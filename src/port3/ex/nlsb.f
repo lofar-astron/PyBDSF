@@ -1,0 +1,128 @@
+C$TEST NLSB
+C TO RUN AS A MAIN PROGRAM REMOVE NEXT LINE
+      SUBROUTINE NLSB
+C***********************************************************************
+C
+C  EXAMPLE OF USE OF THE PORT PROGRAMS MNFB, MNGB, AND MNHB
+C
+C***********************************************************************
+C *** MNFB, MNGB, MNHB EXAMPLE PROGRAM
+C
+C *** MINIMIZE F(X) = 0.1*S(X)**4 + SUM(I = 1(1)3) (I * (X(I) - 10)**2),
+C *** WHERE S(X) = SUM(I = 1(1)3) X(I)
+C *** SUBJECT TO
+C ***    1 .LE. X(1) .LE. 3,
+C ***   -2 .LE. X(2) .LE. 10,
+C ***    1 .LE. X(3) .LE. 21,
+C *** STARTING FROM     X = (2, 30, 9),
+C *** WITH SCALE VECTOR D = (1, 2, 3)
+C
+      INTEGER LIV, LV
+      INTEGER IV(68), P, UI(1)
+      REAL B(2,3), D(3), UR(1), V(132), X(3)
+      EXTERNAL DUMMY, QF, QGH
+C
+      DATA LIV/68/, LV/132/, P/3/
+C
+      DATA B(1,1)/1.E+0/,  B(2,1)/3.E+0/,
+     1     B(1,2)/-2.E+0/, B(2,2)/1.E+1/,
+     2     B(1,3)/1.E+0/,  B(2,3)/2.1E+1/
+C
+      DATA X(1)/2.E+0/, X(2)/3.E+1/, X(3)/9.E+0/
+      DATA D(1)/1.E+0/, D(2)/2.E+0/, D(3)/3.E+0/
+C
+C  ***  BODY  ***
+C
+C  ***  SET IV(1) TO 0 TO USE ALL DEFAULT INPUTS...
+C
+      IV(1) = 0
+C
+C ... WE COULD HAVE MNHB INITIALIZE THE SCALE VECTOR D TO ALL ONES
+C ... BY SETTING V(DINIT) TO 1.0 .  WE WOULD DO THIS BY REPLACING
+C ... THE ABOVE ASSIGNMENT OF 0 TO IV(1) WITH THE FOLLOWING TWO LINES...
+C
+C     CALL IVSET(2, IV, LIV, LV, V)
+C     V(38) = 1.0
+C
+C
+C *** SOLVE THE PROBLEM -- MNHB WILL PRINT THE SOLUTION FOR US...
+C
+      CALL MNHB(P, D, X, B, QF, QGH, IV, LIV, LV, V, UI, UR, DUMMY)
+C
+C *** FOR MNFB AND MNGB, THE CORRESPONDING CALLS WOULD BE...
+C
+C     CALL MNFB(P, D, X, B, QF, IV, LIV, LV, V, UI, UR, DUMMY)
+C     CALL MNGB(P, D, X, B, QF, QG, IV, LIV, LV, V, UI, UR, DUMMY)
+C
+C *** QG WOULD BE A SUBROUTINE, DECLARED EXTERNAL IN PLACE OF QGH ABOVE,
+C *** THAT WOULD BE THE SAME AS QGH (SEE BELOW) EXCEPT FOR HAVING
+C *** THE PARAMETER  H  OMITTED.
+C
+C *** NOTE -- ON MOST SYSTEMS, WE COULD SIMPLY PASS QF OR QGH
+C *** AS THE LAST PARAMETER TO MNHB, SINCE QF AND QGH IGNORE
+C *** THEIR UF PARAMETER.  BUT THERE EXIST SYSTEMS (E.G. UNIVAC)
+C *** THAT WOULD GIVE A RUN-TIME ERROR IF WE DID THIS.  HENCE WE
+C *** PASS THE IMMEDIATELY FOLLOWING DUMMY SUBROUTINE AS UF.
+C
+ 999  STOP
+      END
+      SUBROUTINE DUMMY
+      RETURN
+      END
+      SUBROUTINE QF(P, X, NF, F, UI, UR, UF)
+C
+C *** THIS ROUTINE COMPUTES THE OBJECTIVE FUNCTION, F(X)
+C
+      INTEGER P, NF, UI(1)
+      REAL X(P), F, UR(1)
+      EXTERNAL UF
+C
+      INTEGER I
+      REAL PT1, TEN, ZERO
+C
+      DATA PT1 /0.1E+0/, TEN/1.E+1/, ZERO/0.E+0/
+C
+C
+      F = ZERO
+      DO 10 I = 1, P
+ 10      F = F + X(I)
+      F = PT1 * F**4
+      DO 20 I = 1, P
+ 20      F = F + I*(X(I) - TEN)**2
+ 999  RETURN
+      END
+      SUBROUTINE QGH(P, X, NF, G, H, UI, UR, UF)
+C
+C *** THIS ROUTINE COMPUTES THE GRADIENT, G(X), AND THE LOWER TRIANGLE
+C *** OF THE HESSIAN, H(X).
+C
+      INTEGER P, NF, UI(1)
+      REAL X(P), G(P), H(1), UR(1)
+      EXTERNAL UF
+C
+      INTEGER I, K
+      REAL S, S34
+      REAL ONEPT2, PT4, TEN, TWO, ZERO
+C
+      DATA ONEPT2/1.2E+0/,PT4/0.4E+0/,TEN/1.E+1/,TWO/2.E+0/,ZERO/0.E+0/
+C
+C
+      S = ZERO
+      DO 10 I = 1, P
+ 10      S = S + X(I)
+C
+C     *** INITIALIZE H TO 1.2*S**2 ***
+C
+      CALL SETR(P*(P+1)/2, ONEPT2*S**2, H)
+C
+C     *** NOW COMPUTE G AND ADD (2, 4, ..., 2*P) TO THE DIAGONAL OF H
+C
+      S34 = PT4 * S**3
+      K = 0
+      DO 20 I = 1, P
+         G(I) = S34  +  TWO * I * (X(I) - TEN)
+         K = K + I
+         H(K) = H(K) + TWO*I
+ 20      CONTINUE
+ 999  RETURN
+      END

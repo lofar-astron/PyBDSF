@@ -1,0 +1,79 @@
+C$TEST LRPG
+C TO RUN AS A MAIN PROGRAM REMOVE NEXT LINE
+      SUBROUTINE LRPG
+C***********************************************************************
+C
+C  SECOND EXAMPLE OF USE OF THE PORT PROGRAM LINPA
+C
+C***********************************************************************
+        REAL X(30), C(30), B(29), SIMP(31), U(30)
+        INTEGER ISIMP(31), IPTG(30)
+        EXTERNAL LPRNT,AMAN
+        COMMON /CSTAK/DSTAK
+        DOUBLE PRECISION DSTAK(2000)
+C
+C  GET WORK SPACE FROM THE STACK
+C
+        CALL ISTKIN(2000,4)
+        N=30
+        M=29
+        IE=0
+        IS=31
+C
+C SET UP RIGHT HAND SIDE
+C
+        DO 10 I =1,M
+           B(I) = FLOAT(I)/10.0
+  10    CONTINUE
+C
+C SET UP INITIAL GUESS, OBJECTIVE FUNCTION AND SIMPLE CONSTRAINTS
+C
+       SIGN=-1.0
+       DO 20 I=1,N
+          X(I)=3.0*FLOAT(I)
+          C(I)=SIGN*FLOAT(I)
+          SIGN=-SIGN
+          ISIMP(I)=I
+          SIMP(I)=FLOAT(I)
+  20   CONTINUE
+       ISIMP(N+1)=-N
+       SIMP(N+1)=3.0*FLOAT(N)
+C
+C SOLVE THE PROBLEM AND PRINT OUT THE RESULTS
+C
+       CALL LINPA(A,M,N,AMAN,IA,B,C,X,100,CTX,IS,SIMP,ISIMP,IE,
+     1 LPRNT,IAG,IAS,IPTG,U)
+       IWRITE=I1MACH(2)
+       WRITE(IWRITE,21)(X(I),I=1,N)
+  21   FORMAT(10H SOLUTION ,5E15.5)
+C
+       IF(IAG .GT. 1)WRITE(IWRITE,22)(IPTG(I),I=1,IAG)
+  22   FORMAT( 28H ACTIVE GENERAL CONSTRAINTS ,15I3)
+C
+       IF (IAS .EQ. 0)STOP
+       DO 30 I=1,IAS
+          IP=IABS(ISIMP(I))
+          WRITE(IWRITE,23)IP
+  23      FORMAT(12H BOUND ON X(,I2,11H) IS ACTIVE)
+  30   CONTINUE
+       STOP
+       END
+       SUBROUTINE AMAN(L,A,IA,N,I,TVEC,T)
+       LOGICAL L
+       REAL TVEC(N)
+       IF (L) GOTO 20
+C
+C THE ITH ROW IS REQUESTED
+C
+       DO 10 J=1,N
+          TVEC(J)=0.0
+  10   CONTINUE
+       TVEC(I+1)=1.0
+       TVEC(I)=-1.0
+       RETURN
+C
+C THIS IS INNERPRODUCT REQUEST
+C
+  20   T=TVEC(I+1)-TVEC(I)
+       RETURN
+       END

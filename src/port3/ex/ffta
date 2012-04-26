@@ -1,0 +1,55 @@
+C$TEST FFTA
+C TO RUN AS A MAIN PROGRAM REMOVE NEXT LINE
+      SUBROUTINE FTRA
+C***********************************************************************
+C
+C  EXAMPLE OF USE OF THE PORT PROGRAM FFTR
+C
+C***********************************************************************
+      REAL A(34),B(17),C(32)
+C
+C SET UP THE INPUT DATA FOR E**(-T)
+C AND SAVE IT IN THE VECTOR C FOR LATER COMPARISON.
+C
+      A(1) = .5
+      C(1) = A(1)
+      DO 10 K=2,32
+      A(K) = EXP(-.25*FLOAT(K-1))
+  10  C(K) = A(K)
+C
+C CALL FOR THE TRANSFORM AND PRINT THE FOURIER COEFFICIENTS
+C
+      CALL FFTR(34,A,B)
+C
+      IWRITE = I1MACH(2)
+      WRITE (IWRITE, 997)
+  997 FORMAT (1X,9HFREQUENCY,5X,20HFOURIER COEFFICIENTS//)
+      WRITE (IWRITE, 998)
+  998 FORMAT (1X,7H(=N/NT),5X,9HREAL PART,6X,9HIMAGINARY///)
+C
+      ENT = 1.0/(32. * 0.25)
+      DO 20 K=1,17
+      FREQ = FLOAT(K-1) * ENT
+  20  WRITE (IWRITE,98) FREQ, A(K), B(K)
+  98  FORMAT (2X,F6.3,2F15.8)
+C
+C DO THE INVERSE TRANSFORM
+C
+      CALL FFTRI(32,A,B)
+C
+C SCALE THE RESULTS, FIND THE ERROR, AND PRINT
+C
+      WRITE (IWRITE, 999)
+  999 FORMAT (///4X,1HT,9X,5HINPUT,10X,5HERROR//)
+C
+      EN  = 4*16
+      ENI = 1./EN
+      DO 30 K=1,32
+      A(K) = ENI*A(K)
+      ERR  = A(K) - C(K)
+      T = .25*FLOAT(K-1)
+  30  WRITE (IWRITE,99) T,C(K),ERR
+  99  FORMAT (2X,F4.2,1X,F15.8,4X,1PE10.2)
+C
+      STOP
+      END

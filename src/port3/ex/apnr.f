@@ -1,0 +1,42 @@
+C$TEST APNR
+C TO RUN AS A MAIN PROGRAM REMOVE NEXT LINE
+      SUBROUTINE APNR
+C***********************************************************************
+C
+C  EXAMPLE OF USE OF THE PORT APRNTX ROUTINES
+C
+C***********************************************************************
+      LOGICAL A(25)
+      INTEGER B(25), IWRITE, I1MACH
+      REAL C(25)
+      DOUBLE PRECISION D(25)
+      COMPLEX E(25)
+C
+      IWRITE = I1MACH(2)
+      WRITE(IWRITE, 10)
+   10 FORMAT(14H0LOGICAL ARRAY )
+      CALL SETL(25, .FALSE., A)
+      CALL APRNTL(A, 25, IWRITE, 80)
+C
+      WRITE(IWRITE, 20)
+   20 FORMAT(14H0INTEGER ARRAY )
+      CALL SETI(25, -1, B)
+      CALL APRNTI(B, 25, IWRITE, 80, 4)
+C
+      WRITE(IWRITE, 30)
+   30 FORMAT(11H0REAL ARRAY )
+      CALL SETR(25, 1.0, C)
+      CALL APRNTR(C, 25, IWRITE, 80, 12, 4)
+C
+      WRITE(IWRITE, 40)
+   40 FORMAT(23H0DOUBLE PRECISION ARRAY )
+      CALL SETD(25, 1.0D0, D)
+      CALL APRNTD(D, 25, IWRITE, 80, 12, 4)
+C
+      WRITE(IWRITE, 50)
+   50 FORMAT(14H0COMPLEX ARRAY )
+      CALL SETC(25, CMPLX(1.0, -1.0), E)
+      CALL APRNTC(E, 25, IWRITE, 80, 12, 4)
+C
+      STOP
+      END

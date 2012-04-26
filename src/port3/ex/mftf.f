@@ -1,0 +1,87 @@
+C$TEST MFTF
+C TO RUN AS A MAIN PROGRAM REMOVE NEXT LINE
+      SUBROUTINE MFTF
+C***********************************************************************
+C
+C  EXAMPLE OF USE OF THE PORT PROGRAM MFTRC
+C
+C***********************************************************************
+      REAL A(200,100)
+      REAL AA(200,100)
+      REAL TX(200),TY(200)
+      REAL RSTAK(20014)
+      REAL FN2,RMSERR,SIGN,SUM
+      INTEGER IFX(25),IFY(25)
+      INTEGER I,J,N,N2,NP2,NP3,N2MK
+      DOUBLE PRECISION DSTAK(10007)
+      COMMON /CSTAK/DSTAK
+      EQUIVALENCE (RSTAK(1),DSTAK(1))
+C
+C
+      CALL ISTKIN(20014,3)
+C
+      N   = 100
+      NP2 = 102
+      N2  = 200
+C
+C   SET INPUT VECTORS TO YOUR FAVORITE VALUES HERE, THIS EXAMPLE
+C   USES RANDOM INITIAL VALUES.
+C
+      DO 1 J = 1,N
+         DO 2 I = 1,N
+            A(I,J)  = UNI(0)
+            AA(I,J) = A(I,J)
+ 2       CONTINUE
+ 1    CONTINUE
+C
+      SIGN = 1.0E0
+      CALL MFTRI(N,IFX,TX)
+      CALL MFTCI(N,IFY,TY)
+C
+C  X-DIMENSION
+C
+      CALL MFTRC(N,N,A,1,N2,A(1,1),A(2,1),2,N2,IFX,TX,SIGN)
+C
+C  FILL-IN FROM CONJUGATION OF TERMS
+C
+      NP3  = N+3
+      N2MK = N-1
+      DO 3 I = NP3,N2,2
+         DO 4 J = 1,N
+            A(I,J)   = A(N2MK,J)
+            A(I+1,J) = - A(N2MK+1,J)
+ 4       CONTINUE
+         N2MK = N2MK - 2
+ 3    CONTINUE
+C
+C  DO COMPLEX PART IN Y-DIRECTION
+C
+      CALL MFTCC(N,N,A(1,1),A(2,1),N2,2,A(1,1),A(2,1),N2,2,IFY,TY,SIGN)
+C
+C  NOW GO BACKWARDS, COMPLEX TO COMPLEX FIRST
+C
+      SIGN = -1.0E0
+      CALL MFTCC(N,N,A(1,1),A(2,1),N2,2,A(1,1),A(2,1),N2,2,IFY,TY,SIGN)
+C
+C  AND BACK TO REAL
+C
+      CALL MFTCR(N,N,A(1,1),A(2,1),2,N2,A,1,N2,IFX,TX,SIGN)
+C
+C  COMPARE TO INPUT
+C
+      FN2 = 1./FLOAT(N*N)
+      SUM = 0.0E0
+      DO 5 J = 1,N
+         DO 6 I = 1,N
+            SUM = SUM + (AA(I,J) - FN2*A(I,J))**2
+ 6       CONTINUE
+ 5    CONTINUE
+C
+C   PRINT ROOT MEAN SQUARE ERROR
+C
+      RMSERR = SQRT(SUM*FN2)
+      IWRITE   = I1MACH(2)
+      WRITE(IWRITE,1000) N,N,RMSERR
+ 1000 FORMAT(1X,5H FOR ,I3,1HX,I3,20H ARRAY, RMS ERROR = ,1PE12.3)
+      STOP
+      END

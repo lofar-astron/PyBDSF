@@ -1,0 +1,27 @@
+      REAL FUNCTION S2MACH( XR, BASE, EXP )
+C
+C S2MACH = XR * BASE**EXP
+C
+C     (17-JUN-85) -- REVISED TO MAKE OVERFLOW LESS LIKELY
+      INTEGER BASE, EXP
+      REAL TBASE, XR
+C
+      TBASE = FLOAT(BASE)
+      S2MACH = XR
+C
+      N = EXP
+      IF( N .GE. 0 ) GO TO 20
+C
+      N = -N
+      TBASE = 1.0/TBASE
+C
+ 20   IF( MOD(N,2) .NE. 0 ) S2MACH = S2MACH*TBASE
+      N = N/2
+      IF( N .LT. 2 ) GO TO 30
+      TBASE = TBASE * TBASE
+      GO TO 20
+C
+ 30   IF (N .EQ. 1) S2MACH = (S2MACH * TBASE) * TBASE
+      RETURN
+C
+      END
