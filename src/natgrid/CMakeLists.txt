@@ -1,5 +1,7 @@
 # $Id$
 
+include(PythonInstall)
+
 file(GLOB _natgrid_sources Src/*.c)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Include)
@@ -12,5 +14,5 @@ if (APPLE)
     LINK_FLAGS "-undefined dynamic_lookup")
 endif (APPLE)   
 
-install(TARGETS natgridmodule DESTINATION lib/python/bdsm)
-install(FILES   Lib/nat.py    DESTINATION lib/python/bdsm)
+install(TARGETS natgridmodule DESTINATION ${PYTHON_INSTALL_DIR}/lofar/bdsm)
+install(FILES   Lib/nat.py    DESTINATION ${PYTHON_INSTALL_DIR}/lofar/bdsm)

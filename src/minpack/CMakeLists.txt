@@ -1,13 +1,6 @@
-## ----------------------------------------------------------------------
-## $Id$
-## ----------------------------------------------------------------------
+# $Id$
 
-enable_language(Fortran)
-
-set (minpack_sources
-     lmder.f lmpar.f qrfac.f qrsolv.f enorm.f dpmpar.f)
-
-add_definitions (-fPIC)
-
-add_library (minpack STATIC ${minpack_sources})
+# Always use -fPIC to enable linking with shared libs.
+add_library(minpack STATIC lmder.f lmpar.f qrfac.f qrsolv.f enorm.f dpmpar.f)
+set_target_properties(minpack PROPERTIES COMPILE_FLAGS "-fPIC")
 
