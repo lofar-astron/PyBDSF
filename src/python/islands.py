@@ -58,7 +58,7 @@ class Op_islands(Op):
             #
             # First, set up up an Image object and run a limited
             # op_chain.
-            from bdsm import _run_op_list
+            from lofar.bdsm import _run_op_list
             mylogger.userinfo(mylog, "\nDetermining islands from detection image")
 
             det_chain, det_opts = self.setpara_bdsm(img, opts.detection_image)

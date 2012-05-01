@@ -1,5 +1,8 @@
 # $Id$
 
+include(PythonInstall)
+
+add_subdirectory(apps)
 add_subdirectory(c++)
 add_subdirectory(fortran)
 add_subdirectory(minpack)

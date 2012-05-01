@@ -4,8 +4,8 @@ This module initializes the interactive PyBDSM shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
 "pybdsm" shell script in apps/PyBDSM/ or as "python pybdsm.py".
 """
-import bdsm
-from bdsm.image import Image
+import lofar.bdsm as bdsm
+from lofar.bdsm.image import Image
 import pydoc
 import sys
 import inspect
@@ -548,7 +548,7 @@ def _opts_completer(self, event):
     """ Returns a list of strings with possible completions."""
     import os
     import glob
-    from bdsm.image import Image
+    from lofar.bdsm.image import Image
     img = Image({'filename':''})
     opts = img.opts.get_names()
 
@@ -576,7 +576,7 @@ def _opts_completer(self, event):
             cmd3 = cmd1.split('=')[1]
             cmd1 = cmd1.split('=')[0]
         if cmd1 in opts:
-            from bdsm.tc import tcEnum, tcOption
+            from lofar.bdsm.tc import tcEnum, tcOption
             v = img.opts.__class__.__dict__[cmd1]
             partype = v._type
             if isinstance(partype, tcOption):
@@ -658,7 +658,7 @@ def _opts_completer(self, event):
         return opts
 
 # Define the welcome banner to print on startup
-from bdsm._version import __version__, __revision__, changelog
+from lofar.bdsm._version import __version__, __revision__, changelog
 divider1 = '=' * 72 + '\n'
 divider2 = '_' * 72 + '\n'
 banner = '\nPyBDSM version ' + __version__ + ' (LUS revision ' + \

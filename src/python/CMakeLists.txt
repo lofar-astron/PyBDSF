@@ -1,7 +1,5 @@
 # $Id$
 
-include(PythonInstall)
-
 python_install(
   __init__.py
   _version.py

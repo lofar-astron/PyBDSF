@@ -1,7 +1,5 @@
 # $Id$
 
-include(PythonInstall)
-
 file(GLOB _natgrid_sources Src/*.c)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Include)

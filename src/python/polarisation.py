@@ -137,7 +137,7 @@ class Op_polarisation(Op):
           img.ch0_pi = ch0_pi
 
           if fit_PI:
-              from bdsm import _run_op_list
+              from lofar.bdsm import _run_op_list
               mylogger.userinfo(mylog, "\nChecking PI image for new sources")
  
               mask = img.mask

@@ -28,9 +28,6 @@ if (APPLE)
     LINK_FLAGS "-undefined dynamic_lookup")
 endif (APPLE)   
 
-# This is a quick-and-dirty fix to install the Python binding module in the
-# right place. It will now be installed twice, because lofar_add_library()
-# will install it in $prefix/$libdir
 install(TARGETS _cbdsm
   DESTINATION ${PYTHON_INSTALL_DIR}/lofar/bdsm)
 

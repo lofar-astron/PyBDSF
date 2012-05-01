@@ -17,7 +17,7 @@ def process(img, **kwargs):
     Any options given as keyword arguments will override existing ones stored
     in img.opts.
     """
-    from bdsm import default_chain, _run_op_list
+    from lofar.bdsm import default_chain, _run_op_list
     from image import Image
     import mylogger 
 
@@ -80,7 +80,7 @@ def get_op_chain(img):
     shapelets, we do not need to re-run Op_gausfit, etc. At the 
     moment, this just returns the default Op chain from __init__.py.
     """
-    from bdsm import default_chain
+    from lofar.bdsm import default_chain
     
     return default_chain
 #     prev_opts = img._prev_opts
