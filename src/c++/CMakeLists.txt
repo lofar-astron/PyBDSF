@@ -21,7 +21,8 @@ target_link_libraries(_cbdsm
 
 set_target_properties(_cbdsm PROPERTIES
   PREFIX ""
-  LINKER_LANGUAGE Fortran)
+  LINKER_LANGUAGE Fortran
+  LIBRARY_OUTPUT_DIRECTORY ${PYTHON_BUILD_DIR}/lofar/bdsm)
 
 if (APPLE)
   set_target_properties(_cbdsm PROPERTIES
