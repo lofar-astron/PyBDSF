@@ -5,6 +5,10 @@ include(LofarCTest)
 # Create symlinks to some Python modules so that they can be found during
 # build/test time.
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${PACKAGE_BINARY_DIR}/src/c++/_cbdsm.so
+  ${PYTHON_BUILD_DIR}/lofar/bdsm/_cbdsm.so)
+
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${PACKAGE_BINARY_DIR}/src/fortran/_pytesselate.so
   ${PYTHON_BUILD_DIR}/lofar/bdsm/_pytesselate.so)
 
