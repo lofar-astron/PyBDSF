@@ -68,6 +68,8 @@ class Op_readimage(Op):
             data, hdr = result
 
         # Store data and header in img. If polarisation_do = False, only store pol == 'I'
+        img.nchan = data.shape[1]
+        img.nstokes = data.shape[0]
         mylogger.userinfo(mylog, 'Image size',
                           str(data.shape[-2:])+' pixels')
         mylogger.userinfo(mylog, 'Number of channels',
@@ -241,7 +243,6 @@ class Op_readimage(Op):
             img.wcs_obj.crpix = crpix
             img.wcs_obj.cdelt = cdelt
             img.wcs_obj.ctype = ctype
-
             if crota != []:
                 img.wcs_obj.crota = crota
             if cunit != []:
@@ -359,11 +360,11 @@ class Op_readimage(Op):
             # collapse.py do the initialization 
             img.cfreq = img.opts.frequency_sp[0]
             img.freq_pars = (0.0, 0.0, 0.0)
-            mylog.info('Using user-specified frequency/frequencies.')
-        elif img.opts.frequency != None:
+            mylog.info('Using user-specified frequencies.')
+        elif img.opts.frequency != None and img.image.shape[1] == 1:
             img.cfreq = img.opts.frequency
             img.freq_pars = (0.0, 0.0, 0.0)
-            mylog.info('Using user-specified frequency/frequencies.')           
+            mylog.info('Using user-specified frequency.')           
         else:
             found  = False
             hdr = img.header
@@ -386,7 +387,10 @@ class Op_readimage(Op):
                                 hdr['CDELT'+s], hdr['CRPIX'+s]
                             ff = crval+cdelt*(1.-crpix)
             if found: 
-                img.cfreq = ff
+                if img.opts.frequency != None:
+                    img.cfreq = img.opts.frequency
+                else:
+                    img.cfreq = ff
                 img.freq_pars = (crval, cdelt, crpix)
             else:
                 raise RuntimeError('No frequency information found in image header.')

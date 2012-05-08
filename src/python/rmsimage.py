@@ -60,11 +60,15 @@ class Op_rmsimage(Op):
         # by a weighted average of the values in the maps at the two
         # scales. 
         fwsig = const.fwsig
+        min_adapt_threshold = 10.0
         if opts.adaptive_thresh == None:
             adapt_thresh = 50.0
             start_thresh = 500.0  
         else:
             adapt_thresh = opts.adaptive_thresh
+            if adapt_thresh < min_adapt_threshold:
+                adapt_thresh = min_adapt_threshold
+                opts.adaptive_thresh = min_adapt_threshold
             start_thresh = adapt_thresh
         brightsize = None
         isl_pos = []

@@ -10,7 +10,6 @@ import mylogger
 from gaul2srl import Source
 from copy import deepcopy as cp
 import _cbdsm
-import matplotlib.pyplot as pl
 import collapse 
 import sys
 import functions as func
@@ -21,8 +20,14 @@ from gausfit import Gaussian
 
 Gaussian.spec_indx = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
 Gaussian.e_spec_indx = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
+Gaussian.specin_flux = List(Float(), doc = "Total flux density per channel, Jy", colname=['Total_flux'], units=['Jy'])
+Gaussian.specin_fluxE = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
+Gaussian.specin_freq = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
 Source.spec_indx = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
 Source.e_spex_indx = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
+Source.specin_flux = List(Float(), doc = "Total flux density, Jy", colname=['Total_flux'], units=['Jy'])
+Source.specin_fluxE = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
+Source.specin_freq = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
 
 class Op_spectralindex(Op):
     """Computes spectral index of every gaussian and every source.
@@ -127,26 +132,33 @@ class Op_spectralindex(Op):
                     for ig, gaussian in enumerate(src.gaussians):
                         npos = len(N.where(total_flux[:, ig] > 0.0)[0])
                         if img.opts.verbose_fitting:
-                            print 'Gaussian #%i : averaged to %i channels, of which %i meet SNR criterion' % (gaussian.gaus_num, 
-                                   len(total_flux[:, ig]), n_good_chan_per_gaus[ig])
-                        if n_good_chan_per_gaus[ig] < 2 or npos < 2:
+                            if img.opts.flagchan_snr:
+                                print 'Gaussian #%i : averaged to %i channels, of which %i meet SNR criterion' % (gaussian.gaus_num, 
+                                       len(total_flux[:, ig]), n_good_chan_per_gaus[ig])
+                            else:
+                                print 'Gaussian #%i : averaged to %i channels, all of which will be used' % (gaussian.gaus_num, 
+                                       len(total_flux[:, ig]))
+                        if (img.opts.flagchan_snr and n_good_chan_per_gaus[ig] < 2) or npos < 2:
                             gaussian.spec_indx = N.NaN
                             gaussian.e_spec_indx = N.NaN
                             gaussian.spec_norm = N.NaN
-                            gaussian.specin_flux = N.NaN
-                            gaussian.specin_fluxE = N.NaN
-                            gaussian.specin_freq = N.NaN
+                            gaussian.specin_flux = [N.NaN]
+                            gaussian.specin_fluxE = [N.NaN]
+                            gaussian.specin_freq = [N.NaN]
                             gaussian.specin_freq0 = N.NaN
                         else:
-                            good_fluxes_ind = N.where(gaus_mask[:, ig] == False)
+                            if img.opts.flagchan_snr:
+                                good_fluxes_ind = N.where(gaus_mask[:, ig] == False)
+                            else:
+                                good_fluxes_ind = range(len(freq_av))
                             fluxes_to_fit = total_flux[:, ig][good_fluxes_ind]
                             e_fluxes_to_fit = e_total_flux[:, ig][good_fluxes_ind]
                             freqs_to_fit = freq_av[good_fluxes_ind]
                             fit_res = self.fit_specindex(freqs_to_fit, fluxes_to_fit, e_fluxes_to_fit)
                             gaussian.spec_norm, gaussian.spec_indx, gaussian.e_spec_indx = fit_res
-                            gaussian.specin_flux = fluxes_to_fit
-                            gaussian.specin_fluxE = e_fluxes_to_fit
-                            gaussian.specin_freq = freqs_to_fit
+                            gaussian.specin_flux = fluxes_to_fit.tolist()
+                            gaussian.specin_fluxE = e_fluxes_to_fit.tolist()
+                            gaussian.specin_freq = freqs_to_fit.tolist()
                             gaussian.specin_freq0 = N.median(freqs_to_fit)
         
                     # Next fit total source fluxes for spectral index.
@@ -179,28 +191,45 @@ class Op_spectralindex(Op):
                             rms_desired *= 0.8
                         
                         # Now fit source for spectral index.
+                        src_total_flux = src_total_flux.reshape((src_total_flux.shape[0],))
+                        src_e_total_flux = src_e_total_flux.reshape((src_e_total_flux.shape[0],))
+                        src_mask = src_mask.reshape((src_mask.shape[0],))
                         if img.opts.verbose_fitting:
-                            print 'Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id, 
-                                  len(src_total_flux), nchan)
+                            if img.opts.flagchan_snr:
+                                print 'Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id, 
+                                      len(src_total_flux), nchan)
+                            else:
+                                 print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id, 
+                                       len(src_total_flux))                           
                         npos = len(N.where(src_total_flux > 0.0))
-                        if n_good_chan < 2 or npos < 2:
+                        if (img.opts.flagchan_snr and n_good_chan < 2) or npos < 2:
                             src.spec_indx = N.NaN
                             src.e_spec_indx = N.NaN
                             src.spec_norm = N.NaN
-                            src.specin_flux = N.NaN
-                            src.specin_fluxE = N.NaN
-                            src.specin_freq = N.NaN
+                            src.specin_flux = [N.NaN]
+                            src.specin_fluxE = [N.NaN]
+                            src.specin_freq = [N.NaN]
                             src.specin_freq0 = N.NaN
                         else:
-                            good_fluxes_ind = N.where(src_mask == False)
+                            if img.opts.flagchan_snr:
+                                good_fluxes_ind = N.where(src_mask == False)
+                            else:
+                                good_fluxes_ind = range(len(freq_av))
                             fluxes_to_fit = src_total_flux[good_fluxes_ind]
                             e_fluxes_to_fit = src_e_total_flux[good_fluxes_ind]
-                            freqs_to_fit = freq_av[good_fluxes_ind[0]]
+                            freqs_to_fit = freq_av[good_fluxes_ind]
+#                             if len(freqs_to_fit.shape) == 2:
+#                                 freqs_to_fit = freqs_to_fit.reshape((freqs_to_fit.shape[0],))
+#                             if len(fluxes_to_fit.shape) == 2:
+#                                 fluxes_to_fit = fluxes_to_fit.reshape((fluxes_to_fit.shape[0],))
+#                             if len(e_fluxes_to_fit.shape) == 2:
+#                                 e_fluxes_to_fit = e_fluxes_to_fit.reshape((e_fluxes_to_fit.shape[0],))
+
                             fit_res = self.fit_specindex(freqs_to_fit, fluxes_to_fit, e_fluxes_to_fit)
                             src.spec_norm, src.spec_indx, src.e_spec_indx = fit_res
-                            src.specin_flux = fluxes_to_fit
-                            src.specin_fluxE = e_fluxes_to_fit
-                            src.specin_freq = freqs_to_fit
+                            src.specin_flux = fluxes_to_fit.tolist()
+                            src.specin_fluxE = e_fluxes_to_fit.tolist()
+                            src.specin_freq = freqs_to_fit.tolist()
                             src.specin_freq0 = N.median(freqs_to_fit)
                     else:
                         src.spec_norm = src.gaussians[0].spec_norm

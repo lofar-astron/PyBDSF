@@ -19,7 +19,6 @@ from image import *
 from islands import *
 from gausfit import Gaussian
 import mylogger
-import output_fbdsm_files as opf
 import numpy as N
 N.seterr(divide='raise')
 
@@ -63,7 +62,6 @@ class Op_gaul2srl(Op):
         mylogger.userinfo(mylog, "Number of sources formed from Gaussians",
                           str(img.nsrc))
 
-        if img.opts.output_fbdsm: opf.write_fbdsm_gaul(img)
         img.completed_Ops.append('gaul2srl')
 
 ##################################################################################################
@@ -311,12 +309,6 @@ class Op_gaul2srl(Op):
         if img.opts.flag_smallsrc and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Island = '+str(isl.island_id))
             mylog.debug('Mask = '+repr(mask[xind, yind])+'xind, yind, x1, y1 = '+repr(xind)+' '+repr(yind)+' '+repr(x1)+' '+repr(y1))
-            import matplotlib.pyplot as pl
-            #import pylab as pl
-            pl.subplot(1,2,1); pl.imshow(N.transpose(data*~rmask), origin='lower', interpolation='nearest')
-            pl.subplot(1,2,2); pl.imshow(N.transpose(isl.image*~isl.mask_active), origin='lower', interpolation='nearest')
-            pl.suptitle('Image of M source where it crashed, island '+str(isl.island_id))
-            #raise ValueError("Island number not in mask for gaus->source")
         t=(mompara[1]-x1)/(x1+1-x1)  # in case u change it later
         u=(mompara[2]-y1)/(y1+1-y1)
         s_peak=(1.0-t)*(1.0-u)*subim_src[x1,y1]+t*(1.0-u)*subim_src[x1+1,y1]+ \
@@ -459,16 +451,16 @@ class Source(object):
     """ Instances of this class store sources made from grouped gaussians. """
     source_id           = Int(doc="Source index", colname='Source_id')
     code                = String(doc='Source code S, C, or M', colname='S_Code')
-    total_flux          = Float(doc="Total flux (Jy)", colname='Total_flux', units='Jy')
-    total_fluxE         = Float(doc="Error in total flux (Jy)", colname='E_Total_flux', 
+    total_flux          = Float(doc="Total flux density (Jy)", colname='Total_flux', units='Jy')
+    total_fluxE         = Float(doc="Error in total flux density (Jy)", colname='E_Total_flux', 
                                 units='Jy')
-    peak_flux_centroid  = Float(doc="Peak flux at centroid of emission (Jy/beam)",
+    peak_flux_centroid  = Float(doc="Peak flux density per beam at centroid of emission (Jy/beam)",
                                 colname='Peak_flux_cen', units='Jy/beam')
-    peak_flux_centroidE = Float(doc="Error in peak flux at centroid of emission (Jy/beam)",
+    peak_flux_centroidE = Float(doc="Error in peak flux density per beam at centroid of emission (Jy/beam)",
                                 colname='E_Peak_flux_cen', units='Jy/beam')
-    peak_flux_max       = Float(doc="Peak flux at posn of maximum emission (Jy/beam)",
+    peak_flux_max       = Float(doc="Peak flux density per beam at posn of maximum emission (Jy/beam)",
                                 colname='Peak_flux', units='Jy/beam')
-    peak_flux_maxE      = Float(doc="Error in peak flux at posn of max emission (Jy/beam)",
+    peak_flux_maxE      = Float(doc="Error in peak flux density per beam at posn of max emission (Jy/beam)",
                                 colname='E_Peak_flux', units='Jy/beam')
     posn_sky_centroid   = List(Float(), doc="Posn (RA, Dec in deg) of centroid of source", 
                                colname=['RA', 'DEC'], units=['deg', 'deg'])
@@ -508,7 +500,6 @@ class Source(object):
                                 colname='Resid_Isl_rms', units='Jy/beam')
     sresid_mean         = Float(doc="Island mean in Shapelet residual image Jy/beam", 
                                 colname='Resid_Isl_mean', units='Jy/beam')
-    wavelet_j           = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
     ngaus               = Int(doc='Number of gaussians in the source', colname='N_gaus')
     island_id           = Int(doc="Serial number of the island", colname='Isl_id')
     gaussians           = List(tInstance(Gaussian), doc="")

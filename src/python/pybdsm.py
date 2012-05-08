@@ -4,7 +4,7 @@ This module initializes the interactive PyBDSM shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
 "pybdsm" shell script in apps/PyBDSM/ or as "python pybdsm.py".
 """
-import lofar.bdsm as bdsm
+import lofar.bdsm
 from lofar.bdsm.image import Image
 import pydoc
 import sys
@@ -51,7 +51,7 @@ def inp(cur_cmd=None):
         if not hasattr(_img, '_current_cmd'):
             print '\033[31;1mERROR\033[0m: no task is set'
             return
-    bdsm.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
+    lofar.bdsm.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
                              banner=_img._current_cmd_desc,
                              use_groups=_img._current_cmd_use_groups)
     
@@ -373,8 +373,8 @@ def show_fit(**kwargs):
     the controls at the bottom of the plot window.
 
     In addition, the following commands are available:
-      Press "i" ........ : Get integrated fluxes and mean rms values
-                           for the visible portion of the image
+      Press "i" ........ : Get integrated flux densities and mean rms
+                           values for the visible portion of the image
       Press "m" ........ : Change min and max scaling values
       Press "n" ........ : Show / hide island IDs
       Press "0" ........ : Reset scaling to default
@@ -449,7 +449,7 @@ def write_catalog(**kwargs):
         print "\n\033[31;1mAborted\033[0m"
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
-                          'incl_wavelet', 'clobber', 'catalog_type']
+                          'incl_chan', 'clobber', 'catalog_type']
 write_catalog.use_groups = False
 
 
@@ -485,7 +485,7 @@ def export_image(**kwargs):
         print "\n\033[31;1mAborted\033[0m"
         
 export_image.arg_list = ['outfile', 'img_type', 'img_format',
-                         'incl_wavelet', 'clobber']
+                         'clobber']
 export_image.use_groups = False
 
 
@@ -526,7 +526,7 @@ class bdsmDocHelper(pydoc.Helper):
                     group_text = '\nBelongs to group: ' + opt.group()
                 else:
                     group_text = ''
-                desc_text = bdsm.interface.wrap(desc, 72)
+                desc_text = lofar.bdsm.interface.wrap(desc, 72)
                 desc_text = '\n'.join(desc_text)
                 pydoc.pager(topbar + 'Help on the ' + pydoc.text.bold(request)
                             + ' parameter:\n\n' + default_val_text
@@ -661,7 +661,7 @@ def _opts_completer(self, event):
 from lofar.bdsm._version import __version__, __revision__, changelog
 divider1 = '=' * 72 + '\n'
 divider2 = '_' * 72 + '\n'
-banner = '\nPyBDSM version ' + __version__ + ' (LUS revision ' + \
+banner = '\nPyBDSM version ' + __version__ + ' (LOFAR revision ' + \
          __revision__ + ')\n'\
 + divider1 + 'PyBDSM commands\n'\
 '  inp task ............ : Set current task and list parameters\n'\

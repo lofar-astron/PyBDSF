@@ -8,7 +8,11 @@ import numpy as N
 from image import *
 import mylogger
 import os
-import matplotlib.pyplot as pl
+try:
+    import matplotlib.pyplot as pl
+    has_pl = True
+except ImportError:
+    has_pl = False
 import _cbdsm
 from math import log, floor, sqrt
 import scipy.signal as S
@@ -218,7 +222,7 @@ class Op_wavelet_atrous(Op):
               mylogger.userinfo(mylog, "Number of valid wavelet Gaussians", str(nwvgaus))
               total_flux += tot_flux
               ntot_wvgaus += nwvgaus
-              if img.opts.interactive and len(wimg.gaussians) > 0:
+              if img.opts.interactive and len(wimg.gaussians) > 0 and has_pl:
                   dc = '\033[34;1m'
                   nc = '\033[0m'
                   print dc + 'Displaying islands and rms image...' + nc
@@ -242,7 +246,7 @@ class Op_wavelet_atrous(Op):
           #self.morphfilter_pyramid(img, pdir)
           img.ngaus += ntot_wvgaus
           img.total_flux_gaus += total_flux
-          mylogger.userinfo(mylog, "Total flux in model over all scales" , '%.3f Jy' % img.total_flux_gaus)
+          mylogger.userinfo(mylog, "Total flux density in model over all scales" , '%.3f Jy' % img.total_flux_gaus)
           if img.opts.output_all:
               func.write_image_to_file(img.use_io, img.imagename + '.atrous.cJ.fits',
                                        im_new.transpose(), img, bdir)
@@ -293,7 +297,6 @@ class Op_wavelet_atrous(Op):
         opts['savefits_meanim'] = False
         opts['savefits_rankim'] = False
         opts['savefits_normim'] = False
-        opts['output_fbdsm'] = False
         opts['polarisation_do'] = False
         opts['group_by_isl'] = img.opts.group_by_isl
         opts['quiet'] = img.opts.quiet
@@ -397,7 +400,7 @@ class Op_wavelet_atrous(Op):
                 lpyr.append(pyrsrc)
         img.pyrsrcs = lpyr
 
-        if img.opts.plot_pyramid:
+        if img.opts.plot_pyramid and has_pl:
             pl.figure()
             a = ceil(sqrt(jmax)); b = floor(jmax/a)
             if a*b < jmax: b += 1

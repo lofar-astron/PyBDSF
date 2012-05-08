@@ -55,8 +55,8 @@ class Op_make_residimage(Op):
             x_ax, y_ax = N.mgrid[bbox]
             ffimg = func.gaussian_fcn(g, x_ax, y_ax)
             img.resid_gaus[bbox] = img.resid_gaus[bbox] - ffimg
-            img.model_gaus[bbox] = img.model_gaus[bbox] + ffimg
-
+            img.model_gaus[bbox] = img.model_gaus[bbox] + ffimg                
+    
         # Apply mask to model and resid images
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask

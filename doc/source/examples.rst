@@ -8,7 +8,7 @@ Below is an example of running PyBDSM on an image composed primarily of point so
 
     $ pybdsm
     
-    PyBDSM version 1.0 (LUS revision 9467)
+    PyBDSM version 1.0 (LOFAR revision 9467)
     ========================================================================
     PyBDSM commands
       inp task ............ : Set current task and list parameters
@@ -232,7 +232,7 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
     # This script fits a number of images automatically, writing out source 
     # catalogs and residual and model images for each input image
     
-    import bdsm
+    import lofar.bdsm as bdsm
     
     # Define the list of images to process and the parameter save file
     input_images = ['a2597.fits', 'a2256_1.fits', 'a2256_2.fits',

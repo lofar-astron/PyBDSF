@@ -18,9 +18,12 @@ import mylogger
 import sys
 import time
 import statusbar
-import misc
 import _cbdsm
-import matplotlib.pyplot as pl
+try:
+    import matplotlib.pyplot as pl
+    has_pl = True
+except ImportError:
+    has_pl = False
 import scipy.ndimage as nd
 
 
@@ -75,7 +78,7 @@ class Op_gausfit(Op):
             print "Fitting isl #", idx, '; # pix = ',N.sum(~isl.mask_active),'; size = ',size
             
           if size > maxsize:
-            tosplit = misc.isl_tosplit(isl, img)
+            tosplit = func.isl_tosplit(isl, img)
             if opts.split_isl and tosplit[0] > 0:
                 n_subisl, sub_labels = tosplit[1], tosplit[2]
                 gaul = []; fgaul = []
@@ -108,7 +111,7 @@ class Op_gausfit(Op):
               gaul, fgaul = self.fit_island(isl, opts, img)
             if bar.started: bar.increment()
 
-          if opts.plot_islands:
+          if opts.plot_islands and has_pl:
               pl.figure()
               pl.suptitle('Island : '+str(isl.island_id))
               pl.subplot(1,2,1)
@@ -153,14 +156,14 @@ class Op_gausfit(Op):
         mylogger.userinfo(mylog, "Total number of Gaussians fit to image",
                           str(n))
         if not hasattr(img, '_pi') and not img.waveletimage:
-            mylogger.userinfo(mylog, "Total flux in model", '%.3f Jy' %
+            mylogger.userinfo(mylog, "Total flux density in model", '%.3f Jy' %
                           tot_flux)
  
         # Check if model flux is very different from sum of flux in image
         if img.ch0_sum_jy > 0 and not hasattr(img, '_pi'):
             if img.total_flux_gaus/img.ch0_sum_jy < 0.5 or \
                     img.total_flux_gaus/img.ch0_sum_jy > 2.0:
-                mylog.warn('Total flux in model is %0.2f times sum of pixels '\
+                mylog.warn('Total flux density in model is %0.2f times sum of pixels '\
                                'in input image. Large residuals may remain.' %
                            (img.total_flux_gaus/img.ch0_sum_jy,))
             
@@ -235,7 +238,8 @@ class Op_gausfit(Op):
             iter += 1
             fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, ini_gausfit, ngmax, verbose)
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
-                                              beam, thr0, peak, shape, isl.mask_active, size)
+                                              beam, thr0, peak, shape, isl.mask_active, 
+                                              isl.image, size)
             ng1 = len(gaul)
             if fitok and len(fgaul) == 0:
                 break
@@ -250,7 +254,8 @@ class Op_gausfit(Op):
                iter += 1
                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
-                                                 beam, thr0, peak, shape, isl.mask_active, size)
+                                                 beam, thr0, peak, shape, isl.mask_active, 
+                                                 isl.image, size)
                ng1 = len(gaul)
                if fitok and len(fgaul) == 0:
                    break
@@ -258,7 +263,8 @@ class Op_gausfit(Op):
             # If all else fails, try to fit just a single Gaussian to the island
             fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', 1, verbose)
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
-                                          beam, thr0, peak, shape, isl.mask_active, size)
+                                          beam, thr0, peak, shape, isl.mask_active,
+                                          isl.image, size)
 
         ### return whatever we got
         isl.mg_fcn = fcn
@@ -269,8 +275,6 @@ class Op_gausfit(Op):
         if verbose:
             print 'Number of good Gaussians: %i' % (len(gaul),)
             print 'Number of flagged Gaussians: %i' % (len(fgaul),)
-            for ifg, fg in enumerate(fgaul):
-                print '    Flagged Gaussian %i: flag = %i' % (ifg, len(fgaul))
         return gaul, fgaul
 
     def deblend_and_fit(self, img, isl):
@@ -597,7 +601,7 @@ class Op_gausfit(Op):
         else:
             return False
 
-    def flag_gaussians(self, gaul, opts, beam, thr, peak, shape, isl_mask, size):
+    def flag_gaussians(self, gaul, opts, beam, thr, peak, shape, isl_mask, isl_image, size):
         """Flag gaussians according to some rules.
         Splits list of gaussian parameters in 2, where the first
         one is a list of parameters for accepted gaussians, and
@@ -617,7 +621,7 @@ class Op_gausfit(Op):
         bad  = []
         for g in gaul:
             
-            flag = self._flag_gaussian(g, beam, thr, peak, shape, opts, isl_mask, size)
+            flag = self._flag_gaussian(g, beam, thr, peak, shape, opts, isl_mask, isl_image, size)
             if flag:
                 bad.append((flag, g))
             else:
@@ -625,12 +629,13 @@ class Op_gausfit(Op):
 
         return good, bad
 
-    def _flag_gaussian(self, g, beam, thr, peak, shape, opts, mask, size_bms):
+    def _flag_gaussian(self, g, beam, thr, peak, shape, opts, mask, image, size_bms):
         """The actual flagging routine. See above for description.
         """
         from math import sqrt, sin, cos, log, pi
         from const import fwsig
         import functions as func
+        import scipy.ndimage as nd
 
         A, x1, x2, s1, s2, th = g
         s1, s2 = map(abs, [s1, s2])
@@ -655,9 +660,11 @@ class Op_gausfit(Op):
         border = opts.flag_bordersize
         x1ok = True
         x2ok = True
-        flag_max = False
+        flagmax = False
         if A < opts.flag_minsnr*thr: flag += 1
-        if A > opts.flag_maxsnr*peak or flag_max: flag += 2
+        if A > opts.flag_maxsnr*peak:
+            flag += 2
+            flagmax = True
         if x1 - border < 0 or x1 + border + 1 > shape[0]:
             flag += 4
             x1ok = False
@@ -665,6 +672,11 @@ class Op_gausfit(Op):
             flag += 8
             x2ok = False
         if x1ok and x2ok:
+            if not flagmax:
+                # Check image value at Gaussian center
+                im_val_at_cen = nd.map_coordinates(image, [N.array([x1]), N.array([x2])])
+                if A > opts.flag_maxsnr*im_val_at_cen:
+                   flag += 2   
             borx1_1 = x1 - border
             if borx1_1 < 0: borx1_1 = 0
             borx1_2 = x1 + border + 1
@@ -697,10 +709,6 @@ class Op_gausfit(Op):
             pt4 = [ellx[N.argmin(elly)], N.min(elly)]
             extremes = [pt1, pt2, pt3, pt4]
             for pt in extremes:
-#                 if abs(pt[0] - x1) > 2.0 or abs(pt[1] - x2) > 2.0:
-                    # Make sure extremes are at least 2 pixels from center
-                    # of Gaussian, to avoid flagging small Gaussians near
-                    # island edges
                 if pt[0] < 0 or pt[0] >= shape[0] or pt[1] < 0 or pt[1] >= shape[1]:
                     flag += 256
                     break
@@ -816,7 +824,7 @@ class Gaussian(object):
     gresid_mean= Float(doc="Island mean in Gaussian residual image Jy/beam", colname='Resid_Isl_mean', units='Jy/beam')
     sresid_rms = Float(doc="Island rms in Shapelet residual image Jy/beam", colname='Resid_Isl_rms', units='Jy/beam')
     sresid_mean= Float(doc="Island mean in Shapelet residual image Jy/beam", colname='Resid_Isl_mean', units='Jy/beam')
-    wavelet_j  = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
+    jlevel     = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
 
     def __init__(self, img, gaussian, isl_idx, g_idx, flag=0):
         """Initialize Gaussian object from fitting data

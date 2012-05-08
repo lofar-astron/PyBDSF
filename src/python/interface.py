@@ -17,7 +17,7 @@ def process(img, **kwargs):
     Any options given as keyword arguments will override existing ones stored
     in img.opts.
     """
-    from lofar.bdsm import default_chain, _run_op_list
+    from . import default_chain, _run_op_list
     from image import Image
     import mylogger 
 
@@ -80,7 +80,7 @@ def get_op_chain(img):
     shapelets, we do not need to re-run Op_gausfit, etc. At the 
     moment, this just returns the default Op chain from __init__.py.
     """
-    from lofar.bdsm import default_chain
+    from . import default_chain
     
     return default_chain
 #     prev_opts = img._prev_opts
@@ -537,8 +537,7 @@ def round_list_of_tuples(val):
 # The following functions give convenient access to the output functions in 
 # output.py
 def export_image(img, outfile=None, img_format='fits',
-                 img_type='gaus_resid', incl_wavelet=True,
-                 clobber=False):
+                 img_type='gaus_resid', clobber=False):
     """Write an image to a file. Returns True if successful, False if not. 
 
     outfile - name of resulting file; if None, file is
@@ -636,18 +635,12 @@ def export_image(img, outfile=None, img_format='fits',
                                      img.psf_vary_pa, img, bdir,
                                      clobber=clobber)
         elif img_type == 'gaus_resid':
-            if incl_wavelet and hasattr(img, 'atrous_gaussians'):
-                im = img.resid_wavelets
-            else:
-                im = img.resid_gaus
+            im = img.resid_gaus
             func.write_image_to_file(use_io, filename,
                                      im, img, bdir,
                                      clobber=clobber)
         elif img_type == 'gaus_model':
-            if incl_wavelet and hasattr(img, 'atrous_gaussians'):
-                im = img.ch0 - img.resid_wavelets
-            else:
-                im = img.model_gaus
+            im = img.model_gaus
             func.write_image_to_file(use_io, filename,
                                      im, img, bdir,
                                      clobber=clobber)
@@ -669,7 +662,7 @@ def export_image(img, outfile=None, img_format='fits',
         raise
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
-               bbs_patches=None, incl_wavelet=True, clobber=False):
+               bbs_patches=None, incl_chan=True, clobber=False):
     """Write the Gaussian, source, or shapelet list to a file. Returns True if 
     successful, False if not. 
 
@@ -694,8 +687,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "single"   - all Gaussians are put into a single
                      patch
         "source"   - sources are grouped by source into patches
-    incl_wavelet - Include Gaussians from wavelet decomposition
-                   (Gaussian list only)?
+    incl_chan - Include fluxes for each channel?
     sort_by - Property to sort output list by:
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first
@@ -739,7 +731,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     # Now go format by format and call appropriate function
     if format == 'fits':
         filename = output.write_fits_list(img, filename=filename,
-                                             incl_wavelet=incl_wavelet,
+                                             incl_chan=incl_chan,
                                              clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -749,7 +741,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return True
     if format == 'ascii':
         filename = output.write_ascii_list(img, filename=filename,
-                                              incl_wavelet=incl_wavelet,
+                                              incl_chan=incl_chan,
                                               sort_by='index',
                                               clobber=clobber, objtype=catalog_type)
         if filename == None:
@@ -765,7 +757,6 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         filename = output.write_bbs_gaul(img, filename=filename,
                                             srcroot=srcroot,
                                             patch=patch,
-                                            incl_wavelet=incl_wavelet,
                                             sort_by='flux',
                                             clobber=clobber)
         if filename == None:
@@ -777,7 +768,6 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     if format == 'ds9':
         filename = output.write_ds9_list(img, filename=filename,
                                             srcroot=srcroot,
-                                            incl_wavelet=incl_wavelet,
                                             clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -790,7 +780,6 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with star files."
             return False
         filename = output.write_star(img, filename=filename,
-                                        incl_wavelet=incl_wavelet,
                                         clobber=clobber)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -803,7 +792,6 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with kvis files."
             return False
         filename = output.write_kvis_ann(img, filename=filename,
-                                            incl_wavelet=incl_wavelet,
                                             clobber=clobber)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber=False.'
