@@ -19,7 +19,6 @@ import nat
 from math import *
 import statusbar
 from const import fwsig
-from matplotlib.mlab import griddata
 
 class Op_psf_vary(Op):
     """Computes variation of psf across the image """

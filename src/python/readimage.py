@@ -217,11 +217,11 @@ class Op_readimage(Op):
             # Here we define new p2s and s2p methods to match those of wcslib
             def p2s(self, xy):
                 xy_arr = N.array([xy])
-                sky = self.wcs_pix2sky(xy_arr, 0, ra_dec_order=True)
+                sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
                 return sky.tolist()[0]
             def s2p(self, rd):
                 rd_arr = N.array([rd])
-                pix = self.wcs_sky2pix(rd_arr, 0, ra_dec_order=True)
+                pix = self.wcs_sky2pix(rd_arr, 0)#, ra_dec_order=True)
                 return pix.tolist()[0]
             instancemethod = type(t.wcs_pix2sky)
             t.p2s = instancemethod(p2s, t, pywcs.WCS)
