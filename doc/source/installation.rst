@@ -7,12 +7,8 @@ Downloading and installing
 
     If you are working on the LOFAR CEP I/II clusters, then PyBDSM is already installed. All that needs to be done is to initialize your environment as follows::
     
-        $ use LUS
         $ use LofIm
         
-    The order of the above commands is important, as path variable are not set correctly if the order is reversed.
-    
-
 Downloading the code
 --------------------
 The latest version of the code may be obtained from the LOFAR Subversion repository. First, change to the directory in which you wish to install PyBDSM. Then run the following command::
@@ -60,9 +56,7 @@ For the Bash shell::
 
      If you are working on the LOFAR CEP I/II clusters, then you need only to do::
     
-        $ use LUS
         $ use LofIm
-
 
 Keeping up-to-date
 ------------------
@@ -71,7 +65,6 @@ PyBDSM is currently under active development, and bug fixes and improvements are
     $ cd $LOFAR/LOFAR
     $ svn update
     $ cd ../build/gnu_opt
-    $ cmake -DBUILD_PACKAGES=PyBDSM -DUSE_LOG4CPLUS=OFF -DUSE_LOG4CXX=OFF ../../LOFAR
     $ make install 
     
 Major updates will be listed in :ref:`new`.

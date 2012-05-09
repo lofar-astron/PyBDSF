@@ -225,6 +225,13 @@ Scripting example
 -----------------
 You can use the complete functionality of PyBDSM within Python scripts (see :ref:`scripting` for details). Scripting can be useful, for example, if you have a large number of images or if PyBDSM needs to be called as part of an automated reduction. Below is a short example of using PyBDSM to find sources in a number of images automatically. In this example, the best reduction parameters were determined beforehand for a representative image and saved to a PyBDSM save file using the ``tput`` command (see :ref:`commands` for details).
 
+.. note::
+
+     If you are working on the LOFAR CEP I/II clusters, then at some point before running the script, you will need to do::
+    
+        $ use LofIm
+        $ use Pythonlibs
+
 ::
     
     # pybdsm_example.py

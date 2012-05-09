@@ -214,7 +214,10 @@ class Op_readimage(Op):
             img.pix2sky = t.p2s
             img.sky2pix = t.s2p
         elif img.use_wcs == 'pywcs':
-            # Here we define new p2s and s2p methods to match those of wcslib
+            # Here we define new p2s and s2p methods to match those of wcslib.
+            # Note that, due to a bug in pywcs version 1.10-4.7, the 
+            # "ra_dec_order" option cannot be used. When the bug is fixed,
+            # this option should probably be re-enabled.
             def p2s(self, xy):
                 xy_arr = N.array([xy])
                 sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
