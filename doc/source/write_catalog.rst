@@ -8,7 +8,7 @@ The properties of the fitted Gaussians, sources, and shapelets may be written in
 
 .. note::
 
-    The output catalogs always use the J2000 equinox. If the input image does not have an equinox of J2000, the coordinates of sources will be precessed to J2000.
+    For BBS format, the output catalogs always use the J2000 equinox. If the input image does not have an equinox of J2000, the coordinates of sources will be precessed to J2000. Catalogs in other formats will have the equinox of the image.
 
 The task parameters are as follows:
 
@@ -29,9 +29,8 @@ The task parameters are as follows:
                                    supported)
     :term:`clobber` .............. False : Overwrite existing file?                    
     :term:`format` ................ 'bbs': Format of output Gaussian list: 'bbs', 'ds9',
-                                   'fits', 'star', 'kvis', or 'ascii'          
-    :term:`incl_wavelet` .......... True : Include Gaussians from wavelet decomposition (if
-                                   any)?                                       
+                                   'fits', 'star', 'kvis', or 'ascii'
+    :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?  
     :term:`srcroot` ............... None : Root name for entries in the output catalog. None
                                    => use image file name
                                    
@@ -59,7 +58,7 @@ Each of the parameters is described in detail below.
         
         .. note::
         
-            The choice of ``'srl'`` or ``'gaul'`` depends on whether you want all the source structure in your catalog or not. For example, if you are making a sky model for use as a model in calibration, you want to include all the source structure in your model, so you would use a Gaussian list (``'gaul'``), which writes each Gaussian. On the other hand, if you want to compare to other source catalogs, you want instead the total source fluxes, so use source lists (``'srl'``). For example, say you have a source that is unresolved in WENSS, but is resolved in your image into two nearby Gaussians that are grouped into a single source. In this case, you want to compare the sum of the Gaussians to the WENSS flux, and hence should use a source list.
+            The choice of ``'srl'`` or ``'gaul'`` depends on whether you want all the source structure in your catalog or not. For example, if you are making a sky model for use as a model in calibration, you want to include all the source structure in your model, so you would use a Gaussian list (``'gaul'``), which writes each Gaussian. On the other hand, if you want to compare to other source catalogs, you want instead the total source flux densities, so use source lists (``'srl'``). For example, say you have a source that is unresolved in WENSS, but is resolved in your image into two nearby Gaussians that are grouped into a single source. In this case, you want to compare the sum of the Gaussians to the WENSS flux density, and hence should use a source list.
         
     clobber
         This parameter is a Boolean (default is ``False``) that determines whether existing files are overwritten or not.
@@ -82,10 +81,10 @@ Each of the parameters is described in detail below.
         Catalogues with the ``'fits'`` and ``'ascii'`` formats include all available
         information (see :ref:`output_cols` for column definitions). The
         other formats include only a subset of the full information.
-        
-    incl_wavelet
-        This parameter is a Boolean (default is ``True``) that determines whether Gaussians fit to wavelet images are included in the output.
-        
+
+    incl_chan
+        This parameter is a Boolean (default is ``False``) that determines whether the total flux densities of each source measured in each channel by the spectral index module are included in the output.
+                 
     srcroot
         This parameter is a string (default is ``None``) that sets the root for source names in the output catalog.
         
@@ -115,13 +114,13 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_DEC:** the 1-:math:`\sigma` error on the declination of the source, in degrees
 
-* **Total_flux:** the total, integrated Stokes I flux of the source at the reference frequency, in Jy
+* **Total_flux:** the total, integrated Stokes I flux density of the source at the reference frequency, in Jy
 
-* **E_Total_flux:** the 1-:math:`\sigma` error on the total flux of the source, in Jy
+* **E_Total_flux:** the 1-:math:`\sigma` error on the total flux density of the source, in Jy
 
-* **Peak_flux:** the peak Stokes I flux of the source, in Jy/beam
+* **Peak_flux:** the peak Stokes I flux density per beam of the source, in Jy/beam
 
-* **E_Peak_flux:** the 1-:math:`\sigma` error on the peak flux of the source, in Jy/beam
+* **E_Peak_flux:** the 1-:math:`\sigma` error on the peak flux density per beam of the source, in Jy/beam
 
 * **RA_max:** the J2000 right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
 
@@ -188,17 +187,23 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_Spec_Indx:** the 1-:math:`\sigma` error on the spectral index of the source
 
-* **Total_Q:** the total, integrated Stokes Q flux of the source at the reference frequency, in Jy
+* **Total_flux_ch#** the total, integrated Stokes I flux density of the source in channel #, in Jy
 
-* **E_Total_Q:** the 1-:math:`\sigma` error on the total Stokes Q flux of the source at the reference frequency, in Jy
+* **E_Total_flux_ch#** the 1-:math:`\sigma` error on the total, integrated Stokes I flux density of the source in channel #, in Jy
 
-* **Total_U:** the total, integrated Stokes U flux of the source at the reference frequency, in Jy
+* **Freq_ch#** the frequency of channel #, in Hz
 
-* **E_Total_U:** the 1-:math:`\sigma` error on the total Stokes U flux of the source at the reference frequency, in Jy
+* **Total_Q:** the total, integrated Stokes Q flux density of the source at the reference frequency, in Jy
 
-* **Total_V:** the total, integrated Stokes V flux of the source at the reference frequency, in Jy
+* **E_Total_Q:** the 1-:math:`\sigma` error on the total Stokes Q flux density of the source at the reference frequency, in Jy
 
-* **E_Total_V:** the 1-:math:`\sigma` error on the total Stokes V flux of the source at the reference frequency, in Jy
+* **Total_U:** the total, integrated Stokes U flux density of the source at the reference frequency, in Jy
+
+* **E_Total_U:** the 1-:math:`\sigma` error on the total Stokes U flux density of the source at the reference frequency, in Jy
+
+* **Total_V:** the total, integrated Stokes V flux density of the source at the reference frequency, in Jy
+
+* **E_Total_V:** the 1-:math:`\sigma` error on the total Stokes V flux density of the source at the reference frequency, in Jy
 
 * **Linear_Pol_frac:** the linear polarization fraction of the source
 

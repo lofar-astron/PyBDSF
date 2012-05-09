@@ -23,11 +23,11 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
 * gfortran. Binaries are available from http://gcc.gnu.org/wiki/GFortranBinaries.
 * Python (including numpy and scipy). The easiest way to install Python on a Mac is to use the 64-bit EPD Python distribution, available at http://enthought.com/products/epd.php.
 * PyWCS. You can get PyWCS from https://trac6.assembla.com/astrolib.
-* Boost. Get the latest version from www.boost.org. Only the Python libraries need to be compiled.
+* Boost. Get the latest version from http://www.boost.org. Only the Python libraries need to be compiled.
 
 Compiling and installing
 ------------------------
-Lastly, compile the software. To do so, change to the ``build/gnu_opt`` directory and execute ``make``::
+Lastly, compile the software. To do so, make a ``build/gnu_opt`` directory, go there, and execute ``make``::
 
     $ mkdir -p build/gnu_opt
     $ cd build/gnu_opt
