@@ -771,7 +771,7 @@ The options for this module are as follows:
 .. glossary::
 
     atrous_bdsm_do
-        This parameter is a Boolean (default is ``False``). If ``True``\, PyBDSM performs source extraction on each wavelet scale. Unless this is set to ``True``, the image cannot be decomposed into a pyramidal set of sources for morphological transforms.
+        This parameter is a Boolean (default is ``False``). If ``True``\, PyBDSM performs source extraction on each wavelet scale. 
         
     atrous_jmax
         This parameter is an integer (default is 0) which is the maximum order of the *à trous* wavelet

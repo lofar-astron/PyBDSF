@@ -1004,7 +1004,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
-            import pyfits
+            import pyfits                
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             except IOError:
@@ -1017,9 +1017,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 return None
     else:
         # Simple check of whether pyrap and pyfits are available
+        # We need pyfits version 2.2 or greater to use the 
+        # "ignore_missing_end" argument to pyfits.open().
         try:
+            from distutils.version import StrictVersion
             import pyfits
-            has_pyfits = True
+            if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
+                has_pyfits = True
+            else:
+                has_pyfits = False
         except ImportError:
             has_pyfits = False
         try:
@@ -1028,7 +1034,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         except ImportError:
             has_pyrap = False
         if not has_pyrap and not has_pyfits:
-            raise RuntimeError("Neither Pyfits nor Pyrap is available. Image cannot be read.")          
+            raise RuntimeError("Neither Pyfits (version 2.2 or greater) nor Pyrap is available. Image cannot be read.")          
 
         # First assume image is a fits file, and use pyfits to open it (if
         # available). If that fails, try to use pyrap if available.
@@ -1054,7 +1060,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             else:
                 failed_read = True
                 if reason == 1:
-                    img._reason = 'PyFITS cannot read file and Pyrap is unavailable.'
+                    img._reason = 'Problem reading file.'
         if failed_read:
             return None
 
