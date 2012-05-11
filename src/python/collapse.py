@@ -1,16 +1,8 @@
 """Module collapse
 
-Defines operation Op_collapse which collapses 3D image.
-
-    collapse_mode = Enum('average', 'single', doc="Average channels or take single channel to \
-                        perform source detection on")
-    collapse_ch0 = Int(0, doc="Number of the channel for source extraction, if collapse_mode='single'")
-    collapse_av = List(None, doc="list of channels to average if collapse_mode='average'")
-    collapse_wt = Enum('unity', 'rms', doc="Average channels with weights=1 or 1/rms_clip^2 if \
-                        collapse_mode='average'")
-
-    Calculates and stores mean and rms (normal and clipped) per channel anyway for further use, even if 
-    weights are unity.
+Defines operation Op_collapse which collapses 3D image. Calculates and
+stores mean and rms (normal and clipped) per channel anyway for further
+use, even if weights are unity.
 """
 
 import numpy as N
@@ -259,7 +251,7 @@ def init_freq_collapse(img, wtarr):
         sumfrq = 0.0
         crval, cdelt, crpix = img.freq_pars
         if crval == 0.0 and cdelt == 0.0 and crpix == 0.0 and \
-                img.opts.frequency == None:
+                img.opts.frequency_sp == None:
             raise RuntimeError("Frequency information not found in header and frequencies "\
                          "not specified by user")
         else:

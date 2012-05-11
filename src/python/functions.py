@@ -959,7 +959,7 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
       import numpy as N
       from copy import deepcopy as cp
       import scipy.ndimage as nd
-      import matplotlib.pyplot as pl
+      #import matplotlib.pyplot as pl
       #import pylab as pl
 
       if thr==None: thr = -1e9
@@ -1004,7 +1004,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
-            import pyfits
+            import pyfits                
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             except IOError:
@@ -1017,9 +1017,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 return None
     else:
         # Simple check of whether pyrap and pyfits are available
+        # We need pyfits version 2.2 or greater to use the 
+        # "ignore_missing_end" argument to pyfits.open().
         try:
+            from distutils.version import StrictVersion
             import pyfits
-            has_pyfits = True
+            if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
+                has_pyfits = True
+            else:
+                has_pyfits = False
         except ImportError:
             has_pyfits = False
         try:
@@ -1028,7 +1034,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         except ImportError:
             has_pyrap = False
         if not has_pyrap and not has_pyfits:
-            raise RuntimeError("Neither Pyfits nor Pyrap is available. Image cannot be read.")          
+            raise RuntimeError("Neither Pyfits (version 2.2 or greater) nor Pyrap is available. Image cannot be read.")          
 
         # First assume image is a fits file, and use pyfits to open it (if
         # available). If that fails, try to use pyrap if available.
@@ -1054,7 +1060,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             else:
                 failed_read = True
                 if reason == 1:
-                    img._reason = 'PyFITS cannot read file and Pyrap is unavailable.'
+                    img._reason = 'Problem reading file.'
         if failed_read:
             return None
 
@@ -1441,6 +1447,49 @@ def approx_equal(x, y, *args, **kwargs):
     # approximate equal comparison (or are both floats). Fall back to a numeric
     # comparison.
     return _float_approx_equal(x, y, *args, **kwargs)
+
+def isl_tosplit(isl, img):
+    """ Splits an island and sends back parameters """
+    import numpy as N
+
+    size_extra5 = img.opts.splitisl_size_extra5
+    frac_bigisl3 = img.opts.splitisl_frac_bigisl3
+
+    connected, count = connect(isl.mask_active)
+    index = 0
+    n_subisl3, labels3, isl_pixs3 = open_isl(isl.mask_active, 3)
+    n_subisl5, labels5, isl_pixs5 = open_isl(isl.mask_active, 5)
+    isl_pixs3, isl_pixs5 = N.array(isl_pixs3), N.array(isl_pixs5)
+    
+                                # take open 3 or 5 
+    open3, open5 = False, False
+    if n_subisl3 > 0 and isl_pixs3 != None:                                 # open 3 breaks up island
+      max_sub3 = N.max(isl_pixs3)
+      if max_sub3 < frac_bigisl3 : open3 = True       # if biggest sub island isnt too big
+    if n_subisl5 > 0 and isl_pixs5 != None:                                 # open 5 breaks up island
+      max_sub5 = N.max(isl_pixs5)                     # if biggest subisl isnt too big OR smallest extra islands add upto 10 %
+      if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:len(isl_pixs5)-n_subisl3]) > size_extra5):
+        open5 = True
+                                # index=0 => dont split
+    if open5: index = 5; n_subisl = n_subisl5; labels = labels5
+    else:
+      if open3: index = 3; n_subisl = n_subisl3; labels = labels3
+      else: index = 0
+    convex_def =  convexhull_deficiency(isl) 
+    #print 'CONVEX = ',convex_def
+
+    if img.opts.plot_islands:
+        try:
+            import matplotlib.pyplot as pl
+            pl.figure()
+            pl.suptitle('Island '+str(isl.island_id) + ' ' + repr(img.waveletimage))
+            pl.subplot(2,2,1); pl.imshow(N.transpose(isl.image*~isl.mask_active), origin='lower', interpolation='nearest'); pl.title('Image')
+            pl.subplot(2,2,2); pl.imshow(N.transpose(labels3), origin='lower', interpolation='nearest'); pl.title('labels3')
+            pl.subplot(2,2,3); pl.imshow(N.transpose(labels5), origin='lower', interpolation='nearest'); pl.title('labels5')
+        except ImportError:
+            print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting disabled."
+    if index == 0: return [index, n_subisl5, labels5]
+    else: return [index, n_subisl, labels]
 
 
 class NullDevice():

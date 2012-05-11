@@ -9,25 +9,21 @@ Order n => J=n, where J=0 is the gaussian.
 import numpy as N
 import pyfits
 from scipy.optimize import leastsq
-import matplotlib.pyplot as pl
-#import pylab as pl
 
 def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     """ Decomposes image (with mask) and beta, centre (2-tuple) , nmax into basis
         shapelets and returns the coefficient matrix cf. 
 	Mode is 'fit' or 'integrate' for method finding coeffs. If fit then integrated
 	values are taken as initial guess.
-	Centre is by python convention, for retards who count from zero. """
-	
-    import compute_shapelet_coeff as csc
-
+	Centre is by python convention, for retards who count from zero. 
+	"""	
     bad = False
     if (beta < 0 or beta/max(image.shape) > 5 or \
        (max(N.abs(list(centre)))-max(image.shape)/2) > 10*max(image.shape)): bad = True
 
     hc = []
     if not bad:
-      hc = csc.shapelet_coeff(nmax, basis)
+      hc = shapelet_coeff(nmax, basis)
     else:
       print ' Bad input params'
     ordermax=nmax+1
@@ -76,11 +72,9 @@ def fit_shapeletbasis(image, mask, cf0, Bset):
 def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
     """ Reconstructs a shapelet image of size, for pixels which are unmasked, for a given
     beta, centre, nmax, basis and the shapelet coefficient matrix cf. """
-    import compute_shapelet_coeff as csc
-
     rimage = N.zeros(size)
     hc = []
-    hc = csc.shapelet_coeff(nmax, basis)
+    hc = shapelet_coeff(nmax, basis)
 
     index = [(i,j) for i in range(nmax) for j in range(nmax-i)]
     for coord in index:
@@ -130,12 +124,11 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     and for the c2 image, the zero crossing for every horizontal line, and then 
     we find intersection point of these two. This seems to work even for highly 
     non-gaussian cases. """
-    import compute_shapelet_coeff as csc
     import functions as func
     import sys
 
     hc = []
-    hc = csc.shapelet_coeff(nmax, basis)
+    hc = shapelet_coeff(nmax, basis)
 
     msk=N.zeros(mask.shape, dtype=bool)
     for i, v in N.ndenumerate(mask): msk[i] = not v
@@ -366,6 +359,32 @@ def shape_varybeta(image, mask, basis, betainit, cen, nmax, betarange, plot):
  
     return beta, error
 
+def shapelet_coeff(nmax=20,basis='cartesian'):
+    """ Computes shapelet coefficient matrix for cartesian and polar 
+      hc=shapelet_coeff(nmax=10, basis='cartesian') or
+      hc=shapelet_coeff(10) or hc=shapelet_coeff().
+      hc(nmax) will be a nmax+1 X nmax+1 matrix."""
+    import numpy as N
+
+    order=nmax+1
+    if basis == 'polar':
+       raise NotImplementedError, "Polar shapelets not yet implemented."
+
+    hc=N.zeros([order,order])
+    hnm1=N.zeros(order); hn=N.zeros(order)
+
+    hnm1[0]=1.0; hn[0]=0.0; hn[1]=2.0
+    hc[0]=hnm1
+    hc[1]=hn
+    for ind in range(3,order+1):
+        n=ind-2
+        hnp1=-2.0*n*hnm1
+        hnp1[1:] += 2.0*hn[:order-1]
+        hc[ind-1]=hnp1
+        hnm1=hn
+        hn=hnp1
+
+    return hc
 
 
 

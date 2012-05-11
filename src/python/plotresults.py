@@ -1,17 +1,21 @@
 
 """ Plot stuff """
 from image import *
-import matplotlib.pyplot as pl
+try:
+    import matplotlib.pyplot as pl
+    import matplotlib.cm as cm
+    import matplotlib.patches as mpatches
+    from matplotlib.widgets import Button
+    from matplotlib.patches import Ellipse
+    from matplotlib.lines import Line2D
+    from matplotlib import collections
+    has_pl = True
+except ImportError:
+    has_pl = False
 from math import log10
-import matplotlib.cm as cm
-import matplotlib.patches as mpatches
 import functions as func
 from const import fwsig
 import os
-from matplotlib.widgets import Button
-from matplotlib.patches import Ellipse
-from matplotlib.lines import Line2D
-from matplotlib import collections
 
 
 def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
@@ -27,6 +31,10 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     global low, fig, images, src_list, srcid_cur, sky2pix, markers
     global img_psf_maj, img_psf_min, img_psf_pa
 
+    if not has_pl:
+        print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
+        return
+        
     # Define the images. The images are used both by imshow and by the
     # on_press() and coord_format event handlers
     pix2sky = img.pix2sky
@@ -146,7 +154,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         else:
             # Get the unique j levels and store them. Only make subplots for
             # occupied j levels
-            print 'Pyramidal source plots not yet supported. Skipping wavelet images.'
+            print 'Pyramidal source plots not yet supported.'
 #             j_list = []
 #             for p in img.pyrsrcs:
 #                 for l in p.jlevels:
@@ -199,8 +207,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     styles = ['-', '-.', '--']
     print '=' * 72
     print 'NOTE -- With the mouse pointer in plot window:'
-    print '  Press "i" ........ : Get integrated fluxes and mean rms values'
-    print '                       for the visible portion of the image'
+    print '  Press "i" ........ : Get integrated flux densities and mean rms'
+    print '                       values for the visible portion of the image'
     print '  Press "m" ........ : Change min and max scaling values'
     print '  Press "n" ........ : Show / hide island IDs'
     print '  Press "0" ........ : Reset scaling to default'
@@ -381,7 +389,7 @@ def on_pick(event):
         else:
             print 'Gaussian #' + str(gaus_id) + ' (in src #' + str(src_id) + \
                 ', isl #' + str(isl_id) + ', wav #' + str(wav_j) + \
-                '): Ftot = ' + str(round(tflux,3)) + ' Jy, F_peak = ' + \
+                '): F_tot = ' + str(round(tflux,3)) + ' Jy, F_peak = ' + \
                 str(round(pflux,4)) + ' Jy/beam'
                 
         # Change source SED
@@ -544,15 +552,15 @@ def on_press(event):
         else:
             gaus_mod_flux = N.nansum(img_gaus_mod[xmin:xmax, ymin:ymax])/pixels_per_beam
         print 'Visible region (%i:%i, %i:%i) :' % (xmin, xmax, ymin, ymax)
-        print '  ch0 flux from sum of pixels ........... : %f Jy'\
+        print '  ch0 flux density from sum of pixels ... : %f Jy'\
             % (flux,)
-        print '  Background mean map flux .............. : %f Jy'\
+        print '  Background mean map flux density ...... : %f Jy'\
             % (mean_map_flux,)
-        print '  Gaussian model flux ................... : %f Jy'\
+        print '  Gaussian model flux density ........... : %f Jy'\
             % (gaus_mod_flux,)
         if img_shap_mod != None:
             shap_mod_flux = N.nansum(img_shap_mod[xmin:xmax, ymin:ymax])/pixels_per_beam
-            print '  Shapelet model flux ................... : %f Jy'\
+            print '  Shapelet model flux density ........... : %f Jy'\
                 % (shap_mod_flux,)
         print '  Mean rms (from rms map) ............... : %f Jy/beam'\
             % (mean_rms,)
@@ -691,7 +699,7 @@ def plot_sed(src, ax):
     pl.title('SED of source #'+str(src.source_id)+'\n'
              +'(x = '+str(xpos)+', y = '+str(ypos)+')')
     pl.xlabel('log Frequency (MHz)')
-    pl.ylabel('log Flux (Jy)')
+    pl.ylabel('log Flux Density (Jy)')
     pl.legend()
 
 

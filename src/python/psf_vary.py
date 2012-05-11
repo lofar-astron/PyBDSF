@@ -3,8 +3,11 @@ import numpy as N
 from image import *
 import mylogger
 from copy import deepcopy as cp
-import matplotlib.pyplot as pl
-#import pylab as pl
+try:
+    import matplotlib.pyplot as pl
+    has_pl = True
+except ImportError:
+    has_pl = False
 import scipy
 import scipy.signal as S
 import _cbdsm
@@ -16,7 +19,6 @@ import nat
 from math import *
 import statusbar
 from const import fwsig
-from matplotlib.mlab import griddata
 
 class Op_psf_vary(Op):
     """Computes variation of psf across the image """
@@ -217,84 +219,39 @@ class Op_psf_vary(Op):
 
                     psf_maj[i] = para[3]
                     psf_min[i] = para[4]
-                    psf_pa[i] = para[5]
+                    posang = para[5]
+                    while posang >= 180.0:
+                        posang -= 180.0
+                    psf_pa[i] = posang
                     if img.opts.quiet == False:
                         bar.increment()
     
-                # Interpolate grid using griddata
-                maj_array = N.zeros(image.shape)
-                min_array = N.zeros(image.shape)
-                pa_array = N.zeros(image.shape)
-                for i, coord in enumerate(psfcoords):
-                    maj_array[tuple(coord)] = psf_maj[i]
-                    min_array[tuple(coord)] = psf_min[i]
-                    posang = psf_pa[i]
-                    while posang >= 180.0:
-                        posang -= 180.0
-                    pa_array[tuple(coord)] = posang
-                points = N.where(maj_array > 0.0)
-                x = N.array(points[0], dtype=float)
-                y = N.array(points[1], dtype=float)
-                maj_values = N.array(maj_array[points])
-                min_values = N.array(min_array[points])
-                pa_values = N.array(pa_array[points])
+                # Interpolate Gaussian parameters
+                psf_maj_int = self.interp_prop(psf_maj, psfcoords, image.shape)
+                psf_min_int = self.interp_prop(psf_min, psfcoords, image.shape)
+                psf_pa_int = self.interp_prop(psf_pa, psfcoords, image.shape)
+                psf_ratio_int = self.interp_prop(psfratio, psfcoords, image.shape)
                 
-                # Before proceeding, check whether the variation is significant.
-                # If not, stop here
-                
-                
-                xi = N.linspace(0,image.shape[0],image.shape[0])
-                yi = N.linspace(0,image.shape[1],image.shape[1])
-                mylogger.userinfo(mylog, 'Interpolating PSF variations across image')
+                # Blank with NaNs if needed
+                mask = img.mask
+                if isinstance(mask, N.ndarray):
+                    pix_masked = N.where(mask == True)
+                    psf_maj_int[pix_masked] = N.nan
+                    psf_min_int[pix_masked] = N.nan
+                    psf_pa_int[pix_masked] = N.nan
+                    psf_ratio_int[pix_masked] = N.nan
 
-                maj_interp = N.transpose(griddata(x, y, maj_values, xi, yi))
-                min_interp = N.transpose(griddata(x, y, min_values, xi, yi))
-                pa_interp = N.transpose(griddata(x, y, pa_values, xi, yi))
-                ratio_interp = N.transpose(griddata(x, y, psfratio, xi, yi))
-                
-                # Now fill in regions outside the grid.
-                # First check if they are masked arrays and, if so, convert to 
-                # normal arrays.
-                if hasattr(maj_interp, 'filled'):
-                    maj_interp.filled(N.nan)
-                    min_interp.filled(N.nan)
-                    pa_interp.filled(N.nan)
-                    maj_interp = N.array(maj_interp)
-                    min_interp = N.array(min_interp)
-                    pa_interp = N.array(pa_interp)
-                    ratio_interp = N.array(ratio_interp)
-                nodata = N.where(N.isnan(maj_interp))
-                # Now fill NaNs with values in tiles
-                if len(nodata[0]) > 0:
-                    maj_interp_nearest = N.zeros(image.shape)
-                    min_interp_nearest = N.zeros(image.shape)
-                    pa_interp_nearest = N.zeros(image.shape)
-                    ratio_interp_nearest = N.zeros(image.shape)
-                    for i, coord in enumerate(psfcoords):
-                        intile = N.where(volrank == volrank[tuple(coord)])
-                        maj_interp_nearest[intile] = maj_values[i]
-                        min_interp_nearest[intile] = min_values[i]
-                        pa_interp_nearest[intile] = pa_values[i]
-                        ratio_interp_nearest[intile] = psfratio[i]
-                    blanktiles = N.where(maj_interp_nearest == 0)
-                    maj_interp_nearest[blanktiles] = N.mean(maj_values)
-                    min_interp_nearest[blanktiles] = N.mean(min_values)
-                    pa_interp_nearest[blanktiles] = N.mean(pa_values)    
-                    ratio_interp_nearest[blanktiles] = N.mean(psfratio)                                  
-                    maj_interp[nodata] = maj_interp_nearest[nodata]
-                    min_interp[nodata] = min_interp_nearest[nodata]
-                    pa_interp[nodata] = pa_interp_nearest[nodata]
-                    ratio_interp[nodata] = ratio_interp_nearest[nodata]
-                            
                 # Store interpolated images
-                img.psf_vary_maj = maj_interp
-                img.psf_vary_min = min_interp
-                img.psf_vary_pa = pa_interp
+                img.psf_vary_maj = psf_maj_int
+                img.psf_vary_min = psf_min_int
+                img.psf_vary_pa = psf_pa_int
+                img.psf_vary_ratio = psf_ratio_int
+    
                 if opts.output_all:
-                    func.write_image_to_file(img.use_io, img.imagename + '.maj_interp.fits', N.transpose(maj_interp)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.min_interp.fits', N.transpose(min_interp)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.pa_interp.fits', N.transpose(pa_interp), img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.ratio_interp.fits', N.transpose(ratio_interp), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', N.transpose(psf_maj_in)*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', N.transpose(psf_min_in)*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', N.transpose(psf_pa_in), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', N.transpose(psf_ratio_in), img, dir)
                 
                 # Loop through source and Gaussian lists and deconvolve the sizes using appropriate beam
                 bar2 = statusbar.StatusBar('Correcting deconvolved source sizes ..... : ', 0, img.nsrc)
@@ -304,7 +261,7 @@ class Op_psf_vary(Op):
                     src_pos = img.sky2pix(src.posn_sky_centroid)
                     src_pos_int = (int(src_pos[0]), int(src_pos[1]))
                     gaus_c = img.beam2pix(src.size_sky)
-                    gaus_bm = [maj_interp[src_pos_int]*fwsig, min_interp[src_pos_int]*fwsig, pa_interp[src_pos_int]*fwsig]
+                    gaus_bm = [psf_maj_int[src_pos_int]*fwsig, psf_min_int[src_pos_int]*fwsig, psf_pa_int[src_pos_int]*fwsig]
                     gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
                     src.deconv_size_sky = img.pix2beam(gaus_dc)
                     src.deconv_size_skyE = [0.0, 0.0, 0.0]
@@ -902,13 +859,10 @@ class Op_psf_vary(Op):
     
 ##################################################################################################
     def interp_shapcoefs(self, nmax, tr_psf_cf, psfcoords, imshape, compress, plot):
-        """ Interpolate in scipy for irregular grids has bugs. Hence fits a second order poly
-        to the coefficients. See if it is significant. Do errors for coeff.s properly."""
-    
-    # interpolating in scipy for irregulr grids has problems.
-    # fitting a polynomial is also not very nice.
-    # using natgrid now.
-    
+        """Interpolate using natgrid.
+        
+        Check to see if variation is significant.
+        """    
         x, y = N.transpose(psfcoords)
         index = [(i,j) for i in range(nmax+1) for j in range(nmax+1-i)] 
         xi=x
@@ -936,7 +890,35 @@ class Op_psf_vary(Op):
 #             pl.colorbar()
     
         return p, xo, yo
-
+        
+##################################################################################################
+    def interp_prop(self, prop, psfcoords, imshape, compress=1):
+        """Interpolate using natgrid.
+        
+        Should check to see if variation is significant.
+        """    
+        x, y = N.transpose(psfcoords)
+        xi=x
+        yi=y
+        xo=N.arange(0.0,round(imshape[0]), round(compress))
+        yo=N.arange(0.0,round(imshape[1]), round(compress))
+        rgrid=nat.Natgrid(xi,yi,xo,yo)
+        prop_int = rgrid.rgrd(prop)
+#     	if img.masked:
+#     	    unmasked = N.where(~mask)
+#             stdprop = N.std(prop_int[unmasked])
+#             minprop = N.min(prop_int[unmasked])
+#             maxprop = N.max(prop_int[unmasked])
+#         else:
+#             stdprop = N.std(prop_int)
+#             minprop = N.min(prop_int)
+#             maxprop = N.max(prop_int)
+#         if (maxprop - minprop) > 3.0*stdprop:
+#             return prop_int
+#         else:
+#             return N.mean(prop_int)
+        return prop_int
+        
 ##################################################################################################
     def create_psf_grid(self, psf_coeff_interp, imshape, xgrid, ygrid, skip, nmax, psfshape, basis, beta, 
         cen, totpsfimage, plot):

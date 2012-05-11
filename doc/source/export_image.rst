@@ -18,8 +18,6 @@ Internally derived images (e.g, the Gaussian model image) can be exported to FIT
     :term:`img_type` ....... 'gaus_resid': Type of image to export: 'gaus_resid',      
                                    'shap_resid', 'rms', 'mean', 'gaus_model',  
                                    'shap_model', 'ch0', 'pi'                 
-    :term:`incl_wavelet` .......... True : Include Gaussians from wavelet decomposition (if
-                                   any)?                                       
 
 Each of the parameters is described in detail below.
 
@@ -54,6 +52,4 @@ Each of the parameters is described in detail below.
         
         * ``'shap_model'`` - Shapelet model image
         
-    incl_wavelet
-        This parameter is a Boolean (default is ``True``). If ``True``, Gaussians from wavelet decomposition (if any) are included in the output.
         

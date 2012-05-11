@@ -5,10 +5,13 @@
 import numpy as N
 from image import *
 import mylogger, os
-import matplotlib.pyplot as pl
-#import pylab as pl
+try:
+    import matplotlib.pyplot as pl
+    import matplotlib.cm as cm
+    has_pl = True
+except ImportError:
+    has_pl = False
 import functions as func
-import matplotlib.cm as cm
 
 class Op_cleanup(Op):
     """  """
@@ -17,7 +20,7 @@ class Op_cleanup(Op):
         mylog = mylogger.logging.getLogger("PyBDSM.Cleanup")
 
         ### plotresults for all gaussians together
-        if img.opts.plot_allgaus:
+        if img.opts.plot_allgaus and has_pl:
             pl.figure() 
             pl.title('All gaussians including wavelet images')
             allgaus = img.gaussians

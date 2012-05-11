@@ -8,7 +8,7 @@ Below is an example of running PyBDSM on an image composed primarily of point so
 
     $ pybdsm
     
-    PyBDSM version 1.0 (LUS revision 9467)
+    PyBDSM version 1.1 (LOFAR revision 20883)
     ========================================================================
     PyBDSM commands
       inp task ............ : Set current task and list parameters
@@ -147,13 +147,10 @@ Lastly, the plot window is closed, and the source catalog is written out to an A
                                    source are grouped into one patch           
     catalog_type ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
-                                   Gaussians), 'shap' - shapelet list (not yet 
-                                   supported)                                  
+                                   Gaussians), 'shap' - shapelet list          
     clobber .............. False : Overwrite existing file?                    
     format ................ 'bbs': Format of output catalog: 'bbs', 'ds9', 'fits',
                                    'star', 'kvis', or 'ascii'                  
-    incl_wavelet .......... True : Include Gaussians from wavelet decomposition (if
-                                   any)?                                       
     srcroot ............... None : Root name for entries in the output catalog. None
                                    => use image file name                      
     
@@ -225,14 +222,22 @@ Scripting example
 -----------------
 You can use the complete functionality of PyBDSM within Python scripts (see :ref:`scripting` for details). Scripting can be useful, for example, if you have a large number of images or if PyBDSM needs to be called as part of an automated reduction. Below is a short example of using PyBDSM to find sources in a number of images automatically. In this example, the best reduction parameters were determined beforehand for a representative image and saved to a PyBDSM save file using the ``tput`` command (see :ref:`commands` for details).
 
+.. note::
+
+     If you are working on the LOFAR CEP I/II clusters, then at some point before running the script, you will need to do::
+    
+        $ use LofIm
+        $ use Pythonlibs
+
 ::
     
     # pybdsm_example.py
     #
     # This script fits a number of images automatically, writing out source 
-    # catalogs and residual and model images for each input image
+    # catalogs and residual and model images for each input image. Call it
+    # with "python pybdsm_example.py"
     
-    import bdsm
+    import lofar.bdsm as bdsm
     
     # Define the list of images to process and the parameter save file
     input_images = ['a2597.fits', 'a2256_1.fits', 'a2256_2.fits',

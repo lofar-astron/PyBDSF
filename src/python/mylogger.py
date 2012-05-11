@@ -1,4 +1,4 @@
-""" WARNING, ERROR and CRITICAL are always output to screen and to log file.
+""" WARNING, ERROR, and CRITICAL are always output to screen and to log file.
 INFO and USERINFO always go to the log file. DEBUG goes to log file if debug is 
 True. USERINFO goes to screen only if quiet is False.
 
@@ -15,9 +15,6 @@ from socket import gethostname
 import commands
 import time
 import copy
-from pyparsing import (Literal, Word, nums, Combine, 
-                       delimitedList, oneOf, alphas, Suppress)
-
 
 def init_logger(logfilename, quiet=False, debug=False):
   logging.USERINFO = logging.INFO + 1
@@ -32,7 +29,6 @@ def init_logger(logfilename, quiet=False, debug=False):
   
   # File handlers
   fh = ColorStripperHandler(logfilename)
-#  fh = logging.FileHandler(logfilename)
   if debug:
     # For log file and debug on, print name and levelname
     fh.setLevel(logging.DEBUG)
@@ -48,7 +44,7 @@ def init_logger(logfilename, quiet=False, debug=False):
   fh.setFormatter(fmt1)
   logger.addHandler(fh)  
 
-  # Console handler for warning and critical: format includes levelname
+  # Console handler for warning, error, and critical: format includes levelname
   # ANSI colors are used
   ch = logging.StreamHandler()
   ch.setLevel(logging.WARNING)
@@ -111,12 +107,19 @@ def userinfo(mylog, desc_str, val_str=''):
 
 class ColorStripperHandler(logging.FileHandler):
   def emit(self, record):
-      """Strips ANSI color codes from file stream"""
+      """Strips ANSI color codes from file stream
+      
+      The color codes are hard-coded to those used above
+      in userinfo() and in WARNING, ERROR, and CRITICAL.
+      """
       myrecord = copy.copy(record)
-      ESC = Literal('\033')
-      integer = Word(nums)
-      escapeSeq = Combine(ESC + '[' + delimitedList(integer,';') + oneOf(list(alphas)))
-      
-      myrecord.msg = Suppress(escapeSeq).transformString(str(myrecord.msg))
-      
-      logging.FileHandler.emit( self, myrecord )
+      nocolor_msg = ''
+      a = myrecord.msg.split('\033[1;34m')
+      for b in a:
+        c = b.split('\033[0m')
+        for d in c:
+          e = d.split('\033[31;1m')
+          for f in e:
+            nocolor_msg += f
+      myrecord.msg = nocolor_msg
+      logging.FileHandler.emit(self, myrecord)

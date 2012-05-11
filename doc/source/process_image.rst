@@ -253,7 +253,7 @@ Each of the parameters is described in detail below.
         value is ignored and ``thresh_pix`` is calculated inside the program
         
         This parameter sets the overall detection threshold for islands (i.e.
-        ``thresh_pix = 5`` will find all sources with peak fluxes of 5-sigma or
+        ``thresh_pix = 5`` will find all sources with peak flux densities per beam of 5-sigma or
         greater). Use the ``thresh_isl`` parameter to control how much of each
         island is used in fitting. Generally, ``thresh_pix`` should be larger than
         ``thresh_isl``.
@@ -339,12 +339,8 @@ The advanced options are:
                                    open well, then isl.mean = isl.clipped_mean, and
                                    is taken for fitting. Splitting, if needed, is
                                    always done for wavelet images              
-      :term:`splitisl_frac_bigisl3` .. 0.8 : Fraction of island area for 3x3 opening to be
-                                   used.                                       
       :term:`splitisl_maxsize` .... 50.0 : If island size in beam area is more than this,
                                    consider splitting island. Min value is 50  
-      :term:`splitisl_size_extra5` .. 0.1 : Fraction of island area for 5x5 opening to be
-                                   used.                                       
       :term:`stop_at` ............. None : Stops after: 'isl' = island finding step or 'read'
                                    = image reading step                        
       :term:`trim_box` ............ None : Do source detection on only a part of the image.
@@ -440,7 +436,7 @@ The advanced options are:
         for the island to be included. If
         ``None``\, the number of pixels is set to 1/3 of the area of an unresolved source
         using the beam and pixel size information in the image header. It is set
-        to 4 pixels for all wavelet images.
+        to 6 pixels for all wavelet images.
         
     peak_fit
         This parameter is a Boolean (default is ``True``). When True, PyBDSM will identify and fit peaks of emission in large islands iteratively (the size of islands for which peak fitting is done is controlled with the peak_maxsize option), using a maximum of 10 Gaussians per iteration. Enabling this option will generally speed up fitting (by factors of many for large islands), but may result in somewhat higher residuals.
@@ -459,7 +455,7 @@ The advanced options are:
 
         .. note::
         
-            Bicubic interpolation (the default) can cause ringing artifacts to appear in the rms and mean maps in regions where sharp changes occur. If you find such artifacts, try increasing the :term:`spline_rank` parameter.
+            Bicubic interpolation (the default) can cause ringing artifacts to appear in the rms and mean maps in regions where sharp changes occur. If you find such artifacts, try changing the :term:`spline_rank` parameter.
       
     split_isl
         This parameter is a Boolean (default is ``True``). If ``True``, an island is split if it is too large, has a large convex deficiency and it
@@ -467,21 +463,9 @@ The advanced options are:
         and is taken for fitting. Splitting, if needed, is always done for
         wavelet images
         
-    splitisl_frac_bigisl3
-        This parameter is a float (default is 0.8) that sets the fraction of island area for 3x3 opening to be used. When deciding to split an island, if the largest sub island when opened
-        with a 3x3 footprint is less than this fraction of the island area, then
-        a 3x3 opening is considered.
-
     splitisl_maxsize
         This parameter is a float (default is 50.0). If island size in beam area is more than this, consider splitting
         island. The minimum value is 50.
-        
-    splitisl_size_extra5
-        This parameter is a float (default is 0.1) that sets the fraction of the island area for 5x5 opening to be used.
-        When deciding to split an island, if the smallest extra sub islands
-        while opening with a 5x5 footprint add up to at least this fraction of
-        the island area, and if the largest sub island is less than 75% the size
-        of the largest when opened with a 3x3 footprint, a 5x5 opening is taken.
         
     stop_at
         This parameter is a string (default is ``None``) that stops an analysis after: 'isl' = island finding step or 'read' = image reading step.
@@ -495,7 +479,7 @@ The advanced options are:
 
 Flagging options
 ================
-If ``flagging_opts = True``, a number of options are listed for flagging unwanted Gaussians that occur durring a fit. Flagged Gaussians are not included in any further analysis or catalog. They may be viewed using the ``show_fit`` task (see :ref:`showfit`). A flag value is associated with each flagged Gaussian that allows the user to determine the reason or reasons that it was flagged. If multiple flagging conditions are met by a single Gaussian, the flag values are summed. For example, if a Gaussian is flagged because it is too large (its size exceeds that implied by ``flag_maxsize_bm``, giving a flag value of 64) and because it is too bright (its peak flux exceeds that implied by ``flag_maxsnr``, giving a flag value of 2) then the final flag value is 64 + 2 = 66.
+If ``flagging_opts = True``, a number of options are listed for flagging unwanted Gaussians that occur durring a fit. Flagged Gaussians are not included in any further analysis or catalog. They may be viewed using the ``show_fit`` task (see :ref:`showfit`). A flag value is associated with each flagged Gaussian that allows the user to determine the reason or reasons that it was flagged. If multiple flagging conditions are met by a single Gaussian, the flag values are summed. For example, if a Gaussian is flagged because it is too large (its size exceeds that implied by ``flag_maxsize_bm``, giving a flag value of 64) and because it is too bright (its peak flux density per beam exceeds that implied by ``flag_maxsnr``, giving a flag value of 2) then the final flag value is 64 + 2 = 66.
 
 .. note::
 
@@ -529,7 +513,7 @@ The options for flagging of Gaussians are:
         (for y).
         
     flag_maxsize_bm
-        This parameter is a float (default is 50.0). Any fitted Gaussian whose size is greater than ``flag_maxsize_bm`` times the
+        This parameter is a float (default is 25.0). Any fitted Gaussian whose size is greater than ``flag_maxsize_bm`` times the
         synthesized beam is flagged. The flag value is increased by 64.
 
     flag_maxsize_fwhm
@@ -543,7 +527,7 @@ The options for flagging of Gaussians are:
     
     flag_maxsnr
         This parameter is a float (default is 1.5). Any fitted Gaussian whose peak is greater than ``flag_maxsnr`` times
-        ``thresh_pix`` times the local rms is flagged. The flag value is increased
+        the value of the image at the peak of the Gaussian is flagged. The flag value is increased
         by 2.
     
     flag_minsize_bm
@@ -787,7 +771,7 @@ The options for this module are as follows:
 .. glossary::
 
     atrous_bdsm_do
-        This parameter is a Boolean (default is ``False``). If ``True``\, PyBDSM performs source extraction on each wavelet scale. Unless this is set to ``True``, the image cannot be decomposed into a pyramidal set of sources for morphological transforms.
+        This parameter is a Boolean (default is ``False``). If ``True``\, PyBDSM performs source extraction on each wavelet scale. 
         
     atrous_jmax
         This parameter is an integer (default is 0) which is the maximum order of the *à trous* wavelet
@@ -906,7 +890,7 @@ If ``spectralindex_do = True`` (and the input image has more than one frequency)
     
         No color corrections are applied during averaging. However, unless the source spectral index is very steep or the channels are very wide, the correction is minimal. See :ref:`colorcorrections` for details.
    
-* Fluxes are measured for both individual Gaussians and for total sources. Once source fluxes have been measured in each channel, the SEDs are fit with a polynomial function. The best-fit parameters are then included in any catalogs that are written out (see :ref:`write_catalog`). In addition, plots of the fits can be viewed with the ``show_fit`` task (see :ref:`showfit`).
+* Flux densities are measured for both individual Gaussians and for total sources. Once source flux densities have been measured in each channel, the SEDs are fit with a polynomial function. The best-fit parameters are then included in any catalogs that are written out (see :ref:`write_catalog`). In addition, plots of the fits can be viewed with the ``show_fit`` task (see :ref:`showfit`).
 
 The options for this module are as follows:
 
@@ -917,13 +901,15 @@ The options for this module are as follows:
       :term:`flagchan_rms` ........ True : Flag channels before (averaging and) extracting
                                    spectral index, if their rms if more than 5 
                                    (clipped) sigma outside the median rms over all
-                                   channels, but only if <= 10% of channels    
+                                   channels, but only if <= 10% of channels
+      :term:`flagchan_snr` ........ True : Flag channels that do not meet SNR criterion set 
+                                   by specind_snr
       :term:`specind_maxchan` ........ 0 : Maximum number of channels to average for a 
-                                           given source when when attempting to meet target
-                                           SNR. 1 => no averaging; 0 => no maximum                                     
+                                   given source when when attempting to meet target
+                                   SNR. 1 => no averaging; 0 => no maximum                                     
       :term:`specind_snr` .......... 3.0 : Target SNR to use when fitting power law. If 
-                                           there is insufficient SNR, neighboring channels 
-                                           are averaged to obtain the target SNR                                  
+                                   there is insufficient SNR, neighboring channels 
+                                   are averaged to obtain the target SNR                                  
 
 .. glossary::
 
@@ -934,7 +920,10 @@ The options for this module are as follows:
         spectral indices from the image cube. However, these channels are
         flagged only if the total number of these bad channels does not exceed
         10% of the total number of channels themselves.                 
-                         
+    
+    flagchan_snr
+        This parameter is a Boolean (default is ``True``). If ``True``, then flux densities in channels that do not meet the target SNR are not used in fitting.
+               
     specind_maxchan
         This parameter is an integer (default is 0) that sets the maximum number of channels that can be averaged together to attempt to reach the target SNR set by the ``specind_snr`` parameter. If 0, there is no limit to the number of channels that can be averaged. If 1, no averaging will be done.
     
@@ -945,13 +934,13 @@ The options for this module are as follows:
 
 Polarization module
 -------------------
-If ``polarisation_do = True``, then the polarization properties of the sources are calculated. First, if ``pi_fit = True``, source detection is performed on the polarized intensity (PI) image [#f3]_ to detect sources without Stokes I counterparts. The polarization module then calculates the I, Q, U, and V fluxes, the total, linear, and circular polarisation fractions and the linear polarisation angle of each Gaussian and source. The linear polarisation angle is defined from North, with positive angles towards East. Fluxes are calculated by fitting the normalization of the Gaussians found using the Stokes I or PI images.
+If ``polarisation_do = True``, then the polarization properties of the sources are calculated. First, if ``pi_fit = True``, source detection is performed on the polarized intensity (PI) image [#f3]_ to detect sources without Stokes I counterparts. The polarization module then calculates the I, Q, U, and V flux densities, the total, linear, and circular polarisation fractions and the linear polarisation angle of each Gaussian and source. The linear polarisation angle is defined from North, with positive angles towards East. Flux densities are calculated by fitting the normalization of the Gaussians found using the Stokes I or PI images.
 
 For linearly polarised emission, the signal and noise add vectorially, giving a
 Rice distribution instead of a Gaussian one. To correct for this, a bias 
 is estimated and removed from the polarisation fraction using the same method used for the
 NVSS catalog (see ftp://ftp.cv.nrao.edu/pub/nvss/catalog.ps). Errors on the linear and total
-polarisation fractions and polarisation angle are estimated using the debiased polarised flux
+polarisation fractions and polarisation angle are estimated using the debiased polarised flux density
 and standard error propagation. See Sparks & Axon (1999) [#f4]_ for a more detailed treatment.
 
 The options for this module are as follows:
@@ -986,7 +975,7 @@ The options for this module are as follows:
     pi_thresh_pix
         This parameter is a float (default is ``None``) that sets the overall detection threshold for islands in the
         polarized intensity (PI) image (i.e. pi_thresh_pix = 5 will find all
-        sources with peak fluxes of 5-sigma or greater). If ``None``, the value is set to that of the ``thresh_pix`` parameter. Use the ``pi_thresh_isl``
+        sources with peak flux densities per beam of 5-sigma or greater). If ``None``, the value is set to that of the ``thresh_pix`` parameter. Use the ``pi_thresh_isl``
         parameter to control how much of each island is used in fitting.
         Generally, ``pi_thresh_pix`` should be larger than ``pi_thresh_isl``.
 

@@ -68,6 +68,8 @@ class Op_readimage(Op):
             data, hdr = result
 
         # Store data and header in img. If polarisation_do = False, only store pol == 'I'
+        img.nchan = data.shape[1]
+        img.nstokes = data.shape[0]
         mylogger.userinfo(mylog, 'Image size',
                           str(data.shape[-2:])+' pixels')
         mylogger.userinfo(mylog, 'Number of channels',
@@ -212,14 +214,17 @@ class Op_readimage(Op):
             img.pix2sky = t.p2s
             img.sky2pix = t.s2p
         elif img.use_wcs == 'pywcs':
-            # Here we define new p2s and s2p methods to match those of wcslib
+            # Here we define new p2s and s2p methods to match those of wcslib.
+            # Note that, due to a bug in pywcs version 1.10-4.7, the 
+            # "ra_dec_order" option cannot be used. When the bug is fixed,
+            # this option should probably be re-enabled.
             def p2s(self, xy):
                 xy_arr = N.array([xy])
-                sky = self.wcs_pix2sky(xy_arr, 0, ra_dec_order=True)
+                sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
                 return sky.tolist()[0]
             def s2p(self, rd):
                 rd_arr = N.array([rd])
-                pix = self.wcs_sky2pix(rd_arr, 0, ra_dec_order=True)
+                pix = self.wcs_sky2pix(rd_arr, 0)#, ra_dec_order=True)
                 return pix.tolist()[0]
             instancemethod = type(t.wcs_pix2sky)
             t.p2s = instancemethod(p2s, t, pywcs.WCS)
@@ -241,7 +246,6 @@ class Op_readimage(Op):
             img.wcs_obj.crpix = crpix
             img.wcs_obj.cdelt = cdelt
             img.wcs_obj.ctype = ctype
-
             if crota != []:
                 img.wcs_obj.crota = crota
             if cunit != []:
@@ -359,11 +363,11 @@ class Op_readimage(Op):
             # collapse.py do the initialization 
             img.cfreq = img.opts.frequency_sp[0]
             img.freq_pars = (0.0, 0.0, 0.0)
-            mylog.info('Using user-specified frequency/frequencies.')
-        elif img.opts.frequency != None:
+            mylog.info('Using user-specified frequencies.')
+        elif img.opts.frequency != None and img.image.shape[1] == 1:
             img.cfreq = img.opts.frequency
             img.freq_pars = (0.0, 0.0, 0.0)
-            mylog.info('Using user-specified frequency/frequencies.')           
+            mylog.info('Using user-specified frequency.')           
         else:
             found  = False
             hdr = img.header
@@ -386,7 +390,10 @@ class Op_readimage(Op):
                                 hdr['CDELT'+s], hdr['CRPIX'+s]
                             ff = crval+cdelt*(1.-crpix)
             if found: 
-                img.cfreq = ff
+                if img.opts.frequency != None:
+                    img.cfreq = img.opts.frequency
+                else:
+                    img.cfreq = ff
                 img.freq_pars = (crval, cdelt, crpix)
             else:
                 raise RuntimeError('No frequency information found in image header.')

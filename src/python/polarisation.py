@@ -26,17 +26,17 @@ import functions as func
 import statusbar
 
 ### Insert polarization attributes into Gaussian and Source classes
-Gaussian.total_flux_Q        = Float(doc="Total flux(Jy), Stokes Q", colname='Total_Q',
+Gaussian.total_flux_Q        = Float(doc="Total flux density (Jy), Stokes Q", colname='Total_Q',
                                    units='Jy')
-Gaussian.total_fluxE_Q       = Float(doc="Error in total flux (Jy), Stokes Q", colname='E_Total_Q',
+Gaussian.total_fluxE_Q       = Float(doc="Error in total flux density (Jy), Stokes Q", colname='E_Total_Q',
                                    units='Jy')
-Gaussian.total_flux_U        = Float(doc="Total flux (Jy), Stokes U", colname='Total_U',
+Gaussian.total_flux_U        = Float(doc="Total flux density (Jy), Stokes U", colname='Total_U',
                                    units='Jy')
-Gaussian.total_fluxE_U       = Float(doc="Error in total flux (Jy), Stokes U", colname='E_Total_U',
+Gaussian.total_fluxE_U       = Float(doc="Error in total flux density (Jy), Stokes U", colname='E_Total_U',
                                    units='Jy')
-Gaussian.total_flux_V        = Float(doc="Total flux (Jy), Stokes V", colname='Total_V',
+Gaussian.total_flux_V        = Float(doc="Total flux density (Jy), Stokes V", colname='Total_V',
                                    units='Jy')
-Gaussian.total_fluxE_V       = Float(doc="Error in total flux (Jy), Stokes V", colname='E_Total_V',
+Gaussian.total_fluxE_V       = Float(doc="Error in total flux density (Jy), Stokes V", colname='E_Total_V',
                                    units='Jy')
 Gaussian.lpol_fraction       = Float(doc="Linear polarisation fraction", 
                                    colname='Linear_Pol_frac', units=None)
@@ -61,17 +61,17 @@ Gaussian.lpol_angle          = Float(doc="Polarisation angle (deg from North tow
 Gaussian.lpol_angle_err      = Float(doc="Polarisation angle error (deg)",
                                    colname='E_Linear_Pol_Ang', units='deg')
 
-Source.total_flux_Q        = Float(doc="Total flux(Jy), Stokes Q", colname='Total_Q',
+Source.total_flux_Q        = Float(doc="Total flux density (Jy), Stokes Q", colname='Total_Q',
                                    units='Jy')
-Source.total_fluxE_Q       = Float(doc="Error in total flux (Jy), Stokes Q", colname='E_Total_Q',
+Source.total_fluxE_Q       = Float(doc="Error in total flux density (Jy), Stokes Q", colname='E_Total_Q',
                                    units='Jy')
-Source.total_flux_U        = Float(doc="Total flux (Jy), Stokes U", colname='Total_U',
+Source.total_flux_U        = Float(doc="Total flux density (Jy), Stokes U", colname='Total_U',
                                    units='Jy')
-Source.total_fluxE_U       = Float(doc="Error in total flux (Jy), Stokes U", colname='E_Total_U',
+Source.total_fluxE_U       = Float(doc="Error in total flux density (Jy), Stokes U", colname='E_Total_U',
                                    units='Jy')
-Source.total_flux_V        = Float(doc="Total flux (Jy), Stokes V", colname='Total_V',
+Source.total_flux_V        = Float(doc="Total flux density (Jy), Stokes V", colname='Total_V',
                                    units='Jy')
-Source.total_fluxE_V       = Float(doc="Error in total flux (Jy), Stokes V", colname='E_Total_V',
+Source.total_fluxE_V       = Float(doc="Error in total flux density (Jy), Stokes V", colname='E_Total_V',
                                    units='Jy')
 Source.lpol_fraction       = Float(doc="Linear polarisation fraction", 
                                    colname='Linear_Pol_frac', units=None)
@@ -137,7 +137,7 @@ class Op_polarisation(Op):
           img.ch0_pi = ch0_pi
 
           if fit_PI:
-              from lofar.bdsm import _run_op_list
+              from . import _run_op_list
               mylogger.userinfo(mylog, "\nChecking PI image for new sources")
  
               mask = img.mask
