@@ -32,7 +32,7 @@ and parameters under exponents (NL_ij) are non-linear.
 #define PY_ARRAY_UNIQUE_SYMBOL PyArrayHandle
 #define NO_IMPORT_ARRAY
 
-#include "aux.h"
+#include "boost_python.h"
 #include "MGFunction.h"
     
 #include <ext/algorithm>
