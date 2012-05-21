@@ -21,4 +21,4 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${PYTHON_BUILD_DIR}/lofar/bdsm/nat.py)
 
 lofar_add_test(tbdsm_import)
-lofar_add_test(test_sm)
+lofar_add_test(tbdsm_process_image)

@@ -4,4 +4,4 @@
 use Pythonlibs
 
 # Fire off the test script.
-python test_sm.py
+python tbdsm_process_image.py

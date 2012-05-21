@@ -2,7 +2,7 @@ import lofar.bdsm as bdsm
 import sys
 
 # Process the image
-img = bdsm.process_image('test_sm.in')
+img = bdsm.process_image('tbdsm_process_image.in')
 
 # List of operations that must have been done on `img`.
 operations = [
