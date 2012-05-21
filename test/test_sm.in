@@ -317,7 +317,7 @@ p120
 I00
 sS'filename'
 p121
-S'test_sm.fits'
+S'test_sm.in_fits'
 p122
 sS'psf_gencode'
 p123
