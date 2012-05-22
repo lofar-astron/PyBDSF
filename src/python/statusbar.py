@@ -29,7 +29,10 @@ class StatusBar():
             
     # find number of columns in terminal
     def __getsize(self):
-        rows, columns = os.popen('stty size', 'r').read().split()
+        try:
+            rows, columns = os.popen('stty size', 'r').read().split()
+        except ValueError:
+            rows = columns = 0
         if int(columns) > self.max + 2 + 44 + (len(str(self.max))*2 + 2):
             self.columns = self.max
         else:
