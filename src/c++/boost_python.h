@@ -2,7 +2,7 @@
 #define _AUX_H_INCLUDED
 
 /*!
-	\file aux.h
+	\file boost_python.h
 	
 	\ingroup pybdsm
 
