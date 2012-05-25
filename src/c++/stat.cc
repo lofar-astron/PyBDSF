@@ -9,7 +9,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL PyArrayHandle
 #define NO_IMPORT_ARRAY
 
-#include "aux.h"
+#include "boost_python.h"
 #include "stat.h"
 
 #include <num_util/num_util.h>
