@@ -247,8 +247,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 island_offsets_x = []
                 island_offsets_y = []
                 border_color = []
+                ax = pl.gca()
                 for iisl, isl in enumerate(img.islands):
-                    ax = pl.gca()
                     xb, yb = isl.border
                     if hasattr(isl, '_pi'):
                         for c in range(len(xb)):
