@@ -407,6 +407,15 @@ class Opts(object):
                                  "Jy/beam to use if rms_map = False. "\
                                  "None => calculate inside program",
                              group="advanced_opts")
+    aperture        = Option(None, Float(),
+                             doc="Radius of aperture in pixels inside which aperture fluxes are measured "\
+                                 "for each source. None => no aperture fluxes measured\n" \
+                                 "This is a float and sets the radius (in pixels) inside "
+                                 "which the aperture flux is measured for each source. "
+                                 "The aperture is centered "
+                                 "on the centroid of the source. Errors are calculated "
+                                 "from the mean of the rms map inside the aperture.",
+                             group="advanced_opts")
     ini_gausfit     =   Enum('default', 'simple', 'nobeam',
                              doc = "Initial guess for Gaussian "\
                                  "parameters: 'default', 'simple', or 'nobeam'\n"\
@@ -746,8 +755,9 @@ class Opts(object):
                                  "patches (FITS or CASA format)",
                              group="output_opts")
     solnname        = Option(None, String(),
-                             doc="Name of the run, to be appended "\
-                                 "to the name of the output directory",
+                             doc="Name of the run, to be prepended "\
+                                 "to the name of the output directory. E.g., "\
+                                 "solname='Run_1'",
                              group="output_opts")
     indir           = Option(None, String(),
                              doc="Directory of input FITS files. None => get "\

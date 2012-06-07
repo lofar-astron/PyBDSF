@@ -303,7 +303,7 @@ class Op_wavelet_atrous(Op):
 
         opts['flag_smallsrc'] = False
         opts['flag_minsnr'] = 0.2
-        opts['flag_maxsnr'] = 2.0
+        opts['flag_maxsnr'] = 1.2
         opts['flag_maxsize_isl'] = 2.5
         opts['flag_bordersize'] = 0
         opts['flag_maxsize_bm'] = 25.0

@@ -247,8 +247,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 island_offsets_x = []
                 island_offsets_y = []
                 border_color = []
+                ax = pl.gca()
                 for iisl, isl in enumerate(img.islands):
-                    ax = pl.gca()
                     xb, yb = isl.border
                     if hasattr(isl, '_pi'):
                         for c in range(len(xb)):
@@ -425,7 +425,6 @@ def on_press(event):
     global pixels_per_beam, vmin, vmax, vmin_cur, vmax_cur, img_pi
     global ch0min, ch0max, low, fig, images, src_list, srcid_cur
     global markers
-#     print 'Testing...'
     if event.key == '0':
         print 'Resetting limits to defaults (%.4f -- %.4f Jy/beam)' \
             % (pow(10, vmin)-low,

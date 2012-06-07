@@ -1497,7 +1497,40 @@ class NullDevice():
     def write(self, s):
         pass
 
+def get_aperture_flux(img, posn_pix, aperture_pix):
+    """Measure ch0 flux inside radius aperture_pix pixels centered on posn_pix.
     
+    Returns [flux, fluxE]
+    """
+    import numpy as N
+    
+    # Make a subimage and mask
+    xlo = posn_pix[0]-int(aperture_pix)-1
+    if xlo < 0:
+        xlo = 0
+    xhi = posn_pix[0]+int(aperture_pix)+1
+    if xhi > img.ch0.shape[0]:
+        xhi = img.ch0.shape[0]
+    ylo = posn_pix[1]-int(aperture_pix)-1
+    if ylo < 0:
+        ylo = 0
+    yhi = posn_pix[1]+int(aperture_pix)+1
+    if yhi > img.ch0.shape[1]:
+        yhi = img.ch0.shape[1]
+        
+    aper_im = img.ch0[xlo:xhi, ylo:yhi]
+    aper_rms = img.rms[xlo:xhi, ylo:yhi]
+    dist_mask = N.zeros(aper_im.shape)
+
+    for i in range(aper_im.shape[0]):
+        for j in range(aper_im.shape[1]):
+            dist_mask[i, j] = N.sqrt( (i + xlo - posn_pix[0])**2 + (j + ylo - posn_pix[1])**2 )
+    aper_mask = N.where(dist_mask < aperture_pix)
+    aper_flux = N.nansum(aper_im[aper_mask])/img.pixel_beamarea # Jy
+    pixels_in_source = N.sum(~N.isnan(aper_im[aper_mask])) # number of unmasked pixels assigned to current source
+    aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/img.pixel_beamarea) # Jy
+    
+    return [aper_flux, aper_fluxE]
 
 
 

@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.1'
+__version__ = '1.2'
 
 # Store svn Revision number. For this to work, one also
 # needs to do: 
@@ -26,6 +26,13 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+    
+    2012/06/06 - Version 1.2
+    
+    2012/06/06 - Added option to calculate fluxes within a specified 
+        aperture radius in pixels (set with the "aperture" option). 
+        Aperture fluxes, if measured, are output in the "srl" catalogs.
+        Changed code that determines terminal width to be more robust.
     
     2012/05/07 - Removed dependencies on matplotlib -- if matplotlib is
     	not available, plotting is disabled. Corrected inconsistencies,

@@ -303,7 +303,10 @@ The advanced options are:
 
 .. parsed-literal::
 
-    advanced_opts ......... True : Show advanced options                       
+    advanced_opts ......... True : Show advanced options
+      :term:`aperture` ............ 10.0 : Radius of aperture in pixels inside which aperture
+                                   fluxes are measured for each source. None => no aperture 
+                                   fluxes measured
       :term:`blank_zeros` ........ False : Blank zeros in the image                    
       :term:`bmpersrc_th` ......... None : Theoretical estimate of number of beams per 
                                    source. None => calculate inside program    
@@ -350,16 +353,25 @@ The advanced options are:
 
 .. glossary::
 
+    aperture
+        This parameter is a float (default is ``None``) that sets the radius (in
+        pixels) inside which the aperture flux is measured for each source. 
+        The aperture is centered on the centroid of the source. Errors are 
+        calculated from the mean of the rms map inside the aperture.
+    
     blank_zeros
-        This parameter is a Boolean (default is ``False``). If ``True``, all pixels in the input image with values of 0.0 are blanked. If ``False``, any such pixels are left unblanked (and hence will affect the rms and mean maps, etc.). Pixels with a value of NaN are always blanked.
+        This parameter is a Boolean (default is ``False``). If ``True``, all
+        pixels in the input image with values of 0.0 are blanked. If ``False``,
+        any such pixels are left unblanked (and hence will affect the rms and
+        mean maps, etc.). Pixels with a value of NaN are always blanked.
         
     bmpersrc_th
-        This parameter is a float (default is ``None``) that sets the theoretical estimate of number of beams per source.
-        If ``None``, the value is calculated
-        as N/[n*(alpha-1)], where N is the total number of pixels in the image,
-        n is the number of pixels in the image whose value is greater than 5
-        times the clipped rms, and alpha is the slope of the differential source
-        counts distribution, assumed to be 2.5. 
+        This parameter is a float (default is ``None``) that sets the
+        theoretical estimate of number of beams per source. If ``None``, the
+        value is calculated as N/[n*(alpha-1)], where N is the total number of
+        pixels in the image, n is the number of pixels in the image whose value
+        is greater than 5 times the clipped rms, and alpha is the slope of the
+        differential source counts distribution, assumed to be 2.5.
         
         The value of ``bmpersrc_th`` is used
         to estimate the average separation in pixels between two sources, which
@@ -370,13 +382,14 @@ The advanced options are:
         zero.
         
     check_outsideuniv
-        This parameter is a Boolean (default is ``False``). If ``True``, then the coordinate of each pixel is examined to check if it is
-        outside the universe, which may happen when, e.g., an all sky image is
-        made with SIN projection (commonly done at LOFAR earlier). When found,
-        these pixels are blanked (since imaging software do not do this on their
-        own). Note that this process takes a lot of time, as every pixel is
-        checked in case weird geometries and projections are used.
-        
+        This parameter is a Boolean (default is ``False``). If ``True``, then
+        the coordinate of each pixel is examined to check if it is outside the
+        universe, which may happen when, e.g., an all sky image is made with SIN
+        projection (commonly done at LOFAR earlier). When found, these pixels
+        are blanked (since imaging software do not do this on their own). Note
+        that this process takes a lot of time, as every pixel is checked in case
+        weird geometries and projections are used.
+       
     detection_image
         This parameter is a string (default is ``''``) that sets the detection image file name used only for detecting islands of emission. Source measurement is still done on the main image. The detection image can be a FITS or CASA 2-, 3-, or 4-D cube and must have the same size and WCS parameters as the main image.
         
