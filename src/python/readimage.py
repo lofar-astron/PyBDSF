@@ -115,7 +115,7 @@ class Op_readimage(Op):
                 img.opts.opdir_overwrite = 'append'
                 mylog.info('Appending output files in directory '+basedir)
             img.basedir = basedir + '/'
-            if img.opts.solnname != None: img.basedir += img.opts.solnname + '__'
+            if img.opts.solnname != None: img.basedir += img.opts.solnname + '_'
             img.basedir += time.strftime("%d%b%Y_%H.%M.%S")
 
             if os.path.isfile(basedir): os.system("rm -fr "+basedir)

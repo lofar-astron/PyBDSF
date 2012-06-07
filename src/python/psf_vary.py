@@ -248,10 +248,10 @@ class Op_psf_vary(Op):
                 img.psf_vary_ratio = psf_ratio_int
     
                 if opts.output_all:
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', N.transpose(psf_maj_in)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', N.transpose(psf_min_in)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', N.transpose(psf_pa_in), img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', N.transpose(psf_ratio_in), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', N.transpose(psf_maj_int)*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', N.transpose(psf_min_int)*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', N.transpose(psf_pa_int), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', N.transpose(psf_ratio_int), img, dir)
                 
                 # Loop through source and Gaussian lists and deconvolve the sizes using appropriate beam
                 bar2 = statusbar.StatusBar('Correcting deconvolved source sizes ..... : ', 0, img.nsrc)

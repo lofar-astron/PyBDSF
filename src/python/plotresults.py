@@ -425,7 +425,6 @@ def on_press(event):
     global pixels_per_beam, vmin, vmax, vmin_cur, vmax_cur, img_pi
     global ch0min, ch0max, low, fig, images, src_list, srcid_cur
     global markers
-#     print 'Testing...'
     if event.key == '0':
         print 'Resetting limits to defaults (%.4f -- %.4f Jy/beam)' \
             % (pow(10, vmin)-low,

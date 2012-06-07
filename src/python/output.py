@@ -336,11 +336,16 @@ def write_fits_list(img, filename=None, sort_by='indx', objtype='gaul',
                 nmax = isl.shapelet_nmax
         nmax += 1
     
+    if img.opts.aperture != None:
+        incl_aper = True
+    else:
+        incl_aper = False
     cvals, cnames, cformats, cunits = make_output_columns(outl[0][0], fits=True,
                                                           objtype=objtype, 
                                                           incl_spin=img.opts.spectralindex_do,
                                                           incl_chan=img.opts.incl_chan,
                                                           incl_pol=img.opts.polarisation_do,
+                                                          incl_aper=incl_aper,
                                                           nmax=nmax, nchan=img.nchan)
     out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax)
     col_list = []
@@ -578,12 +583,18 @@ def make_ascii_str(img, glist, objtype='gaul'):
     outstr_list.append('# Reference frequency of the detection ("ch0") image: %s Hz\n' % freq)
     outstr_list.append('# Equinox : %s \n\n' % img.equinox)
     val_list = []
+    if img.opts.aperture != None:
+        incl_aper = True
+    else:
+        incl_aper = False
+
     for i, g in enumerate(glist[0]):
         cvals, cnames, cformats, cunits = make_output_columns(g, fits=False, 
                                                               objtype=objtype, 
                                                               incl_spin=img.opts.spectralindex_do,
                                                               incl_chan=img.opts.incl_chan,
                                                               incl_pol=img.opts.polarisation_do,
+                                                              incl_aper=incl_aper,
                                                               nchan=img.nchan)
         cformats[-1] += "\n"
         if i == 0:
@@ -596,11 +607,16 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30):
     import functions as func
 
     out_list = []
+    if img.opts.aperture != None:
+        incl_aper = True
+    else:
+        incl_aper = False
     for g in glist[0]:
         cvals, ext1, ext2, ext3 = make_output_columns(g, fits=True, objtype=objtype, 
                                                       incl_spin=img.opts.spectralindex_do,
                                                       incl_chan=img.opts.incl_chan,
                                                       incl_pol=img.opts.polarisation_do,
+                                                      incl_aper=incl_aper,
                                                       nmax=nmax, nchan=img.nchan)
         out_list.append(cvals)
     out_list = func.trans_gaul(out_list)
@@ -805,7 +821,8 @@ def list_and_sort_gaussians(img, patch=None, root=None,
     return (outlist_sorted, outnames_sorted, patchnames_sorted)
 
 def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
-                        incl_chan=False, incl_pol=False, nmax=30, nchan=1):
+                        incl_chan=False, incl_pol=False, incl_aper=False, 
+                        nmax=30, nchan=1):
     """Returns a list of column names, formats, and units for Gaussian, Source, or Shapelet"""
     import numpy as N
     
@@ -820,10 +837,15 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'deconv_size_skyE', 'rms', 'mean', 'gresid_rms', 'gresid_mean',
                  'code']
     elif objtype == 'srl':
+        if incl_aper:
+            infix = ['aperture_flux', 'aperture_fluxE']
+        else:
+            infix = []
         names = ['source_id', 'island_id', 'posn_sky_centroid', 
                  'posn_sky_centroidE', 'total_flux', 
                  'total_fluxE', 
-                 'peak_flux_max', 'peak_flux_maxE', 'posn_sky_max', 'posn_sky_maxE', 
+                 'peak_flux_max', 'peak_flux_maxE'] + infix + \
+                 ['posn_sky_max', 'posn_sky_maxE', 
                  'posn_pix_centroid', 'posn_pix_centroidE', 'posn_pix_max', 
                  'posn_pix_maxE',
                  'size_sky', 'size_skyE', 'deconv_size_sky',

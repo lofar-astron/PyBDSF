@@ -20,10 +20,21 @@ Preparing to compile the code
 -----------------------------
 Before compiling the PyBDSM source code, you need to make sure you have the required dependencies:
 
+* Python 2.6 or newer (including NumPy, SciPy, Matplotlib, and IPython). The easiest way to install Python and all of the required modules is to use the 64-bit EPD Python distribution, available at http://enthought.com/products/epd.php. For academic users, a free version is available at http://www.enthought.com/products/edudownload.php.
 * gfortran. Binaries are available from http://gcc.gnu.org/wiki/GFortranBinaries.
-* Python (including numpy and scipy). The easiest way to install Python on a Mac is to use the 64-bit EPD Python distribution, available at http://enthought.com/products/epd.php.
 * PyWCS. You can get PyWCS from https://trac6.assembla.com/astrolib.
 * Boost. Get the latest version from http://www.boost.org. Only the Python libraries need to be compiled.
+
+.. note::
+
+    If you use the 64-bit EPD distribution on Mac OS X, there are problems with the default matplotlib backend that cause some of the plotting functionality of PyBDSM to be lost. To fix this problem, edit (or create) the ``~/.matplotlib/matplotlibrc`` file and add the line::
+    
+        backend : Qt4Agg
+        
+    Then add the following line to your ``.bash_profile``::
+    
+        export QT_API='pyside'
+
 
 Compiling and installing
 ------------------------
