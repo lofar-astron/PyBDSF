@@ -26,6 +26,9 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2012/06/13 - Added total island flux (from sum of pixels) to 
+        "gaul" and "srl" catalogs. 
     
     2012/06/06 - Version 1.2
     

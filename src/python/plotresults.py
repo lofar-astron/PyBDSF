@@ -365,9 +365,6 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
            
     fig.canvas.mpl_connect('key_press_event', on_press)
     fig.canvas.mpl_connect('pick_event', on_pick)
-#     axPlay = pl.axes([0.02, 0.05, 0.1, 0.075])
-#     bPlay = Button(axPlay, 'Play')  
-#     bPlay.on_clicked(on_press)
     pl.show()
     pl.close()
 

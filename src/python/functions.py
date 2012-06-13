@@ -1497,14 +1497,14 @@ class NullDevice():
     def write(self, s):
         pass
 
-def get_aperture_flux(img, posn_pix, aperture_pix):
+def ch0_aperture_flux(img, posn_pix, aperture_pix):
     """Measure ch0 flux inside radius aperture_pix pixels centered on posn_pix.
     
     Returns [flux, fluxE]
     """
     import numpy as N
     
-    # Make a subimage and mask
+    # Make ch0 and rms subimages
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
         xlo = 0
@@ -1520,20 +1520,61 @@ def get_aperture_flux(img, posn_pix, aperture_pix):
         
     aper_im = img.ch0[xlo:xhi, ylo:yhi]
     aper_rms = img.rms[xlo:xhi, ylo:yhi]
-    dist_mask = N.zeros(aper_im.shape)
+    posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
+    aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, img.pixel_beamarea)
+    return aper_flux
 
-    for i in range(aper_im.shape[0]):
-        for j in range(aper_im.shape[1]):
-            dist_mask[i, j] = N.sqrt( (i + xlo - posn_pix[0])**2 + (j + ylo - posn_pix[1])**2 )
-    aper_mask = N.where(dist_mask < aperture_pix)
-    aper_flux = N.nansum(aper_im[aper_mask])/img.pixel_beamarea # Jy
+def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
+    """Returns aperture flux and error"""
+    import numpy as N
+        
+    dist_mask = generate_aperture(aper_im.shape[1], aper_im.shape[0], posn_pix[1], posn_pix[0], aperture_pix)
+    aper_mask = N.where(dist_mask)
+    aper_flux = N.nansum(aper_im[aper_mask])/beamarea # Jy
     pixels_in_source = N.sum(~N.isnan(aper_im[aper_mask])) # number of unmasked pixels assigned to current source
-    aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/img.pixel_beamarea) # Jy
-    
+    aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
     return [aper_flux, aper_fluxE]
 
+def generate_aperture(ysize, xsize, ycenter, xcenter, radius):
+    """Makes a mask for a circular aperture"""
+    import numpy
+    
+    x, y = numpy.mgrid[0:ysize,0:xsize]
+    return ((x - ycenter)**2 + (y - xcenter)**2 <= radius**2) * 1
 
-
-
-
+def getTerminalSize():
+    """
+    returns (lines:int, cols:int)
+    """
+    import os, struct
+    def ioctl_GWINSZ(fd):
+        import fcntl, termios
+        return struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
+    # try stdin, stdout, stderr
+    for fd in (0, 1, 2):
+        try:
+            return ioctl_GWINSZ(fd)
+        except:
+            pass
+    # try os.ctermid()
+    try:
+        fd = os.open(os.ctermid(), os.O_RDONLY)
+        try:
+            return ioctl_GWINSZ(fd)
+        finally:
+            os.close(fd)
+    except:
+        pass
+    # try `stty size`
+    try:
+        return tuple(int(x) for x in os.popen("stty size", "r").read().split())
+    except:
+        pass
+    # try environment variables
+    try:
+        return tuple(int(os.getenv(var)) for var in ("LINES", "COLUMNS"))
+    except:
+        pass
+    # Give up. return 0.
+    return (0, 0)            
 

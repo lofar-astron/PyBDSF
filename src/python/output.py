@@ -834,7 +834,8 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'total_fluxE', 'peak_flux', 'peak_fluxE',
                  'centre_pix', 'centre_pixE', 'size_sky', 'size_skyE', 
                  'deconv_size_sky',
-                 'deconv_size_skyE', 'rms', 'mean', 'gresid_rms', 'gresid_mean',
+                 'deconv_size_skyE', 'total_flux_isl', 'total_flux_islE', 'rms', 
+                 'mean', 'gresid_rms', 'gresid_mean',
                  'code']
     elif objtype == 'srl':
         if incl_aper:
@@ -849,7 +850,8 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'posn_pix_centroid', 'posn_pix_centroidE', 'posn_pix_max', 
                  'posn_pix_maxE',
                  'size_sky', 'size_skyE', 'deconv_size_sky',
-                 'deconv_size_skyE', 'rms_isl', 'mean_isl', 'gresid_rms', 
+                 'deconv_size_skyE', 'total_flux_isl', 'total_flux_islE', 
+                 'rms_isl', 'mean_isl', 'gresid_rms', 
                  'gresid_mean', 'code']
     elif objtype == 'shap':
         names = ['island_id', 'posn_sky_centroid', 

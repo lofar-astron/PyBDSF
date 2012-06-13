@@ -283,8 +283,9 @@ def print_opts(grouped_opts_list, img, banner=None):
     """
     from image import Image
     import os
+    import functions as func
 
-    termx, termy = getTerminalSize()
+    termx, termy = func.getTerminalSize()
     minwidth = 28 # minimum width for parameter names and values
     # Define colors for output
     dc = '\033[1;34m' # Blue: non-default option text color
@@ -415,32 +416,6 @@ def print_opts(grouped_opts_list, img, banner=None):
                             print fmt % (parvalstr.ljust(minwidth-2), dt.ljust(44))
                         else:
                             print nc + spcstr + '   %44s' % dt.ljust(44)
-
-
-def getTerminalSize():
-    """Returns the x and y size of the terminal."""
-    def ioctl_GWINSZ(fd):
-        try:
-            import fcntl, termios, struct, os
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-        '1234'))
-        except:
-            return None
-        return cr
-    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-    if not cr:
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = ioctl_GWINSZ(fd)
-            os.close(fd)
-        except:
-            pass
-    if not cr:
-        try:
-            cr = (env['LINES'], env['COLUMNS'])
-        except:
-            cr = (25, 80)
-    return int(cr[1]), int(cr[0])
 
 
 def wrap(text, width=80):
