@@ -1504,6 +1504,9 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     """
     import numpy as N
     
+    if aperture_pix == None:
+        return [0.0, 0.0]
+        
     # Make ch0 and rms subimages
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
@@ -1530,6 +1533,8 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
         
     dist_mask = generate_aperture(aper_im.shape[1], aper_im.shape[0], posn_pix[1], posn_pix[0], aperture_pix)
     aper_mask = N.where(dist_mask)
+    if N.size(aper_mask) == 0:
+        return [0.0, 0.0]
     aper_flux = N.nansum(aper_im[aper_mask])/beamarea # Jy
     pixels_in_source = N.sum(~N.isnan(aper_im[aper_mask])) # number of unmasked pixels assigned to current source
     aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
