@@ -40,7 +40,7 @@ class Op_gaul2srl(Op):
         if img.aperture != None and img.aperture <= 0.0:
             mylog.warn('Specified aperture is <= 0. Skipping aperture fluxes.')            
             img.aperture = None
-            
+
         src_index = -1
         sources = []
         for iisl, isl in enumerate(img.islands):

@@ -11,10 +11,7 @@ Downloading and installing
         
 Downloading the code
 --------------------
-The latest version of the code may be obtained from the LOFAR Subversion repository. First, change to the directory in which you wish to install PyBDSM. Then run the following command::
-
-    $ svn co -N https://svn.astron.nl/LOFAR/trunk LOFAR
-    $ svn up LOFAR/CMake    
+The latest version of the code may be obtained as a gzipped tar file from the STRW FTP server at ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM (e.g., ``PyBDSM-1.2.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
 
 Preparing to compile the code
 -----------------------------
@@ -38,14 +35,15 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
 
 Compiling and installing
 ------------------------
-Lastly, compile the software. To do so, make a ``build/gnu_opt`` directory, go there, and execute ``make``::
+Lastly, compile the software. To do so, change to the ``LOFAR`` directory and make a ``build/gnu_opt`` directory, go there, and execute ``make``::
 
+    $ cd LOFAR
     $ mkdir -p build/gnu_opt
     $ cd build/gnu_opt
-    $ cmake -DBUILD_PACKAGES=PyBDSM -DUSE_LOG4CPLUS=OFF -DUSE_LOG4CXX=OFF ../../LOFAR
+    $ cmake -DBUILD_PACKAGES=PyBDSM -DUSE_LOG4CPLUS=OFF -DUSE_LOG4CXX=OFF ../..
     $ make install
     
-If successful, PyBDSM should now be installed in ``build/gnu_opt/installed/``. 
+If successful, PyBDSM should now be installed in ``LOFAR/build/gnu_opt/installed/``. 
 
 .. _add_to_path:
 
@@ -71,12 +69,7 @@ For the Bash shell::
 
 Keeping up-to-date
 ------------------
-PyBDSM is currently under active development, and bug fixes and improvements are frequently committed to the Subversion repository. To update PyBDSM to the latest version, enter the following commands::
-
-    $ cd $LOFAR/LOFAR
-    $ svn update
-    $ cd ../build/gnu_opt
-    $ make install 
+PyBDSM is currently under active development, and bug fixes and improvements are frequently implemented. PyBDSM will automatically check for updates each time the interactive shell is started. To update PyBDSM to the latest version, download the new version and repeat the above steps.
     
 Major updates will be listed in :ref:`new`.
         

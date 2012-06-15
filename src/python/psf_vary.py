@@ -830,14 +830,13 @@ class Op_psf_vary(Op):
             src_wts_aper = []
             for gt in tile_gauls:
                 src = img.sources[gt[0]]
-                if img.opts.aperture != None:
+                if img.aperture != None:
                     src_ratio_aper.append(src.peak_flux_max / src.aperture_flux)
                     src_wts_aper.append(src.total_flux / src.aperture_fluxE)                
-                else:
-                    src_ratio.append(src.peak_flux_max / src.total_flux)
-                    src_wts.append(src.total_flux / src.total_fluxE)
-            if img.opts.aperture != None:
-                psfratio_aper.append(sum(N.asarray(src_ratio)*src_wts)/sum(src_wts))
+                src_ratio.append(src.peak_flux_max / src.total_flux)
+                src_wts.append(src.total_flux / src.total_fluxE)
+            if img.aperture != None:
+                psfratio_aper.append(sum(N.asarray(src_ratio_aper)*src_wts_aper)/sum(src_wts_aper))
             else:
                 psfratio_aper.append(0.0)
             psfratio.append(sum(N.asarray(src_ratio)*src_wts)/sum(src_wts))

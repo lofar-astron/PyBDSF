@@ -1025,7 +1025,7 @@ class Opts(object):
     clobber         =   Bool(False,
                              doc="Overwrite existing file?",
                              group='hidden')
-    format          =   Enum('bbs', 'ds9', 'fits', 'ascii', 'star', 'kvis',
+    format          =   Enum('bbs', 'ds9', 'fits', 'ascii', 'star', 'kvis', 'sagecal',
                              doc="Format of output catalog: 'bbs', "\
                                  "'ds9', 'fits', 'star', 'kvis', or 'ascii'\n"\
                                  "The following formats are supported:\n"\
@@ -1038,6 +1038,7 @@ class Opts(object):
                                  "'star' - AIPS STAR format (Gaussian list only)\n"\
                                  "'kvis' - kvis format (Gaussian list only)\n"\
                                  "'ascii' - simple text file\n"\
+                                 "'sagecal - Sagecal formal\n"\
                                  "Catalogues with the 'fits' and 'ascii' formats "\
                                  "include all available information (see headers "\
                                  "of the output file for column definitions). The "\

@@ -654,6 +654,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "ds9"   - ds9 region file
         "star"  - AIPS STAR file (Gaussian list only)
         "kvis"  - kvis file (Gaussian list only)
+        "sagecal" - Sagecal file (Gaussian list only)
     srcroot - root for source and patch names (BBS/ds9 only);
               if None, the srcroot is chosen automatically
     bbs_patches - type of patches to use:
@@ -686,7 +687,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     if isinstance(patch, str):
         patch = patch.lower()
     if (format in ['fits', 'ascii', 'bbs', 'ds9', 'star', 
-                   'kvis']) == False:
+                   'kvis', 'sagecal']) == False:
         print '\033[91mERROR\033[0m: format must be "fits", '\
             '"ascii", "ds9", "star", "kvis",  or "bbs"'
         return False
@@ -739,6 +740,21 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return False
         else:
             print '--> Wrote BBS sky model ' + repr(filename)
+            return True
+    if format == 'sagecal':
+        if catalog_type != 'gaul':
+            print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with Sagecal files."
+            return False
+        filename = output.write_lsm_gaul(img, filename=filename,
+                                            srcroot=srcroot,
+                                            patch=patch,
+                                            sort_by='flux',
+                                            clobber=clobber)
+        if filename == None:
+            print '\033[91mERROR\033[0m: File exists and clobber = False.'
+            return False
+        else:
+            print '--> Wrote Sagecal lsm file ' + repr(filename)
             return True
     if format == 'ds9':
         filename = output.write_ds9_list(img, filename=filename,

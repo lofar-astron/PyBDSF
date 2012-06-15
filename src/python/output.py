@@ -229,6 +229,39 @@ def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
         f.write(s)
     f.close()
     return filename
+
+
+def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
+                   incl_primary=True, sort_by='flux',
+                   clobber=False):
+    """Writes Gaussian list to a Sagecal lsm sky model"""
+    import numpy as N
+    from const import fwsig
+    import mylogger
+    import os
+
+    mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
+    if int(img.equinox) != 2000 and int(img.equinox) != 1950:
+        mylog.warning('Equinox of input image is not J2000 or B1950. '\
+                          'Sky model may not be appropriate for Sagecal.')
+    if int(img.equinox) == 1950:
+        mylog.warning('Equinox of input image is B1950. Coordinates '\
+                          'will be precessed to J2000.')
+
+    outl, outn, patl = list_and_sort_gaussians(img, patch=patch,
+                                               root=srcroot, sort_by=sort_by)
+    outstr_list = make_lsm_str(img, outl, outn)
+
+    if filename == None:    
+        filename = img.imagename + '.lsm'
+    if os.path.exists(filename) and clobber == False:
+        return None
+    mylog.info('Writing ' + filename)
+    f = open(filename, 'w')
+    for s in outstr_list:
+        f.write(s)
+    f.close()
+    return filename
     
 
 def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
@@ -518,6 +551,61 @@ def make_bbs_str(img, glist, gnames, patchnames):
                                  Q_flux + sep + U_flux + sep + V_flux + sep +
                                  deconvstr + sep + freq + sep +
                                  '[' + specin + ']\n') 
+    return outstr_list
+
+def make_lsm_str(img, glist, gnames):
+    """Makes a list of string entries for a BBS sky model."""
+    from output import ra2hhmmss
+    from output import dec2ddmmss
+    from const import fwsig
+    import numpy as N
+
+    outstr_list = []
+    freq = "%.5e" % img.cfreq
+    outstr_list.append("## LSM file\n### Name  | RA (hr,min,sec) | DEC (deg,min,sec) | I | Q | U | V | SI | RM | eX | eY | eP | freq0\n\n")
+    for gindx, g in enumerate(glist[0]):
+        src_name = gnames[0][gindx]
+        ra, dec = g.centre_sky
+        if img.equinox == 1950:
+            ra, dec = B1950toJ2000([ra, dec])
+        ra = ra2hhmmss(ra)
+        sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.3f" % (ra[2])).zfill(6)
+        dec = dec2ddmmss(dec)
+        decsign = ('-' if dec[3] < 0 else '+')
+        sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
+        total = str("%.3e" % (g.total_flux))
+        peak = str("%.3e" % (g.peak_flux))
+        deconv = g.deconv_size_sky
+        if deconv[0] == 0.0  and deconv[1] == 0.0:
+            sname = 'P' + src_name
+            deconv[2] = 0.0
+        else:
+            sname = 'G' + src_name
+        deconv1 = str("%.5e" % (deconv[0]*N.pi/180.0/2.0)) 
+        deconv2 = str("%.5e" % (deconv[1]*N.pi/180.0/2.0)) 
+        deconv3 = str("%.5e" % (deconv[2]*N.pi/180.0/2.0)) 
+        deconvstr = deconv1 + ' ' + deconv2 + ' ' + deconv3
+        specin = '-0.8'
+        if hasattr(g, 'spec_indx'):
+            if g.spec_indx != None and N.isfinite(g.spec_indx):
+                specin = str("%.3e" % (g.spec_indx))
+        sep = ' '
+        if img.opts.polarisation_do:
+            size = g.size_pix
+            pixel_beam = img.pixel_beam
+            bm_pix = N.array([pixel_beam[0]*fwsig, pixel_beam[1]*fwsig, pixel_beam[2]])
+            Q_flux = str("%.3e" % (g.total_flux_Q/(size[0]*size[1]/(bm_pix[0]*bm_pix[1]))))
+            U_flux = str("%.3e" % (g.total_flux_U/(size[0]*size[1]/(bm_pix[0]*bm_pix[1]))))
+            V_flux = str("%.3e" % (g.total_flux_V/(size[0]*size[1]/(bm_pix[0]*bm_pix[1]))))
+        else:
+            Q_flux = '0.0'
+            U_flux = '0.0'
+            V_flux = '0.0'
+        outstr_list.append(sname + sep + sra + sep +
+                               sdec + sep + peak + sep + Q_flux + sep +
+                               U_flux + sep + V_flux + sep +
+                               specin + sep + '0' + sep + deconvstr + sep + 
+                               freq + sep + '\n')
     return outstr_list
 
 
