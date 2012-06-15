@@ -1027,7 +1027,7 @@ class Opts(object):
                              group='hidden')
     format          =   Enum('bbs', 'ds9', 'fits', 'ascii', 'star', 'kvis', 'sagecal',
                              doc="Format of output catalog: 'bbs', "\
-                                 "'ds9', 'fits', 'star', 'kvis', or 'ascii'\n"\
+                                 "'ds9', 'fits', 'star', 'kvis', 'sagecal', or 'ascii'\n"\
                                  "The following formats are supported:\n"\
                                  "'bbs' - BlackBoard Selfcal sky model format "\
                                  "(Gaussian list only)\n"\
