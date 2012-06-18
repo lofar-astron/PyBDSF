@@ -147,10 +147,13 @@ class Op_readimage(Op):
             img.use_wcs = 'wcslib'
         except ImportError:
             try:
-                import pywcs    
+                import pywcs
                 img.use_wcs = 'pywcs'
-            except ImportError:
-                raise RuntimeError('Either WCSLIB or PyWCS is required.')
+            except ImportError, e:
+                # Expose original exception details to outside world
+                raise RuntimeError(
+                    "Either WCSLIB or PyWCS is required."
+                    " Original error: \n {0}".format(str(e)))
         from math import pi
 
         hdr = img.header
