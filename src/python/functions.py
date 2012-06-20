@@ -992,6 +992,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     """ Reads data and header from indir/filename using either pyfits or pyrap depending on
          img.use_io = 'fits'/'rap' """
     import mylogger
+    import os
     import numpy as N
     
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
@@ -1001,19 +1002,26 @@ def read_image_from_file(filename, img, indir, quiet=False):
         prefix = indir + '/'
     image_file = prefix + filename
     
+    # Check that file exists
+    if not os.path.isfile(image_file):
+        img._reason = 'File does not exist'
+        return None
+
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
             import pyfits                
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            except IOError:
+            except IOError, err:
+                img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
         if img.use_io == 'rap':
             import pyrap.images as pim
             try:
                 inputimage = pim.image(image_file)
-            except IOError:
+            except IOError, err:
+                img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
     else:
         # Simple check of whether pyrap and pyfits are available
@@ -1026,15 +1034,18 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 has_pyfits = True
             else:
                 has_pyfits = False
-        except ImportError:
+                e_pyfits = 'PyFITS version < 2.2'
+        except ImportError, err:
             has_pyfits = False
+            e_pyfits = str(err)
         try:
             import pyrap.images as pim
             has_pyrap = True
-        except ImportError:
+        except ImportError, err:
             has_pyrap = False
+            e_pyrap = str(err)
         if not has_pyrap and not has_pyfits:
-            raise RuntimeError("Neither Pyfits (version 2.2 or greater) nor Pyrap is available. Image cannot be read.")          
+            raise RuntimeError("Neither PyFITS (version 2.2 or greater) nor Pyrap is available. Image cannot be read.\nOriginal errors: \n {0}\n {1}".format(e_pyfits, e_pyrap))
 
         # First assume image is a fits file, and use pyfits to open it (if
         # available). If that fails, try to use pyrap if available.
@@ -1046,22 +1057,26 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 img.use_io = 'fits'
             else:
                 reason = 2 # Pyfits unavailable
-                raise IOError
-        except IOError:
+                raise IOError("PyFITS unavailable")
+        except IOError, err:
+            e_pyfits = str(err)
             if reason == 0:
                 reason = 1 # Pyfits available but cannot read file
             if has_pyrap:
                 try:
                     inputimage = pim.image(image_file)
                     img.use_io = 'rap'
-                except IOError:
+                except IOError, err:
+                    e_pyrap = str(err)
                     failed_read = True
                     img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
             else:
                 failed_read = True
+                e_pyrap = "Pyrap unavailable"
                 if reason == 1:
                     img._reason = 'Problem reading file.'
         if failed_read:
+            img._reason += '\nOriginal errors: {0}\n {1}'.format(e_pyfits, e_pyrap)
             return None
 
     # Now that image has been read in successfully, get data and header

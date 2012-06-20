@@ -1190,8 +1190,8 @@ class Opts(object):
                             # Try parse it as a parameter set bool string
                             v = self._parse_string_as_bool(v)
                         else:
-                            # riase error
-                            raise tcError("unknow type for bool variable")
+                            # raise error
+                            raise tcError("unknown type for bool variable")
                 if v == "none":
                     v = None
                 self.__setattr__(k, v)

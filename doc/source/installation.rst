@@ -20,7 +20,14 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
 * Python 2.6 or newer (including NumPy, SciPy, Matplotlib, and IPython). The easiest way to install Python and all of the required modules is to use the 64-bit EPD Python distribution, available at http://enthought.com/products/epd.php. For academic users, a free version is available at http://www.enthought.com/products/edudownload.php.
 * gfortran. Binaries are available from http://gcc.gnu.org/wiki/GFortranBinaries.
 * PyWCS. You can get PyWCS from https://trac6.assembla.com/astrolib.
-* Boost. Get the latest version from http://www.boost.org. Only the Python libraries need to be compiled.
+* Boost. Get the latest version from http://www.boost.org. Only the Python libraries need to be compiled. For example, on a Mac, do the following (which assumes the latest version is ``boost_1_49_0.tar.gz``)::
+
+    $ cd /usr/local/
+    $ sudo tar --bzip2 -xf ~/Downloads/boost_1_49_0.tar.gz
+    $ cd boost_1_49_0/
+    $ sudo ./bootstrap.sh --with-libraries=python
+    $ sudo ./b2 install
+
 
 .. note::
 

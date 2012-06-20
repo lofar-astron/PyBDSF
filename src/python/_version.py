@@ -26,6 +26,11 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+    
+    2011/06/19 - Changed exception handling to raise exceptions when
+        the interactive shell is not being used. Fixed bug that
+        caused a crash when using show_fit() when no islands were
+        found. 
 
     2011/06/15 - Added Sagecal output format for Gaussian catalogs.
 

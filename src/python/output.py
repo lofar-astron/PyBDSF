@@ -573,8 +573,9 @@ def make_lsm_str(img, glist, gnames):
         dec = dec2ddmmss(dec)
         decsign = ('-' if dec[3] < 0 else '+')
         sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
-        total = str("%.3e" % (g.total_flux))
-        peak = str("%.3e" % (g.peak_flux))
+        size = g.size_sky #  degrees, in terms of FWHM
+        src_area = 1.1331*size[0]*size[1]*fwsig*fwsig*3600.0**2 # area of source in arcsec**2
+        peak = str("%.3e" % (g.total_flux/src_area)) # peak flux in Jy/arcsec**2
         deconv = g.deconv_size_sky
         if deconv[0] == 0.0  and deconv[1] == 0.0:
             sname = 'P' + src_name
@@ -591,12 +592,9 @@ def make_lsm_str(img, glist, gnames):
                 specin = str("%.3e" % (g.spec_indx))
         sep = ' '
         if img.opts.polarisation_do:
-            size = g.size_pix
-            pixel_beam = img.pixel_beam
-            bm_pix = N.array([pixel_beam[0]*fwsig, pixel_beam[1]*fwsig, pixel_beam[2]])
-            Q_flux = str("%.3e" % (g.total_flux_Q/(size[0]*size[1]/(bm_pix[0]*bm_pix[1]))))
-            U_flux = str("%.3e" % (g.total_flux_U/(size[0]*size[1]/(bm_pix[0]*bm_pix[1]))))
-            V_flux = str("%.3e" % (g.total_flux_V/(size[0]*size[1]/(bm_pix[0]*bm_pix[1]))))
+            Q_flux = str("%.3e" % (g.total_flux_Q/src_area))
+            U_flux = str("%.3e" % (g.total_flux_U/src_area))
+            V_flux = str("%.3e" % (g.total_flux_V/src_area))
         else:
             Q_flux = '0.0'
             U_flux = '0.0'

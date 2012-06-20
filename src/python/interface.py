@@ -21,9 +21,6 @@ def process(img, **kwargs):
     from image import Image
     import mylogger 
 
-    pars = img.opts.to_dict()
-    img._prev_opts = pars
-    
     # First, reset img to initial state (in case img is being reprocessed)
     if hasattr(img, 'use_io'): del img.use_io
     if hasattr(img, 'sources'): del img.sources
@@ -44,6 +41,20 @@ def process(img, **kwargs):
     if hasattr(img, 'rms_mask'): del img.rms_mask
     if hasattr(img, 'completed_Ops'): del img.completed_Ops
 
+    try:
+        # set options if given
+        if len(kwargs) > 0:
+            set_pars(img, **kwargs)
+    except RuntimeError, err:
+        # Catch and log error
+        mylog.error(str(err))
+        
+        # Re-throw error if the user is not in the interactive shell
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
+
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
     log = img.opts.filename + '.pybdsm.log'
@@ -55,11 +66,7 @@ def process(img, **kwargs):
     mylog.info("Running PyBDSM on "+img.opts.filename)
 
     # Run all the op's
-    try:
-        # set options if given
-        if len(kwargs) > 0:
-            set_pars(img, **kwargs)
-            
+    try:        
         # Run op's in chain
         op_chain = get_op_chain(img)
         _run_op_list(img, op_chain)   
@@ -67,7 +74,12 @@ def process(img, **kwargs):
     except RuntimeError, err:
         # Catch and log error
         mylog.error(str(err))
-        return False
+        
+        # Re-throw error if the user is not in the interactive shell
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
         return False
@@ -101,7 +113,7 @@ def load_pars(filename):
     The file must be a pickled opts dictionary.
 
     filename - name of options file to load.
-    Returns None if no file can be loaded successfully.
+    Returns None (and original error) if no file can be loaded successfully.
     """
     from image import Image
     import mylogger 
@@ -113,7 +125,7 @@ def load_pars(filename):
     # First, check if input is a dictionary
     if isinstance(filename, dict):
         timg = Image(filename)
-        return timg
+        return timg, None
     else:
         try:
             pkl_file = open(filename, 'rb')
@@ -121,9 +133,9 @@ def load_pars(filename):
             pkl_file.close()
             timg = Image(pars)
             print "--> Loaded parameters from file '" + filename + "'."
-            return timg
-        except:
-            return None
+            return timg, None
+        except Exception, err:
+            return None, err
         
 def save_pars(img, savefile=None, quiet=False):
     """Save parameters to a file.
@@ -205,7 +217,7 @@ def set_pars(img, **kwargs):
         if chk_key == []:
             raise RuntimeError("Input parameter '" + key + "' not recognized.")
         if len(chk_key) > 1 and key not in opts:
-            raise RuntimeError("Input parameter '" + key + "' matches to more than one"\
+            raise RuntimeError("Input parameter '" + key + "' matches to more than one "\
                          "possible parameter:\n " + "\n ".join(chk_key))
         if key in opts:
             full_key.append(key)

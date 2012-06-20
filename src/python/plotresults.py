@@ -290,10 +290,11 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                                     e.isl_id = g.island_id
                                     e.tflux = g.total_flux
                                     e.pflux = g.peak_flux
-                island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
-                isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color, 
+                if len(img.islands) > 0:
+                    island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
+                    isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color, 
                                     transOffset=ax.transData, sizes=(10.0,))
-                ax.add_collection(isl_borders)
+                    ax.add_collection(isl_borders)
                 
                 if hasattr(img, 'gaussians'):
                     for atrg in img.gaussians:

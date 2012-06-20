@@ -22,7 +22,8 @@ import inspect
 # start-up banner. However, the parameter list will fill the entire available
 # terminal width to consume as few vertical lines as possible.
 global _img
-_img = Image({'filename':'', 'output_all':False})
+_img = Image({'filename':''})
+_img._is_interactive_shell = True
 T = True
 F = False
 true = True
@@ -232,7 +233,7 @@ def _set_pars_from_prompt():
         orig_opt_val = opts[k]
         f_dict[k] = orig_opt_val
         print '\033[31;1mERROR\033[0m: ' + str(err) + \
-              ' Resetting to previous value.'
+              '\nResetting to previous value.'
         return False
 
     
@@ -663,8 +664,7 @@ def _opts_completer(self, event):
 # asking them to update.
 from lofar.bdsm._version import __version__, __revision__, changelog
 
-# Query the STRW FTP server. Should we do this only if last entry in changelog
-# is > 1 month old?
+# Query the STRW FTP server. 
 # Check whether called from the LOFAR CEPI/II. If so, skip check.
 import os
 aps_local_val = os.environ.get('APS_LOCAL')
