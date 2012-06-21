@@ -36,6 +36,10 @@ class Op_gaul2srl(Op):
         #  src_index is source number, starting from 0
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gaul2Srl")
         mylogger.userinfo(mylog, 'Grouping Gaussians into sources')
+        img.aperture = img.opts.aperture
+        if img.aperture != None and img.aperture <= 0.0:
+            mylog.warn('Specified aperture is <= 0. Skipping aperture fluxes.')            
+            img.aperture = None
 
         src_index = -1
         sources = []
@@ -81,10 +85,7 @@ class Op_gaul2srl(Op):
         ngaus = 1
         island_id = g.island_id
         gaussians = list([g])
-        if img.opts.aperture != None:
-            aper_flux = func.get_aperture_flux(img, g.centre_pix, img.opts.aperture)
-        else:
-            aper_flux = [0.0, 0.0]
+        aper_flux = func.ch0_aperture_flux(img, g.centre_pix, img.aperture)
 
         source_prop = list([code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid, \
              posn_sky_max, size_sky, deconv_size_sky, bbox, ngaus, island_id, gaussians])
@@ -382,12 +383,8 @@ class Op_gaul2srl(Op):
         sraE, sdecE = (mompara1E*sqrt(cdeltsq), mompara2E*sqrt(cdeltsq))
         
         # Find aperture flux
-        if img.opts.aperture != None:
-            aper_flux, aper_fluxE = func.get_aperture_flux(img, [mompara[1]+delc[0], 
-                                    mompara[2]+delc[1]], img.opts.aperture)
-        else:
-            aper_flux = 0.0
-            aper_fluxE = 0.0
+        aper_flux, aper_fluxE = func.ch0_aperture_flux(img, [mompara[1]+delc[0], 
+                                    mompara[2]+delc[1]], img.aperture)
         
         isl_id = isl.island_id
         source_prop = list(['M', [tot, totE], [s_peak, isl.rms], [maxpeak, isl.rms], 
@@ -509,6 +506,8 @@ class Source(object):
                               'deg'])
     rms_isl             = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
     mean_isl            = Float(doc="Island mean Jy/beam", colname='Isl_mean', units='Jy/beam')
+    total_flux_isl      = Float(doc="Island total flux from sum of pixels", colname='Isl_Total_flux', units='Jy')
+    total_flux_islE     = Float(doc="Error on island total flux from sum of pixels", colname='E_Isl_Total_flux', units='Jy')
     gresid_rms          = Float(doc="Island rms in Gaussian residual image Jy/beam", 
                                 colname='Resid_Isl_rms', units='Jy/beam')
     gresid_mean         = Float(doc="Island mean in Gaussian residual image Jy/beam", 
@@ -527,7 +526,7 @@ class Source(object):
         code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid, \
                      posn_sky_max, size_sky, deconv_size_sky, bbox, ngaus, island_id, gaussians = sourceprop
         self.code = code
-        self.total_flux, self.total_fluxE = total_flux 
+        self.total_flux, self.total_fluxE = total_flux
         self.peak_flux_centroid, self.peak_flux_centroidE = peak_flux_centroid 
         self.peak_flux_max, self.peak_flux_maxE = peak_flux_max 
         self.posn_sky_centroid, self.posn_sky_centroidE = posn_sky_centroid 
@@ -540,6 +539,9 @@ class Source(object):
         self.gaussians = gaussians
         self.rms_isl = img.islands[island_id].rms
         self.mean_isl = img.islands[island_id].mean
+        self.total_flux_isl = img.islands[island_id].total_flux
+        self.total_flux_islE = img.islands[island_id].total_fluxE
+        self.mean_isl = img.islands[island_id].mean        
         self.jlevel = img.j
         self.aperture_flux, self.aperture_fluxE =  aper_flux
          

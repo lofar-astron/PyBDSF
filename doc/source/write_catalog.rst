@@ -114,6 +114,14 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_DEC:** the 1-:math:`\sigma` error on the declination of the source, in degrees
 
+* **RA_max:** the J2000 right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
+
+* **E_RA_max:** the 1-:math:`\sigma` error on the right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
+
+* **DEC_max:** the J2000 declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
+
+* **E_DEC_max:** the 1-:math:`\sigma` error on the declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
+
 * **Total_flux:** the total, integrated Stokes I flux density of the source at the reference frequency, in Jy
 
 * **E_Total_flux:** the 1-:math:`\sigma` error on the total flux density of the source, in Jy
@@ -122,13 +130,9 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_Peak_flux:** the 1-:math:`\sigma` error on the peak flux density per beam of the source, in Jy/beam
 
-* **RA_max:** the J2000 right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
+* **Aperture_flux:** the total Stokes I flux density of the source within the specified aperture, in Jy (``'srl'`` catalogs only)
 
-* **E_RA_max:** the 1-:math:`\sigma` error on the right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
-
-* **DEC_max:** the J2000 declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
-
-* **E_DEC_max:** the 1-:math:`\sigma` error on the declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
+* **E_Aperture_flux:** the 1-:math:`\sigma` error on the total flux density of the source within the specified aperture, in Jy (``'srl'`` catalogs only)
 
 * **Xposn:** the x image coordinate of the source, in pixels
 
@@ -169,6 +173,10 @@ The information included in the Gaussian and source catalogs varies by format an
 * **DC_PA:** the position angle of the deconvolved major axis of the source measured east of north, in degrees
 
 * **E_DC_PA:** the 1-:math:`\sigma` error on the position angle of the deconvolved major axis of the source, in degrees
+
+* **Isl_Total_flux:** the total, integrated Stokes I flux density of the island in which the source is located, in Jy. This value is calculated from the sum of all non-masked pixels in the island with values above ``thresh_isl``
+
+* **E_Isl_Total_flux:** the 1-:math:`\sigma` error on the total flux density of the island in which the source is located, in Jy
 
 * **Isl_rms:** the average background rms value of the island, in Jy/beam
 

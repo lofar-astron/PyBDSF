@@ -172,7 +172,7 @@ class Op_islands(Op):
             isl_maxposn = tuple(N.array(N.unravel_index(N.argmax(image[s]), image[s].shape))+\
                           N.array((s[0].start, s[1].start)))
             if (isl_size >= minsize) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
-                isl = Island(image, mask, mean, rms, labels, s, idx)
+                isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea)
                 res.append(isl)
                 pyrank[isl.bbox] += N.invert(isl.mask_active)*idx / idx
 
@@ -214,6 +214,8 @@ class Island(object):
     size_active = Int(doc="Number of active pixels in the island")
     mean        = Float(doc="Average mean value")
     rms         = Float(doc="Average rms")
+    total_flux  = Float(doc="Total flux from sum of pixels in island")
+    total_fluxE  = Float(doc="Error on total flux from sum of pixels in island")
     max_value   = Float(doc="Maximum value in island")
     island_id   = Int(doc="Island id, starting from 0", colname='Isl_id')
     gresid_rms  = Float(doc="Rms of residual image of island")
@@ -222,7 +224,7 @@ class Island(object):
     convex_def  = Float(doc="Convex deficiency, with first order correction for edge effect")
     islmean     = Float(doc="a constant value to subtract from image before fitting")
 
-    def __init__(self, img, mask, mean, rms, labels, bbox, idx):
+    def __init__(self, img, mask, mean, rms, labels, bbox, idx, beamarea):
         """Create Island instance.
 
         Parameters:
@@ -271,6 +273,9 @@ class Island(object):
         bbox_mean_im = mean[bbox]
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
         self.mean  = bbox_mean_im[in_bbox_and_unmasked].mean()
+        self.total_flux = N.nansum(self.image[in_bbox_and_unmasked])/beamarea
+        pixels_in_isl = N.sum(~N.isnan(self.image[self.mask_active])) # number of unmasked pixels assigned to current island
+        self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
         self.border = self.get_border()
 
     ### do map etc in case of ndim image
@@ -283,7 +288,7 @@ class Island(object):
     def copy(self, img):
         mask, mean, rms = img.mask, img.mean, img.rms
         image = img.ch0; labels = img.island_labels; bbox = self.oldbbox; idx = self.oldidx
-        return Island(image, mask, mean, rms, labels, bbox, idx)
+        return Island(image, mask, mean, rms, labels, bbox, idx, img.pixel_beamarea)
 
     def get_border(self):
         """ From all valid island pixels, generate the border."""

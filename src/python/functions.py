@@ -992,6 +992,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     """ Reads data and header from indir/filename using either pyfits or pyrap depending on
          img.use_io = 'fits'/'rap' """
     import mylogger
+    import os
     import numpy as N
     
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
@@ -1001,19 +1002,26 @@ def read_image_from_file(filename, img, indir, quiet=False):
         prefix = indir + '/'
     image_file = prefix + filename
     
+    # Check that file exists
+    if not os.path.isfile(image_file):
+        img._reason = 'File does not exist'
+        return None
+
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
             import pyfits                
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            except IOError:
+            except IOError, err:
+                img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
         if img.use_io == 'rap':
             import pyrap.images as pim
             try:
                 inputimage = pim.image(image_file)
-            except IOError:
+            except IOError, err:
+                img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
     else:
         # Simple check of whether pyrap and pyfits are available
@@ -1026,15 +1034,18 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 has_pyfits = True
             else:
                 has_pyfits = False
-        except ImportError:
+                e_pyfits = 'PyFITS version < 2.2'
+        except ImportError, err:
             has_pyfits = False
+            e_pyfits = str(err)
         try:
             import pyrap.images as pim
             has_pyrap = True
-        except ImportError:
+        except ImportError, err:
             has_pyrap = False
+            e_pyrap = str(err)
         if not has_pyrap and not has_pyfits:
-            raise RuntimeError("Neither Pyfits (version 2.2 or greater) nor Pyrap is available. Image cannot be read.")          
+            raise RuntimeError("Neither PyFITS (version 2.2 or greater) nor Pyrap is available. Image cannot be read.\nOriginal errors: \n {0}\n {1}".format(e_pyfits, e_pyrap))
 
         # First assume image is a fits file, and use pyfits to open it (if
         # available). If that fails, try to use pyrap if available.
@@ -1046,22 +1057,26 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 img.use_io = 'fits'
             else:
                 reason = 2 # Pyfits unavailable
-                raise IOError
-        except IOError:
+                raise IOError("PyFITS unavailable")
+        except IOError, err:
+            e_pyfits = str(err)
             if reason == 0:
                 reason = 1 # Pyfits available but cannot read file
             if has_pyrap:
                 try:
                     inputimage = pim.image(image_file)
                     img.use_io = 'rap'
-                except IOError:
+                except IOError, err:
+                    e_pyrap = str(err)
                     failed_read = True
                     img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
             else:
                 failed_read = True
+                e_pyrap = "Pyrap unavailable"
                 if reason == 1:
                     img._reason = 'Problem reading file.'
         if failed_read:
+            img._reason += '\nOriginal errors: {0}\n {1}'.format(e_pyfits, e_pyrap)
             return None
 
     # Now that image has been read in successfully, get data and header
@@ -1497,14 +1512,17 @@ class NullDevice():
     def write(self, s):
         pass
 
-def get_aperture_flux(img, posn_pix, aperture_pix):
+def ch0_aperture_flux(img, posn_pix, aperture_pix):
     """Measure ch0 flux inside radius aperture_pix pixels centered on posn_pix.
     
     Returns [flux, fluxE]
     """
     import numpy as N
     
-    # Make a subimage and mask
+    if aperture_pix == None:
+        return [0.0, 0.0]
+        
+    # Make ch0 and rms subimages
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
         xlo = 0
@@ -1520,20 +1538,63 @@ def get_aperture_flux(img, posn_pix, aperture_pix):
         
     aper_im = img.ch0[xlo:xhi, ylo:yhi]
     aper_rms = img.rms[xlo:xhi, ylo:yhi]
-    dist_mask = N.zeros(aper_im.shape)
+    posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
+    aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, img.pixel_beamarea)
+    return aper_flux
 
-    for i in range(aper_im.shape[0]):
-        for j in range(aper_im.shape[1]):
-            dist_mask[i, j] = N.sqrt( (i + xlo - posn_pix[0])**2 + (j + ylo - posn_pix[1])**2 )
-    aper_mask = N.where(dist_mask < aperture_pix)
-    aper_flux = N.nansum(aper_im[aper_mask])/img.pixel_beamarea # Jy
+def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
+    """Returns aperture flux and error"""
+    import numpy as N
+        
+    dist_mask = generate_aperture(aper_im.shape[1], aper_im.shape[0], posn_pix[1], posn_pix[0], aperture_pix)
+    aper_mask = N.where(dist_mask)
+    if N.size(aper_mask) == 0:
+        return [0.0, 0.0]
+    aper_flux = N.nansum(aper_im[aper_mask])/beamarea # Jy
     pixels_in_source = N.sum(~N.isnan(aper_im[aper_mask])) # number of unmasked pixels assigned to current source
-    aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/img.pixel_beamarea) # Jy
-    
+    aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
     return [aper_flux, aper_fluxE]
 
+def generate_aperture(ysize, xsize, ycenter, xcenter, radius):
+    """Makes a mask for a circular aperture"""
+    import numpy
+    
+    x, y = numpy.mgrid[0:ysize,0:xsize]
+    return ((x - ycenter)**2 + (y - xcenter)**2 <= radius**2) * 1
 
-
-
-
+def getTerminalSize():
+    """
+    returns (lines:int, cols:int)
+    """
+    import os, struct
+    def ioctl_GWINSZ(fd):
+        import fcntl, termios
+        return struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
+    # try stdin, stdout, stderr
+    for fd in (0, 1, 2):
+        try:
+            return ioctl_GWINSZ(fd)
+        except:
+            pass
+    # try os.ctermid()
+    try:
+        fd = os.open(os.ctermid(), os.O_RDONLY)
+        try:
+            return ioctl_GWINSZ(fd)
+        finally:
+            os.close(fd)
+    except:
+        pass
+    # try `stty size`
+    try:
+        return tuple(int(x) for x in os.popen("stty size", "r").read().split())
+    except:
+        pass
+    # try environment variables
+    try:
+        return tuple(int(os.getenv(var)) for var in ("LINES", "COLUMNS"))
+    except:
+        pass
+    # Give up. return 0.
+    return (0, 0)            
 

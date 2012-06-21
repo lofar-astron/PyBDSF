@@ -48,7 +48,14 @@ order:
    stored. Errors on each of the fitted parameters are computed using the
    formulae in Condon (1997) [#f1]_.
    
-#. Groups nearby Gaussians within an island into sources. See :ref:`grouping` for details.
+#. Groups nearby Gaussians within an island into sources. See :ref:`grouping`
+   for details. Fluxes for the grouped Gaussians are summed to obtain the
+   total flux of the source (the uncertainty is calculated by summing the
+   Gaussian uncertainties in quadrature). The source position is set to be its
+   centroid (the position of the maximum of the source is also calculated and
+   output). The total source size is measured using moment analysis (see
+   http://en.wikipedia.org/wiki/Image_moment for a nice overview of moment
+   analysis).
 
 #. Continues with further processing, if the user has specified that one or more of the following modules be used:
 
@@ -304,7 +311,7 @@ The advanced options are:
 .. parsed-literal::
 
     advanced_opts ......... True : Show advanced options
-      :term:`aperture` ............ 10.0 : Radius of aperture in pixels inside which aperture
+      :term:`aperture` ............ None : Radius of aperture in pixels inside which aperture
                                    fluxes are measured for each source. None => no aperture 
                                    fluxes measured
       :term:`blank_zeros` ........ False : Blank zeros in the image                    
