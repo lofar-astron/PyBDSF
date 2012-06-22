@@ -115,7 +115,7 @@ class Op_readimage(Op):
                 img.opts.opdir_overwrite = 'append'
                 mylog.info('Appending output files in directory '+basedir)
             img.basedir = basedir + '/'
-            if img.opts.solnname != None: img.basedir += img.opts.solnname + '__'
+            if img.opts.solnname != None: img.basedir += img.opts.solnname + '_'
             img.basedir += time.strftime("%d%b%Y_%H.%M.%S")
 
             if os.path.isfile(basedir): os.system("rm -fr "+basedir)
@@ -145,12 +145,15 @@ class Op_readimage(Op):
         try:
             import wcslib
             img.use_wcs = 'wcslib'
-        except ImportError:
+        except ImportError, ewcslib:
             try:
-                import pywcs    
+                import pywcs
                 img.use_wcs = 'pywcs'
-            except ImportError:
-                raise RuntimeError('Either WCSLIB or PyWCS is required.')
+            except ImportError, e:
+                # Expose original exception details to outside world
+                raise RuntimeError(
+                    "Either WCSLIB or PyWCS is required."
+                    " Original error: \n {0}\n {1}".format(str(e_wcslib), str(e)))
         from math import pi
 
         hdr = img.header

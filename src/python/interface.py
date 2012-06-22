@@ -21,9 +21,6 @@ def process(img, **kwargs):
     from image import Image
     import mylogger 
 
-    pars = img.opts.to_dict()
-    img._prev_opts = pars
-    
     # First, reset img to initial state (in case img is being reprocessed)
     if hasattr(img, 'use_io'): del img.use_io
     if hasattr(img, 'sources'): del img.sources
@@ -44,6 +41,20 @@ def process(img, **kwargs):
     if hasattr(img, 'rms_mask'): del img.rms_mask
     if hasattr(img, 'completed_Ops'): del img.completed_Ops
 
+    try:
+        # set options if given
+        if len(kwargs) > 0:
+            set_pars(img, **kwargs)
+    except RuntimeError, err:
+        # Catch and log error
+        mylog.error(str(err))
+        
+        # Re-throw error if the user is not in the interactive shell
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
+
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
     log = img.opts.filename + '.pybdsm.log'
@@ -55,11 +66,7 @@ def process(img, **kwargs):
     mylog.info("Running PyBDSM on "+img.opts.filename)
 
     # Run all the op's
-    try:
-        # set options if given
-        if len(kwargs) > 0:
-            set_pars(img, **kwargs)
-            
+    try:        
         # Run op's in chain
         op_chain = get_op_chain(img)
         _run_op_list(img, op_chain)   
@@ -67,7 +74,12 @@ def process(img, **kwargs):
     except RuntimeError, err:
         # Catch and log error
         mylog.error(str(err))
-        return False
+        
+        # Re-throw error if the user is not in the interactive shell
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
         return False
@@ -101,7 +113,7 @@ def load_pars(filename):
     The file must be a pickled opts dictionary.
 
     filename - name of options file to load.
-    Returns None if no file can be loaded successfully.
+    Returns None (and original error) if no file can be loaded successfully.
     """
     from image import Image
     import mylogger 
@@ -113,7 +125,7 @@ def load_pars(filename):
     # First, check if input is a dictionary
     if isinstance(filename, dict):
         timg = Image(filename)
-        return timg
+        return timg, None
     else:
         try:
             pkl_file = open(filename, 'rb')
@@ -121,9 +133,9 @@ def load_pars(filename):
             pkl_file.close()
             timg = Image(pars)
             print "--> Loaded parameters from file '" + filename + "'."
-            return timg
-        except:
-            return None
+            return timg, None
+        except Exception, err:
+            return None, err
         
 def save_pars(img, savefile=None, quiet=False):
     """Save parameters to a file.
@@ -205,7 +217,7 @@ def set_pars(img, **kwargs):
         if chk_key == []:
             raise RuntimeError("Input parameter '" + key + "' not recognized.")
         if len(chk_key) > 1 and key not in opts:
-            raise RuntimeError("Input parameter '" + key + "' matches to more than one"\
+            raise RuntimeError("Input parameter '" + key + "' matches to more than one "\
                          "possible parameter:\n " + "\n ".join(chk_key))
         if key in opts:
             full_key.append(key)
@@ -283,8 +295,9 @@ def print_opts(grouped_opts_list, img, banner=None):
     """
     from image import Image
     import os
+    import functions as func
 
-    termx, termy = getTerminalSize()
+    termx, termy = func.getTerminalSize()
     minwidth = 28 # minimum width for parameter names and values
     # Define colors for output
     dc = '\033[1;34m' # Blue: non-default option text color
@@ -415,32 +428,6 @@ def print_opts(grouped_opts_list, img, banner=None):
                             print fmt % (parvalstr.ljust(minwidth-2), dt.ljust(44))
                         else:
                             print nc + spcstr + '   %44s' % dt.ljust(44)
-
-
-def getTerminalSize():
-    """Returns the x and y size of the terminal."""
-    def ioctl_GWINSZ(fd):
-        try:
-            import fcntl, termios, struct, os
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-        '1234'))
-        except:
-            return None
-        return cr
-    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-    if not cr:
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = ioctl_GWINSZ(fd)
-            os.close(fd)
-        except:
-            pass
-    if not cr:
-        try:
-            cr = (env['LINES'], env['COLUMNS'])
-        except:
-            cr = (25, 80)
-    return int(cr[1]), int(cr[0])
 
 
 def wrap(text, width=80):
@@ -679,6 +666,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "ds9"   - ds9 region file
         "star"  - AIPS STAR file (Gaussian list only)
         "kvis"  - kvis file (Gaussian list only)
+        "sagecal" - Sagecal file (Gaussian list only)
     srcroot - root for source and patch names (BBS/ds9 only);
               if None, the srcroot is chosen automatically
     bbs_patches - type of patches to use:
@@ -711,7 +699,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     if isinstance(patch, str):
         patch = patch.lower()
     if (format in ['fits', 'ascii', 'bbs', 'ds9', 'star', 
-                   'kvis']) == False:
+                   'kvis', 'sagecal']) == False:
         print '\033[91mERROR\033[0m: format must be "fits", '\
             '"ascii", "ds9", "star", "kvis",  or "bbs"'
         return False
@@ -764,6 +752,21 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return False
         else:
             print '--> Wrote BBS sky model ' + repr(filename)
+            return True
+    if format == 'sagecal':
+        if catalog_type != 'gaul':
+            print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with Sagecal files."
+            return False
+        filename = output.write_lsm_gaul(img, filename=filename,
+                                            srcroot=srcroot,
+                                            patch=patch,
+                                            sort_by='flux',
+                                            clobber=clobber)
+        if filename == None:
+            print '\033[91mERROR\033[0m: File exists and clobber = False.'
+            return False
+        else:
+            print '--> Wrote Sagecal lsm file ' + repr(filename)
             return True
     if format == 'ds9':
         filename = output.write_ds9_list(img, filename=filename,

@@ -9,13 +9,13 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.1'
+__version__ = '1.2'
 
-# Store svn Revision number. For this to work, one also
-# needs to do: 
+# Store svn Revision number. For this to work, one also needs to do: 
+#
 # "svn propset svn:keywords Revision CEP/PyBDSM/src/python/_version.py"
-# "svn propset svn:keywords Revision src/Anaamika/implement/PyBDSM/python/_version.py" 
-# from the LOFARSOFT directory. Then, the revision number is
+#
+# from the LOFAR directory. Then, the revision number is
 # added automatically with each update to this file. The line below does not
 # need to be edited by hand.
 __revision__ = filter(str.isdigit, "$Revision$")
@@ -26,6 +26,26 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+    
+    2011/06/19 - Changed exception handling to raise exceptions when
+        the interactive shell is not being used. Fixed bug that
+        caused a crash when using show_fit() when no islands were
+        found. 
+
+    2011/06/15 - Added Sagecal output format for Gaussian catalogs.
+
+    2012/06/14 - Added check for newer versions of the PyBDSM 
+        software tar.gz file available on ftp.strw.leidenuniv.nl.
+
+    2012/06/13 - Added total island flux (from sum of pixels) to 
+        "gaul" and "srl" catalogs. 
+    
+    2012/06/06 - Version 1.2
+    
+    2012/06/06 - Added option to calculate fluxes within a specified 
+        aperture radius in pixels (set with the "aperture" option). 
+        Aperture fluxes, if measured, are output in the "srl" catalogs.
+        Changed code that determines terminal width to be more robust.
     
     2012/05/07 - Removed dependencies on matplotlib -- if matplotlib is
     	not available, plotting is disabled. Corrected inconsistencies,

@@ -142,7 +142,7 @@ class Op_psf_vary(Op):
         # For each tile, calculate the weighted averaged psf image. Also for all the sources in the image.
         cdelt = list(img.wcs_obj.acdelt[0:2])
         factor=3.
-        psfimages, psfcoords, totpsfimage, psfratio = self.psf_in_tile(image, img.beam, g_gauls, \
+        psfimages, psfcoords, totpsfimage, psfratio, psfratio_aper = self.psf_in_tile(image, img.beam, g_gauls, \
                    cdelt, factor, snrcutstack, volrank, tile_prop, plot, img)
         npsf = len(psfimages)
 
@@ -195,7 +195,7 @@ class Op_psf_vary(Op):
                 mylog.warning('Insufficient number of tiles to do interpolation of PSF variation')
                 return
             else:
-                # Fit stacked PSFs with Gaussians
+                # Fit stacked PSFs with Gaussians and measure aperture fluxes
                 bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
                 psf_maj = N.zeros(npsf)
                 psf_min = N.zeros(npsf)
@@ -213,7 +213,7 @@ class Op_psf_vary(Op):
                     ### first extent is major
                     if para[3] < para[4]:
                         para[3:5] = para[4:2:-1]
-                        para[5] += 90    
+                        para[5] += 90
                     ### clip position angle
                     para[5] = divmod(para[5], 180)[1]
 
@@ -223,6 +223,7 @@ class Op_psf_vary(Op):
                     while posang >= 180.0:
                         posang -= 180.0
                     psf_pa[i] = posang
+                    
                     if img.opts.quiet == False:
                         bar.increment()
     
@@ -231,6 +232,7 @@ class Op_psf_vary(Op):
                 psf_min_int = self.interp_prop(psf_min, psfcoords, image.shape)
                 psf_pa_int = self.interp_prop(psf_pa, psfcoords, image.shape)
                 psf_ratio_int = self.interp_prop(psfratio, psfcoords, image.shape)
+                psf_ratio_aper_int = self.interp_prop(psfratio_aper, psfcoords, image.shape)
                 
                 # Blank with NaNs if needed
                 mask = img.mask
@@ -240,18 +242,21 @@ class Op_psf_vary(Op):
                     psf_min_int[pix_masked] = N.nan
                     psf_pa_int[pix_masked] = N.nan
                     psf_ratio_int[pix_masked] = N.nan
+                    psf_ratio_aper_int[pix_masked] = N.nan
 
                 # Store interpolated images
                 img.psf_vary_maj = psf_maj_int
                 img.psf_vary_min = psf_min_int
                 img.psf_vary_pa = psf_pa_int
                 img.psf_vary_ratio = psf_ratio_int
+                img.psf_vary_ratio_aper = psf_ratio_aper_int
     
                 if opts.output_all:
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', N.transpose(psf_maj_in)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', N.transpose(psf_min_in)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', N.transpose(psf_pa_in), img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', N.transpose(psf_ratio_in), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', N.transpose(psf_maj_int)*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', N.transpose(psf_min_int)*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', N.transpose(psf_pa_int), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', N.transpose(psf_ratio_int), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio_aper.fits', N.transpose(psf_ratio_aper_int), img, dir)
                 
                 # Loop through source and Gaussian lists and deconvolve the sizes using appropriate beam
                 bar2 = statusbar.StatusBar('Correcting deconvolved source sizes ..... : ', 0, img.nsrc)
@@ -784,6 +789,7 @@ class Op_psf_vary(Op):
         psfimages = []
         psfcoords = []
         psfratio = [] # ratio of peak flux to total flux
+        psfratio_aper = [] # ratio of peak flux to aperture flux
         srcpertile = N.zeros(ntile)
         snrpertile = N.zeros(ntile)
     
@@ -815,13 +821,24 @@ class Op_psf_vary(Op):
             psfimages.append(a)
             psfcoords.append([sum(N.asarray(t_gauls[2])*wts)/sum(wts), sum(N.asarray(t_gauls[3])*wts)/sum(wts)])
             
-            # Find peak/total flux ratio for sources in tile. t_gauls[0] is source_id
+            # Find peak/total flux ratio for sources in tile. If an aperture is given,
+            # use the aperture flux as well.
+            # t_gauls[0] is source_id
             src_ratio = []
             src_wts = []
+            src_ratio_aper = []
+            src_wts_aper = []
             for gt in tile_gauls:
                 src = img.sources[gt[0]]
+                if img.aperture != None:
+                    src_ratio_aper.append(src.peak_flux_max / src.aperture_flux)
+                    src_wts_aper.append(src.total_flux / src.aperture_fluxE)                
                 src_ratio.append(src.peak_flux_max / src.total_flux)
                 src_wts.append(src.total_flux / src.total_fluxE)
+            if img.aperture != None:
+                psfratio_aper.append(sum(N.asarray(src_ratio_aper)*src_wts_aper)/sum(src_wts_aper))
+            else:
+                psfratio_aper.append(0.0)
             psfratio.append(sum(N.asarray(src_ratio)*src_wts)/sum(src_wts))
 
         totpsfimage = psfimages[0]*snrpertile[0]
@@ -854,7 +871,7 @@ class Op_psf_vary(Op):
            pl.setp(a, xticks=[], yticks=[])
          pl.show()
          
-        return psfimages, psfcoords, totpsfimage, psfratio
+        return psfimages, psfcoords, totpsfimage, psfratio, psfratio_aper
     
     
 ##################################################################################################

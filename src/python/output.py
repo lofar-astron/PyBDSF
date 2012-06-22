@@ -229,6 +229,39 @@ def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
         f.write(s)
     f.close()
     return filename
+
+
+def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
+                   incl_primary=True, sort_by='flux',
+                   clobber=False):
+    """Writes Gaussian list to a Sagecal lsm sky model"""
+    import numpy as N
+    from const import fwsig
+    import mylogger
+    import os
+
+    mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
+    if int(img.equinox) != 2000 and int(img.equinox) != 1950:
+        mylog.warning('Equinox of input image is not J2000 or B1950. '\
+                          'Sky model may not be appropriate for Sagecal.')
+    if int(img.equinox) == 1950:
+        mylog.warning('Equinox of input image is B1950. Coordinates '\
+                          'will be precessed to J2000.')
+
+    outl, outn, patl = list_and_sort_gaussians(img, patch=patch,
+                                               root=srcroot, sort_by=sort_by)
+    outstr_list = make_lsm_str(img, outl, outn)
+
+    if filename == None:    
+        filename = img.imagename + '.lsm'
+    if os.path.exists(filename) and clobber == False:
+        return None
+    mylog.info('Writing ' + filename)
+    f = open(filename, 'w')
+    for s in outstr_list:
+        f.write(s)
+    f.close()
+    return filename
     
 
 def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
@@ -336,11 +369,16 @@ def write_fits_list(img, filename=None, sort_by='indx', objtype='gaul',
                 nmax = isl.shapelet_nmax
         nmax += 1
     
+    if img.opts.aperture != None:
+        incl_aper = True
+    else:
+        incl_aper = False
     cvals, cnames, cformats, cunits = make_output_columns(outl[0][0], fits=True,
                                                           objtype=objtype, 
                                                           incl_spin=img.opts.spectralindex_do,
                                                           incl_chan=img.opts.incl_chan,
                                                           incl_pol=img.opts.polarisation_do,
+                                                          incl_aper=incl_aper,
                                                           nmax=nmax, nchan=img.nchan)
     out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax)
     col_list = []
@@ -515,6 +553,59 @@ def make_bbs_str(img, glist, gnames, patchnames):
                                  '[' + specin + ']\n') 
     return outstr_list
 
+def make_lsm_str(img, glist, gnames):
+    """Makes a list of string entries for a BBS sky model."""
+    from output import ra2hhmmss
+    from output import dec2ddmmss
+    from const import fwsig
+    import numpy as N
+
+    outstr_list = []
+    freq = "%.5e" % img.cfreq
+    outstr_list.append("## LSM file\n### Name  | RA (hr,min,sec) | DEC (deg,min,sec) | I | Q | U | V | SI | RM | eX | eY | eP | freq0\n\n")
+    for gindx, g in enumerate(glist[0]):
+        src_name = gnames[0][gindx]
+        ra, dec = g.centre_sky
+        if img.equinox == 1950:
+            ra, dec = B1950toJ2000([ra, dec])
+        ra = ra2hhmmss(ra)
+        sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.3f" % (ra[2])).zfill(6)
+        dec = dec2ddmmss(dec)
+        decsign = ('-' if dec[3] < 0 else '+')
+        sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
+        size = g.size_sky #  degrees, in terms of FWHM
+        src_area = 1.1331*size[0]*size[1]*fwsig*fwsig*3600.0**2 # area of source in arcsec**2
+        peak = str("%.3e" % (g.total_flux/src_area)) # peak flux in Jy/arcsec**2
+        deconv = g.deconv_size_sky
+        if deconv[0] == 0.0  and deconv[1] == 0.0:
+            sname = 'P' + src_name
+            deconv[2] = 0.0
+        else:
+            sname = 'G' + src_name
+        deconv1 = str("%.5e" % (deconv[0]*N.pi/180.0/2.0)) 
+        deconv2 = str("%.5e" % (deconv[1]*N.pi/180.0/2.0)) 
+        deconv3 = str("%.5e" % (deconv[2]*N.pi/180.0/2.0)) 
+        deconvstr = deconv1 + ' ' + deconv2 + ' ' + deconv3
+        specin = '-0.8'
+        if hasattr(g, 'spec_indx'):
+            if g.spec_indx != None and N.isfinite(g.spec_indx):
+                specin = str("%.3e" % (g.spec_indx))
+        sep = ' '
+        if img.opts.polarisation_do:
+            Q_flux = str("%.3e" % (g.total_flux_Q/src_area))
+            U_flux = str("%.3e" % (g.total_flux_U/src_area))
+            V_flux = str("%.3e" % (g.total_flux_V/src_area))
+        else:
+            Q_flux = '0.0'
+            U_flux = '0.0'
+            V_flux = '0.0'
+        outstr_list.append(sname + sep + sra + sep +
+                               sdec + sep + peak + sep + Q_flux + sep +
+                               U_flux + sep + V_flux + sep +
+                               specin + sep + '0' + sep + deconvstr + sep + 
+                               freq + sep + '\n')
+    return outstr_list
+
 
 def make_ds9_str(img, glist, gnames, deconvolve=False):
     """Makes a list of string entries for a ds9 region file."""
@@ -578,12 +669,18 @@ def make_ascii_str(img, glist, objtype='gaul'):
     outstr_list.append('# Reference frequency of the detection ("ch0") image: %s Hz\n' % freq)
     outstr_list.append('# Equinox : %s \n\n' % img.equinox)
     val_list = []
+    if img.opts.aperture != None:
+        incl_aper = True
+    else:
+        incl_aper = False
+
     for i, g in enumerate(glist[0]):
         cvals, cnames, cformats, cunits = make_output_columns(g, fits=False, 
                                                               objtype=objtype, 
                                                               incl_spin=img.opts.spectralindex_do,
                                                               incl_chan=img.opts.incl_chan,
                                                               incl_pol=img.opts.polarisation_do,
+                                                              incl_aper=incl_aper,
                                                               nchan=img.nchan)
         cformats[-1] += "\n"
         if i == 0:
@@ -596,11 +693,16 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30):
     import functions as func
 
     out_list = []
+    if img.opts.aperture != None:
+        incl_aper = True
+    else:
+        incl_aper = False
     for g in glist[0]:
         cvals, ext1, ext2, ext3 = make_output_columns(g, fits=True, objtype=objtype, 
                                                       incl_spin=img.opts.spectralindex_do,
                                                       incl_chan=img.opts.incl_chan,
                                                       incl_pol=img.opts.polarisation_do,
+                                                      incl_aper=incl_aper,
                                                       nmax=nmax, nchan=img.nchan)
         out_list.append(cvals)
     out_list = func.trans_gaul(out_list)
@@ -805,7 +907,8 @@ def list_and_sort_gaussians(img, patch=None, root=None,
     return (outlist_sorted, outnames_sorted, patchnames_sorted)
 
 def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
-                        incl_chan=False, incl_pol=False, nmax=30, nchan=1):
+                        incl_chan=False, incl_pol=False, incl_aper=False, 
+                        nmax=30, nchan=1):
     """Returns a list of column names, formats, and units for Gaussian, Source, or Shapelet"""
     import numpy as N
     
@@ -817,17 +920,24 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'total_fluxE', 'peak_flux', 'peak_fluxE',
                  'centre_pix', 'centre_pixE', 'size_sky', 'size_skyE', 
                  'deconv_size_sky',
-                 'deconv_size_skyE', 'rms', 'mean', 'gresid_rms', 'gresid_mean',
+                 'deconv_size_skyE', 'total_flux_isl', 'total_flux_islE', 'rms', 
+                 'mean', 'gresid_rms', 'gresid_mean',
                  'code']
     elif objtype == 'srl':
+        if incl_aper:
+            infix = ['aperture_flux', 'aperture_fluxE']
+        else:
+            infix = []
         names = ['source_id', 'island_id', 'posn_sky_centroid', 
                  'posn_sky_centroidE', 'total_flux', 
                  'total_fluxE', 
-                 'peak_flux_max', 'peak_flux_maxE', 'posn_sky_max', 'posn_sky_maxE', 
+                 'peak_flux_max', 'peak_flux_maxE'] + infix + \
+                 ['posn_sky_max', 'posn_sky_maxE', 
                  'posn_pix_centroid', 'posn_pix_centroidE', 'posn_pix_max', 
                  'posn_pix_maxE',
                  'size_sky', 'size_skyE', 'deconv_size_sky',
-                 'deconv_size_skyE', 'rms_isl', 'mean_isl', 'gresid_rms', 
+                 'deconv_size_skyE', 'total_flux_isl', 'total_flux_islE', 
+                 'rms_isl', 'mean_isl', 'gresid_rms', 
                  'gresid_mean', 'code']
     elif objtype == 'shap':
         names = ['island_id', 'posn_sky_centroid', 

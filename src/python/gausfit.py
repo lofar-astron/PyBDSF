@@ -820,10 +820,12 @@ class Gaussian(object):
     size_pixE  = List(Float(), doc="Error on shape of the gaussian FWHM, pixel units")
     rms        = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
     mean       = Float(doc="Island mean Jy/beam", colname='Isl_mean', units='Jy/beam')
-    gresid_rms = Float(doc="Island rms in Gaussian residual image Jy/beam", colname='Resid_Isl_rms', units='Jy/beam')
-    gresid_mean= Float(doc="Island mean in Gaussian residual image Jy/beam", colname='Resid_Isl_mean', units='Jy/beam')
-    sresid_rms = Float(doc="Island rms in Shapelet residual image Jy/beam", colname='Resid_Isl_rms', units='Jy/beam')
-    sresid_mean= Float(doc="Island mean in Shapelet residual image Jy/beam", colname='Resid_Isl_mean', units='Jy/beam')
+    total_flux_isl = Float(doc="Island total flux from sum of pixels", colname='Isl_Total_flux', units='Jy')
+    total_flux_islE = Float(doc="Error on island total flux from sum of pixels", colname='E_Isl_Total_flux', units='Jy')
+    gresid_rms = Float(doc="Island rms in Gaussian residual image", colname='Resid_Isl_rms', units='Jy/beam')
+    gresid_mean= Float(doc="Island mean in Gaussian residual image", colname='Resid_Isl_mean', units='Jy/beam')
+    sresid_rms = Float(doc="Island rms in Shapelet residual image", colname='Resid_Isl_rms', units='Jy/beam')
+    sresid_mean= Float(doc="Island mean in Shapelet residual image", colname='Resid_Isl_mean', units='Jy/beam')
     jlevel     = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
 
     def __init__(self, img, gaussian, isl_idx, g_idx, flag=0):
@@ -859,8 +861,8 @@ class Gaussian(object):
             # undistorted beam.
             size = img.pixel_beam
         size = func.corrected_size(size)  # gives fwhm and P.A.
-        self.size_pix = size
-        self.size_sky = img.pix2beam(size)
+        self.size_pix = size # FWHM
+        self.size_sky = img.pix2beam(size) # FWHM in degrees
         
         # Check if this is a wavelet image. If so, use orig_pixel_beam
         # for flux calculation, as pixel_beam has been altered to match 
@@ -889,6 +891,8 @@ class Gaussian(object):
         self.size_skyE = img.pix2beam(errors[3:6])
         self.rms = img.islands[isl_idx].rms
         self.mean = img.islands[isl_idx].mean
+        self.total_flux_isl = img.islands[isl_idx].total_flux
+        self.total_flux_islE = img.islands[isl_idx].total_fluxE
 
         # func.deconv, based on AIPS DECONV.FOR, gives a lot of
         # 1-D Gaussians. The Miriad algorithm in func.deconv2 does

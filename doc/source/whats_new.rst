@@ -4,6 +4,18 @@
 What's New
 **********
 
+Version 1.2 (2012/06/06):
+        
+    * Added option to output flux densities for every channel found by the spectral index module. 
+    
+    * Added option to spectral index module to allow use of flux densities that do not meet the desired SNR.
+
+    * Implemented an adaptive scaling scheme for the ``rms_box`` parameter that shrinks the box size near bright sources and expands it far from them (enabled with the ``adaptive_rms_box`` option when ``rms_box`` is None). This scheme generally results in improved rms and mean maps when both strong artifacts and extended sources are present.
+
+    *  Improved speed of Gaussian fitting to wavelet images.
+
+    * Added option to calculate fluxes within a specified aperture radius in pixels (set with the ``aperture`` option). Aperture fluxes, if measured, are output in the ``srl`` format catalogs.
+
 Version 1.1 (2012/03/28):
 
     * Tweaked settings that affect fitting of Gaussians to improve fitting in general.

@@ -43,7 +43,7 @@ peaks (higher than the pixel threshold) of emission inside the island (negative 
 directions). These peaks are CLEANed from the subimage assuming the theoretical beam. If
 the (unclipped) rms of the residual subimage is greater than the (clipped) rms in the region,
 the maximum pixel in the residue is greater than the threshold for this former rms, and is
-located atleast 0.5 beams (and :math:`\sqrt{5}` pixels) away from all previous peaks, then this residual
+located at least 0.5 beams (and :math:`\sqrt{5}` pixels) away from all previous peaks, then this residual
 peak is identified as a new one.
 
 .. _grouping:
@@ -52,8 +52,10 @@ Grouping of Gaussians into sources
 ----------------------------------
 Inside each island, groups of Gaussians are deemed to be a part of the same source if:
 
-    1. no pixel on the line joining the centers of any pair of Gaussians has a (Gaussian reconstructed) value less than the island threshold, and 
+    1. no pixel on the line joining the centers of any pair of Gaussians has a (Gaussian-reconstructed) value less than the island threshold, and 
     2. the centers are separated by a distance less than half the sum of their FWHMs along the line joining them. 
+
+Once the Gaussians that belong to a source are identified, fluxes for the grouped Gaussians are summed to obtain the total flux of the source. The uncertainty on the total flux is calculated by summing the uncertainties on the total fluxes of the individual Gaussians in quadrature. The source RA and Dec position is set to the source centroid determined from moment analysis (the position of the maximum of the source is also calculated). The total source size is also measured using moment analysis (see http://en.wikipedia.org/wiki/Image_moment for an overview of moment analysis).
 
 .. _colorcorrections:
 
