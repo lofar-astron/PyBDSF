@@ -1003,7 +1003,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     image_file = prefix + filename
     
     # Check that file exists
-    if not os.path.isfile(image_file):
+    if not os.path.exists(image_file):
         img._reason = 'File does not exist'
         return None
 
