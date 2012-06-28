@@ -327,20 +327,29 @@ class Op_rmsimage(Op):
                 rms[pix_masked] = N.nan
             img.mean = mean; img.rms  = rms
             if opts.savefits_rmsim or opts.output_all:
-              dir = img.basedir + '/background/'
-              if not os.path.exists(dir): os.mkdir(dir)
-              func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', N.transpose(rms), img, dir)
-              mylog.info('%s %s' % ('Writing ', dir+img.imagename+'.rmsd_I.fits'))
+              if img.waveletimage:
+                  resdir = img.basedir + '/wavelet/background/'
+              else:
+                  resdir = img.basedir + '/background/'
+              if not os.path.exists(resdir): os.mkdir(resdir)
+              func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', N.transpose(rms), img, resdir)
+              mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.rmsd_I.fits'))
             if opts.savefits_meanim or opts.output_all: 
-              dir = img.basedir + '/background/'
-              if not os.path.exists(dir): os.mkdir(dir)
-              func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', N.transpose(mean), img, dir)
-              mylog.info('%s %s' % ('Writing ', dir+img.imagename+'.mean_I.fits'))
+              if img.waveletimage:
+                  resdir = img.basedir + '/wavelet/background/'
+              else:
+                  resdir = img.basedir + '/background/'
+              if not os.path.exists(resdir): os.mkdir(resdir)
+              func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', N.transpose(mean), img, resdir)
+              mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.mean_I.fits'))
             if opts.savefits_normim or opts.output_all: 
-              dir = img.basedir + '/background/'
-              if not os.path.exists(dir): os.mkdir(dir)
-              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', N.transpose((img.ch0-mean)/rms), img, dir)
-              mylog.info('%s %s' % ('Writing ', dir+img.imagename+'.norm_I.fits'))
+              if img.waveletimage:
+                  resdir = img.basedir + '/wavelet/background/'
+              else:
+                  resdir = img.basedir + '/background/'
+              if not os.path.exists(resdir): os.mkdir(resdir)
+              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', N.transpose((img.ch0-mean)/rms), img, resdir)
+              mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
           else:
             img.mean_QUV.append(mean); img.rms_QUV.append(rms)
 

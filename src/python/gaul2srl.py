@@ -345,7 +345,8 @@ class Op_gaul2srl(Op):
             tot += g.total_flux
             totE_sq += g.total_fluxE**2
         totE = sqrt(totE_sq)
-        size_sky = [mompara[3]*sqrt(cdeltsq), mompara[4]*sqrt(cdeltsq), mompara[5]]
+        size_pix = [mompara[3], mompara[4], mompara[5]]
+        size_sky = img.pix2beam(size_pix)
         
         # Estimate errors using Monte Carlo technique
         nMC = 20

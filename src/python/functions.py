@@ -893,7 +893,7 @@ def gaussian_fcn(g, x1, x2):
     A = g.peak_flux
     C1, C2 = g.centre_pix
     S1, S2, Th = g.size_pix
-    S1 = S1/fwsig; S2 = S2/fwsig; Th = Th + 90.0
+    S1 = S1/fwsig; S2 = S2/fwsig; Th = Th + 90.0 # Define theta = 0 on x-axis
 
     th = radians(Th)
     cs = cos(th)
