@@ -50,8 +50,8 @@ class Op_wavelet_atrous(Op):
           bdir = img.basedir + '/wavelet/'
           if img.opts.output_all:
               os.mkdir(bdir)
-              os.mkdir(bdir + '/residuals/')
-              os.mkdir(bdir + '/models/')
+              os.mkdir(bdir + '/residual/')
+              os.mkdir(bdir + '/model/')
           dobdsm = img.opts.atrous_bdsm_do
           filter = {'tr':{'size':3, 'vec':[1. / 4, 1. / 2, 1. / 4], 'name':'Triangle'},
                     'b3':{'size':5, 'vec':[1. / 16, 1. / 4, 3. / 8, 1. / 4, 1. / 16], 'name':'B3 spline'}}
@@ -252,14 +252,11 @@ class Op_wavelet_atrous(Op):
                                        im_new.transpose(), img, bdir)
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.cJ.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.resid_wavelets.fits',
-                                       N.transpose(img.resid_wavelets), img, bdir)
+                                       N.transpose(img.ch0 - img.resid_gaus + img.resid_wavelets), img, bdir + '/residual/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.resid_wavelets.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.model_wavelets.fits',
-                                       N.transpose(img.resid_gaus - img.resid_wavelets), img, bdir)
+                                       N.transpose(img.resid_gaus - img.resid_wavelets), img, bdir + '/model/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
-              func.write_image_to_file(img.use_io, img.imagename + '.model_all.fits',
-                                       N.transpose(img.ch0 - img.resid_wavelets), img, bdir)
-              mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_all.fits'))
           img.completed_Ops.append('wavelet_atrous')
 
 

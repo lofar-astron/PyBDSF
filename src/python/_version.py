@@ -27,12 +27,20 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
     
-    2011/06/19 - Changed exception handling to raise exceptions when
+    2012/06/28 - Output now includes the residual image produced by
+        using only wavelet Gaussians (if any) when atrous_do=True and
+        output_all=True. Improved organization of files when 
+        output_all=True. Added logging of simple statistics (mean, 
+        std. dev, skew, and kurtosis) of the residual images.
+    
+    2012/06/22 - Included image rotation (if any) in beam definition.
+    
+    2012/06/19 - Changed exception handling to raise exceptions when
         the interactive shell is not being used. Fixed bug that
         caused a crash when using show_fit() when no islands were
         found. 
 
-    2011/06/15 - Added Sagecal output format for Gaussian catalogs.
+    2012/06/15 - Added Sagecal output format for Gaussian catalogs.
 
     2012/06/14 - Added check for newer versions of the PyBDSM 
         software tar.gz file available on ftp.strw.leidenuniv.nl.

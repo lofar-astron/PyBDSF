@@ -171,7 +171,7 @@ class Op_readimage(Op):
           if 'crota1' in hdr: 
             crota = [hdr['crota1'], hdr['crota2']]
           else:
-            crota = []
+            crota = [0.0, 0.0]
           if 'cunit1' in hdr: 
             cunit = [hdr['cunit1'], hdr['cunit2']]
           else:
@@ -190,7 +190,7 @@ class Op_readimage(Op):
           if wcs_dict.has_key('crota1'):
             crota = [wcs_dict.get('crota')[i] for i in iterlist]
           else:
-            crota = []
+            crota = [0.0, 0.0]
           if wcs_dict.has_key('cunit1'): 
             cunit = [wcs_dict.get('cunit')[i] for i in iterlist]
           else:
@@ -208,8 +208,7 @@ class Op_readimage(Op):
             t.cdelt = tuple(cdelt)
             t.acdelt = tuple(acdelt)
             t.ctype = tuple(ctype)
-            if crota != []:
-                t.crota = tuple(crota)
+            t.crota = tuple(crota)
             if cunit != []:
                 t.cunit = tuple(cunit)
             t.wcsset()
@@ -238,8 +237,7 @@ class Op_readimage(Op):
             t.wcs.crpix = crpix
             t.wcs.cdelt = cdelt
             t.wcs.ctype = ctype
-            if crota != []:
-                t.wcs.crota = crota
+            t.wcs.crota = crota
             if cunit != []:
                 t.wcs.cunit = cunit
 
@@ -249,8 +247,7 @@ class Op_readimage(Op):
             img.wcs_obj.crpix = crpix
             img.wcs_obj.cdelt = cdelt
             img.wcs_obj.ctype = ctype
-            if crota != []:
-                img.wcs_obj.crota = crota
+            img.wcs_obj.crota = crota
             if cunit != []:
                 img.wcs_obj.cunit = cunit
             
@@ -263,17 +260,21 @@ class Op_readimage(Op):
         from const import fwsig
         mylog = mylogger.logging.getLogger("PyBDSM.InitBeam")
 
-        ### FIXME: beam shape conversion should include rotation angle
         hdr = img.header
         cdelt1, cdelt2 = img.wcs_obj.acdelt[0:2]
-
+        brot = self.get_rot(img.wcs_obj) # beam rotation delta CCW (in degrees) between N and +y axis of image
+        
         ### define beam conversion routines:
         def beam2pix(x):
-            """ Converts beam in deg to pixels """
+            """ Converts beam in deg to pixels.
+            
+            Input beam angle should be degrees CCW from North.
+            The output beam angle is degrees CCW from the +y axis of the image.
+            """
             bmaj, bmin, bpa = x
             s1 = abs(bmaj/cdelt1) 
             s2 = abs(bmin/cdelt2) 
-            th = bpa ### FIXME: check conventions (th + 90)
+            th = bpa + brot 
             return (s1, s2, th)
 
         def pix2coord(pix):
@@ -283,10 +284,15 @@ class Op_readimage(Op):
             return (s1, s2)
 
         def pix2beam(x):
+            """ Converts beam in pixels to deg.
+            
+            Input beam angle should be degrees CCW from the +y axis of the image.
+            The output beam angle is degrees CCW from North.
+            """
             s1, s2, th = x
             bmaj = abs(s1*cdelt1) 
             bmin = abs(s2*cdelt2) 
-            bpa  = th ### FIXME: check conventions (th - 90)
+            bpa  = th - brot
             if bmaj < bmin:
                 bmaj, bmin = bmin, bmaj
                 bpa += 90
@@ -342,7 +348,7 @@ class Op_readimage(Op):
                         found = True
             if not found: raise RuntimeError("No beam information found in image header.")
 
-        ### convert beam into pixels and make sure it's asymmetric
+        ### convert beam into pixels
         pbeam = beam2pix(beam)
         pbeam = (pbeam[0]/fwsig, pbeam[1]/fwsig, pbeam[2])  # IN SIGMA UNITS
         
@@ -453,3 +459,10 @@ class Op_readimage(Op):
                         if sys[:3] == 'FK5': year = 2000.0
                         if sys[:3] == 'FK4': year = 1950.0
         return year, code
+
+    def get_rot(self, wcs_obj):
+        """Returns CCW rotation angle (in degrees) between N and +y axis of image"""
+        if wcs_obj.crota == []:
+            return 0.0
+        else:
+            return N.mean(wcs_obj.crota) * 180.0 / N.pi

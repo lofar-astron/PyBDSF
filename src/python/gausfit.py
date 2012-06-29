@@ -861,8 +861,8 @@ class Gaussian(object):
             # undistorted beam.
             size = img.pixel_beam
         size = func.corrected_size(size)  # gives fwhm and P.A.
-        self.size_pix = size # FWHM
-        self.size_sky = img.pix2beam(size) # FWHM in degrees
+        self.size_pix = size # FWHM in pixels and P.A. CCW from +y axis
+        self.size_sky = img.pix2beam(size) # FWHM in degrees and P.A. CCW from North
         
         # Check if this is a wavelet image. If so, use orig_pixel_beam
         # for flux calculation, as pixel_beam has been altered to match 
