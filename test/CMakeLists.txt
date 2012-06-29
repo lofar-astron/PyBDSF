@@ -20,5 +20,5 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${PACKAGE_SOURCE_DIR}/src/natgrid/Lib/nat.py
   ${PYTHON_BUILD_DIR}/lofar/bdsm/nat.py)
 
-lofar_add_test(tbdsm_import)
-lofar_add_test(tbdsm_process_image)
+lofar_add_test(tbdsm_import DEPENDS _cbdsm _pytesselate natgridmodule)
+lofar_add_test(tbdsm_process_image DEPENDS _cbdsm _pytesselate natgridmodule)
