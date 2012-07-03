@@ -861,8 +861,8 @@ class Gaussian(object):
             # undistorted beam.
             size = img.pixel_beam
         size = func.corrected_size(size)  # gives fwhm and P.A.
-        self.size_pix = size # FWHM
-        self.size_sky = img.pix2beam(size) # FWHM in degrees
+        self.size_pix = size # FWHM in pixels and P.A. CCW from +y axis
+        self.size_sky = img.pix2beam(size, self.centre_pix) # FWHM in degrees and P.A. CCW from North
         
         # Check if this is a wavelet image. If so, use orig_pixel_beam
         # for flux calculation, as pixel_beam has been altered to match 
@@ -888,7 +888,7 @@ class Gaussian(object):
         self.centre_pixE = errors[1:3]
         self.centre_skyE = img.pix2coord(errors[1:3])
         self.size_pixE = errors[3:6]
-        self.size_skyE = img.pix2beam(errors[3:6])
+        self.size_skyE = img.pix2beam(errors[3:6], self.centre_pix)
         self.rms = img.islands[isl_idx].rms
         self.mean = img.islands[isl_idx].mean
         self.total_flux_isl = img.islands[isl_idx].total_flux
@@ -902,7 +902,7 @@ class Gaussian(object):
         if flag == 0:
             #gaus_dc = func.deconv(bm_pix, size)
             gaus_dc, err = func.deconv2(bm_pix, size)
-            self.deconv_size_sky = img.pix2beam(gaus_dc)
+            self.deconv_size_sky = img.pix2beam(gaus_dc, self.centre_pix)
             self.deconv_size_skyE  = [0., 0., 0.]
         else:
             self.deconv_size_sky = [0., 0., 0.]

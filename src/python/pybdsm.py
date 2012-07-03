@@ -677,7 +677,17 @@ if aps_local_val == None:
         file_list = []
         file_list = f.nlst('pub/rafferty/PyBDSM')
         f.close()
-        if 'pub/rafferty/PyBDSM/PyBDSM-' + __version__ + '.tar.gz' not in file_list:
+        ftp_version = []
+        for file in file_list:
+            if 'tar.gz' in file:
+                ver_start_indx = file.find('-') + 1
+                ftp_version.append(float(file[ver_start_indx:ver_start_indx+3]))
+        if ftp_version == []:
+            # No files found, continue without message
+            pass
+        elif float(__version__) < max(ftp_version):
+            print __version__
+            print max(ftp_version)
             print '\n' + '*' * 72
             print "There appears to be a newer version of PyBDSM available at:"
             print "    ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM/"

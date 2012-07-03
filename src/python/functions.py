@@ -717,7 +717,7 @@ def get_errors(img, p, stdav, bm_pix=None):
       pp = p[i*7:i*7+7]
                                         ### Now do error analysis as in Condon (and fBDSM)
       size = pp[3:6]
-      size = corrected_size(size)
+      size = corrected_size(size) # angle is now degrees CCW from +y-axis
       sq2 = sqrt(2.0)
       if bm_pix == None:
           bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
@@ -729,10 +729,11 @@ def get_errors(img, p, stdav, bm_pix=None):
       d2 = (size[0]*size[0]-size[1]*size[1])/(size[0]*size[0])
       try:
           e_peak = pp[0]*sq2/(dumrr3*pow(dumrr1,0.75)*pow(dumrr2,0.75))
-          e_x0=size[0]/fwsig*sq2/(d1*dumrr3*pow(dumrr1,1.25)*pow(dumrr2,0.25))
-          e_y0=size[1]/fwsig*sq2/(d1*dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))
           e_maj=size[0]*sq2/(dumrr3*pow(dumrr1,1.25)*pow(dumrr2,0.25))
           e_min=size[1]*sq2/(dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))  # in fw
+          pa_rad = size[2]*pi/180.0
+          e_x0 = sqrt( (e_maj*N.sin(pa_rad))**2 + (e_min*N.cos(pa_rad))**2 ) / d1
+          e_y0 = sqrt( (e_maj*N.cos(pa_rad))**2 + (e_min*N.sin(pa_rad))**2 ) / d1
           e_pa=2.0/(d2*dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))
           e_pa=e_pa*180.0/pi
           e_tot=pp[0]*sqrt(e_peak*e_peak/(pp[0]*pp[0])+(0.25/dumr/dumr)*(e_maj*e_maj/(size[0]*size[0])+e_min*e_min/(size[1]*size[1])))
@@ -893,7 +894,7 @@ def gaussian_fcn(g, x1, x2):
     A = g.peak_flux
     C1, C2 = g.centre_pix
     S1, S2, Th = g.size_pix
-    S1 = S1/fwsig; S2 = S2/fwsig; Th = Th + 90.0
+    S1 = S1/fwsig; S2 = S2/fwsig; Th = Th + 90.0 # Define theta = 0 on x-axis
 
     th = radians(Th)
     cs = cos(th)
@@ -1003,7 +1004,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     image_file = prefix + filename
     
     # Check that file exists
-    if not os.path.isfile(image_file):
+    if not os.path.exists(image_file):
         img._reason = 'File does not exist'
         return None
 

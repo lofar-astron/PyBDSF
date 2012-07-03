@@ -336,7 +336,7 @@ class Op_gaul2srl(Op):
         gaus_c = [mompara[3], mompara[4], mompara[5]]
         gaus_bm = [bm_pix[0], bm_pix[1], bm_pix[2]]
         gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
-        deconv_size_sky = [img.pix2beam(gaus_dc), [0.0, 0.0, 0.0]]
+        deconv_size_sky = [img.pix2beam(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]]), [0.0, 0.0, 0.0]]
 
                                         # update all objects etc
         tot = 0.0
@@ -345,7 +345,8 @@ class Op_gaul2srl(Op):
             tot += g.total_flux
             totE_sq += g.total_fluxE**2
         totE = sqrt(totE_sq)
-        size_sky = [mompara[3]*sqrt(cdeltsq), mompara[4]*sqrt(cdeltsq), mompara[5]]
+        size_pix = [mompara[3], mompara[4], mompara[5]]
+        size_sky = img.pix2beam(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
         
         # Estimate errors using Monte Carlo technique
         nMC = 20
@@ -375,10 +376,20 @@ class Op_gaul2srl(Op):
                 mompara5_MC[i] = mompara[5]
         mompara0E = N.std(mompara0_MC)
         mompara1E = N.std(mompara1_MC)
+        if mompara1E > 2.0*mompara[1]:
+            mompara1E = 2.0*mompara[1] # Don't let errors get too large
         mompara2E = N.std(mompara2_MC)
+        if mompara2E > 2.0*mompara[2]:
+            mompara2E = 2.0*mompara[2] # Don't let errors get too large
         mompara3E = N.std(mompara3_MC)
+        if mompara3E > 2.0*mompara[3]:
+            mompara3E = 2.0*mompara[3] # Don't let errors get too large
         mompara4E = N.std(mompara4_MC)
+        if mompara4E > 2.0*mompara[4]:
+            mompara4E = 2.0*mompara[4] # Don't let errors get too large
         mompara5E = N.std(mompara5_MC)
+        if mompara5E > 2.0*mompara[5]:
+            mompara5E = 2.0*mompara[5] # Don't let errors get too large
         size_skyE = [mompara3E*sqrt(cdeltsq), mompara4E*sqrt(cdeltsq), mompara5E]
         sraE, sdecE = (mompara1E*sqrt(cdeltsq), mompara2E*sqrt(cdeltsq))
         

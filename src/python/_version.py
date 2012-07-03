@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.2'
+__version__ = '1.3'
 
 # Store svn Revision number. For this to work, one also needs to do: 
 #
@@ -27,12 +27,33 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
     
-    2011/06/19 - Changed exception handling to raise exceptions when
+    2012/07/03 - Version 1.3
+    
+    2012/07/03 - Fixed a bug in calculation of the positional errors of
+        Gaussians. If interactive=True and image is large (> 4096 pixels),
+        display is limited to 'ch0_islands' only; otherwise, show_fit()
+        is very slow. Tweaked show_fit() to better display a single image.
+    
+    2012/07/02 - Adjusted rms_box algorithm to check for negative rms
+        values (due to interpolation with cubic spline). If negative 
+        values are found, either the box size is increased or the 
+        interpolation is done with order=1 (bilinear) instead.
+    
+    2012/06/28 - Output now includes the residual image produced by
+        using only wavelet Gaussians (if any) when atrous_do=True and
+        output_all=True. Improved organization of files when 
+        output_all=True. Added logging of simple statistics (mean, 
+        std. dev, skew, and kurtosis) of the residual images.
+    
+    2012/06/22 - Included image rotation (if any) in beam definition.
+        Rotation angle can vary across the image (defined by image WCS).
+    
+    2012/06/19 - Changed exception handling to raise exceptions when
         the interactive shell is not being used. Fixed bug that
         caused a crash when using show_fit() when no islands were
         found. 
 
-    2011/06/15 - Added Sagecal output format for Gaussian catalogs.
+    2012/06/15 - Added Sagecal output format for Gaussian catalogs.
 
     2012/06/14 - Added check for newer versions of the PyBDSM 
         software tar.gz file available on ftp.strw.leidenuniv.nl.
