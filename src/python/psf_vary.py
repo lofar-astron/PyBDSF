@@ -268,12 +268,12 @@ class Op_psf_vary(Op):
                     gaus_c = img.beam2pix(src.size_sky)
                     gaus_bm = [psf_maj_int[src_pos_int]*fwsig, psf_min_int[src_pos_int]*fwsig, psf_pa_int[src_pos_int]*fwsig]
                     gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
-                    src.deconv_size_sky = img.pix2beam(gaus_dc)
+                    src.deconv_size_sky = img.pix2beam(gaus_dc, src_pos)
                     src.deconv_size_skyE = [0.0, 0.0, 0.0]
                     for g in src.gaussians:
                         gaus_c = img.beam2pix(g.size_sky)
                         gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
-                        g.deconv_size_sky = img.pix2beam(gaus_dc)
+                        g.deconv_size_sky = img.pix2beam(gaus_dc, g.centre_pix)
                         g.deconv_size_skyE = [0.0, 0.0, 0.0]
                         if img.opts.quiet == False:
                             bar2.spin()
