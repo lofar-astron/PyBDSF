@@ -30,7 +30,9 @@ def changelog():
     2012/07/03 - Version 1.3
     
     2012/07/03 - Fixed a bug in calculation of the positional errors of
-        Gaussians.
+        Gaussians. If interactive=True and image is large (> 4096 pixels),
+        display is limited to 'ch0_islands' only; otherwise, show_fit()
+        is very slow. Tweaked show_fit() to better display a single image.
     
     2012/07/02 - Adjusted rms_box algorithm to check for negative rms
         values (due to interpolation with cubic spline). If negative 

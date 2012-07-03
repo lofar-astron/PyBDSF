@@ -225,8 +225,14 @@ class Op_wavelet_atrous(Op):
               if img.opts.interactive and len(wimg.gaussians) > 0 and has_pl:
                   dc = '\033[34;1m'
                   nc = '\033[0m'
-                  print dc + 'Displaying islands and rms image...' + nc
-                  wimg.show_fit()
+                  print dc + '--> Displaying islands and rms image...' + nc
+                  if max(wimg.ch0.shape) > 4096:
+                      print dc + '--> Image is large. Showing islands only.' + nc
+                      wimg.show_fit(rms_image=False, mean_image=False, ch0_image=False,
+                        ch0_islands=True, gresid_image=False, sresid_image=False,
+                        gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+                  else:
+                      wimg.show_fit()
                   prompt = dc + "Press enter to continue or 'q' stop fitting wavelet images : " + nc
                   answ = raw_input_no_history(prompt)
                   while answ != '':

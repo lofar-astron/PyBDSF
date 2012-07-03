@@ -222,7 +222,10 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
             print '                       The SED plot will also show the chosen source.'
     print '_' * 72
 
-    numx = 2
+    if len(images) > 1:
+        numx = 2
+    else:
+        numx = 1
     numy = int(N.ceil(float(len(images))/float(numx)))
     fig = pl.figure(figsize=(max(15, 10.0*float(numy)/float(numx)), 10.0))
     fig.canvas.set_window_title('PyBDSM Fit Results for '+ img.filename)
