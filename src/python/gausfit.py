@@ -445,17 +445,20 @@ class Op_gausfit(Op):
         return gaul, nmulsrc1, len(inipeak)
 
     def inigaus_nobeam(self, isl, thr, beam, img):
-        """ To get initial guesses when the source sizes are very different from the beam, and can also be elongated. 
-            Mainly in the context of a-trous transform images. Need to arrive at a good guess of the sizes and hence need
-            to partition the image around the maxima first. Tried the IFT watershed algo but with markers, it segments
-            the island only around the minima and not the whole island. Cant find a good weighting scheme for tesselation 
-            either. Hence will try this :
+        """ To get initial guesses when the source sizes are very different
+        from the beam, and can also be elongated. Mainly in the context of
+        a-trous transform images. Need to arrive at a good guess of the sizes
+        and hence need to partition the image around the maxima first. Tried the
+        IFT watershed algo but with markers, it segments the island only around
+        the minima and not the whole island. Cant find a good weighting scheme
+        for tesselation either. Hence will try this :
 
-            Calulate number of maxima. If one, then take moment as initial guess.
-            If more than one, then moment of whole island is one of the guesses if mom1 is within n pixels of one of 
-            the maxima. Else dont take whole island moment. Instead, find minima on lines connecting all maxima and use
-            geometric mean of all minima of a peak as the size of that peak.
-            """
+        Calculate number of maxima. If one, then take moment as initial
+        guess. If more than one, then moment of whole island is one of the
+        guesses if mom1 is within n pixels of one of the maxima. Else dont take
+        whole island moment. Instead, find minima on lines connecting all maxima
+        and use geometric mean of all minima of a peak as the size of that peak.
+        """ 
         from math import sqrt
         from const import fwsig
         import scipy.ndimage as nd
@@ -525,6 +528,7 @@ class Op_gausfit(Op):
             coords.append([xcen, ycen])
 
         return gaul
+
 
     def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax, verbose=1):
         """One round of fitting

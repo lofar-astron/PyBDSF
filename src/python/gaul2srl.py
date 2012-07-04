@@ -68,7 +68,7 @@ class Op_gaul2srl(Op):
 
         img.completed_Ops.append('gaul2srl')
 
-##################################################################################################
+#################################################################################################
 
     def process_single_gaussian(self, img, g_list, src_index, code):
         """ Process single gaussian into a source, for both S and C type sources. g is just one
@@ -160,6 +160,19 @@ class Op_gaul2srl(Op):
         """ Whether two gaussians belong to the same source or not. """
         import functions as func
 
+        def same_island_aegean(pair, g_list, subim, delc, tol=0.5):
+            """Groups Gaussians using the Aegean curvature algorithm 
+            (Hancock et al. 2012)
+            
+            The Aegean algorithm uses a curvature map to identify regions of negative 
+            curvature. These regions then define distinct sources.
+            """
+            import scipy.signal as sg
+            
+            # Make average curavature map:
+            curv_kernal = N.array([[1, 1, 1],[1, -8, 1],[1, 1, 1]])
+            curv_map = sg.convolve2d(subim, curv_kernal)
+                    
         def same_island_min(pair, g_list, subim, delc, tol=0.5):
             """ If the minimum of the reconstructed fluxes along the line joining the peak positions 
                 is greater than thresh_isl times the rms_clip, they belong to different islands. """

@@ -664,7 +664,8 @@ def _opts_completer(self, event):
 # asking them to update.
 from lofar.bdsm._version import __version__, __revision__, changelog
 
-# Query the STRW FTP server. 
+# Query the STRW FTP server. Tar files must be named "PyBDSM-version#.tar.gz":
+#   e.g., "PyBDSM-1.3.tar.gz".
 # Check whether called from the LOFAR CEPI/II. If so, skip check.
 import os
 aps_local_val = os.environ.get('APS_LOCAL')
@@ -683,11 +684,9 @@ if aps_local_val == None:
                 ver_start_indx = file.find('-') + 1
                 ftp_version.append(float(file[ver_start_indx:ver_start_indx+3]))
         if ftp_version == []:
-            # No files found, continue without message
+            # No matching files found, continue without message
             pass
         elif float(__version__) < max(ftp_version):
-            print __version__
-            print max(ftp_version)
             print '\n' + '*' * 72
             print "There appears to be a newer version of PyBDSM available at:"
             print "    ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM/"
