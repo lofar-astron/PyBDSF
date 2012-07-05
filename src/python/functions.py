@@ -1198,18 +1198,19 @@ def write_image_to_file(use, filename, image, img, outdir=None,
     #  im.saveas(indir+filename)
 
 def make_fits_image(imagedata, wcsobj, beam, freq):
-    """Makes a simple FITS hdulist appropriate for images"""
+    """Makes a simple FITS hdulist appropriate for single-channel images"""
     import pyfits
-    hdu = pyfits.PrimaryHDU(imagedata)
+    shape_out = [1, imagedata.shape[0], imagedata.shape[1]]
+    hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
     header = hdulist[0].header
     header.update('CTYPE1', wcsobj.ctype[0])
-    header.update('CTYPE2', wcsobj.ctype[1])
     header.update('CRVAL1', wcsobj.crval[0])
-    header.update('CRVAL2', wcsobj.crval[1])
     header.update('CDELT1', wcsobj.cdelt[0])
-    header.update('CDELT2', wcsobj.cdelt[1])
     header.update('CRPIX1', wcsobj.crpix[0])
+    header.update('CTYPE2', wcsobj.ctype[1])
+    header.update('CRVAL2', wcsobj.crval[1])
+    header.update('CDELT2', wcsobj.cdelt[1])
     header.update('CRPIX2', wcsobj.crpix[1])
     if hasattr(wcsobj, 'crota'):
         header.update('CROTA1', wcsobj.crota[0])
@@ -1217,6 +1218,7 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     header.update('BMAJ', beam[0])
     header.update('BMIN', beam[1])
     header.update('BPA', beam[2])
+    header.update('CTYPE3', 'FREQ')
     header.update('CRVAL3', freq[0])
     header.update('CDELT3', freq[1])
     header.update('CRPIX3', freq[2])

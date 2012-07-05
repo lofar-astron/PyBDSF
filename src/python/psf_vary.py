@@ -132,7 +132,7 @@ class Op_psf_vary(Op):
         volrank, vorowts = self.tesselate(vorogenP, vorogenS, tile_prop, tess_method, tess_sc, tess_fuzzy, \
                   generators, gencode, image.shape)
         if opts.output_all:
-            func.write_image_to_file(img.use_io, img.imagename + '.volrank.fits', N.transpose(volrank), img, dir)
+            func.write_image_to_file(img.use_io, img.imagename + '.volrank.fits', volrank, img, dir)
 
         tile_list, tile_coord, tile_snr = tile_prop
         ntile = len(tile_list)
@@ -252,11 +252,11 @@ class Op_psf_vary(Op):
                 img.psf_vary_ratio_aper = psf_ratio_aper_int
     
                 if opts.output_all:
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', N.transpose(psf_maj_int)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', N.transpose(psf_min_int)*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', N.transpose(psf_pa_int), img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', N.transpose(psf_ratio_int), img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio_aper.fits', N.transpose(psf_ratio_aper_int), img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', psf_maj_int*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', psf_min_int*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', psf_pa_int, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', psf_ratio_int, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio_aper.fits', psf_ratio_aper_int, img, dir)
                 
                 # Loop through source and Gaussian lists and deconvolve the sizes using appropriate beam
                 bar2 = statusbar.StatusBar('Correcting deconvolved source sizes ..... : ', 0, img.nsrc)

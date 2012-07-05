@@ -27,6 +27,11 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
     
+    2012/07/05 - Fixed a bug that caused images written when output_all=
+        True to be transposed. Added frequency information to all output
+        images. Improved fitting robustness to prevent rare cases in 
+        which no valid Gaussians could be fit to an island.
+    
     2012/07/03 - Version 1.3
     
     2012/07/03 - Fixed a bug in calculation of the positional errors of

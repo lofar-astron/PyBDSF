@@ -260,11 +260,53 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
         if not fitok:
-            # If all else fails, try to fit just a single Gaussian to the island
-            fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', 1, verbose)
-            gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+            # If normal fitting fails, try to fit 5 or fewer Gaussians to the island
+            ngmax = 5
+            while not fitok and ngmax > 1:
+                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose)
+                ngmax -= 1
+                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
                                           beam, thr0, peak, shape, isl.mask_active,
                                           isl.image, size)
+        if not fitok:
+            # If all else fails, shrink the island a little and try one last time
+            if ffimg == None:
+                fcn = MGFunction(isl.image-isl.islmean, nd.binary_dilation(isl.mask_active), 1)
+            else:
+                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_dilation(isl.mask_active), 1)
+            gaul = []
+            iter = 0
+            ng1 = 0
+            ngmax = 25
+            while iter < 5:
+               iter += 1
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+                                                 beam, thr0, peak, shape, isl.mask_active, 
+                                                 isl.image, size)
+               ng1 = len(gaul)
+               if fitok and len(fgaul) == 0:
+                   break
+        if not fitok:
+            # If all else fails, expand the island a little and try one last time
+            if ffimg == None:
+                fcn = MGFunction(isl.image-isl.islmean, nd.binary_erosion(isl.mask_active), 1)
+            else:
+                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_erosion(isl.mask_active), 1)
+            gaul = []
+            iter = 0
+            ng1 = 0
+            ngmax = 25
+            while iter < 5:
+               iter += 1
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+                                                 beam, thr0, peak, shape, isl.mask_active, 
+                                                 isl.image, size)
+               ng1 = len(gaul)
+               if fitok and len(fgaul) == 0:
+                   break
+
 
         ### return whatever we got
         isl.mg_fcn = fcn

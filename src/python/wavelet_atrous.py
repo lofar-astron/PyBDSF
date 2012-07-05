@@ -107,7 +107,7 @@ class Op_wavelet_atrous(Op):
             suffix = 'w' + `j`
             filename = img.imagename + '.atrous.' + suffix + '.fits'
             if img.opts.output_all:
-                func.write_image_to_file(img.use_io, filename, w.transpose(), img, bdir)
+                func.write_image_to_file(img.use_io, filename, w, img, bdir)
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.' + suffix + '.fits'))
                                                         # now do bdsm on each wavelet image
             if dobdsm:
@@ -255,13 +255,13 @@ class Op_wavelet_atrous(Op):
           mylogger.userinfo(mylog, "Total flux density in model over all scales" , '%.3f Jy' % img.total_flux_gaus)
           if img.opts.output_all:
               func.write_image_to_file(img.use_io, img.imagename + '.atrous.cJ.fits',
-                                       im_new.transpose(), img, bdir)
+                                       im_new, img, bdir)
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.cJ.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.resid_wavelets.fits',
-                                       N.transpose(img.ch0 - img.resid_gaus + img.resid_wavelets), img, bdir + '/residual/')
+                                       (img.ch0 - img.resid_gaus + img.resid_wavelets), img, bdir + '/residual/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.resid_wavelets.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.model_wavelets.fits',
-                                       N.transpose(img.resid_gaus - img.resid_wavelets), img, bdir + '/model/')
+                                       (img.resid_gaus - img.resid_wavelets), img, bdir + '/model/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
           img.completed_Ops.append('wavelet_atrous')
 
