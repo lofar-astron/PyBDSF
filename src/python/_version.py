@@ -30,7 +30,8 @@ def changelog():
     2012/07/05 - Fixed a bug that caused images written when output_all=
         True to be transposed. Added frequency information to all output
         images. Improved fitting robustness to prevent rare cases in 
-        which no valid Gaussians could be fit to an island.
+        which no valid Gaussians could be fit to an island. Modified the
+        island-finding routine to handle NaNs properly.
     
     2012/07/03 - Version 1.3
     
