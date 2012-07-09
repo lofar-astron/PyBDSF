@@ -156,10 +156,13 @@ class Op_make_residimage(Op):
                         g.sresid_mean = N.mean(resid)
 
             # Calculate some statistics for the Shapelet residual image
-            n, min_max, mean, var, skew, kurt = stats.describe(img.resid_shap, axis=None)
+            mean = N.mean(img.resid_gaus, axis=None)
+            std_dev = N.std(img.resid_gaus, axis=None)
+            skew = stats.skew(img.resid_gaus, axis=None)
+            kurt = stats.kurtosis(img.resid_gaus, axis=None)
             mylog.info("Statistics of the Shapelet residual image:")
             mylog.info("        mean: %.3e (Jy/beam)" % mean)
-            mylog.info("    std. dev: %.3e (Jy/beam)" % N.sqrt(var))
+            mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
             mylog.info("        skew: %.3f" % skew)
             mylog.info("    kurtosis: %.3f" % kurt)
 

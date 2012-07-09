@@ -141,7 +141,7 @@ class Op_islands(Op):
                 minsize = 6 # Need at least 6 pixels to obtain good fits
             mylogger.userinfo(mylog, "Minimum number of pixels per island", '%i' %
                           minsize)
-        
+        img.minpix_isl = minsize
         clipped_mean = img.clipped_mean
         saverank = opts.savefits_rankim
 
