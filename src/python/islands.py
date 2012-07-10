@@ -77,7 +77,7 @@ class Op_islands(Op):
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
-            
+            img.minpix_isl = det_img.minpix_isl
         else:
             img.islands = self.ndimage_alg(img, opts)
             img.nisl = len(img.islands)

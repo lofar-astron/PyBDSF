@@ -27,6 +27,10 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
     
+    2012/07/10 - Fixed a bug that caused a segfault during Gaussian
+        fitting. Fixed a bug that caused a crash when a detection image
+        is used.
+    
     2012/07/05 - Fixed a bug that caused images written when output_all=
         True to be transposed. Added frequency information to all output
         images. Improved fitting robustness to prevent rare cases in 
