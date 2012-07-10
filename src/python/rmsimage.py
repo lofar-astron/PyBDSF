@@ -223,7 +223,15 @@ class Op_rmsimage(Op):
                         if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
                             # Increase box by 20%
                             img.rms_box = (int(img.rms_box[0]*1.2),int(img.rms_box[1]*1.2)) 
-                            map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
+                            if img.rms_box[0] > min(img.ch0.shape)/4.0:
+                                self.output_rmsbox_size(img)
+                                mylog.warning('Size of rms_box larger than 1/4 of image size')
+                                mylogger.userinfo(mylog, 'Using constant background rms and mean')
+                                img.use_rms_map = False
+                                img.mean_map_type = 'const'
+                                rms_ok = True
+                            else:                            
+                                map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
                         else:
                             # User has specified box size, use order=1 to prevent negatives
                             if opts.spline_rank > 1:
@@ -248,7 +256,15 @@ class Op_rmsimage(Op):
                             if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
                                 # Increase box by 20%
                                 img.rms_box = (int(img.rms_box[0]*1.2),int(img.rms_box[1]*1.2)) 
-                                map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
+                                if img.rms_box[0] > min(img.ch0.shape)/4.0:
+                                    self.output_rmsbox_size(img)
+                                    mylog.warning('Size of rms_box larger than 1/4 of image size')
+                                    mylogger.userinfo(mylog, 'Using constant background rms and mean')
+                                    img.use_rms_map = False
+                                    img.mean_map_type = 'const'
+                                    rms_ok = True
+                                else:                            
+                                    map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
                             else:
                                 # User has specified box size, use order=1 to prevent negatives
                                 if opts.spline_rank > 1:
