@@ -379,7 +379,7 @@ class Op_readimage(Op):
             mylog.info('Using user-specified frequencies.')
         elif img.opts.frequency != None and img.image.shape[1] == 1:
             img.cfreq = img.opts.frequency
-            img.freq_pars = (0.0, 0.0, 0.0)
+            img.freq_pars = (img.cfreq, 0.0, 0.0)
             mylog.info('Using user-specified frequency.')           
         else:
             found  = False

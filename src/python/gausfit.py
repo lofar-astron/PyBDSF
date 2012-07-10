@@ -260,11 +260,55 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
         if not fitok:
-            # If all else fails, try to fit just a single Gaussian to the island
-            fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', 1, verbose)
-            gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+            # If normal fitting fails, try to fit 5 or fewer Gaussians to the island
+            ngmax = 5
+            while not fitok and ngmax > 1:
+                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose)
+                ngmax -= 1
+                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
                                           beam, thr0, peak, shape, isl.mask_active,
                                           isl.image, size)
+        sm_isl = nd.binary_dilation(isl.mask_active)
+        if not fitok and N.sum(~sm_isl) >= img.minpix_isl:
+            # If all else fails, shrink the island a little and try one last time
+            if ffimg == None:
+                fcn = MGFunction(isl.image-isl.islmean, nd.binary_dilation(isl.mask_active), 1)
+            else:
+                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_dilation(isl.mask_active), 1)
+            gaul = []
+            iter = 0
+            ng1 = 0
+            ngmax = 25
+            while iter < 5:
+               iter += 1
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+                                                 beam, thr0, peak, shape, isl.mask_active, 
+                                                 isl.image, size)
+               ng1 = len(gaul)
+               if fitok and len(fgaul) == 0:
+                   break
+        lg_isl = nd.binary_erosion(isl.mask_active)
+        if not fitok and N.sum(~lg_isl) >= img.minpix_isl:
+            # If all else fails, expand the island a little and try one last time
+            if ffimg == None:
+                fcn = MGFunction(isl.image-isl.islmean, nd.binary_erosion(isl.mask_active), 1)
+            else:
+                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_erosion(isl.mask_active), 1)
+            gaul = []
+            iter = 0
+            ng1 = 0
+            ngmax = 25
+            while iter < 5:
+               iter += 1
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+                                                 beam, thr0, peak, shape, isl.mask_active, 
+                                                 isl.image, size)
+               ng1 = len(gaul)
+               if fitok and len(fgaul) == 0:
+                   break
+
 
         ### return whatever we got
         isl.mg_fcn = fcn
@@ -445,17 +489,20 @@ class Op_gausfit(Op):
         return gaul, nmulsrc1, len(inipeak)
 
     def inigaus_nobeam(self, isl, thr, beam, img):
-        """ To get initial guesses when the source sizes are very different from the beam, and can also be elongated. 
-            Mainly in the context of a-trous transform images. Need to arrive at a good guess of the sizes and hence need
-            to partition the image around the maxima first. Tried the IFT watershed algo but with markers, it segments
-            the island only around the minima and not the whole island. Cant find a good weighting scheme for tesselation 
-            either. Hence will try this :
+        """ To get initial guesses when the source sizes are very different
+        from the beam, and can also be elongated. Mainly in the context of
+        a-trous transform images. Need to arrive at a good guess of the sizes
+        and hence need to partition the image around the maxima first. Tried the
+        IFT watershed algo but with markers, it segments the island only around
+        the minima and not the whole island. Cant find a good weighting scheme
+        for tesselation either. Hence will try this :
 
-            Calulate number of maxima. If one, then take moment as initial guess.
-            If more than one, then moment of whole island is one of the guesses if mom1 is within n pixels of one of 
-            the maxima. Else dont take whole island moment. Instead, find minima on lines connecting all maxima and use
-            geometric mean of all minima of a peak as the size of that peak.
-            """
+        Calculate number of maxima. If one, then take moment as initial
+        guess. If more than one, then moment of whole island is one of the
+        guesses if mom1 is within n pixels of one of the maxima. Else dont take
+        whole island moment. Instead, find minima on lines connecting all maxima
+        and use geometric mean of all minima of a peak as the size of that peak.
+        """ 
         from math import sqrt
         from const import fwsig
         import scipy.ndimage as nd
@@ -525,6 +572,7 @@ class Op_gausfit(Op):
             coords.append([xcen, ycen])
 
         return gaul
+
 
     def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax, verbose=1):
         """One round of fitting

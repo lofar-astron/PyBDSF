@@ -331,7 +331,7 @@ class Op_rmsimage(Op):
               else:
                   resdir = img.basedir + '/background/'
               if not os.path.exists(resdir): os.mkdir(resdir)
-              func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', N.transpose(rms), img, resdir)
+              func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', rms, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.rmsd_I.fits'))
             if opts.savefits_meanim or opts.output_all: 
               if img.waveletimage:
@@ -339,7 +339,7 @@ class Op_rmsimage(Op):
               else:
                   resdir = img.basedir + '/background/'
               if not os.path.exists(resdir): os.mkdir(resdir)
-              func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', N.transpose(mean), img, resdir)
+              func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', mean, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.mean_I.fits'))
             if opts.savefits_normim or opts.output_all: 
               if img.waveletimage:
@@ -347,7 +347,7 @@ class Op_rmsimage(Op):
               else:
                   resdir = img.basedir + '/background/'
               if not os.path.exists(resdir): os.mkdir(resdir)
-              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', N.transpose((img.ch0-mean)/rms), img, resdir)
+              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (img.ch0-mean)/rms, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
           else:
             img.mean_QUV.append(mean); img.rms_QUV.append(rms)

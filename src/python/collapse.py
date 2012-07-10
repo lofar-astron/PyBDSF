@@ -99,7 +99,7 @@ class Op_collapse(Op):
               mylog.debug('%s %s %s' % ('Channel weights : ', str1, '; unity=zero if c_wts="rms"'))
               
           if img.opts.output_all:
-              func.write_image_to_file(img.use_io, img.imagename+'.ch0_'+pol+'.fits', N.transpose(ch0), img)
+              func.write_image_to_file(img.use_io, img.imagename+'.ch0_'+pol+'.fits', ch0, img)
               mylog.debug('%s %s ' % ('Writing file ', img.imagename+'.ch0_'+pol+'.fits'))
               
       else:
@@ -243,6 +243,7 @@ def init_freq_collapse(img, wtarr):
             sumwts += wtarr[i]
             sumfrq += freqs[ch]*wtarr[i]
         img.cfreq = sumfrq / sumwts
+        img.freq_pars = (img.cfreq, 0.0, 0.0)
     else:
         # Calculate from header info
         c_list = img.opts.collapse_av
