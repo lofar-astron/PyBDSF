@@ -68,7 +68,7 @@ class Op_gaul2srl(Op):
 
         img.completed_Ops.append('gaul2srl')
 
-##################################################################################################
+#################################################################################################
 
     def process_single_gaussian(self, img, g_list, src_index, code):
         """ Process single gaussian into a source, for both S and C type sources. g is just one
@@ -160,6 +160,19 @@ class Op_gaul2srl(Op):
         """ Whether two gaussians belong to the same source or not. """
         import functions as func
 
+        def same_island_aegean(pair, g_list, subim, delc, tol=0.5):
+            """Groups Gaussians using the Aegean curvature algorithm 
+            (Hancock et al. 2012)
+            
+            The Aegean algorithm uses a curvature map to identify regions of negative 
+            curvature. These regions then define distinct sources.
+            """
+            import scipy.signal as sg
+            
+            # Make average curavature map:
+            curv_kernal = N.array([[1, 1, 1],[1, -8, 1],[1, 1, 1]])
+            curv_map = sg.convolve2d(subim, curv_kernal)
+                    
         def same_island_min(pair, g_list, subim, delc, tol=0.5):
             """ If the minimum of the reconstructed fluxes along the line joining the peak positions 
                 is greater than thresh_isl times the rms_clip, they belong to different islands. """
@@ -336,7 +349,7 @@ class Op_gaul2srl(Op):
         gaus_c = [mompara[3], mompara[4], mompara[5]]
         gaus_bm = [bm_pix[0], bm_pix[1], bm_pix[2]]
         gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
-        deconv_size_sky = [img.pix2beam(gaus_dc), [0.0, 0.0, 0.0]]
+        deconv_size_sky = [img.pix2beam(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]]), [0.0, 0.0, 0.0]]
 
                                         # update all objects etc
         tot = 0.0
@@ -346,7 +359,7 @@ class Op_gaul2srl(Op):
             totE_sq += g.total_fluxE**2
         totE = sqrt(totE_sq)
         size_pix = [mompara[3], mompara[4], mompara[5]]
-        size_sky = img.pix2beam(size_pix)
+        size_sky = img.pix2beam(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
         
         # Estimate errors using Monte Carlo technique
         nMC = 20
@@ -357,8 +370,13 @@ class Op_gaul2srl(Op):
         mompara4_MC = N.zeros(nMC, dtype=float)
         mompara5_MC = N.zeros(nMC, dtype=float)
         for i in range(nMC):
-            subim_src_MC = self.make_subim(subn, subm, g_sublist, delc) + \
-                        N.random.normal(loc=0.0, scale=abs(isl.rms)*sqrt(bmar_p), size=(subn, subm))
+            # Add random noise (convolved with beam) to image
+            noise_im = N.random.normal(loc=0.0, scale=abs(isl.rms)*sqrt(bmar_p), 
+                                       size=(subn, subm))
+#            beam = N.
+#             noise_im = convolve2d(noise_im, beam)
+            subim_src_MC = self.make_subim(subn, subm, g_sublist, delc) + noise_im
+                        
             try:
                 mompara_MC = func.momanalmask_gaus(subim_src_MC, mask, isrc, bmar_p, True)
                 mompara0_MC[i] = mompara_MC[0]
@@ -376,10 +394,20 @@ class Op_gaul2srl(Op):
                 mompara5_MC[i] = mompara[5]
         mompara0E = N.std(mompara0_MC)
         mompara1E = N.std(mompara1_MC)
+        if mompara1E > 2.0*mompara[1]:
+            mompara1E = 2.0*mompara[1] # Don't let errors get too large
         mompara2E = N.std(mompara2_MC)
+        if mompara2E > 2.0*mompara[2]:
+            mompara2E = 2.0*mompara[2] # Don't let errors get too large
         mompara3E = N.std(mompara3_MC)
+        if mompara3E > 2.0*mompara[3]:
+            mompara3E = 2.0*mompara[3] # Don't let errors get too large
         mompara4E = N.std(mompara4_MC)
+        if mompara4E > 2.0*mompara[4]:
+            mompara4E = 2.0*mompara[4] # Don't let errors get too large
         mompara5E = N.std(mompara5_MC)
+        if mompara5E > 2.0*mompara[5]:
+            mompara5E = 2.0*mompara[5] # Don't let errors get too large
         size_skyE = [mompara3E*sqrt(cdeltsq), mompara4E*sqrt(cdeltsq), mompara5E]
         sraE, sdecE = (mompara1E*sqrt(cdeltsq), mompara2E*sqrt(cdeltsq))
         

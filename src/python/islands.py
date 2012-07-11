@@ -77,7 +77,7 @@ class Op_islands(Op):
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
-            
+            img.minpix_isl = det_img.minpix_isl
         else:
             img.islands = self.ndimage_alg(img, opts)
             img.nisl = len(img.islands)
@@ -141,7 +141,7 @@ class Op_islands(Op):
                 minsize = 6 # Need at least 6 pixels to obtain good fits
             mylogger.userinfo(mylog, "Minimum number of pixels per island", '%i' %
                           minsize)
-        
+        img.minpix_isl = minsize
         clipped_mean = img.clipped_mean
         saverank = opts.savefits_rankim
 
@@ -169,7 +169,7 @@ class Op_islands(Op):
                         # number of pixels inside bounding box which are in island
             isl_size = (labels[s] == idx).sum()
             isl_peak = nd.maximum(image[s], labels[s], idx)
-            isl_maxposn = tuple(N.array(N.unravel_index(N.argmax(image[s]), image[s].shape))+\
+            isl_maxposn = tuple(N.array(N.unravel_index(N.nanargmax(image[s]), image[s].shape))+\
                           N.array((s[0].start, s[1].start)))
             if (isl_size >= minsize) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea)

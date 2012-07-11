@@ -262,17 +262,19 @@ class Op_readimage(Op):
 
         hdr = img.header
         cdelt1, cdelt2 = img.wcs_obj.acdelt[0:2]
-        brot = self.get_rot(img.wcs_obj) # beam rotation delta CCW (in degrees) between N and +y axis of image
         
         ### define beam conversion routines:
-        def beam2pix(x):
+        def beam2pix(x, location=None):
             """ Converts beam in deg to pixels.
             
+            location specifies the location in pixels (x, y) for which beam is desired
             Input beam angle should be degrees CCW from North.
             The output beam angle is degrees CCW from the +y axis of the image.
             """
             bmaj, bmin, bpa = x
-            s1 = abs(bmaj/cdelt1) 
+            brot = self.get_rot(img, location) # beam rotation delta CCW (in degrees) between N and +y axis of image
+            
+            s1 = abs(bmaj/cdelt1)
             s2 = abs(bmin/cdelt2) 
             th = bpa + brot 
             return (s1, s2, th)
@@ -283,15 +285,17 @@ class Op_readimage(Op):
             s2 = abs(y*cdelt2) 
             return (s1, s2)
 
-        def pix2beam(x):
+        def pix2beam(x, location=None):
             """ Converts beam in pixels to deg.
             
+            location specifies the location in pixels (x, y) for which beam is desired
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North.
             """
             s1, s2, th = x
             bmaj = abs(s1*cdelt1) 
             bmin = abs(s2*cdelt2) 
+            brot = self.get_rot(img, location) # beam rotation delta CCW (in degrees) between N and +y axis of image
             bpa  = th - brot
             if bmaj < bmin:
                 bmaj, bmin = bmin, bmaj
@@ -348,7 +352,7 @@ class Op_readimage(Op):
                         found = True
             if not found: raise RuntimeError("No beam information found in image header.")
 
-        ### convert beam into pixels
+        ### convert beam into pixels (at image center)
         pbeam = beam2pix(beam)
         pbeam = (pbeam[0]/fwsig, pbeam[1]/fwsig, pbeam[2])  # IN SIGMA UNITS
         
@@ -375,7 +379,7 @@ class Op_readimage(Op):
             mylog.info('Using user-specified frequencies.')
         elif img.opts.frequency != None and img.image.shape[1] == 1:
             img.cfreq = img.opts.frequency
-            img.freq_pars = (0.0, 0.0, 0.0)
+            img.freq_pars = (img.cfreq, 0.0, 0.0)
             mylog.info('Using user-specified frequency.')           
         else:
             found  = False
@@ -460,9 +464,22 @@ class Op_readimage(Op):
                         if sys[:3] == 'FK4': year = 1950.0
         return year, code
 
-    def get_rot(self, wcs_obj):
-        """Returns CCW rotation angle (in degrees) between N and +y axis of image"""
-        if wcs_obj.crota == []:
-            return 0.0
+    def get_rot(self, img, location=None):
+        """Returns CCW rotation angle (in degrees) between N and +y axis of image
+        
+        location specifies the location in pixels (x, y) for which beam is desired
+        """
+        if location == None:
+            x1 = int(img.image.shape[2]/2.0)
+            y1 = int(img.image.shape[3]/2.0)
         else:
-            return N.mean(wcs_obj.crota) * 180.0 / N.pi
+            x1, y1 = location
+        delta_x = 0
+        delta_y = 10
+        w1 = img.pix2sky((x1, y1))
+        w2 = img.pix2sky((x1+delta_x, y1+delta_y))
+            
+        rot_ang_rad = N.arctan2((w2[0] - w1[0]) , (w2[1] - w1[1]))
+        return rot_ang_rad*180.0/N.pi
+        
+        

@@ -107,7 +107,7 @@ class Op_wavelet_atrous(Op):
             suffix = 'w' + `j`
             filename = img.imagename + '.atrous.' + suffix + '.fits'
             if img.opts.output_all:
-                func.write_image_to_file(img.use_io, filename, w.transpose(), img, bdir)
+                func.write_image_to_file(img.use_io, filename, w, img, bdir)
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.' + suffix + '.fits'))
                                                         # now do bdsm on each wavelet image
             if dobdsm:
@@ -225,8 +225,14 @@ class Op_wavelet_atrous(Op):
               if img.opts.interactive and len(wimg.gaussians) > 0 and has_pl:
                   dc = '\033[34;1m'
                   nc = '\033[0m'
-                  print dc + 'Displaying islands and rms image...' + nc
-                  wimg.show_fit()
+                  print dc + '--> Displaying islands and rms image...' + nc
+                  if max(wimg.ch0.shape) > 4096:
+                      print dc + '--> Image is large. Showing islands only.' + nc
+                      wimg.show_fit(rms_image=False, mean_image=False, ch0_image=False,
+                        ch0_islands=True, gresid_image=False, sresid_image=False,
+                        gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+                  else:
+                      wimg.show_fit()
                   prompt = dc + "Press enter to continue or 'q' stop fitting wavelet images : " + nc
                   answ = raw_input_no_history(prompt)
                   while answ != '':
@@ -249,13 +255,13 @@ class Op_wavelet_atrous(Op):
           mylogger.userinfo(mylog, "Total flux density in model over all scales" , '%.3f Jy' % img.total_flux_gaus)
           if img.opts.output_all:
               func.write_image_to_file(img.use_io, img.imagename + '.atrous.cJ.fits',
-                                       im_new.transpose(), img, bdir)
+                                       im_new, img, bdir)
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.cJ.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.resid_wavelets.fits',
-                                       N.transpose(img.ch0 - img.resid_gaus + img.resid_wavelets), img, bdir + '/residual/')
+                                       (img.ch0 - img.resid_gaus + img.resid_wavelets), img, bdir + '/residual/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.resid_wavelets.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.model_wavelets.fits',
-                                       N.transpose(img.resid_gaus - img.resid_wavelets), img, bdir + '/model/')
+                                       (img.resid_gaus - img.resid_wavelets), img, bdir + '/model/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
           img.completed_Ops.append('wavelet_atrous')
 

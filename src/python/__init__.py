@@ -124,9 +124,15 @@ def _run_op_list(img, chain):
     for op in ops:
         if isinstance(op, Op_gausfit) and img.opts.interactive:
             print dc + '--> Displaying islands and rms image...' + nc
-            img.show_fit(rms_image=True, mean_image=True,
-                ch0_islands=True, gresid_image=False, sresid_image=False,
-                gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+            if max(img.ch0.shape) > 4096:
+                print dc + '--> Image is large. Showing islands only.' + nc
+                img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
+                    ch0_islands=True, gresid_image=False, sresid_image=False,
+                    gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+            else:
+                img.show_fit(rms_image=True, mean_image=True,
+                    ch0_islands=True, gresid_image=False, sresid_image=False,
+                    gmodel_image=False, smodel_image=False, pyramid_srcs=False)
             prompt = dc + "Press enter to continue or 'q' to quit .. : " + nc
             answ = raw_input_no_history(prompt)
             while answ != '':
@@ -149,7 +155,14 @@ def _run_op_list(img, chain):
             show_spec = True
         else:
             show_spec = False
-        img.show_fit(smodel_image=show_smod, sresid_image=show_sres,
+        if max(img.ch0.shape) > 4096:
+            print dc + '--> Image is large. Showing Gaussian residual image only.' + nc
+            img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
+                ch0_islands=False, gresid_image=True, sresid_image=False,
+                gmodel_image=False, smodel_image=False, pyramid_srcs=False,
+                source_seds=show_spec)
+        else:
+            img.show_fit(smodel_image=show_smod, sresid_image=show_sres,
                      source_seds=show_spec)
 
     if img.opts.print_timing:

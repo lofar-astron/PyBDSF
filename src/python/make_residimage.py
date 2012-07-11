@@ -4,7 +4,7 @@ It calculates residual image from the list of gaussians and shapelets
 """
 
 import numpy as N
-from scipy import stats
+from scipy import stats # for skew and kurtosis
 from image import *
 from shapelets import *
 import mylogger
@@ -77,9 +77,9 @@ class Op_make_residimage(Op):
                 moddir = img.basedir + '/model/'
             if not os.path.exists(resdir): os.mkdir(resdir)
             if not os.path.exists(moddir): os.mkdir(moddir)
-            func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', N.transpose(img.resid_gaus), img, resdir)
+            func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', img.resid_gaus, img, resdir)
             mylog.info('%s %s' % ('Writing', resdir+img.imagename+'.resid_gaus.fits'))
-            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', N.transpose(img.ch0 - img.resid_gaus), img, moddir)
+            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0 - img.resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 
         ### residual rms and mean per island
@@ -99,10 +99,13 @@ class Op_make_residimage(Op):
                     g.gresid_mean = N.mean(resid)
                     
         # Calculate some statistics for the Gaussian residual image
-        n, min_max, mean, var, skew, kurt = stats.describe(img.resid_gaus, axis=None)
+        mean = N.mean(img.resid_gaus, axis=None)
+        std_dev = N.std(img.resid_gaus, axis=None)
+        skew = stats.skew(img.resid_gaus, axis=None)
+        kurt = stats.kurtosis(img.resid_gaus, axis=None)
         mylog.info("Statistics of the Gaussian residual image:")
         mylog.info("        mean: %.3e (Jy/beam)" % mean)
-        mylog.info("    std. dev: %.3e (Jy/beam)" % N.sqrt(var))
+        mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
         mylog.info("        skew: %.3f" % skew)
         mylog.info("    kurtosis: %.3f" % kurt)
 
@@ -134,7 +137,7 @@ class Op_make_residimage(Op):
                 img.resid_shap[pix_masked] = N.nan
                 
             if img.opts.output_all:
-                func.write_image_to_file(img.use_io, img.imagename + '.resid_shap.fits', N.transpose(img.resid_shap), img, resdir)
+                func.write_image_to_file(img.use_io, img.imagename + '.resid_shap.fits', img.resid_shap, img, resdir)
                 mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.resid_shap.fits'))
 
             ### shapelet residual rms and mean per island
@@ -153,10 +156,13 @@ class Op_make_residimage(Op):
                         g.sresid_mean = N.mean(resid)
 
             # Calculate some statistics for the Shapelet residual image
-            n, min_max, mean, var, skew, kurt = stats.describe(img.resid_shap, axis=None)
+            mean = N.mean(img.resid_gaus, axis=None)
+            std_dev = N.std(img.resid_gaus, axis=None)
+            skew = stats.skew(img.resid_gaus, axis=None)
+            kurt = stats.kurtosis(img.resid_gaus, axis=None)
             mylog.info("Statistics of the Shapelet residual image:")
             mylog.info("        mean: %.3e (Jy/beam)" % mean)
-            mylog.info("    std. dev: %.3e (Jy/beam)" % N.sqrt(var))
+            mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
             mylog.info("        skew: %.3f" % skew)
             mylog.info("    kurtosis: %.3f" % kurt)
 
