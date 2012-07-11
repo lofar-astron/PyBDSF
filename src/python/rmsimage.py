@@ -73,6 +73,8 @@ class Op_rmsimage(Op):
         brightsize = None
         isl_pos = []
         do_adapt = img.opts.adaptive_rms_box
+        img.use_rms_map = None
+        img.mean_map_type = None
 
         # 'size' of brightest source
         kappa1 = 3.0
@@ -222,9 +224,13 @@ class Op_rmsimage(Op):
                         rms_ok = False
                         if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
                             # Increase box by 20%
-                            img.rms_box = (int(img.rms_box[0]*1.2),int(img.rms_box[1]*1.2)) 
+                            new_width = int(img.rms_box[0]*1.2)
+                            if new_width == img.rms_box[0]:
+                                new_width = img.rms_box[0] + 1
+                            new_step = int(new_width/3.0)
+                            img.rms_box = (new_width, new_step) 
                             if img.rms_box[0] > min(img.ch0.shape)/4.0:
-                                self.output_rmsbox_size(img)
+                                #self.output_rmsbox_size(img)
                                 mylog.warning('Size of rms_box larger than 1/4 of image size')
                                 mylogger.userinfo(mylog, 'Using constant background rms and mean')
                                 img.use_rms_map = False
@@ -255,9 +261,13 @@ class Op_rmsimage(Op):
                             rms_ok = False
                             if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
                                 # Increase box by 20%
-                                img.rms_box = (int(img.rms_box[0]*1.2),int(img.rms_box[1]*1.2)) 
+                                new_width = int(img.rms_box[0]*1.2)
+                                if new_width == img.rms_box[0]:
+                                    new_width = img.rms_box[0] + 1
+                                new_step = int(new_width/3.0)
+                                img.rms_box = (new_width, new_step) 
                                 if img.rms_box[0] > min(img.ch0.shape)/4.0:
-                                    self.output_rmsbox_size(img)
+                                    #self.output_rmsbox_size(img)
                                     mylog.warning('Size of rms_box larger than 1/4 of image size')
                                     mylogger.userinfo(mylog, 'Using constant background rms and mean')
                                     img.use_rms_map = False
@@ -285,23 +295,23 @@ class Op_rmsimage(Op):
             #       check_rmsmap() sets img.use_rms_map
             #       check_meanmap() sets img.mean_map_type
             if pol == 'I':
-                if opts.rms_map is None:
+                if opts.rms_map is None and img.use_rms_map is None:
                     if do_adapt and len(isl_pos) > 0:
                         # Always use 2d map if there is at least one bright
                         # source and adaptive scaling is desired
                         img.use_rms_map = True
                     else:
                         self.check_rmsmap(img, rms)
-                else:
+                elif opts.rms_map != None:
                     img.use_rms_map = opts.rms_map
                 if img.use_rms_map is False:
                     mylogger.userinfo(mylog, 'Using constant background rms')
                 else:
                     mylogger.userinfo(mylog, 'Using 2D map for background rms')
                                     
-                if opts.mean_map == 'default':
+                if opts.mean_map == 'default' and img.mean_map_type is None:
                     self.check_meanmap(img, rms)
-                else:
+                elif opts.mean_map != 'default':
                     img.mean_map_type = opts.mean_map
                 if img.mean_map_type != 'map':
                     mylogger.userinfo(mylog, 'Using constant background mean')

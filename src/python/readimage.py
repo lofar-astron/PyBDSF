@@ -476,10 +476,12 @@ class Op_readimage(Op):
             x1, y1 = location
         delta_x = 0
         delta_y = 10
-        w1 = img.pix2sky((x1, y1))
-        w2 = img.pix2sky((x1+delta_x, y1+delta_y))
-            
-        rot_ang_rad = N.arctan2((w2[0] - w1[0]) , (w2[1] - w1[1]))
+        try:
+            w1 = img.pix2sky((x1, y1))
+            w2 = img.pix2sky((x1+delta_x, y1+delta_y))
+            rot_ang_rad = N.arctan2((w2[0] - w1[0]) , (w2[1] - w1[1]))
+        except:
+            rot_ang_rad = 0.0             
         return rot_ang_rad*180.0/N.pi
         
         
