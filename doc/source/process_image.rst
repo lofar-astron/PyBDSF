@@ -601,8 +601,6 @@ The output options are:
       :term:`plot_islands` ....... False : Make separate plots of each island during fitting
                                    (for large images, this may take a long time and a
                                    lot of memory)                              
-      :term:`plot_pyramid` ....... False : Make separate plots of each pyramid source during
-                                   wavelet fitting                             
       :term:`print_timing` ....... False : Print basic timing information              
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
                                    sent to the log file as usual               
@@ -648,10 +646,6 @@ The output options are:
         (for large images, this may take a long time and a
         lot of memory).
     
-    plot_pyramid
-        This parameter is a Boolean (default is ``False``). If ``True``\, make separate plots of each pyramid source during
-        wavelet fitting .
-        
     print_timing
         This parameter is a Boolean (default is ``False``). If ``True``\, print basic timing information.
     

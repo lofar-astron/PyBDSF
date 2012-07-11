@@ -23,7 +23,6 @@ PyBDSM includes a task named ``show_fit`` that allows the user to quickly check 
     :term:`psf_major` ............ False : Show the PSF major axis variation           
     :term:`psf_minor` ............ False : Show the PSF minor axis variation           
     :term:`psf_pa` ............... False : Show the PSF position angle variation                   
-    :term:`pyramid_srcs` ......... False : Plot the wavelet pyramidal sources          
     :term:`rms_image` ............. True : Show the background rms image               
     :term:`smodel_image` ......... False : Show the shapelet model image               
     :term:`source_seds` .......... False : Plot the source SEDs and best-fit spectral  
@@ -66,9 +65,6 @@ Each of the parameters is described in detail below.
         
     psf_pa
         This parameter is a Boolean (default is ``False``) that determines whether to plot the variation of the position angle of the PSF.
-        
-    pyramid_srcs
-        This parameter is a Boolean (default is ``False``) that determines whether to plot the pyramidal sources constructed during wavelet decomposition.
         
     rms_image
         This parameter is a Boolean (default is ``True``) that determines whether to plot the background rms image.
