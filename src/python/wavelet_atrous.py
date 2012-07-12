@@ -95,7 +95,7 @@ class Op_wavelet_atrous(Op):
           total_flux = 0.0
           ntot_wvgaus = 0
           stop_wav = False
-          pix_masked = N.where(N.isnan(resid)  == True)
+          pix_masked = N.where(N.isnan(resid) == True)
           for j in range(1, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
             mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
             mean, rms, cmean, std, cnt = _cbdsm.bstat(im_old, N.isnan(im_old), img.opts.kappa_clip) # why do i have this here ?
@@ -232,7 +232,7 @@ class Op_wavelet_atrous(Op):
                         ch0_islands=True, gresid_image=False, sresid_image=False,
                         gmodel_image=False, smodel_image=False, pyramid_srcs=False)
                   else:
-                  wimg.show_fit()
+                      wimg.show_fit()
                   prompt = dc + "Press enter to continue or 'q' stop fitting wavelet images : " + nc
                   answ = raw_input_no_history(prompt)
                   while answ != '':

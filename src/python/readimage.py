@@ -208,7 +208,7 @@ class Op_readimage(Op):
             t.cdelt = tuple(cdelt)
             t.acdelt = tuple(acdelt)
             t.ctype = tuple(ctype)
-                t.crota = tuple(crota)
+            t.crota = tuple(crota)
             if cunit != []:
                 t.cunit = tuple(cunit)
             t.wcsset()
@@ -237,7 +237,7 @@ class Op_readimage(Op):
             t.wcs.crpix = crpix
             t.wcs.cdelt = cdelt
             t.wcs.ctype = ctype
-                t.wcs.crota = crota
+            t.wcs.crota = crota
             if cunit != []:
                 t.wcs.cunit = cunit
 
@@ -247,7 +247,7 @@ class Op_readimage(Op):
             img.wcs_obj.crpix = crpix
             img.wcs_obj.cdelt = cdelt
             img.wcs_obj.ctype = ctype
-                img.wcs_obj.crota = crota
+            img.wcs_obj.crota = crota
             if cunit != []:
                 img.wcs_obj.cunit = cunit
             
