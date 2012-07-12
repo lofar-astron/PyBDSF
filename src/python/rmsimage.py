@@ -189,11 +189,11 @@ class Op_rmsimage(Op):
                 img.rms_box2 = (bsize2, bstep2)
             else:
                 img.rms_box2 = opts.rms_box
-        else:
+                    else:
             img.rms_box = opts.rms_box_bright
             img.rms_box2 = opts.rms_box
             self.output_rmsbox_size(img)
-                    
+        
         map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
         for ipol, pol in enumerate(pols):
           data = ch0_images[ipol]
@@ -217,7 +217,7 @@ class Op_rmsimage(Op):
               if len(data.shape) == 2:   ## 2d case
                 rms_ok = False
                 while not rms_ok:
-                    self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
+                self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                                 bright_pt_coords=isl_pos, rms_box2=img.rms_box2, 
                                 logname="PyBDSM."+img.log)
                     if N.any(rms < 0.0):
@@ -254,8 +254,8 @@ class Op_rmsimage(Op):
                     ## iterate each plane
                     rms_ok = False
                     while not rms_ok:
-                        self.map_2d(data[i], mean[i], rms[i], mask[i], *map_opts, 
-                                    do_adapt=do_adapt, bright_pt_coords=isl_pos,
+                    self.map_2d(data[i], mean[i], rms[i], mask[i], *map_opts, 
+                                do_adapt=do_adapt, bright_pt_coords=isl_pos,
                                     rms_box2=img.rms_box2, logname="PyBDSM."+img.log)
                         if N.any(rms[i] < 0.0):
                             rms_ok = False
@@ -275,7 +275,7 @@ class Op_rmsimage(Op):
                                     rms_ok = True
                                 else:                            
                                     map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
-                            else:
+              else:
                                 # User has specified box size, use order=1 to prevent negatives
                                 if opts.spline_rank > 1:
                                     mylog.warning('Negative values found in rms map interpolated with spline_rank = %i' % opts.spline_rank)
@@ -370,7 +370,7 @@ class Op_rmsimage(Op):
             if opts.savefits_normim or opts.output_all: 
               if img.waveletimage:
                   resdir = img.basedir + '/wavelet/background/'
-              else:
+          else:
                   resdir = img.basedir + '/background/'
               if not os.path.exists(resdir): os.mkdir(resdir)
               func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (img.ch0-mean)/rms, img, resdir)

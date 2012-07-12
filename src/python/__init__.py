@@ -130,9 +130,9 @@ def _run_op_list(img, chain):
                     ch0_islands=True, gresid_image=False, sresid_image=False,
                     gmodel_image=False, smodel_image=False, pyramid_srcs=False)
             else:
-                img.show_fit(rms_image=True, mean_image=True,
-                    ch0_islands=True, gresid_image=False, sresid_image=False,
-                    gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+            img.show_fit(rms_image=True, mean_image=True,
+                ch0_islands=True, gresid_image=False, sresid_image=False,
+                gmodel_image=False, smodel_image=False, pyramid_srcs=False)
             prompt = dc + "Press enter to continue or 'q' to quit .. : " + nc
             answ = raw_input_no_history(prompt)
             while answ != '':
@@ -162,7 +162,7 @@ def _run_op_list(img, chain):
                 gmodel_image=False, smodel_image=False, pyramid_srcs=False,
                 source_seds=show_spec)
         else:
-            img.show_fit(smodel_image=show_smod, sresid_image=show_sres,
+        img.show_fit(smodel_image=show_smod, sresid_image=show_sres,
                      source_seds=show_spec)
 
     if img.opts.print_timing:

@@ -77,7 +77,7 @@ def process(img, **kwargs):
         
         # Re-throw error if the user is not in the interactive shell
         if img._is_interactive_shell:
-            return False
+        return False
         else:
             raise
     except KeyboardInterrupt:

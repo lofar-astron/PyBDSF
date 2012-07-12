@@ -265,7 +265,7 @@ class Op_gausfit(Op):
             while not fitok and ngmax > 1:
                 fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose)
                 ngmax -= 1
-                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+            gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
                                           beam, thr0, peak, shape, isl.mask_active,
                                           isl.image, size)
         sm_isl = nd.binary_dilation(isl.mask_active)

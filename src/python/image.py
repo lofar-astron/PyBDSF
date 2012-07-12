@@ -55,7 +55,7 @@ class Image(object):
     def set_pars(self, **kwargs):
         """Set parameter values."""
         import interface
-        interface.set_pars(self, **kwargs)
+            interface.set_pars(self, **kwargs)
 
     def process(self, **kwargs):
         """Process Image object"""
@@ -82,13 +82,13 @@ class Image(object):
                 self.opts.filename = orig_filename # reset filename to original
             else:
                 if self._is_interactive_shell:
-                    print "\n\033[31;1mERROR\033[0m: '"+\
+                print "\n\033[31;1mERROR\033[0m: '"+\
                     loadfile+"' is not a valid parameter save file."
-                else:
+        else:
                     raise RuntimeError(str(err))
         else:
             if self._is_interactive_shell:
-                print "\n\033[31;1mERROR\033[0m: File '"+\
+            print "\n\033[31;1mERROR\033[0m: File '"+\
                 loadfile+"' not found."
             else:
                 raise RuntimeError('File not found')

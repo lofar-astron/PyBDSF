@@ -37,9 +37,9 @@ from tc import Int, Float, Bool, String, Tuple, Enum, \
 
 class Opts(object):
     """Class Opts -- user-controllable parameters."""
-    advanced_opts = Bool(False,
+    advanced_opts   =   Bool(False,
                              doc = "Show advanced options")
-    atrous_do = Bool(False,
+    atrous_do       =   Bool(False,
                              doc = "Decompose Gaussian residual image "\
                                  "into multiple scales\n"\
                                  "If True, then the Gaussian-subtracted "\
@@ -49,7 +49,7 @@ class Opts(object):
                                  "significant extended emission in the image. "\
                                  "If the image contains only point sources, "\
                                  "it is best to set this to Fasle.")
-    beam = Option(None, Tuple(Float(), Float(), Float()),
+    beam            = Option(None, Tuple(Float(), Float(), Float()),
                              doc = "FWHM of restoring beam. Specify as (maj, "\
                                  "min, pos ang E of N) in degrees. "\
                                  "E.g., beam = (0.06, 0.02, 13.3). None => "\
@@ -64,7 +64,7 @@ class Opts(object):
     filename = String(doc = "Input image file name\n"\
                                  "The input image can be a FITS or CASA 2-, "\
                                  "3-, or 4-D cube.")
-    flagging_opts = Bool(False,
+    flagging_opts   =   Bool(False,
                              doc = "Show options for Gaussian flagging\n"\
                                  "Gaussians which are likely in error "\
                                  "(e.g., very small or very large Gaussians) "\
@@ -81,7 +81,7 @@ class Opts(object):
                                  "If flag_maxsize_bm: flag + 64\n"\
                                  "If flag_minsize_bm: flag + 128\n"\
                                  "If flag_maxsize_fwhm: flag + 256")
-    frequency = Option(None, Float(),
+    frequency       = Option(None, Float(),
                              doc = "Frequency in Hz of input image. "\
                                  "E.g., frequency = 74e6. None => get from header.\n"\
                                  "For more than one channel, use the frequency_sp "\
@@ -90,7 +90,7 @@ class Opts(object):
                                  "image header. If not found, then an error "\
                                  "is raised. PyBDSM will not work without "\
                                  "knowledge of the frequency.")
-    interactive = Bool(False,
+    interactive     =   Bool(False,
                              doc = "Use interactive mode\n"\
                                  "In interactive mode, plots are displayed at "\
                                  "various stages of the processing so that "\
@@ -104,7 +104,7 @@ class Opts(object):
                                  "wavelet scale are shown. The wavelet fitting "\
                                  "may be truncated at the current scale if "\
                                  "desired.\nLastly, the final results are shown.")
-    mean_map = Enum('default', 'zero', 'const', 'map',
+    mean_map        =   Enum('default', 'zero', 'const', 'map',
                              doc = "Background mean map: 'default' => calc whether "\
                                  "to use or not, 'zero' => 0, 'const' => "\
                                  "clipped mean, 'map' => use 2-D map\n"\
@@ -139,12 +139,12 @@ class Opts(object):
                                  "it is often necessary to force the use of a "\
                                  "constant mean map using either 'const' or "\
                                  "'mean'.")
-    multichan_opts = Bool(False,
+    multichan_opts  =   Bool(False,
                              doc = "Show options for multi-channel "\
                                  "images")
-    output_opts = Bool(False,
+    output_opts     =   Bool(False,
                              doc = "Show output options")
-    polarisation_do = Bool(False,
+    polarisation_do =   Bool(False,
                              doc = "Find polarisation properties\n"\
                                  "First, if pi_fit = True, source detection is done on the polarized intensity "\
                                  "(PI) image and sources not detected in "\
@@ -168,12 +168,12 @@ class Opts(object):
                                  "and polarisation angle are estimated using the debiased "\
                                  "polarised flux density and standard error propagation. See "\
                                  "Sparks & Axon (1999) for a more detailed treatment.")
-    psf_vary_do = Bool(False,
+    psf_vary_do     =   Bool(False,
                              doc = "Calculate PSF variation across image")
-    rm_do = Bool(False,
+    rm_do           =   Bool(False,
                              doc = "Find rotation measure properties",
                              group = 'hidden')
-    rms_box = Option(None, Tuple(Int(), Int()),
+    rms_box         = Option(None, Tuple(Int(), Int()),
                              doc = "Box size, step size for rms/mean map "\
                                  "calculation. Specify as (box, step) in "\
                                  "pixels. E.g., rms_box = (40, 10) => box "\
@@ -198,7 +198,7 @@ class Opts(object):
                                  "If adaptive_rms_box is True, the rms_box parameter "\
                                  "sets the large-scale box size that is used far "\
                                  "from bright sources.")
-    rms_map = Enum(None, True, False,
+    rms_map         =   Enum(None, True, False,
                              doc = "Background rms map: True => "\
                                  "use 2-D rms map; False => use constant rms; " \
                                  "None => calculate inside program\n"\
@@ -214,7 +214,7 @@ class Opts(object):
                                  "significant extended emission in the image, "\
                                  "it is often necessary to force the use of a "\
                                  "constant rms map by setting rms_map = False.")
-    shapelet_do = Bool(False,
+    shapelet_do     =   Bool(False,
                              doc = "Decompose islands into shapelets\n"\
                                  "If True, then each island is decomposed using shapelets, "\
                                  "However, at the moment, output of the shapelet parameters "\
@@ -239,7 +239,7 @@ class Opts(object):
                                  "number of true source pixels, then the 'fdr' threshold "\
                                  "option is chosen, else the 'hard' threshold option is "\
                                  "chosen.")
-    thresh_isl = Float(3,
+    thresh_isl      =  Float(3,
                              doc = "Threshold for the island boundary in number of sigma "\
                                  "above the mean. Determines extent of island used for fitting\n"\
                                  "This parameter determines the region to which fitting "\
@@ -255,7 +255,7 @@ class Opts(object):
                                  "mean + thresh_isl * rms. Use the mean_map "\
                                  "and rms_map parameters to control the way "\
                                  "the mean and rms are determined.")
-    thresh_pix = Float(5,
+    thresh_pix      =  Float(5,
                              doc = "Source detection threshold: threshold for the "\
                                  "island peak in number of sigma "\
                                  "above the mean. If "\
@@ -293,7 +293,7 @@ class Opts(object):
 
 
     #--------------------------------ADVANCED OPTIONS--------------------------------
-    split_isl = Bool(True,
+    split_isl       =   Bool(True,
                              doc = "Split island if it is too large, has a large "\
                                  "convex deficiency and it opens well.\n"\
                                  "If it doesn't open well, then isl.mean = "\
@@ -322,7 +322,7 @@ class Opts(object):
                                       "3x3 footprint is less than this fraction of the "\
                                       "island area, then a 3x3 opening is considered.",
                              group = 'hidden')
-    peak_fit = Bool(True,
+    peak_fit        =   Bool(True,
                              doc = "Find and fit peaks of large islands iteratively\n"\
                                  "When enabled, PyBDSM will identify and "\
                                  "fit peaks of emission in "\
@@ -333,23 +333,23 @@ class Opts(object):
                                  "generally speed up fitting, but may result in "\
                                  "somewhat higher residuals.",
                              group = 'advanced_opts')
-    peak_maxsize = Float(30.0,
+    peak_maxsize    =  Float(30.0,
                              doc = "If island size in beam area is more than this, "\
                                  "attempt to fit peaks iteratively (if "\
                                  "peak_fit = True). Min value is 30",
                              group = 'advanced_opts')
-    fdr_alpha = Float(0.05,
+    fdr_alpha       =  Float(0.05,
                              doc = "Alpha for FDR algorithm for thresholds\n"\
                                  "If thresh is 'fdr', then the estimate of fdr_alpha "\
                                  "(see Hopkins et al. 2002 for details) is stored "\
                                  "in this parameter.",
                              group = "advanced_opts")
-    fdr_ratio = Float(0.1,
+    fdr_ratio       =  Float(0.1,
                              doc = "For thresh = None; " \
                                  "if #false_pix / #source_pix < fdr_ratio, " \
                                  "thresh = 'hard' else thresh = 'fdr'",
                              group = "advanced_opts")
-    kappa_clip = Float(3,
+    kappa_clip      =  Float(3,
                              doc = "Kappa for clipped mean and rms\n"\
                                  "The value of this is the factor used for Kappa-alpha "\
                                  "clipping, as in AIPS. For an image with few source "\
@@ -384,13 +384,13 @@ class Opts(object):
                                  "image is greater than 0.1), the image is assumed to be "\
                                  "confused and hence the background mean is put to zero.",
                              group = "advanced_opts")
-    spline_rank = Enum(3, 1, 2, 4,
+    spline_rank     =   Enum(3, 1, 2, 4,
                              doc = "Rank of the interpolating function for rms/mean map\n"\
                                  "This is an integer and is the order of the interpolating "\
                                  "spline function to interpolate the background rms and "\
                                  "mean map over the entire image.",
                              group = "advanced_opts")
-    minpix_isl = Option(None, Int(),
+    minpix_isl      = Option(None, Int(),
                              doc = "Minimum number of pixels with emission per island "\
                                  "(minimum is 6 pixels). "\
                                  "None -> calculate inside program\n"\
@@ -402,7 +402,7 @@ class Opts(object):
                                  "image header. It is set to 6 pixels for all "\
                                  "wavelet images.",
                              group = "advanced_opts")
-    rms_value = Option(None, Float(),
+    rms_value       = Option(None, Float(),
                              doc = "Value of constant rms in "\
                                  "Jy/beam to use if rms_map = False. "\
                                  "None => calculate inside program",
@@ -416,7 +416,7 @@ class Opts(object):
                                  "on the centroid of the source. Errors are calculated "
                                  "from the mean of the rms map inside the aperture.",
                              group = "advanced_opts")
-    ini_gausfit = Enum('default', 'simple', 'nobeam',
+    ini_gausfit     =   Enum('default', 'simple', 'nobeam',
                              doc = "Initial guess for Gaussian "\
                                  "parameters: 'default', 'simple', or 'nobeam'\n"\
                                  "These are three different ways of estimating the initial "\
@@ -458,24 +458,24 @@ class Opts(object):
                                  "lot of time, as every pixel is checked in case weird "\
                                  "geometries and projections are used",
                              group = "advanced_opts")
-    trim_box = Option(None, Tuple(Float(), Float(), Float(), Float()),
+    trim_box        = Option(None, Tuple(Float(), Float(), Float(), Float()),
                              doc = "Do source detection on only a part of the image. "\
                                  "Specify as (xmin, xmax, ymin, ymax) in pixels. "\
                                  "E.g., trim_box = (120, 840, 15, 895). None => "\
                                  "use entire image",
                              group = "advanced_opts")
-    stop_at = Enum(None, 'isl', 'read',
+    stop_at         =   Enum(None, 'isl', 'read',
                              doc = "Stops after: 'isl' = island finding step or "\
                                  "'read' = image reading step",
                              group = "advanced_opts")
-    group_by_isl = Bool(False,
+    group_by_isl    =   Bool(False,
                              doc = "Group all Gaussians in each island into a single "\
                                  "source\n"\
                                  "If True, all Gaussians in the island belong to a "\
                                  "single source. If False, grouping is controlled "\
                                  "by the group_tol parameter.",
                              group = "advanced_opts")
-    group_tol = Float(1.0,
+    group_tol       =  Float(1.0,
                              doc = "Tolerance for grouping of Gaussians into sources: "\
                                  "larger values will result in larger sources\n"\
                                  "Sources are created by "\
@@ -487,7 +487,7 @@ class Opts(object):
                                  "PA of the line joining them, they belong to the "\
                                  "same island.",
                              group = "advanced_opts")
-    blank_zeros = Bool(False,
+    blank_zeros     =   Bool(False,
                              doc = "Blank zeros in the image\n"\
                                 "If True, all pixels with a value of 0 are blanked."\
                                 "If False, any such pixels are left unblanked (and "\
@@ -503,7 +503,7 @@ class Opts(object):
                              group = "advanced_opts")
 
     #--------------------------------ADAPTIVE RMS_BOX OPTIONS--------------------------------
-    rms_box_bright = Option(None, Tuple(Int(), Int()),
+    rms_box_bright  = Option(None, Tuple(Int(), Int()),
                              doc = "Box size, step size for rms/mean map "\
                                  "calculation near bright sources. Specify as (box, step) in "\
                                  "pixels. None => calculate inside program\n"\
@@ -530,7 +530,7 @@ class Opts(object):
                              group = "adaptive_rms_box")
 
     #--------------------------------A-TROUS OPTIONS--------------------------------
-    atrous_jmax = Int(0,
+    atrous_jmax     =    Int(0,
                              doc = 'Max allowed wavelength order, 0 => calculate '\
                                  'inside program\n'\
                                  'This is an integer which is the maximum order of '\
@@ -546,7 +546,7 @@ class Opts(object):
                                  'not more than 3-4 times smaller than the smallest image '\
                                  'dimension.',
                              group = "atrous_do")
-    atrous_lpf = Enum('b3', 'tr',
+    atrous_lpf      =   Enum('b3', 'tr',
                              doc = "Low pass filter, either 'b3' or "\
                                  "'tr', for B3 spline or Triangle\n"\
                                  "This is the low pass filter, which can currently be "\
@@ -556,7 +556,7 @@ class Opts(object):
                                  "[1, 2, 1], normalised so that the sum is unity. The "\
                                  "lengths of the filters are hence 5 and 3 respectively.",
                              group = "atrous_do")
-    atrous_bdsm_do = Bool(True,
+    atrous_bdsm_do  =   Bool(True,
                              doc = "Perform source extraction on each wavelet "\
                                  "scale\n"\
                                  "Unless this is set to True, the image cannot be "\
@@ -565,7 +565,7 @@ class Opts(object):
                              group = "atrous_do")
 
     #--------------------------------FLAGGING OPTIONS--------------------------------
-    flag_smallsrc = Bool(False,
+    flag_smallsrc   =   Bool(False,
                              doc = "Flag sources smaller than "\
                                  "flag_minsize_bm times beam area\n"\
                                  "If True, "\
@@ -584,14 +584,14 @@ class Opts(object):
                                  "flag is automatically set to False while "\
                                  "decomposing wavelet images into Gaussians. ",
                              group = "flagging_opts")
-    flag_minsnr = Float(0.6,
+    flag_minsnr     =  Float(0.6,
                              doc = "Flag Gaussian if peak is less than flag_minsnr "\
                                  "times thresh_pix times local rms\n"\
                                  "Any fitted Gaussian whose peak is less than "\
                                  "flag_minsnr times thresh_pix times the local rms "\
                                  "is flagged. The flag value is increased by 1.",
                              group = "flagging_opts")
-    flag_maxsnr = Float(1.5,
+    flag_maxsnr     =  Float(1.5,
                              doc = "Flag Gaussian if peak is greater than "\
                                  "flag_maxsnr times image value at the peak\n"\
                                  "Any fitted Gaussian whose peak is greater than "\
@@ -613,14 +613,14 @@ class Opts(object):
                                  "falls outside the island is "\
                                  "flagged. The flag value is increased by 256.",
                              group = "flagging_opts")
-    flag_bordersize = Int(0,
+    flag_bordersize =    Int(0,
                              doc = "Flag Gaussian if centre is outside border "\
                                  "- flag_bordersize pixels\n"\
                                  "Any fitted Gaussian whose centre is border pixels "\
                                  "outside the island bounding box is flagged. The flag "\
                                  "value is increased by 4 (for x) and 8 (for y).",
                              group = "flagging_opts")
-    flag_maxsize_bm = Float(25.0,
+    flag_maxsize_bm =  Float(25.0,
                              doc = "Flag Gaussian if area greater than "\
                                  "flag_maxsize_bm times beam area\n"\
                                  "Any fitted "\
@@ -628,7 +628,7 @@ class Opts(object):
                                  "bm times the synthesized beam is flagged. The "\
                                  "flag value is increased by 64.",
                              group = "flagging_opts")
-    flag_minsize_bm = Float(0.7,
+    flag_minsize_bm =  Float(0.7,
                              doc = "Flag Gaussian if flag_smallsrc = True "\
                                  "and area smaller than flag_minsize_bm times "\
                                  "beam area\n"\
@@ -653,7 +653,7 @@ class Opts(object):
                                  "to scale with frequency, depending on whether the "\
                                  "parameter beam_sp_derive is False or True.",
                              group = "multichan_opts")
-    frequency_sp = Option(None, List(Float()),
+    frequency_sp    = Option(None, List(Float()),
                              doc = "Frequency in Hz of channels in input image when "\
                                  "more than one channel is present. "\
                                  "E.g., frequency_sp = [74e6, 153e6]. "\
@@ -664,7 +664,7 @@ class Opts(object):
                                  "is raised. PyBDSM will not work without the "\
                                  "knowledge of the frequency.",
                              group = "multichan_opts")
-    beam_sp_derive = Bool(False,
+    beam_sp_derive  =   Bool(False,
                              doc = "If True and beam_spectrum is None, then "\
                                  "assume header beam is for median frequency and scales "\
                                  "with frequency for channels\n"\
@@ -674,7 +674,7 @@ class Opts(object):
                                  "calculate the beam per channel. If False, then a "\
                                  "constant value of the beam is taken instead.",
                              group = "multichan_opts")
-    collapse_mode = Enum('average', 'single',
+    collapse_mode   =   Enum('average', 'single',
                              doc = "Collapse method: 'average' "\
                                  "or 'single'. Average channels or take single "\
                                  "channel to perform source detection on\n"\
@@ -683,11 +683,11 @@ class Opts(object):
                                  "done on a single channel or an average of many "\
                                  "channels.",
                              group = 'multichan_opts')
-    collapse_ch0 = Int(0,
+    collapse_ch0    =    Int(0,
                              doc = "Number of the channel for source extraction, "\
                                  "if collapse_mode = 'single'",
                              group = 'multichan_opts')
-    collapse_av = List(None,
+    collapse_av     =   List(None,
                              doc = "List of channels to average if collapse_mode "\
                                  "= 'average'; None => all\n"\
                                  "This parameter is a list of channels to be averaged "\
@@ -696,7 +696,7 @@ class Opts(object):
                                  "value is None, then all channels are used. Else, the "\
                                  "value is a Python list of channel numbers.",
                              group = 'multichan_opts')
-    collapse_wt = Enum('unity', 'rms',
+    collapse_wt     =   Enum('unity', 'rms',
                              doc = "Weighting: 'unity' or 'rms'. "\
                                  "Average channels with weights = 1 or 1/rms_clip^2 if " \
                                  "collapse_mode = 'average'\n"\
@@ -709,24 +709,28 @@ class Opts(object):
 
 
     #-----------------------------OUTPUT OPTIONS--------------------------------
-    plot_islands = Bool(False,
+    plot_islands    =   Bool(False,
                              doc = 'Make separate plots of each island during '\
                                  'fitting (for large images, this may take '\
                                  'a long time and a lot of memory)',
                              group = "output_opts")
-    plot_allgaus = Bool(False,
+    plot_pyramid    =   Bool(False,
+                             doc = 'Make separate plots of each pyramid source '\
+                                 'during wavelet fitting',
+                             group = "output_opts")
+    plot_allgaus    =   Bool(False,
                              doc = 'Make a plot of all Gaussians at the end',
                              group = "output_opts")
-    output_all = Bool(False,
+    output_all      =   Bool(False,
                              doc = "Write out all files automatically to directory "\
                                  "'filename_pybdsm'",
                              group = "output_opts")
-    opdir_overwrite = Enum('overwrite', 'append',
+    opdir_overwrite =   Enum('overwrite', 'append',
                              doc = "'overwrite'/'append': If output_all=True, "\
                                  "delete existing "\
                                  "files or append a new directory",
                              group = "output_opts")
-    bbs_patches = Enum(None, 'single', 'gaussian', 'source', 'mask',
+    bbs_patches     =   Enum(None, 'single', 'gaussian', 'source', 'mask',
                              doc = "For BBS format, type of patch to use: None "\
                                  "=> no patches. "\
                                  "'single' => all Gaussians in one patch. "\
@@ -750,45 +754,45 @@ class Opts(object):
                              doc = "Name of the mask file to use to define the BBS "\
                                  "patches (FITS or CASA format)",
                              group = "output_opts")
-    solnname = Option(None, String(),
+    solnname        = Option(None, String(),
                              doc = "Name of the run, to be prepended "\
                                  "to the name of the output directory. E.g., "\
                                  "solname='Run_1'",
                              group = "output_opts")
-    indir = Option(None, String(),
+    indir           = Option(None, String(),
                              doc = "Directory of input FITS files. None => get "\
                                  "from filename",
                              group = "output_opts")
     savefits_residim = Bool(False,
                              doc = "Save residual image as fits file",
                              group = "output_opts")
-    savefits_rmsim = Bool(False,
+    savefits_rmsim  =   Bool(False,
                              doc = "Save background rms image as fits file",
                              group = "output_opts")
-    savefits_meanim = Bool(False,
+    savefits_meanim =   Bool(False,
                              doc = "Save background mean image as fits file",
                              group = "output_opts")
-    savefits_rankim = Bool(False,
+    savefits_rankim =   Bool(False,
                              doc = "Save island rank image as fits file",
                              group = "output_opts")
-    savefits_normim = Bool(False,
+    savefits_normim =   Bool(False,
                              doc = "Save norm image as fits file",
                              group = "output_opts")
-    print_timing = Bool(False,
+    print_timing    =   Bool(False,
                              doc = "Print basic timing information",
                              group = "output_opts")
-    verbose_fitting = Bool(False,
+    verbose_fitting =   Bool(False,
                              doc = "Print out extra information " \
                                  "during fitting",
                              group = "output_opts")
-    quiet = Bool(False,
+    quiet           =   Bool(False,
                              doc = "Suppress text output to screen. Output is "\
                                  "still sent to the log file as usual",
                              group = "output_opts")
 
 
     #------------------------POLARISATION OPTIONS------------------------------
-    pi_fit = Bool(True,
+    pi_fit         =   Bool(True,
                              doc = "Check the polarized intesity (PI) image for "\
                                  "sources not found in Stokes I\n"\
                                  "If True, the polarized intensity image is "\
@@ -798,7 +802,7 @@ class Opts(object):
                                  "pi_thresh_pix and pi_thresh_isl parameters to "\
                                  "control island detection in the PI image.",
                              group = "polarisation_do")
-    pi_thresh_isl = Option(None, Float(),
+    pi_thresh_isl  =  Option(None, Float(),
                              doc = "Threshold for PI island boundary in number of sigma "\
                                  "above the mean. None => use thresh_isl\n"\
                                  "This parameter determines the region to which fitting "\
@@ -810,7 +814,7 @@ class Opts(object):
                                  "threshold for sources. Generally, pi_thresh_isl should "\
                                  "be lower than pi_thresh_pix.",
                              group = "polarisation_do")
-    pi_thresh_pix = Option(None, Float(),
+    pi_thresh_pix   =  Option(None, Float(),
                              doc = "Source detection threshold for PI image: threshold for the "\
                                  "island peak in number of sigma "\
                                  "above the mean. None => use thresh_pix\n"\
@@ -825,7 +829,7 @@ class Opts(object):
 
 
     #-----------------------------PSF VARY OPTIONS--------------------------------
-    psf_generators = Enum('calibrators', 'field',
+    psf_generators  =   Enum('calibrators', 'field',
                              doc = "PSF generators: 'calibrators' or 'field'\n"\
                                  " If 'calibrator', only one source is taken per "\
                                  "facet, and sources between psf_snrtop and maximum "\
@@ -834,7 +838,7 @@ class Opts(object):
                                  "secondary generators to be used in tessellating. "\
                                  "Currently, the 'field' option is not implemented.",
                              group = "hidden")
-    psf_nsig = Float(3.0,
+    psf_nsig        =  Float(3.0,
                              doc = "Kappa for clipping within each bin\n"\
                                  "When constructing a set of 'unresolved' sources "\
                                  "for psf estimation, the (clipped) median, rms and "\
@@ -842,11 +846,11 @@ class Opts(object):
                                  "SNR within each bin is calculated using kappa = "\
                                  "psf_nsig.",
                              group = "psf_vary_do")
-    psf_over = Int(2,
+    psf_over        =    Int(2,
                              doc = "Factor of nyquist sample for binning bmaj, "\
                                  "etc. vs SNR",
                              group = "psf_vary_do")
-    psf_kappa2 = Float(2.0,
+    psf_kappa2      =  Float(2.0,
                              doc = "Kappa for clipping for analytic fit\n"\
                                  "When iteratively arriving at a statistically "\
                                  "probable set of 'unresolved' sources, the fitted "\
@@ -857,12 +861,12 @@ class Opts(object):
                                  "considered 'unresolved' and are used further to "\
                                  "estimate the PSFs.",
                              group = "psf_vary_do")
-    psf_snrcut = Float(10.0,
+    psf_snrcut      =  Float(10.0,
                              doc = "Minimum SNR for statistics\n"\
                                  "Only Gaussians with SNR greater than this are "\
                                  "considered for processing. The minimum value is 5.0",
                              group = "psf_vary_do")
-    psf_snrtop = Float(0.15,
+    psf_snrtop      =  Float(0.15,
                              doc = "Fraction of SNR > snrcut as primary generators\n"\
                                  "If psf_generators is 'calibrator', then the peak "\
                                  "pixels of Gaussians which are the psf_snrtop "\
@@ -871,7 +875,7 @@ class Opts(object):
                                  "Gaussians which are between psf_snrbot and psf_snrtop "\
                                  "fraction of the highest SNR are taken.",
                              group = "psf_vary_do")
-    psf_snrbot = Float(0.20,
+    psf_snrbot      =  Float(0.20,
                              doc = "Fraction of SNR > snrcut as all generators\n"\
                                  "If psf_generators is 'field', then all sources which "\
                                  "are between a fraction psf_snrbot and a fraction "\
@@ -879,13 +883,13 @@ class Opts(object):
                                  "Voronoi generators. That is, for a value of 0.2, the "\
                                  "top 20% (in terms of SNR) of Gaussians are taken.",
                              group = "hidden")
-    psf_snrcutstack = Float(15.0,
+    psf_snrcutstack =  Float(15.0,
                              doc = "Unresolved sources with higher SNR "\
                                  "taken for stacked psfs\n"\
                                  "Only Gaussians with SNR greater than this are used for "\
                                  "estimating psf images in each tile.",
                              group = "psf_vary_do")
-    psf_gencode = Enum('list', 'file',
+    psf_gencode     =   Enum('list', 'file',
                              doc = "'list'/'file': Take primary "\
                                  "gens from Gaussian list or file\n"\
                                  "This is a string which can be either of 'list' or "\
@@ -900,7 +904,7 @@ class Opts(object):
                                  "psfs are believed to close to theoretical (e.g. strong "\
                                  "calibrators) need to be supplied with the metadata.",
                              group = "hidden")
-    psf_primarygen = String('',
+    psf_primarygen  = String('',
                              doc = "Filename for primary gens if psf_gencode='file'\n"\
                                  "This is the filename with the generators if psf_gencode "\
                                  "is 'file'. This is not yet implemented.",
@@ -918,7 +922,7 @@ class Opts(object):
                                  "that each tile has smooth boundaries instead of straight "\
                                  "lines, using pixel-dependent weights.",
                              group = "psf_vary_do")
-    psf_tess_sc = Enum('s', 'c',
+    psf_tess_sc     =   Enum('s', 'c',
                              doc = "('s')imple/('c')omplicated - normal "\
                                  "or approximate (fuzzy)\n"\
                                  "If 's', then each pixel can only belong to one Voronoi "\
@@ -927,16 +931,16 @@ class Opts(object):
                                  "not yet process the result of fuzzy tessellation and hence "\
                                  "it is advisable to use 's'.",
                              group = "hidden")
-    psf_tess_fuzzy = Float(0.05,
+    psf_tess_fuzzy  =  Float(0.05,
                              doc = "Fraction of overlap for fuzzy tessellation\n"\
                                  "If psf_tess_sc is 'c', then this determines the fraction "\
                                  "of overlap between adjacent tiles for fuzzy tessellation.",
                              group = "hidden")
-    psf_use_shap = Bool(False,
+    psf_use_shap    =   Bool(False,
                              doc = "Use shapelets for PSF variation",
                              group = "hidden")
 
-    psf_high_snr = Option(None, Float(),
+    psf_high_snr    = Option(None, Float(),
                              doc = "SNR above which all sources are taken to be unresolved. "\
                                  "E.g., psf_high_snr = 20.0. None => no such selection is made\n"\
                                  "Gaussians with SNR greater than this are "\
@@ -944,7 +948,7 @@ class Opts(object):
                                  "to be resolved. This corrects for the unreliability at high SNRs in the "\
                                  "algorithm used to find unresolved sources. The minimum value is 20.0",
                              group = "psf_vary_do")
-    psf_stype_only = Bool(True,
+    psf_stype_only =    Bool(True,
                              doc = "Restrict sources to "\
                                  "be only of type 'S'",
                              group = "psf_vary_do")
@@ -971,7 +975,7 @@ class Opts(object):
 
 
     #-------------------------SPECTRAL INDEX OPTIONS--------------------------------
-    flagchan_rms = Bool(True,
+    flagchan_rms    =   Bool(True,
                              doc = "Flag channels before (averaging and) "\
                                  "extracting spectral index, if their rms if "\
                                  "more than 5 (clipped) sigma outside the median "\
@@ -986,13 +990,13 @@ class Opts(object):
                                  "total number of these bad channels does not exceed "\
                                  "10% of the total number of channels themselves.",
                              group = "spectralindex_do")
-    flagchan_snr = Bool(True,
+    flagchan_snr    =   Bool(True,
                              doc = "Flag channels that do not meet SNR criterion "\
                                  "set by specind_snr\n"\
                                  "If True, then channels (after averaging if needed) "\
                                  "will be flagged and will not be used during fitting.",
                              group = "spectralindex_do")
-    specind_maxchan = Int(0,
+    specind_maxchan =    Int(0,
                              doc = "Maximum number of channels to average for "\
                                  "a given source when when attempting to meet target SNR. "\
                                  "1 => no averaging; 0 => no maximum\n"\
@@ -1001,7 +1005,7 @@ class Opts(object):
                                  "then this determines the maximum number of channels to "\
                                  "average.",
                              group = "spectralindex_do")
-    specind_snr = Float(3.0,
+    specind_snr     =  Float(3.0,
                              doc = "Target SNR to use when fitting power law. If "\
                                  "there is insufficient SNR, neighboring channels "\
                                  "are averaged to attempt to obtain the target SNR. "\
@@ -1012,16 +1016,16 @@ class Opts(object):
                              group = "spectralindex_do")
 
     #-------------------------HIDDEN OPTIONS--------------------------------
-    debug = Bool(False,
+    debug           =   Bool(False,
                              doc = "Print debug info to the logfile",
                              group = "hidden")
-    outfile = Option(None, String(),
+    outfile         = Option(None, String(),
                              doc = "Output file name. None => file is named automatically",
                              group = 'hidden')
-    clobber = Bool(False,
+    clobber         =   Bool(False,
                              doc = "Overwrite existing file?",
                              group = 'hidden')
-    format = Enum('bbs', 'ds9', 'fits', 'ascii', 'star', 'kvis',
+    format          =   Enum('bbs', 'ds9', 'fits', 'ascii', 'star', 'kvis',
                              doc = "Format of output catalog: 'bbs', "\
                                  "'ds9', 'fits', 'star', 'kvis', or 'ascii'\n"\
                                  "The following formats are supported:\n"\
@@ -1040,26 +1044,26 @@ class Opts(object):
                                  "other formats include only a subset of the full "\
                                  "information.",
                              group = 'hidden')
-    srcroot = Option(None, String(),
+    srcroot         = Option(None, String(),
                              doc = "Root name for entries in the output catalog. "\
                                  "None => use image file name",
                              group = 'hidden')
-    incl_chan = Bool(False,
+    incl_chan       =   Bool(False,
                              doc = "Include flux densities from each channel "\
                                  "(if any)?",
                              group = 'hidden')
-    catalog_type = Enum('gaul', 'shap', 'srl',
+    catalog_type    =   Enum('gaul', 'shap', 'srl',
                              doc = "Type of catalog to write:  'gaul' - Gaussian "\
                                  "list, 'srl' - source list (formed "\
                                  "by grouping Gaussians), 'shap' - shapelet "\
                                  "list (FITS format only)",
                              group = 'hidden')
-    img_format = Enum('fits', 'casa',
+    img_format      =   Enum('fits', 'casa',
                              doc = "Format of output image: 'fits' or "\
                                  "'casa' (at the moment only 'fits' is "\
                                  "supported)",
                              group = 'hidden')
-    img_type = Enum('gaus_resid', 'shap_resid', 'rms', 'mean', 'gaus_model',
+    img_type        =   Enum('gaus_resid', 'shap_resid', 'rms', 'mean', 'gaus_model',
                              'shap_model', 'ch0', 'pi', 'psf_major', 'psf_minor',
                              'psf_pa',
                              doc = "Type of image to export: 'gaus_resid', "\
@@ -1079,40 +1083,43 @@ class Opts(object):
                                  "'psf_minor' - PSF minor axis FWHM (in pixels) image\n"\
                                  "'psf_pa' - PSF position angle (E from N in degrees) image\n",
                              group = 'hidden')
-    ch0_image = Bool(True,
+    ch0_image       =   Bool(True,
                              doc = "Show the ch0 image. This is the image used for "\
                                  "source detection",
                              group = "hidden")
-    rms_image = Bool(True,
+    rms_image       =   Bool(True,
                              doc = "Show the background rms image",
                              group = "hidden")
-    mean_image = Bool(True,
+    mean_image      =   Bool(True,
                              doc = "Show the background mean image",
                              group = "hidden")
-    ch0_islands = Bool(True,
+    ch0_islands     =   Bool(True,
                              doc = "Show the ch0 image with islands and Gaussians "\
                                  "(if any) overplotted",
                              group = "hidden")
-    ch0_flagged = Bool(False,
+    ch0_flagged     =   Bool(False,
                              doc = "Show the ch0 image with flagged Gaussians "\
                                  "(if any) overplotted",
                              group = "hidden")
-    gresid_image = Bool(True,
+    gresid_image    =   Bool(True,
                              doc = "Show the Gaussian residual image",
                              group = "hidden")
-    sresid_image = Bool(False,
+    sresid_image    =   Bool(False,
                              doc = "Show the shapelet residual image",
                              group = "hidden")
-    gmodel_image = Bool(True,
+    gmodel_image    =   Bool(True,
                              doc = "Show the Gaussian model image",
                              group = "hidden")
-    smodel_image = Bool(False,
+    smodel_image    =   Bool(False,
                              doc = "Show the shapelet model image",
                              group = "hidden")
-    pi_image = Bool(False,
+    pi_image        =   Bool(False,
                              doc = "Show the polarized intensity image",
                              group = "hidden")
-    source_seds = Bool(False,
+    pyramid_srcs    =   Bool(False,
+                             doc = "Plot the wavelet pyramidal sources",
+                             group = "hidden")
+    source_seds     =   Bool(False,
                              doc = "Plot the source SEDs and best-fit spectral "\
                                  "indices (if image was processed with "\
                                  "spectralindex_do = True). "\
@@ -1120,15 +1127,15 @@ class Opts(object):
                                  "or, if ch0_islands = True, by picking a source with "\
                                  "the mouse",
                              group = "hidden")
-    psf_major = Bool(False,
+    psf_major       =   Bool(False,
                              doc = "Show the PSF major axis variation (values are "\
                                  "FWHM in pixels)",
                              group = "hidden")
-    psf_minor = Bool(False,
+    psf_minor       =   Bool(False,
                              doc = "Show the FWHM of PSF minor axis variation (values are "\
                                  "FWHM in pixels)",
                              group = "hidden")
-    psf_pa = Bool(False,
+    psf_pa          =   Bool(False,
                              doc = "Show the PSF position angle variation (values are "\
                                  "angle E from N in degrees)",
                              group = "hidden")
