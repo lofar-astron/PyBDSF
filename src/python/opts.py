@@ -714,10 +714,6 @@ class Opts(object):
                                  'fitting (for large images, this may take '\
                                  'a long time and a lot of memory)',
                              group = "output_opts")
-    plot_pyramid = Bool(False,
-                             doc = 'Make separate plots of each pyramid source '\
-                                 'during wavelet fitting',
-                             group = "output_opts")
     plot_allgaus = Bool(False,
                              doc = 'Make a plot of all Gaussians at the end',
                              group = "output_opts")
@@ -1115,9 +1111,6 @@ class Opts(object):
                              group = "hidden")
     pi_image = Bool(False,
                              doc = "Show the polarized intensity image",
-                             group = "hidden")
-    pyramid_srcs = Bool(False,
-                             doc = "Plot the wavelet pyramidal sources",
                              group = "hidden")
     source_seds = Bool(False,
                              doc = "Plot the source SEDs and best-fit spectral "\

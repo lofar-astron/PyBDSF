@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.3'
+__version__ = '1.3.1'
 
 # Store svn Revision number. For this to work, one also needs to do: 
 #
@@ -26,6 +26,14 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+    
+    2012/07/11 - Version 1.3.1
+    
+    2012/07/11 - Cleaned up unused options.
+    
+    2012/07/10 - Fixed a bug that caused a segfault during Gaussian
+        fitting. Fixed a bug that caused a crash when a detection image
+        is used.
     
     2012/07/05 - Fixed a bug that caused images written when output_all=
         True to be transposed. Added frequency information to all output

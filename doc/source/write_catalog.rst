@@ -106,19 +106,19 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **Wave_id:** the wavelet scale from which the source was extracted, starting from zero (for the ch0 image)
 
-* **RA:** the J2000 right ascension of the source, in degrees
+* **RA:** the right ascension of the source (for the equinox of the image), in degrees
 
 * **E_RA:** the error on the right ascension of the source, in degrees
 
-* **DEC:** the J2000 declination of the source, in degrees
+* **DEC:** the declination of the source (for the equinox of the image), in degrees
 
 * **E_DEC:** the 1-:math:`\sigma` error on the declination of the source, in degrees
 
-* **RA_max:** the J2000 right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
+* **RA_max:** the right ascension of the maximum of the source (for the equinox of the image), in degrees (``'srl'`` catalogs only)
 
 * **E_RA_max:** the 1-:math:`\sigma` error on the right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
 
-* **DEC_max:** the J2000 declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
+* **DEC_max:** the declination of the maximum of the source (for the equinox of the image), in degrees (``'srl'`` catalogs only)
 
 * **E_DEC_max:** the 1-:math:`\sigma` error on the declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
 

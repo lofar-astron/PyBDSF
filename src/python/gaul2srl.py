@@ -370,8 +370,13 @@ class Op_gaul2srl(Op):
         mompara4_MC = N.zeros(nMC, dtype=float)
         mompara5_MC = N.zeros(nMC, dtype=float)
         for i in range(nMC):
-            subim_src_MC = self.make_subim(subn, subm, g_sublist, delc) + \
-                        N.random.normal(loc=0.0, scale=abs(isl.rms)*sqrt(bmar_p), size=(subn, subm))
+            # Add random noise (convolved with beam) to image
+            noise_im = N.random.normal(loc=0.0, scale=abs(isl.rms)*sqrt(bmar_p), 
+                                       size=(subn, subm))
+#            beam = N.
+#             noise_im = convolve2d(noise_im, beam)
+            subim_src_MC = self.make_subim(subn, subm, g_sublist, delc) + noise_im
+                        
             try:
                 mompara_MC = func.momanalmask_gaus(subim_src_MC, mask, isrc, bmar_p, True)
                 mompara0_MC[i] = mompara_MC[0]

@@ -268,7 +268,8 @@ class Op_gausfit(Op):
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
                                           beam, thr0, peak, shape, isl.mask_active,
                                           isl.image, size)
-        if not fitok:
+        sm_isl = nd.binary_dilation(isl.mask_active)
+        if not fitok and N.sum(~sm_isl) >= img.minpix_isl:
             # If all else fails, shrink the island a little and try one last time
             if ffimg == None:
                 fcn = MGFunction(isl.image-isl.islmean, nd.binary_dilation(isl.mask_active), 1)
@@ -287,7 +288,8 @@ class Op_gausfit(Op):
                ng1 = len(gaul)
                if fitok and len(fgaul) == 0:
                    break
-        if not fitok:
+        lg_isl = nd.binary_erosion(isl.mask_active)
+        if not fitok and N.sum(~lg_isl) >= img.minpix_isl:
             # If all else fails, expand the island a little and try one last time
             if ffimg == None:
                 fcn = MGFunction(isl.image-isl.islmean, nd.binary_erosion(isl.mask_active), 1)

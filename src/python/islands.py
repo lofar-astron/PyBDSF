@@ -77,7 +77,7 @@ class Op_islands(Op):
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
-            
+            img.minpix_isl = det_img.minpix_isl
         else:
             img.islands = self.ndimage_alg(img, opts)
             img.nisl = len(img.islands)
@@ -141,7 +141,7 @@ class Op_islands(Op):
                 minsize = 6 # Need at least 6 pixels to obtain good fits
             mylogger.userinfo(mylog, "Minimum number of pixels per island", '%i' %
                           minsize)
-        
+        img.minpix_isl = minsize
         clipped_mean = img.clipped_mean
         saverank = opts.savefits_rankim
 
