@@ -239,6 +239,22 @@ def g2param(g, adj=False):
 
     return params
 
+def g2param_err(g, adj=False):
+    """Convert errors on gaussian object g to param list [Eamp, Ecenx, Eceny, Esigx, Esigy, Etheta] """
+    from const import fwsig
+    from math import pi
+
+    A = g.peak_fluxE
+    if adj and hasattr(g, 'size_pix_adj'):
+        sigx, sigy, th = g.size_pix_adj
+    else:
+        sigx, sigy, th = g.size_pixE
+    cenx, ceny = g.centre_pixE
+    sigx = sigx/fwsig; sigy = sigy/fwsig
+    params = [A, cenx, ceny, sigx, sigy, th]
+
+    return params
+
 def corrected_size(size):
     """ convert major and minor axis from sigma to fwhm and angle from horizontal to P.A. """
 
@@ -510,7 +526,6 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
         multiple gaussians. Compute only for gaussian with index (mask value) isrc.
         Returns normalised peak, centroid, fwhm and P.A. assuming North is top. 
     """
-
     from math import sqrt, atan, pi
     from const import fwsig
     import numpy as N
@@ -707,7 +722,7 @@ def get_errors(img, p, stdav, bm_pix=None):
     import mylogger
     import numpy as N
 
-    mylog = mylogger.logging.getLogger("PyBDSM.Compute   ")
+    mylog = mylogger.logging.getLogger("PyBDSM.Compute")
 
     if len(p) % 7 > 0: 
       mylog.error("Gaussian parameters passed have to have 7n numbers")

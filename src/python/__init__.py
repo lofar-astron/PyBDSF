@@ -166,12 +166,14 @@ def _run_op_list(img, chain):
                      source_seds=show_spec)
 
     if img.opts.print_timing:
-        print "="*30
+        print "="*36
+        print "%18s : %10s" % ("Module", "Time (sec)")
+        print "-"*36
         for op in chain:
-            print "%15s : %f" % (op.__class__.__name__, 
+            print "%18s : %f" % (op.__class__.__name__, 
                                  (op.__stop_time - op.__start_time))
-        print "="*30
-        print "%15s : %f" % ("Total",
+        print "="*36
+        print "%18s : %f" % ("Total",
                              (chain[-1].__stop_time - chain[0].__start_time))
 
     return True

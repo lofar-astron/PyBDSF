@@ -55,7 +55,9 @@ order:
    centroid (the position of the maximum of the source is also calculated and
    output). The total source size is measured using moment analysis (see
    http://en.wikipedia.org/wiki/Image_moment for a nice overview of moment
-   analysis).
+   analysis). Errors on the source position and size are estimated using
+   Condon (1997), but additional uncertainties due to uncertainties in the
+   constituent Gaussians may be estimated using a Monte Carlo technique.
 
 #. Continues with further processing, if the user has specified that one or more of the following modules be used:
 
@@ -321,6 +323,8 @@ The advanced options are:
       :term:`detection_image` ........ '': Detection image file name used only for 
                                    detecting islands of emission. Source 
                                    measurement is still done on the main image
+      :term:`do_mc_errors` ....... False : Estimate uncertainties for 'M'-type sources 
+                                   using Monte Carlo method
       :term:`fdr_alpha` ........... 0.05 : Alpha for FDR algorithm for thresholds      
       :term:`fdr_ratio` ............ 0.1 : For thresh = None; if #false_pix / #source_pix <
                                    fdr_ratio, thresh = 'hard' else thresh = 'fdr'
@@ -398,23 +402,47 @@ The advanced options are:
         weird geometries and projections are used.
        
     detection_image
-        This parameter is a string (default is ``''``) that sets the detection image file name used only for detecting islands of emission. Source measurement is still done on the main image. The detection image can be a FITS or CASA 2-, 3-, or 4-D cube and must have the same size and WCS parameters as the main image.
-        
+        This parameter is a string (default is ``''``) that sets the detection
+        image file name used only for detecting islands of emission. Source
+        measurement is still done on the main image. The detection image can be
+        a FITS or CASA 2-, 3-, or 4-D cube and must have the same size and WCS
+        parameters as the main image.
+    
+    do_mc_errors
+        This parameter is a Boolean (default is ``False``). If ``True``,
+        uncertainties on the sizes and positions of 'M'-type sources due to
+        uncertainties in the constituent Gaussians are estimated using a Monte
+        Carlo technique. These uncertainties are added in quadrature with those
+        calculated using Condon (1997). If ``False``, these uncertainties are
+        ignored, and errors are calculated using Condon (1997) only.
+
+        Enabling this option will result in longer run times if many 'M'-type
+        sources are present, but should give better estimates of the
+        uncertainites, particularly for complex sources composed of many
+        Gaussians.
+
     fdr_alpha
-        This parameter is a float (default is 0.05) that sets the value of alpha for the FDR algorithm for thresholding. If ``thresh`` is ``'fdr'``, then the estimate of ``fdr_alpha`` (see Hopkins et al. 2002 [#f2]_ for details) is stored in this parameter.
+        This parameter is a float (default is 0.05) that sets the value of alpha
+        for the FDR algorithm for thresholding. If ``thresh`` is ``'fdr'``, then
+        the estimate of ``fdr_alpha`` (see Hopkins et al. 2002 [#f2]_ for
+        details) is stored in this parameter.
 
     fdr_ratio
-        This parameter is a float (default is 0.1). When ``thresh = None``, if #false_pix / #source_pix < fdr_ratio, ``thresh = 'hard'`` otherwise ``thresh = 'fdr'``.
+        This parameter is a float (default is 0.1). When ``thresh = None``, if
+        #false_pix / #source_pix < fdr_ratio, ``thresh = 'hard'`` otherwise
+        ``thresh = 'fdr'``.
     
     fittedimage_clip
-        This parameter is a float (default is 0.1). When the residual image is being made after Gaussian decomposition, the
-        model images for each fitted Gaussian are constructed up to a size 2b,
-        such that the amplitude of the Gaussian falls to a value of
-        ``fitted_image_clip`` times the local rms, b pixels from the peak.
+        This parameter is a float (default is 0.1). When the residual image is
+        being made after Gaussian decomposition, the model images for each
+        fitted Gaussian are constructed up to a size 2b, such that the amplitude
+        of the Gaussian falls to a value of ``fitted_image_clip`` times the
+        local rms, b pixels from the peak.
         
     group_by_isl
-        This parameter is a Boolean (default is ``False``). If True, all Gaussians in the island belong to a single source. If
-        False, grouping is controlled by the group_tol parameter.
+        This parameter is a Boolean (default is ``False``). If True, all
+        Gaussians in the island belong to a single source. If False, grouping is
+        controlled by the group_tol parameter.
         
     group_tol
         This parameter is a float (default is 1.0) that sets the tolerance for grouping of Gaussians into sources: larger values will
