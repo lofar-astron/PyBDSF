@@ -31,41 +31,41 @@ from make_residimage import Op_make_residimage
 from output import Op_outlist
 from interface import raw_input_no_history
 
-jmax = Int(doc="Maximum order of a-trous wavelet decomposition")
-lpf = String(doc="Low pass filter used for a-trous wavelet decomposition")
+jmax = Int(doc = "Maximum order of a-trous wavelet decomposition")
+lpf = String(doc = "Low pass filter used for a-trous wavelet decomposition")
 atrous_islands = List(Any(), doc = "")
 atrous_gaussians = List(Any(), doc = "")
 atrous_sources = List(Any(), doc = "")
 n_pyrsrc = Int(0, doc = "Number of pyramidal sources")
-Image.resid_wavelets = NArray(doc="Residual image calculated from " \
+Image.resid_wavelets = NArray(doc = "Residual image calculated from " \
                                 "gaussians fitted to wavelet sources")
 
 class Op_wavelet_atrous(Op):
     """  """
     def __call__(self, img):
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Wavelet")
+        mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Wavelet")
         if img.opts.atrous_do:
           mylog.info("Decomposing gaussian residual image into a-trous wavelets")
           bdir = img.basedir + '/wavelet/'
           if img.opts.output_all:
               os.mkdir(bdir)
-              os.mkdir(bdir+'/residuals/')
-              os.mkdir(bdir+'/models/')
+              os.mkdir(bdir + '/residual/')
+              os.mkdir(bdir + '/model/')
           dobdsm = img.opts.atrous_bdsm_do
-          filter = {'tr':{'size':3,'vec':[1./4,1./2,1./4], 'name':'Triangle'}, 
-                    'b3':{'size':5, 'vec':[1./16,1./4,3./8,1./4,1./16], 'name':'B3 spline'}}
+          filter = {'tr':{'size':3, 'vec':[1. / 4, 1. / 2, 1. / 4], 'name':'Triangle'},
+                    'b3':{'size':5, 'vec':[1. / 16, 1. / 4, 3. / 8, 1. / 4, 1. / 16], 'name':'B3 spline'}}
 
           if dobdsm: wchain, wopts = self.setpara_bdsm(img)
 
           n, m = img.ch0.shape
-          
+
           # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
           Op_make_residimage()(img)
           resid = img.resid_gaus
-          lpf=img.opts.atrous_lpf
+          lpf = img.opts.atrous_lpf
           if lpf not in ['b3', 'tr']: lpf = 'b3'
-          jmax=img.opts.atrous_jmax
+          jmax = img.opts.atrous_jmax
           l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
           if jmax < 1 or jmax > 15:                   # determine jmax 
             # Check if largest island size is 
@@ -73,82 +73,82 @@ class Op_wavelet_atrous(Op):
             min_size = min(resid.shape)
             max_isl_shape = (0, 0)
             for isl in img.islands:
-                if isl.image.shape[0]*isl.image.shape[1] > max_isl_shape[0]*max_isl_shape[1]:
+                if isl.image.shape[0] * isl.image.shape[1] > max_isl_shape[0] * max_isl_shape[1]:
                     max_isl_shape = isl.image.shape
-            if max_isl_shape != (0, 0) and min(max_isl_shape) < min(resid.shape)/3.0:
-                min_size = min(max_isl_shape)*4.0
+            if max_isl_shape != (0, 0) and min(max_isl_shape) < min(resid.shape) / 3.0:
+                min_size = min(max_isl_shape) * 4.0
             else:
                 min_size = min(resid.shape)
-            jmax = int(floor(log((min_size/3.0*3.0-l)/(l-1)+1)/log(2.0)+1.0))+1
-            if min_size*0.55 <= (l+(l-1)*(2**(jmax)-1)): jmax = jmax-1
+            jmax = int(floor(log((min_size / 3.0 * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0)) + 1
+            if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)): jmax = jmax - 1
           img.wavelet_lpf = lpf
           img.wavelet_jmax = jmax
-          mylog.info("Using "+filter[lpf]['name']+' filter with J_max = '+str(jmax))
+          mylog.info("Using " + filter[lpf]['name'] + ' filter with J_max = ' + str(jmax))
 
           img.atrous_islands = []
           img.atrous_gaussians = []
           img.atrous_sources = []
           img.atrous_opts = []
           img.resid_wavelets = cp(img.resid_gaus)
-    
-          im_old=resid
+
+          im_old = resid
           total_flux = 0.0
           ntot_wvgaus = 0
           stop_wav = False
-          pix_masked = N.where(N.isnan(resid)  == True)
-          for j in range(1,jmax+1):  # extra +1 is so we can do bdsm on cJ as well
-            mylogger.userinfo(mylog, "\nWavelet scale #" +str(j))
+          pix_masked = N.where(N.isnan(resid) == True)
+          for j in range(1, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
+            mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
             mean, rms, cmean, std, cnt = _cbdsm.bstat(im_old, N.isnan(im_old), img.opts.kappa_clip) # why do i have this here ?
             if cnt > 198: cmean = mean; crms = rms
-            im_new=self.atrous(im_old,filter[lpf]['vec'],lpf,j)
+            im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j)
             im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
-            w=im_old-im_new
-            im_old=im_new
-            suffix = 'w'+`j`
-            filename = img.imagename + '.atrous.'+suffix+'.fits'
+            w = im_old - im_new
+            im_old = im_new
+            suffix = 'w' + `j`
+            filename = img.imagename + '.atrous.' + suffix + '.fits'
             if img.opts.output_all:
-                func.write_image_to_file(img.use_io, filename, w.transpose(), img, bdir)
-                mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.'+suffix+'.fits'))
+                func.write_image_to_file(img.use_io, filename, w, img, bdir)
+                mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.' + suffix + '.fits'))
                                                         # now do bdsm on each wavelet image
             if dobdsm:
               wopts['filename'] = filename
               wopts['basedir'] = bdir
               if img.opts.rms_box == None: box = 0
               else: box = img.opts.rms_box[0]
-              y1 = (l+(l-1)*(2**(j-1)-1)); bs = max(5*y1, box)  # changed from 10 to 5
-              if bs > min(n,m)/2:
+              y1 = (l + (l - 1) * (2 ** (j - 1) - 1)); bs = max(5 * y1, box)  # changed from 10 to 5
+              if bs > min(n, m) / 2:
                 wopts['rms_map'] = False
                 wopts['mean_mao'] = 'const'
                 wopts['rms_box'] = None
               else:
-                wopts['rms_box'] = (bs, bs/3)
+                wopts['rms_box'] = (bs, bs / 3)
               if not img.opts.rms_map: wopts['rms_map'] = False
               if not wopts['rms_map']: wopts['mean_map'] = 'zero'
-              if j <= 3: 
+              if j <= 3:
                 wopts['ini_gausfit'] = 'default'
               else:
                 wopts['ini_gausfit'] = 'nobeam'
-              wid = (l+(l-1)*(2**(j-1)-1))/3.0
+              wid = (l + (l - 1) * (2 ** (j - 1) - 1)) / 3.0
               b1, b2 = img.pixel_beam[0:2]
-              b1 = b1*fwsig
-              b2 = b2*fwsig
+              b1 = b1 * fwsig
+              b2 = b2 * fwsig
               cdelt = img.wcs_obj.acdelt[:2]
-              wopts['beam'] = (sqrt(wid*wid+b1*b1)*cdelt[0], sqrt(wid*wid+b2*b2)*cdelt[1], 0.0)
+              wopts['beam'] = (sqrt(wid * wid + b1 * b1) * cdelt[0], sqrt(wid * wid + b2 * b2) * cdelt[1], 0.0)
 
               wimg = Image(wopts)
-              wimg.pixel_beam = (wopts['beam'][0]/fwsig/cdelt[0], wopts['beam'][1]/fwsig/cdelt[1], wopts['beam'][2])
-              wimg.pixel_beamarea = 1.1331*wimg.pixel_beam[0]*wimg.pixel_beam[1]*fwsig*fwsig
+              wimg.pixel_beam = (wopts['beam'][0] / fwsig / cdelt[0], wopts['beam'][1] / fwsig / cdelt[1], wopts['beam'][2])
+              wimg.pixel_beamarea = 1.1331 * wimg.pixel_beam[0] * wimg.pixel_beam[1] * fwsig * fwsig
               wimg.orig_pixel_beam = img.pixel_beam
               wimg.log = 'Wavelet.'
               wimg.basedir = img.basedir
               wimg.extraparams['bbsprefix'] = suffix
-              wimg.extraparams['bbsname'] = img.imagename+'.wavelet'
+              wimg.extraparams['bbsname'] = img.imagename + '.wavelet'
               wimg.extraparams['bbsappend'] = True
               wimg.bbspatchnum = img.bbspatchnum
               wimg.waveletimage = True
               wimg.use_wcs = img.use_wcs
-              wimg.j = j             
-              self.FITS_simple(wimg, img, w, '.atrous.'+suffix)
+              wimg.j = j
+              self.FITS_simple(wimg, img, w, '.atrous.' + suffix)
               img.atrous_opts.append(wimg.opts)
               for op in wchain:
                 op(wimg)
@@ -158,16 +158,16 @@ class Op_wavelet_atrous(Op):
                     good_isl = []
                     # Make original rank image boolean; rank counts from 0, with -1 being
                     # outside any island
-                    orig_rankim_bool = N.array(img.pyrank+1, dtype=bool)                    
+                    orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
                     # Multiply rank images
                     valid_islands = orig_rankim_bool * (wimg.pyrank + 1)
                     for wvisl in wimg.islands:
-                        if wvisl.island_id in valid_islands-1:
+                        if wvisl.island_id in valid_islands - 1:
                             wvisl.valid = True
                             good_isl.append(wvisl)
                         else:
                             wvisl.valid = False
-                            
+
                     wimg.islands = good_isl
                     wimg.nisl = len(good_isl)
                     mylogger.userinfo(mylog, "Number of vaild islands found", '%i' %
@@ -175,13 +175,13 @@ class Op_wavelet_atrous(Op):
                     # Renumber islands:
                     for wvindx, wvisl in enumerate(wimg.islands):
                         wvisl.island_id = wvindx
-                    
+
                 if isinstance(op, Op_gaul2srl):
                   # Restrict Gaussians to original ch0 islands.
                   gaul = wimg.gaussians
                   tot_flux = 0.0
                   nwvgaus = 0
-                  
+
                   # TODO fix following when img.ngaus == 0!
                   gaus_id = img.gaussians[-1].gaus_num
                   for isl in img.islands:
@@ -190,8 +190,8 @@ class Op_wavelet_atrous(Op):
                           if not hasattr(g, 'valid'):
                               g.valid = False
                           if not g.valid:
-                              gcenter = (g.centre_pix[0]-isl.origin[0],
-                                         g.centre_pix[1]-isl.origin[1])
+                              gcenter = (g.centre_pix[0] - isl.origin[0],
+                                         g.centre_pix[1] - isl.origin[1])
                               if gcenter[0] >= 0 and gcenter[0] < isl.shape[0] and gcenter[1] >= 0 and gcenter[1] < isl.shape[1]:
                                   if not isl.mask_active[gcenter]:
                                       gaus_id += 1
@@ -207,13 +207,13 @@ class Op_wavelet_atrous(Op):
                               else:
                                   g.valid = False
                                   g.jlevel = 0
-                      isl.gaul += wvgaul  
-                      img.gaussians += wvgaul  
-                      nwvgaus += len(wvgaul)             
+                      isl.gaul += wvgaul
+                      img.gaussians += wvgaul
+                      nwvgaus += len(wvgaul)
                       isl.ngaus += nwvgaus
                       for g in wvgaul:
                           tot_flux += g.total_flux
-                          
+
                   vg = []
                   for g in wimg.gaussians:
                       if g.valid:
@@ -225,8 +225,14 @@ class Op_wavelet_atrous(Op):
               if img.opts.interactive and len(wimg.gaussians) > 0 and has_pl:
                   dc = '\033[34;1m'
                   nc = '\033[0m'
-                  print dc + 'Displaying islands and rms image...' + nc
-                  wimg.show_fit()
+                  print dc + '--> Displaying islands and rms image...' + nc
+                  if max(wimg.ch0.shape) > 4096:
+                      print dc + '--> Image is large. Showing islands only.' + nc
+                      wimg.show_fit(rms_image=False, mean_image=False, ch0_image=False,
+                        ch0_islands=True, gresid_image=False, sresid_image=False,
+                        gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+                  else:
+                      wimg.show_fit()
                   prompt = dc + "Press enter to continue or 'q' stop fitting wavelet images : " + nc
                   answ = raw_input_no_history(prompt)
                   while answ != '':
@@ -235,44 +241,41 @@ class Op_wavelet_atrous(Op):
                           stop_wav = True
                           break
                       answ = raw_input_no_history(prompt)
-              if len(wimg.gaussians) > 0: 
+              if len(wimg.gaussians) > 0:
                 img.resid_wavelets = self.subtract_wvgaus(img.opts, img.resid_wavelets, wimg.gaussians, wimg.islands)
               del wimg
               if stop_wav == True:
                   break
 
           pdir = img.basedir + '/misc/'
-          
+
           #self.morphfilter_pyramid(img, pdir)
           img.ngaus += ntot_wvgaus
           img.total_flux_gaus += total_flux
           mylogger.userinfo(mylog, "Total flux density in model over all scales" , '%.3f Jy' % img.total_flux_gaus)
           if img.opts.output_all:
               func.write_image_to_file(img.use_io, img.imagename + '.atrous.cJ.fits',
-                                       im_new.transpose(), img, bdir)
+                                       im_new, img, bdir)
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.cJ.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.resid_wavelets.fits',
-                                       N.transpose(img.resid_wavelets),  img, bdir)
-              mylog.info('%s %s' % ('Wrote ', img.imagename+'.resid_wavelets.fits'))
+                                       (img.ch0 - img.resid_gaus + img.resid_wavelets), img, bdir + '/residual/')
+              mylog.info('%s %s' % ('Wrote ', img.imagename + '.resid_wavelets.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.model_wavelets.fits',
-                                       N.transpose(img.resid_gaus-img.resid_wavelets), img, bdir)
-              mylog.info('%s %s' % ('Wrote ', img.imagename+'.model_wavelets.fits'))
-              func.write_image_to_file(img.use_io, img.imagename + '.model_all.fits',
-                                       N.transpose(img.ch0-img.resid_wavelets), img, bdir)
-              mylog.info('%s %s' % ('Wrote ', img.imagename+'.model_all.fits'))
+                                       (img.resid_gaus - img.resid_wavelets), img, bdir + '/model/')
+              mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
           img.completed_Ops.append('wavelet_atrous')
 
 
 #######################################################################################################
     def atrous(self, image, filtvec, lpf, j):
 
-        ff=filtvec[:]
-        for i in range(1,len(filtvec)):
-          ii=1+(2**(j-1))*(i-1)
-          ff[ii:ii]=[0]*(2**(j-1)-1)
-        kern=N.outer(ff,ff) 
+        ff = filtvec[:]
+        for i in range(1, len(filtvec)):
+          ii = 1 + (2 ** (j - 1)) * (i - 1)
+          ff[ii:ii] = [0] * (2 ** (j - 1) - 1)
+        kern = N.outer(ff, ff)
         unmasked = N.nan_to_num(image)
-        im_new=S.fftconvolve(unmasked,kern,mode='same')
+        im_new = S.fftconvolve(unmasked, kern, mode = 'same')
         if im_new.shape != image.shape:
             im_new = im_new[0:image.shape[0], 0:image.shape[1]]
 
@@ -282,17 +285,17 @@ class Op_wavelet_atrous(Op):
     def setpara_bdsm(self, img):
         from types import ClassType, TypeType
 
-        chain=[Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
+        chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
                Op_gausfit(), Op_gaul2srl, Op_make_residimage()]
 
-        opts={'thresh':'hard'}
+        opts = {'thresh':'hard'}
         opts['thresh_pix'] = 3.0
         opts['kappa_clip'] = 3.0
         opts['rms_map'] = img.opts.rms_map
         opts['mean_map'] = img.opts.mean_map
         opts['thresh_isl'] = 3.0
         opts['minpix_isl'] = 6
-        opts['takemeanclip'] = False
+#        opts['takemeanclip'] = False
         opts['savefits_rmsim'] = False
         opts['savefits_meanim'] = False
         opts['savefits_rankim'] = False
@@ -334,8 +337,8 @@ class Op_wavelet_atrous(Op):
         wimg.ch0 = w
         wimg.wcs_obj = img.wcs_obj
         wimg.parentname = img.filename
-        wimg.filename = img.filename+name
-        wimg.imagename = img.imagename+name+'.pybdsm'
+        wimg.filename = img.filename + name
+        wimg.imagename = img.imagename + name + '.pybdsm'
         wimg.pix2sky = img.pix2sky; wimg.sky2pix = img.sky2pix; wimg.pix2beam = img.pix2beam
         wimg.beam2pix = img.beam2pix; wimg.pix2coord = img.pix2coord; wimg.beam = img.beam
         mask = img.mask
@@ -350,7 +353,7 @@ class Op_wavelet_atrous(Op):
 
         dummy = opp()
         shape = residim.shape
-        thresh= opts.fittedimage_clip
+        thresh = opts.fittedimage_clip
 
         for g in gaussians:
           if g.valid:
@@ -359,9 +362,9 @@ class Op_wavelet_atrous(Op):
                   isl = islands[g.wisland_id]
               else:
                   isl = islands[g.island_id]
-              b = opp.find_bbox(dummy, thresh*isl.rms, g)
-              bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
-                          max(0, int(C2-b)):min(shape[1], int(C2+b+1))]
+              b = opp.find_bbox(dummy, thresh * isl.rms, g)
+              bbox = N.s_[max(0, int(C1 - b)):min(shape[0], int(C1 + b + 1)),
+                          max(0, int(C2 - b)):min(shape[1], int(C2 + b + 1))]
               x_ax, y_ax = N.mgrid[bbox]
               ffimg = func.gaussian_fcn(g, x_ax, y_ax)
               residim[bbox] = residim[bbox] - ffimg
@@ -395,28 +398,28 @@ class Op_wavelet_atrous(Op):
                 else:
                   pyrsrc = Pyramid_source(img, isl, i)
                   lpyr.append(pyrsrc)
-              else: 
+              else:
                 pyrsrc = Pyramid_source(img, isl, i)
                 lpyr.append(pyrsrc)
         img.pyrsrcs = lpyr
 
         if img.opts.plot_pyramid and has_pl:
             pl.figure()
-            a = ceil(sqrt(jmax)); b = floor(jmax/a)
-            if a*b < jmax: b += 1
+            a = ceil(sqrt(jmax)); b = floor(jmax / a)
+            if a * b < jmax: b += 1
             colours = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
             sh = img.ch0.shape
             for pyr in img.pyrsrcs:
               for iisl, isl in enumerate(pyr.islands):
                 jj = pyr.jlevels[iisl]
                 col = colours[pyr.pyr_id % 7]
-                pl.subplot(a,b,jj)
+                pl.subplot(a, b, jj)
                 ind = N.where(~isl.mask_active)
-                pl.plot(ind[0]+isl.origin[0], ind[1]+isl.origin[1], '.', color=col)
+                pl.plot(ind[0] + isl.origin[0], ind[1] + isl.origin[1], '.', color = col)
                 pl.axis([0.0, sh[0], 0.0, sh[1]])
-                pl.title('J = '+str(jj))
-            pl.savefig(bdir+img.imagename+'.pybdsm.atrous.pyramidsrc.png')
-        
+                pl.title('J = ' + str(jj))
+            pl.savefig(bdir + img.imagename + '.pybdsm.atrous.pyramidsrc.png')
+
 #######################################################################################################
 
 class Pyramid_source(object):
@@ -437,9 +440,9 @@ class Pyramid_source(object):
             belong = False
                                                 # check if lies within any island of self
             for i, pyrisl in enumerate(self.islands):
-              if N.sum([pyrisl.bbox[j].start <= cen[j] < pyrisl.bbox[j].stop for j in range(2)])==2:
+              if N.sum([pyrisl.bbox[j].start <= cen[j] < pyrisl.bbox[j].stop for j in range(2)]) == 2:
                 pix = tuple([cen[j] - pyrisl.origin[j] for j in range(2)])
-                if not pyrisl.mask_active[pix]: 
+                if not pyrisl.mask_active[pix]:
                   belong = True
 
             return belong
@@ -449,7 +452,7 @@ class Pyramid_source(object):
             self.jlevels.append(level + 1)
 
 
-Image.pyrsrcs = List(tInstance(Pyramid_source), doc="List of Pyramidal sources")
+Image.pyrsrcs = List(tInstance(Pyramid_source), doc = "List of Pyramidal sources")
 
-    
-    
+
+

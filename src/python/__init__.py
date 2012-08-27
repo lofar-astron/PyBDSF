@@ -90,10 +90,10 @@ def execute(chain, opts):
     except RuntimeError, err:
         # Catch and log, then re-raise if needed (e.g., for AstroWise)
         mylog.error(str(err))
-        # raise
+        raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
-        # raise
+        raise
 
 
 def _run_op_list(img, chain):
@@ -124,9 +124,15 @@ def _run_op_list(img, chain):
     for op in ops:
         if isinstance(op, Op_gausfit) and img.opts.interactive:
             print dc + '--> Displaying islands and rms image...' + nc
-            img.show_fit(rms_image=True, mean_image=True,
-                ch0_islands=True, gresid_image=False, sresid_image=False,
-                gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+            if max(img.ch0.shape) > 4096:
+                print dc + '--> Image is large. Showing islands only.' + nc
+                img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
+                    ch0_islands=True, gresid_image=False, sresid_image=False,
+                    gmodel_image=False, smodel_image=False, pyramid_srcs=False)
+            else:
+                img.show_fit(rms_image=True, mean_image=True,
+                    ch0_islands=True, gresid_image=False, sresid_image=False,
+                    gmodel_image=False, smodel_image=False, pyramid_srcs=False)
             prompt = dc + "Press enter to continue or 'q' to quit .. : " + nc
             answ = raw_input_no_history(prompt)
             while answ != '':
@@ -149,16 +155,25 @@ def _run_op_list(img, chain):
             show_spec = True
         else:
             show_spec = False
-        img.show_fit(smodel_image=show_smod, sresid_image=show_sres,
+        if max(img.ch0.shape) > 4096:
+            print dc + '--> Image is large. Showing Gaussian residual image only.' + nc
+            img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
+                ch0_islands=False, gresid_image=True, sresid_image=False,
+                gmodel_image=False, smodel_image=False, pyramid_srcs=False,
+                source_seds=show_spec)
+        else:
+            img.show_fit(smodel_image=show_smod, sresid_image=show_sres,
                      source_seds=show_spec)
 
     if img.opts.print_timing:
-        print "="*30
+        print "="*36
+        print "%18s : %10s" % ("Module", "Time (sec)")
+        print "-"*36
         for op in chain:
-            print "%15s : %f" % (op.__class__.__name__, 
+            print "%18s : %f" % (op.__class__.__name__, 
                                  (op.__stop_time - op.__start_time))
-        print "="*30
-        print "%15s : %f" % ("Total",
+        print "="*36
+        print "%18s : %f" % ("Total",
                              (chain[-1].__stop_time - chain[0].__start_time))
 
     return True
@@ -185,22 +200,16 @@ def process_image(input, **kwargs):
     
     # Try to load input assuming it's a parameter save file or a dictionary.
     # load_pars returns None if this doesn't work.
-    try:
-        img = load_pars(input)
-    except RuntimeError, err:
-        print '\n\033[31;1mERROR\033[0m: ' + str(err)
-        return
+    img, err = load_pars(input)
 
-    # If load_pars fails, assume that input is an image file. If it's not a
+    # If load_pars fails (returns None), assume that input is an image file. If it's not a
     # valid image file (but is an existing file), an error will be raised
     # by img.process() during reading of the file.
     if img == None:
         if os.path.exists(input):
             img = Image({'filename': input})
         else:
-            print "\n\033[31;1mERROR\033[0m: File '"+\
-                input+"' not found."
-            return
+            raise RuntimeError("File '" + input + "' not found.")
 
     # Now process it. Any kwargs specified by the user will
     # override those read in from the parameter save file or dictionary.

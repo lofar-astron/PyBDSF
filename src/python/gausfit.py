@@ -260,11 +260,55 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
         if not fitok:
-            # If all else fails, try to fit just a single Gaussian to the island
-            fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', 1, verbose)
-            gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+            # If normal fitting fails, try to fit 5 or fewer Gaussians to the island
+            ngmax = 5
+            while not fitok and ngmax > 1:
+                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose)
+                ngmax -= 1
+                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
                                           beam, thr0, peak, shape, isl.mask_active,
                                           isl.image, size)
+        sm_isl = nd.binary_dilation(isl.mask_active)
+        if not fitok and N.sum(~sm_isl) >= img.minpix_isl:
+            # If all else fails, shrink the island a little and try one last time
+            if ffimg == None:
+                fcn = MGFunction(isl.image-isl.islmean, nd.binary_dilation(isl.mask_active), 1)
+            else:
+                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_dilation(isl.mask_active), 1)
+            gaul = []
+            iter = 0
+            ng1 = 0
+            ngmax = 25
+            while iter < 5:
+               iter += 1
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+                                                 beam, thr0, peak, shape, isl.mask_active, 
+                                                 isl.image, size)
+               ng1 = len(gaul)
+               if fitok and len(fgaul) == 0:
+                   break
+        lg_isl = nd.binary_erosion(isl.mask_active)
+        if not fitok and N.sum(~lg_isl) >= img.minpix_isl:
+            # If all else fails, expand the island a little and try one last time
+            if ffimg == None:
+                fcn = MGFunction(isl.image-isl.islmean, nd.binary_erosion(isl.mask_active), 1)
+            else:
+                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_erosion(isl.mask_active), 1)
+            gaul = []
+            iter = 0
+            ng1 = 0
+            ngmax = 25
+            while iter < 5:
+               iter += 1
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts, 
+                                                 beam, thr0, peak, shape, isl.mask_active, 
+                                                 isl.image, size)
+               ng1 = len(gaul)
+               if fitok and len(fgaul) == 0:
+                   break
+
 
         ### return whatever we got
         isl.mg_fcn = fcn
@@ -445,17 +489,20 @@ class Op_gausfit(Op):
         return gaul, nmulsrc1, len(inipeak)
 
     def inigaus_nobeam(self, isl, thr, beam, img):
-        """ To get initial guesses when the source sizes are very different from the beam, and can also be elongated. 
-            Mainly in the context of a-trous transform images. Need to arrive at a good guess of the sizes and hence need
-            to partition the image around the maxima first. Tried the IFT watershed algo but with markers, it segments
-            the island only around the minima and not the whole island. Cant find a good weighting scheme for tesselation 
-            either. Hence will try this :
+        """ To get initial guesses when the source sizes are very different
+        from the beam, and can also be elongated. Mainly in the context of
+        a-trous transform images. Need to arrive at a good guess of the sizes
+        and hence need to partition the image around the maxima first. Tried the
+        IFT watershed algo but with markers, it segments the island only around
+        the minima and not the whole island. Cant find a good weighting scheme
+        for tesselation either. Hence will try this :
 
-            Calulate number of maxima. If one, then take moment as initial guess.
-            If more than one, then moment of whole island is one of the guesses if mom1 is within n pixels of one of 
-            the maxima. Else dont take whole island moment. Instead, find minima on lines connecting all maxima and use
-            geometric mean of all minima of a peak as the size of that peak.
-            """
+        Calculate number of maxima. If one, then take moment as initial
+        guess. If more than one, then moment of whole island is one of the
+        guesses if mom1 is within n pixels of one of the maxima. Else dont take
+        whole island moment. Instead, find minima on lines connecting all maxima
+        and use geometric mean of all minima of a peak as the size of that peak.
+        """ 
         from math import sqrt
         from const import fwsig
         import scipy.ndimage as nd
@@ -525,6 +572,7 @@ class Op_gausfit(Op):
             coords.append([xcen, ycen])
 
         return gaul
+
 
     def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax, verbose=1):
         """One round of fitting
@@ -820,10 +868,12 @@ class Gaussian(object):
     size_pixE  = List(Float(), doc="Error on shape of the gaussian FWHM, pixel units")
     rms        = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
     mean       = Float(doc="Island mean Jy/beam", colname='Isl_mean', units='Jy/beam')
-    gresid_rms = Float(doc="Island rms in Gaussian residual image Jy/beam", colname='Resid_Isl_rms', units='Jy/beam')
-    gresid_mean= Float(doc="Island mean in Gaussian residual image Jy/beam", colname='Resid_Isl_mean', units='Jy/beam')
-    sresid_rms = Float(doc="Island rms in Shapelet residual image Jy/beam", colname='Resid_Isl_rms', units='Jy/beam')
-    sresid_mean= Float(doc="Island mean in Shapelet residual image Jy/beam", colname='Resid_Isl_mean', units='Jy/beam')
+    total_flux_isl = Float(doc="Island total flux from sum of pixels", colname='Isl_Total_flux', units='Jy')
+    total_flux_islE = Float(doc="Error on island total flux from sum of pixels", colname='E_Isl_Total_flux', units='Jy')
+    gresid_rms = Float(doc="Island rms in Gaussian residual image", colname='Resid_Isl_rms', units='Jy/beam')
+    gresid_mean= Float(doc="Island mean in Gaussian residual image", colname='Resid_Isl_mean', units='Jy/beam')
+    sresid_rms = Float(doc="Island rms in Shapelet residual image", colname='Resid_Isl_rms', units='Jy/beam')
+    sresid_mean= Float(doc="Island mean in Shapelet residual image", colname='Resid_Isl_mean', units='Jy/beam')
     jlevel     = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
 
     def __init__(self, img, gaussian, isl_idx, g_idx, flag=0):
@@ -859,8 +909,8 @@ class Gaussian(object):
             # undistorted beam.
             size = img.pixel_beam
         size = func.corrected_size(size)  # gives fwhm and P.A.
-        self.size_pix = size
-        self.size_sky = img.pix2beam(size)
+        self.size_pix = size # FWHM in pixels and P.A. CCW from +y axis
+        self.size_sky = img.pix2beam(size, self.centre_pix) # FWHM in degrees and P.A. CCW from North
         
         # Check if this is a wavelet image. If so, use orig_pixel_beam
         # for flux calculation, as pixel_beam has been altered to match 
@@ -886,20 +936,22 @@ class Gaussian(object):
         self.centre_pixE = errors[1:3]
         self.centre_skyE = img.pix2coord(errors[1:3])
         self.size_pixE = errors[3:6]
-        self.size_skyE = img.pix2beam(errors[3:6])
+        self.size_skyE = img.pix2beam(errors[3:6], self.centre_pix)
         self.rms = img.islands[isl_idx].rms
         self.mean = img.islands[isl_idx].mean
+        self.total_flux_isl = img.islands[isl_idx].total_flux
+        self.total_flux_islE = img.islands[isl_idx].total_fluxE
 
         # func.deconv, based on AIPS DECONV.FOR, gives a lot of
         # 1-D Gaussians. The Miriad algorithm in func.deconv2 does
         # a much better job in this regard, so use it instead. Note
         # that for resolved sources, the two algorithms give the
-        # same answer.
+        # same answer. For now, errors on the deconvolved parameters
+        # are just set to those of the undeconvolved ones.
         if flag == 0:
-            #gaus_dc = func.deconv(bm_pix, size)
             gaus_dc, err = func.deconv2(bm_pix, size)
-            self.deconv_size_sky = img.pix2beam(gaus_dc)
-            self.deconv_size_skyE  = [0., 0., 0.]
+            self.deconv_size_sky = img.pix2beam(gaus_dc, self.centre_pix)
+            self.deconv_size_skyE  = img.pix2beam(errors[3:6], self.centre_pix)
         else:
             self.deconv_size_sky = [0., 0., 0.]
             self.deconv_size_skyE  = [0., 0., 0.]

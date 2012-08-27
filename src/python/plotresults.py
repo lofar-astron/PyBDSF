@@ -192,6 +192,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         low = 1.1*abs(img.min_value)
     else:
         low = N.max([1.1*abs(img.min_value),1.1*abs(N.nanmin(img.resid_gaus))])
+    if low <= 0.0:
+        low = 1E-6
     vmin_est = im_mean - im_rms*5.0 + low
     if vmin_est <= 0.0:
         vmin = N.log10(low)
@@ -222,7 +224,10 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
             print '                       The SED plot will also show the chosen source.'
     print '_' * 72
 
-    numx = 2
+    if len(images) > 1:
+        numx = 2
+    else:
+        numx = 1
     numy = int(N.ceil(float(len(images))/float(numx)))
     fig = pl.figure(figsize=(max(15, 10.0*float(numy)/float(numx)), 10.0))
     fig.canvas.set_window_title('PyBDSM Fit Results for '+ img.filename)
@@ -290,10 +295,11 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                                     e.isl_id = g.island_id
                                     e.tflux = g.total_flux
                                     e.pflux = g.peak_flux
-                island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
-                isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color, 
+                if len(img.islands) > 0:
+                    island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
+                    isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color, 
                                     transOffset=ax.transData, sizes=(10.0,))
-                ax.add_collection(isl_borders)
+                    ax.add_collection(isl_borders)
                 
                 if hasattr(img, 'gaussians'):
                     for atrg in img.gaussians:
@@ -365,9 +371,6 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
            
     fig.canvas.mpl_connect('key_press_event', on_press)
     fig.canvas.mpl_connect('pick_event', on_pick)
-#     axPlay = pl.axes([0.02, 0.05, 0.1, 0.075])
-#     bPlay = Button(axPlay, 'Play')  
-#     bPlay.on_clicked(on_press)
     pl.show()
     pl.close()
 
@@ -425,7 +428,6 @@ def on_press(event):
     global pixels_per_beam, vmin, vmax, vmin_cur, vmax_cur, img_pi
     global ch0min, ch0max, low, fig, images, src_list, srcid_cur
     global markers
-#     print 'Testing...'
     if event.key == '0':
         print 'Resetting limits to defaults (%.4f -- %.4f Jy/beam)' \
             % (pow(10, vmin)-low,

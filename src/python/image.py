@@ -40,6 +40,7 @@ class Image(object):
     masked = Bool(False, doc="Flag if mask is present")
     basedir = String('DUMMY', doc="Base directory for output files")
     completed_Ops = List(String(), doc="List of completed operations")
+    _is_interactive_shell = Bool(False, doc="PyBDSM is being used in the interactive shell")
 
 
     def __init__(self, opts):
@@ -54,10 +55,7 @@ class Image(object):
     def set_pars(self, **kwargs):
         """Set parameter values."""
         import interface
-        try:
-            interface.set_pars(self, **kwargs)
-        except RuntimeError, err:
-            print '\n\033[31;1mERROR\033[0m: ' + str(err)
+        interface.set_pars(self, **kwargs)
 
     def process(self, **kwargs):
         """Process Image object"""
@@ -77,17 +75,23 @@ class Image(object):
         if loadfile == None or loadfile == '':
             loadfile = self.opts.filename + '.pybdsm.sav'
         if os.path.exists(loadfile):
-            timg = interface.load_pars(loadfile)
+            timg, err = interface.load_pars(loadfile)
             if timg != None:
                 orig_filename = self.opts.filename
                 self.opts = timg.opts
                 self.opts.filename = orig_filename # reset filename to original
             else:
-                print "\n\033[31;1mERROR\033[0m: '"+\
+                if self._is_interactive_shell:
+                    print "\n\033[31;1mERROR\033[0m: '"+\
                     loadfile+"' is not a valid parameter save file."
+                else:
+                    raise RuntimeError(str(err))
         else:
-            print "\n\033[31;1mERROR\033[0m: File '"+\
+            if self._is_interactive_shell:
+                print "\n\033[31;1mERROR\033[0m: File '"+\
                 loadfile+"' not found."
+            else:
+                raise RuntimeError('File not found')
 
     def show_fit(self, **kwargs):
         """Show results of the fit."""

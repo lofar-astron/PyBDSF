@@ -160,6 +160,8 @@ def NArray(value=None, or_none=True, doc=None, group=None, colname=None,
     value: default value
     or_none: if 'None' is valid value
     group: group designation for the value
+    colname: name of column if quantity is to be output
+    units: units if quantity is to be output
     """
     try:
         import numpy as N
@@ -177,6 +179,8 @@ def Instance(value, type=None, or_none=True, doc=None, group=None,
     value, type: default value and type
     or_none: flag if 'None' is valid value for this variable
     group: group designation for the value
+    colname: name of column if quantity is to be output
+    units: units if quantity is to be output
 
     Examples:
     Instance(instance, class)
@@ -203,7 +207,6 @@ def tInstance(type, or_none=False):
     Parameters:
     type: target type/class
     or_none: flag if 'None' is valid value for this variable
-    group: group designation for the value
 
     Example: we want to define tc-variable holding a list of objects
     List(Instance(slice, or_none=False) ## FAILS, no default value
@@ -220,7 +223,12 @@ def List(value, type=None, doc=None, group=None, colname=None, units=None):
     obeys specific type-constrains.
 
     Parameters:
+    doc: docstring for the object
     value, type: default value and type
+    group: parameter group to which the option belongs
+    colname: name of column if quantity is to be output
+    units: units if quantity is to be output
+
 
     Examples:
     List(Int())        # list of integers, default value is []
@@ -299,6 +307,8 @@ class TC(object):
         _type: type specification (instance of tcHandler) or None
         doc: docstring for the object
         group: parameter group to which the option belongs
+        colname: name of column if quantity is to be output
+        units: units if quantity is to be output
         """
         if _type is not None:
             self._type = _type
