@@ -311,7 +311,7 @@ class Op_gausfit(Op):
 
 
         ### return whatever we got
-        isl.mg_fcn = fcn
+        #isl.mg_fcn = fcn
         gaul  = [self.fixup_gaussian(isl, g) for g in gaul]
         fgaul = [(flag, self.fixup_gaussian(isl, g))
                                        for flag, g in fgaul]

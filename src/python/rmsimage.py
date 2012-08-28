@@ -170,6 +170,7 @@ class Op_rmsimage(Op):
         if opts.rms_box is None or (opts.rms_box_bright is None and do_adapt):
             if do_adapt:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size_highthresh*2.0))
+#                 bsize = int(max(brightsize, min_size_allowed, max_isl_size_lowthresh))
             else:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size*2.0))
             bsize2 = int(max(min(img.ch0.shape)/10.0, max_isl_size*5.0))
@@ -190,9 +191,12 @@ class Op_rmsimage(Op):
             else:
                 img.rms_box2 = opts.rms_box
         else:
-            img.rms_box = opts.rms_box_bright
-            img.rms_box2 = opts.rms_box
-#             self.output_rmsbox_size(img)
+            if do_adapt:
+                img.rms_box = opts.rms_box_bright
+                img.rms_box2 = opts.rms_box
+            else:
+                img.rms_box = opts.rms_box
+                img.rms_box2 = opts.rms_box
                     
         map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
         for ipol, pol in enumerate(pols):
