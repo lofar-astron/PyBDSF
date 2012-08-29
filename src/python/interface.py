@@ -63,7 +63,7 @@ def process(img, **kwargs):
                          debug=img.opts.debug)
     add_break_to_logfile(log)
     mylog = mylogger.logging.getLogger("PyBDSM.Process")
-    mylog.info("Running PyBDSM on "+img.opts.filename)
+    mylog.info("Processing "+img.opts.filename)
 
     # Run all the op's
     try:        
@@ -297,8 +297,9 @@ def print_opts(grouped_opts_list, img, banner=None):
     import os
     import functions as func
 
-    termx, termy = func.getTerminalSize()
+    termy, termx = func.getTerminalSize() # note: returns row, col -> y, x
     minwidth = 28 # minimum width for parameter names and values
+    
     # Define colors for output
     dc = '\033[1;34m' # Blue: non-default option text color
     ec = '\033[0;47m' # expandable option text color

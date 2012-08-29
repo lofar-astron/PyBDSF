@@ -4,7 +4,15 @@
 What's New
 **********
 
-Version 1.3 (2012/07/03):
+Version 1.3.2 (2012/08/22):
+    
+    * Fixed a bug that could cause the user-specified ``rms_box`` value to be ignored. Added an option to enable the Monte Carlo error estimation for 'M'-type sources (the ``do_mc_errors`` option), which is now disabled by default.
+    
+Version 1.3.1 (2012/07/11):
+    
+    * Fixed a bug that caused images written when ``output_all = True`` to be transposed. Added frequency information to all output images. Improved fitting robustness to prevent rare cases in which no valid Gaussians could be fit to an island. Modified the island-finding routine to handle NaNs properly.
+
+Version 1.3.0 (2012/07/03):
     
     * Fixed a bug in the calculation of positional errors for Gaussians.
     

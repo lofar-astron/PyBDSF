@@ -27,6 +27,10 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
     
+    2012/08/29 - Fixed incorrect terminal size in parameter listing. Added
+        logging of non-default input parameters and internally derived
+        parameters.
+    
     2012/08/22 - Version 1.3.2
     
     2012/08/22 - Fixed a bug that caused the user-specified rms_box to be

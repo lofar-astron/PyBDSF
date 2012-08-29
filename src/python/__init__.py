@@ -80,7 +80,7 @@ def execute(chain, opts):
     log_filename = opts["filename"] + '.pybdsm.log'
     mylogger.init_logger(log_filename, quiet=quiet, debug=debug)
     mylog = mylogger.logging.getLogger("PyBDSM.Init")
-    mylog.info("Running PyBDSM on "+opts["filename"])
+    mylog.info("Processing "+opts["filename"])
 
     try:
         img = Image(opts)
@@ -106,6 +106,7 @@ def _run_op_list(img, chain):
     from types import ClassType, TypeType
     from interface import raw_input_no_history
     from gausfit import Op_gausfit
+    import mylogger 
     
     ops = []
     stopat = img.opts.stop_at
@@ -118,6 +119,18 @@ def _run_op_list(img, chain):
         if stopat == 'read' and isinstance(op, Op_readimage): break
         if stopat == 'isl' and isinstance(op, Op_islands): break
 
+    # Log all non-default parameters
+    mylog = mylogger.logging.getLogger("PyBDSM.Init")
+    mylog.info("PyBDSM version %s (LUS revision %s)" 
+                             % (__version__, __revision__))
+    mylog.info("Non-default input parameters:")
+    user_opts = img.opts.to_list()
+    for user_opt in user_opts:
+        k, v = user_opt
+        val = img.opts.__getattribute__(k)
+        if val != v._default and v.group() != 'hidden':
+            mylog.info('    %-20s : %s' % (k, repr(val)))
+    
     # Run all op's
     dc = '\033[34;1m'
     nc = '\033[0m'
@@ -175,6 +188,23 @@ def _run_op_list(img, chain):
         print "="*36
         print "%18s : %f" % ("Total",
                              (chain[-1].__stop_time - chain[0].__start_time))
+
+    # Log all internally derived parameters
+    mylog = mylogger.logging.getLogger("PyBDSM.Final")
+    mylog.info("Internally derived input parameters:")
+    import inspect
+    import types
+
+    for attr in inspect.getmembers(img.opts):
+        if attr[0][0] != '_':
+            if isinstance(attr[1], (int, str, bool, float, types.NoneType, tuple, list)):
+                if hasattr(img, attr[0]):
+                    used = img.__getattribute__(attr[0])
+                    if used != attr[1] and isinstance(used, (int, str, bool, float,
+                                                             types.NoneType, tuple,
+                                                             list)):
+
+                        mylog.info('    %-20s : %s' % (attr[0], repr(used)))
 
     return True
 
