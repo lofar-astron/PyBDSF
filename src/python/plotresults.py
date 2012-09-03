@@ -192,6 +192,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         low = 1.1*abs(img.min_value)
     else:
         low = N.max([1.1*abs(img.min_value),1.1*abs(N.nanmin(img.resid_gaus))])
+    if low <= 0.0:
+        low = 1E-6
     vmin_est = im_mean - im_rms*5.0 + low
     if vmin_est <= 0.0:
         vmin = N.log10(low)

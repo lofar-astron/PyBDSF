@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
 # Store svn Revision number. For this to work, one also needs to do: 
 #
@@ -27,6 +27,17 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
     
+    2012/08/29 - Fixed incorrect terminal size in parameter listing. Added
+        logging of non-default input parameters and internally derived
+        parameters.
+    
+    2012/08/22 - Version 1.3.2
+    
+    2012/08/22 - Fixed a bug that caused the user-specified rms_box to be
+        ignored. Added an option to enable the Monte Carlo error estimation
+        for 'M'-type sources (the "do_mc_errors" option), which is now
+        disabled by default.
+    
     2012/07/11 - Version 1.3.1
     
     2012/07/11 - Cleaned up unused options.
@@ -35,7 +46,7 @@ def changelog():
         fitting. Fixed a bug that caused a crash when a detection image
         is used.
     
-    2012/07/05 - Fixed a bug that caused images written when output_all=
+    2012/07/05 - Fixed a bug that caused images written when output_all =
         True to be transposed. Added frequency information to all output
         images. Improved fitting robustness to prevent rare cases in 
         which no valid Gaussians could be fit to an island. Modified the

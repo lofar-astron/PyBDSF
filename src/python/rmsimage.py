@@ -167,9 +167,10 @@ class Op_rmsimage(Op):
             do_adapt = False
         min_size_allowed = int(img.pixel_beam[0]*9.0)
 
-        if opts.rms_box is None or opts.rms_box_bright is None:
+        if opts.rms_box is None or (opts.rms_box_bright is None and do_adapt):
             if do_adapt:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size_highthresh*2.0))
+#                 bsize = int(max(brightsize, min_size_allowed, max_isl_size_lowthresh))
             else:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size*2.0))
             bsize2 = int(max(min(img.ch0.shape)/10.0, max_isl_size*5.0))
@@ -190,9 +191,12 @@ class Op_rmsimage(Op):
             else:
                 img.rms_box2 = opts.rms_box
         else:
-            img.rms_box = opts.rms_box_bright
-            img.rms_box2 = opts.rms_box
-            self.output_rmsbox_size(img)
+            if do_adapt:
+                img.rms_box = opts.rms_box_bright
+                img.rms_box2 = opts.rms_box
+            else:
+                img.rms_box = opts.rms_box
+                img.rms_box2 = opts.rms_box
                     
         map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)        
         for ipol, pol in enumerate(pols):
@@ -205,7 +209,7 @@ class Op_rmsimage(Op):
               pol_txt = ''
               
           ## calculate rms/mean maps if needed
-          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(img.ch0.shape)/4.0:
+          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box2[0] > min(img.ch0.shape)/4.0:
             # rms box is too large - just use constant rms and mean
             self.output_rmsbox_size(img)
             mylog.warning('Size of rms_box larger than 1/4 of image size')
@@ -896,6 +900,11 @@ class Op_rmsimage(Op):
                                     '(' + str(img.rms_box2[0]) + ', ' +
                                     str(img.rms_box2[1]) + ') pixels (large scale)')                    
           else:
-              mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
-                                '(' + str(img.rms_box[0]) + ', ' +
-                                str(img.rms_box[1]) + ') pixels')                
+              if opts.rms_box is None:
+                  mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
+                                '(' + str(img.rms_box2[0]) + ', ' +
+                                str(img.rms_box2[1]) + ') pixels')                
+              else:
+                  mylogger.userinfo(mylog, 'Using user-specified rms_box',
+                                    '(' + str(img.rms_box2[0]) + ', ' +
+                                    str(img.rms_box2[1]) + ') pixels')                    
