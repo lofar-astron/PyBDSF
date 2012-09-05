@@ -42,12 +42,13 @@ class Op_readimage(Op):
         import time, os
         mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Readimage")
 
-        # Check for trailing "/" in filename (happens a lot, since MS images are directories)
+        if img.opts.filename == '':
+            raise RuntimeError('Image file name not specified.')
+
+        # Check for trailing "/" in filename (since CASA images are directories).
         # Although the general rule is to not alter the values in opts (only the
         # user should be able to alter these), in this case there is no harm in
         # replacing the filename in opts with the '/' trimmed off.
-        if img.opts.filename == '':
-            raise RuntimeError('Image file name not specified.')
         if img.opts.filename[-1] == '/':
             img.opts.filename = img.opts.filename[:-1]
 
@@ -95,6 +96,7 @@ class Op_readimage(Op):
             mylog.info('Equinox not found in image header. Assuming J2000.')
             img.equinox = 2000.0
         else:
+            mylog.info('Equinox of image is %f.' % year)
             img.equinox = year
 
         # Try to trim common extensions from filename
@@ -126,6 +128,7 @@ class Op_readimage(Op):
         # Check for zeros and blank if img.opts.blank_zeros is True
         if img.opts.blank_zeros:
             zero_pixels = N.where(img.image[0] == 0.0)
+            mylog.info('Blanking %i zeros in image' % len(zero_pixels[1]))
             img.image[0][zero_pixels] = N.nan
 
         img.completed_Ops.append('readimage')

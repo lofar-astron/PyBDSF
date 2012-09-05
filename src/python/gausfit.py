@@ -311,7 +311,7 @@ class Op_gausfit(Op):
 
 
         ### return whatever we got
-        isl.mg_fcn = fcn
+        #isl.mg_fcn = fcn
         gaul  = [self.fixup_gaussian(isl, g) for g in gaul]
         fgaul = [(flag, self.fixup_gaussian(isl, g))
                                        for flag, g in fgaul]
@@ -946,12 +946,12 @@ class Gaussian(object):
         # 1-D Gaussians. The Miriad algorithm in func.deconv2 does
         # a much better job in this regard, so use it instead. Note
         # that for resolved sources, the two algorithms give the
-        # same answer.
+        # same answer. For now, errors on the deconvolved parameters
+        # are just set to those of the undeconvolved ones.
         if flag == 0:
-            #gaus_dc = func.deconv(bm_pix, size)
             gaus_dc, err = func.deconv2(bm_pix, size)
             self.deconv_size_sky = img.pix2beam(gaus_dc, self.centre_pix)
-            self.deconv_size_skyE  = [0., 0., 0.]
+            self.deconv_size_skyE  = img.pix2beam(errors[3:6], self.centre_pix)
         else:
             self.deconv_size_sky = [0., 0., 0.]
             self.deconv_size_skyE  = [0., 0., 0.]
