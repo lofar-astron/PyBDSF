@@ -501,6 +501,23 @@ class Opts(object):
                                  "3-, or 4-D cube. The detection image and the main"\
                                  "image must have the same size and be registered.",
                              group = "advanced_opts")
+    do_mc_errors = Bool(False,
+                             doc = "Estimate uncertainties for 'M'-type sources using Monte "\
+                                "Carlo method\n"\
+                                "If True, uncertainties on the sizes and "\
+                                "positions of 'M'-type sources "\
+                                "due to uncertainties in the constituent Gaussians are "\
+                                "estimated using a Monte Carlo technique. These "\
+                                "uncertainties are added in quadrature with those "\
+                                "calculated using Condon (1997). If False, "\
+                                "these uncertainties are ignored, and errors are "\
+                                "calculated using Condon (1997) only.\n"\
+                                "Enabling this option will result in longer run "\
+                                "times if many 'M'-type sources are present, but "\
+                                "should give better estimates of the uncertainites, "
+                                "particularly for complex sources composed of many "\
+                                "Gaussians.",
+                             group = "advanced_opts")
 
     #--------------------------------ADAPTIVE RMS_BOX OPTIONS--------------------------------
     rms_box_bright = Option(None, Tuple(Int(), Int()),

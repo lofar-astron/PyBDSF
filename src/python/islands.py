@@ -300,5 +300,3 @@ class Island(object):
 
 ### Insert attribute for island list into Image class
 Image.islands = List(tInstance(Island), doc="List of islands")
-
-
