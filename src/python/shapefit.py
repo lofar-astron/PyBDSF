@@ -8,6 +8,9 @@ from islands import *
 from shapelets import *
 import mylogger
 import statusbar
+import multi_proc as mp
+import itertools
+import functions as func
 
 
 Island.shapelet_basis=String(doc="Coordinate system for shapelet decomposition (cartesian/polar)", colname='Basis', units=None)
@@ -17,60 +20,114 @@ Island.shapelet_centre=Tuple(Float(), Float(),doc="Centre for the shapelet decom
 Island.shapelet_cf=NArray(doc="Coefficient matrix of the shapelet decomposition", colname='Coeff_matrix', units=None)
 
 class Op_shapelets(Op):
-    """ Get the image and mask from each island and send it to 
+    """ Get the image and mask from each island and send it to
     shapelet programs which can then also be called seperately """
 
     def __call__(self, img):
-    
+
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Shapefit")
-        global bar
         bar = statusbar.StatusBar('Decomposing islands into shapelets ...... : ', 0, img.nisl)
+        opts = img.opts
         if img.opts.shapelet_do:
-            if img.opts.quiet == False:
+            if opts.quiet == False:
                 bar.start()
+
+            # Set up multiproccessing. First create a simple copy of the Image
+            # object that contains the minimal data needed.
+            shap_list = []
+            opts_dict = opts.to_dict()
+            img_simple = Image(opts_dict)
+            img_simple.pixel_beamarea = img.pixel_beamarea
+            img_simple.pixel_beam = img.pixel_beam
+            img_simple.thresh_pix = img.thresh_pix
+            img_simple.minpix_isl = img.minpix_isl
+            img_simple.clipped_mean = img.clipped_mean
+
+            # Now call the parallel mapping function. We use eval_func_tuple() and
+            # itertools to get around limitation that multiple-argument sequences
+            # are not supported.
+            result = mp.parallel_map(func.eval_func_tuple,
+                        itertools.izip(itertools.repeat(self.process_island),
+                        img.islands, itertools.repeat(img_simple),
+                        itertools.repeat(opts)), numcores=opts.ncores,
+                        bar=bar)
+            for core_result in result:
+                shap_list += core_result
+
             for id, isl in enumerate(img.islands):
-                arr=isl.image
-                mask=isl.mask_active + isl.mask_noisy
-                basis=img.opts.shapelet_basis
-                beam_pix=img.beam2pix(img.beam)
-                mode=img.opts.shapelet_fitmode
-                if mode != 'fit': mode=''
-
-                fixed=(0,0,0)
-                (beta, centre, nmax)=self.get_shapelet_params(arr, mask, basis, beam_pix, fixed, N.array(isl.origin), mode)
-
-                cf=decompose_shapelets(arr, mask, basis, beta, centre, nmax, mode)
-
+                beta, centre, nmax, basis, cf = shap_list[id]
                 isl.shapelet_beta=beta
                 isl.shapelet_centre=tuple(N.array(centre) + N.array(isl.origin))
                 isl.shapelet_nmax=nmax
                 isl.shapelet_basis=basis
                 isl.shapelet_cf=cf
-                mylog.info('Shape : cen '+str(isl.shapelet_centre[0])+' '+ \
-                     str(isl.shapelet_centre[1])+' beta '+str(beta))
-                if img.opts.quiet == False:
-                    bar.increment()
+
+
+#             for id, isl in enumerate(img.islands):
+#                 arr=isl.image
+#                 mask=isl.mask_active + isl.mask_noisy
+#                 basis=img.opts.shapelet_basis
+#                 beam_pix=img.beam2pix(img.beam)
+#                 mode=img.opts.shapelet_fitmode
+#                 if mode != 'fit': mode=''
+#
+#                 fixed=(0,0,0)
+#                 (beta, centre, nmax)=self.get_shapelet_params(arr, mask, basis, beam_pix, fixed, N.array(isl.origin), mode)
+#
+#                 cf=decompose_shapelets(arr, mask, basis, beta, centre, nmax, mode)
+#
+#                 isl.shapelet_beta=beta
+#                 isl.shapelet_centre=tuple(N.array(centre) + N.array(isl.origin))
+#                 isl.shapelet_nmax=nmax
+#                 isl.shapelet_basis=basis
+#                 isl.shapelet_cf=cf
+#                 mylog.info('Shape : cen '+str(isl.shapelet_centre[0])+' '+ \
+#                      str(isl.shapelet_centre[1])+' beta '+str(beta))
+#                 if img.opts.quiet == False:
+#                     bar.increment()
             img.completed_Ops.append('shapelets')
 
 
+    def process_island(self, isl, img, opts=None):
+        """Processes a single island.
+
+        Returns shapelet parameters.
+        """
+        if opts == None:
+            opts = img.opts
+        arr = isl.image
+        mask = isl.mask_active + isl.mask_noisy
+        basis = opts.shapelet_basis
+        beam_pix = img.pixel_beam
+        mode = opts.shapelet_fitmode
+        if mode != 'fit': mode = ''
+
+        fixed = (0,0,0)
+        (beta, centre, nmax) = self.get_shapelet_params(arr, mask, basis, beam_pix, fixed, N.array(isl.origin), mode)
+
+        cf = decompose_shapelets(arr, mask, basis, beta, centre, nmax, mode)
+
+        return [beta, tuple(N.array(centre) + N.array(isl.origin)), nmax, basis, cf]
+
+
     def get_shapelet_params(self, image, mask, basis, beam_pix, fixed, ori, mode, beta=None, cen=None, nmax=None):
-         """ This takes as input an image, its mask (false=valid), basis="cartesian"/"polar", 
+         """ This takes as input an image, its mask (false=valid), basis="cartesian"/"polar",
 	     fixed=(i,j,k) where i,j,k =0/1 to calculate or take as fixed for (beta, centre, nmax),
-	     beam_pix has the beam in (pix_fwhm, pix_fwhm, deg), 
+	     beam_pix has the beam in (pix_fwhm, pix_fwhm, deg),
 	     beta (the scale), cen (centre of basis expansion), nmax (max order). The output
 	     is an updated set of values of (beta, centre, nmax). If fixed is 1 and the value is not
 	     specified as an argument, then fixed is taken as 0."""
 	 from math import sqrt, log, floor
          import functions as func
          import numpy as N
-         
+
 	 if fixed[0]==1 and beta==None: fixed[0]=0
 	 if fixed[1]==1 and cen==None: fixed[1]=0
 	 if fixed[2]==1 and nmax==None: fixed[2]=0
 
          if fixed[0]*fixed[1]==0:
              (m1, m2, m3)=func.moment(image, mask)
-             
+
          if fixed[0]==0:
              beta=sqrt(m3[0]*m3[1])*2.0
              if beta == 0.0:
@@ -88,7 +145,7 @@ class Op_shapelets(Op):
                nmax=min(nmax, nmax_max)
 
          betarange=[0.5,sqrt(beta*max(n,m))]  # min, max
-         #print betarange 
+         #print betarange
 
          #print 'Initial Beta = ',beta, image.shape
 
@@ -110,6 +167,6 @@ class Op_shapelets(Op):
 
          return beta, cen, nmax
 
- 
-       
+
+
 

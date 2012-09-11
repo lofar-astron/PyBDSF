@@ -4,14 +4,14 @@ This module simply stores the version and svn revision numbers, as well
 as a changelog. The svn revision number will be updated automatically
 whenever there is a change to this file. However, if no change is made
 to this file, the revision number will get out of sync. Therefore, one
-must update this file with each (significant) update of the code: 
+must update this file with each (significant) update of the code:
 adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.3.2'
+__version__ = '1.4'
 
-# Store svn Revision number. For this to work, one also needs to do: 
+# Store svn Revision number. For this to work, one also needs to do:
 #
 # "svn propset svn:keywords Revision CEP/PyBDSM/src/python/_version.py"
 #
@@ -26,85 +26,92 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
-    
+
+    2011/09/11 - Version 1.4.0
+
+    2012/09/11 - Parallelized Gaussian fitting and shapelet decomposition.
+        The number of cores to be used can be specified with the "ncores"
+        option (default is to use all). Fixed bug in SED plotting in
+        the show_fit task.
+
     2012/08/29 - Fixed incorrect terminal size in parameter listing. Added
         logging of non-default input parameters and internally derived
         parameters.
-    
+
     2012/08/22 - Version 1.3.2
-    
+
     2012/08/22 - Fixed a bug that caused the user-specified rms_box to be
         ignored. Added an option to enable the Monte Carlo error estimation
         for 'M'-type sources (the "do_mc_errors" option), which is now
         disabled by default.
-    
+
     2012/07/11 - Version 1.3.1
-    
+
     2012/07/11 - Cleaned up unused options.
-    
+
     2012/07/10 - Fixed a bug that caused a segfault during Gaussian
         fitting. Fixed a bug that caused a crash when a detection image
         is used.
-    
+
     2012/07/05 - Fixed a bug that caused images written when output_all =
         True to be transposed. Added frequency information to all output
-        images. Improved fitting robustness to prevent rare cases in 
+        images. Improved fitting robustness to prevent rare cases in
         which no valid Gaussians could be fit to an island. Modified the
         island-finding routine to handle NaNs properly.
-    
+
     2012/07/03 - Version 1.3
-    
+
     2012/07/03 - Fixed a bug in calculation of the positional errors of
         Gaussians. If interactive=True and image is large (> 4096 pixels),
         display is limited to 'ch0_islands' only; otherwise, show_fit()
         is very slow. Tweaked show_fit() to better display a single image.
-    
+
     2012/07/02 - Adjusted rms_box algorithm to check for negative rms
-        values (due to interpolation with cubic spline). If negative 
-        values are found, either the box size is increased or the 
+        values (due to interpolation with cubic spline). If negative
+        values are found, either the box size is increased or the
         interpolation is done with order=1 (bilinear) instead.
-    
+
     2012/06/28 - Output now includes the residual image produced by
         using only wavelet Gaussians (if any) when atrous_do=True and
-        output_all=True. Improved organization of files when 
-        output_all=True. Added logging of simple statistics (mean, 
+        output_all=True. Improved organization of files when
+        output_all=True. Added logging of simple statistics (mean,
         std. dev, skew, and kurtosis) of the residual images.
-    
+
     2012/06/22 - Included image rotation (if any) in beam definition.
         Rotation angle can vary across the image (defined by image WCS).
-    
+
     2012/06/19 - Changed exception handling to raise exceptions when
         the interactive shell is not being used. Fixed bug that
         caused a crash when using show_fit() when no islands were
-        found. 
+        found.
 
     2012/06/15 - Added Sagecal output format for Gaussian catalogs.
 
-    2012/06/14 - Added check for newer versions of the PyBDSM 
+    2012/06/14 - Added check for newer versions of the PyBDSM
         software tar.gz file available on ftp.strw.leidenuniv.nl.
 
-    2012/06/13 - Added total island flux (from sum of pixels) to 
-        "gaul" and "srl" catalogs. 
-    
+    2012/06/13 - Added total island flux (from sum of pixels) to
+        "gaul" and "srl" catalogs.
+
     2012/06/06 - Version 1.2
-    
-    2012/06/06 - Added option to calculate fluxes within a specified 
-        aperture radius in pixels (set with the "aperture" option). 
+
+    2012/06/06 - Added option to calculate fluxes within a specified
+        aperture radius in pixels (set with the "aperture" option).
         Aperture fluxes, if measured, are output in the "srl" catalogs.
         Changed code that determines terminal width to be more robust.
-    
+
     2012/05/07 - Removed dependencies on matplotlib -- if matplotlib is
     	not available, plotting is disabled. Corrected inconsistencies,
     	spelling mistakes, etc. in help text and documentation. Cleaned
     	up unneeded modules and files.
-    
+
     2012/05/02 - Added option to output flux densities for every channel
     	found by the spectral index module. Added option to spectral index
     	module to allow use of flux densities that do not meet the desired
     	SNR. Changed flag_maxsnr criterion to also flag if the peak flux
     	density per beam of the Gaussian exceeds the value at its center.
     	Removed incl_wavelet option.
-                 
+
     2012/04/20 - Promoted the adaptive_rms_box parameter to the main options
     	listing and added the rms_box_bright option so that the user can
     	specify either (or both) of the rms_boxes. Fixed bug in wavelet
@@ -132,7 +139,7 @@ def changelog():
     	mean maps when both strong artifacts and extended sources are
     	present. Fixed bug that prevented plotting of results during wavelet
     	decomposition when interactive = True.
-    
+
     2012/03/29 - Fixed bug in wavelet module that could cause incorrect
     	associations of Gaussians. Fixed bug in show_fit that displayed
     	incorrect model and residual images when wavelets were used.
@@ -288,7 +295,6 @@ def changelog():
     2011/09/08 - Version 1.0
 
     2011/09/08 - Versioning system changed to use _version.py.
-    
+
     """
     pass
-    
