@@ -271,7 +271,7 @@ class Island(object):
             bbox_mean_im = mean
 
         ### finish initialization
-        isl_size = isl_mask.sum()
+        isl_size = N.sum(~isl_mask)
         self.bbox = bbox
         self.origin = origin
         self.image = data
