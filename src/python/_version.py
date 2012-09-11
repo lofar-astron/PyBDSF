@@ -29,7 +29,8 @@ def changelog():
 
     2011/09/11 - Version 1.4.0
 
-    2012/09/11 - Parallelized Gaussian fitting and shapelet decomposition.
+    2012/09/11 - Parallelized Gaussian fitting, shapelet decomposition,
+        validation of wavelet islands, and mean/rms map generation.
         The number of cores to be used can be specified with the "ncores"
         option (default is to use all). Fixed bug in SED plotting in
         the show_fit task.

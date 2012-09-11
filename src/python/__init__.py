@@ -182,12 +182,14 @@ def _run_op_list(img, chain):
         print "="*36
         print "%18s : %10s" % ("Module", "Time (sec)")
         print "-"*36
-        for op in chain:
-            print "%18s : %f" % (op.__class__.__name__,
+        for i, op in enumerate(chain):
+            if hasattr(op, '__start_time'):
+                print "%18s : %f" % (op.__class__.__name__,
                                  (op.__stop_time - op.__start_time))
+                indx_stop = i
         print "="*36
         print "%18s : %f" % ("Total",
-                             (chain[-1].__stop_time - chain[0].__start_time))
+                             (chain[indx_stop].__stop_time - chain[0].__start_time))
 
     # Log all internally derived parameters
     mylog = mylogger.logging.getLogger("PyBDSM.Final")
