@@ -34,7 +34,6 @@ class Op_shapelets(Op):
 
             # Set up multiproccessing. First create a simple copy of the Image
             # object that contains the minimal data needed.
-            shap_list = []
             opts_dict = opts.to_dict()
             img_simple = Image(opts_dict)
             img_simple.pixel_beamarea = img.pixel_beamarea
@@ -43,16 +42,13 @@ class Op_shapelets(Op):
             img_simple.minpix_isl = img.minpix_isl
             img_simple.clipped_mean = img.clipped_mean
 
-            # Now call the parallel mapping function. We use eval_func_tuple() and
-            # itertools to get around limitation that multiple-argument sequences
-            # are not supported.
-            result = mp.parallel_map(func.eval_func_tuple,
+            # Now call the parallel mapping function. Returns a list of
+            # [beta, centre, nmax, basis, cf] for each island
+            shap_list = mp.parallel_map(func.eval_func_tuple,
                         itertools.izip(itertools.repeat(self.process_island),
                         img.islands, itertools.repeat(img_simple),
                         itertools.repeat(opts)), numcores=opts.ncores,
                         bar=bar)
-            for core_result in result:
-                shap_list += core_result
 
             for id, isl in enumerate(img.islands):
                 beta, centre, nmax, basis, cf = shap_list[id]
@@ -62,29 +58,6 @@ class Op_shapelets(Op):
                 isl.shapelet_basis=basis
                 isl.shapelet_cf=cf
 
-
-#             for id, isl in enumerate(img.islands):
-#                 arr=isl.image
-#                 mask=isl.mask_active + isl.mask_noisy
-#                 basis=img.opts.shapelet_basis
-#                 beam_pix=img.beam2pix(img.beam)
-#                 mode=img.opts.shapelet_fitmode
-#                 if mode != 'fit': mode=''
-#
-#                 fixed=(0,0,0)
-#                 (beta, centre, nmax)=self.get_shapelet_params(arr, mask, basis, beam_pix, fixed, N.array(isl.origin), mode)
-#
-#                 cf=decompose_shapelets(arr, mask, basis, beta, centre, nmax, mode)
-#
-#                 isl.shapelet_beta=beta
-#                 isl.shapelet_centre=tuple(N.array(centre) + N.array(isl.origin))
-#                 isl.shapelet_nmax=nmax
-#                 isl.shapelet_basis=basis
-#                 isl.shapelet_cf=cf
-#                 mylog.info('Shape : cen '+str(isl.shapelet_centre[0])+' '+ \
-#                      str(isl.shapelet_centre[1])+' beta '+str(beta))
-#                 if img.opts.quiet == False:
-#                     bar.increment()
             img.completed_Ops.append('shapelets')
 
 

@@ -634,7 +634,7 @@ class Op_rmsimage(Op):
         axes     = [N.zeros(len, dtype=float) for len in mapshape]
 
         # Step 1: internal area of the image
-        # Make a list of i,j to send to process_mean_rms_maps()
+        # Make a list of coordinates to send to process_mean_rms_maps()
         coord_list = []
         ind_list = []
         for i in range(boxcount[0]):
@@ -645,35 +645,23 @@ class Op_rmsimage(Op):
                     coord_list.append((i, j))
                 ind_list.append([i*SS, i*SS+BS, j*SS, j*SS+BS])
 
-        cm_cr_list = []
+        # Now call the parallel mapping function. Returns a list of [mean, rms]
+        # for each coordinate.
         if use_extrapolation:
-            result = mp.parallel_map(func.eval_func_tuple,
+            cm_cr_list = mp.parallel_map(func.eval_func_tuple,
                     itertools.izip(itertools.repeat(self.process_mean_rms_maps),
                     ind_list, itertools.repeat(mask), itertools.repeat(arr),
                     itertools.repeat(kappa)), numcores=ncores)
         else:
-            result = mp.parallel_map(func.eval_func_tuple,
+            cm_cr_list = mp.parallel_map(func.eval_func_tuple,
                     itertools.izip(itertools.repeat(self.process_mean_rms_maps),
                     ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
                     itertools.repeat(kappa)), numcores=ncores)
-
-        for core_result in result:
-            cm_cr_list += core_result
 
         for i, co in enumerate(coord_list):
             cm, cr = cm_cr_list[i]
             mean_map[co] = cm
             rms_map[co] = cr
-
-#         for i in range(boxcount[0]):
-#             for j in range(boxcount[1]):
-#                 ind = [i*SS, i*SS+BS, j*SS, j*SS+BS]
-#                 if use_extrapolation:
-#                     self.for_masked(mean_map, rms_map, mask, arr, ind,
-#                                     kappa, [i+1, j+1])
-#                 else:
-#                     self.for_masked(mean_map, rms_map, mask_pad, arr_pad, ind,
-#                                     kappa, [i, j])
 
         # Check if all regions have too few unmasked pixels
         if mask != None and N.size(N.where(mean_map != N.inf)) == 0:

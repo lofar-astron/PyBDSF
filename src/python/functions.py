@@ -1620,5 +1620,9 @@ def getTerminalSize():
     return (0, 0)
 
 def eval_func_tuple(f_args):
-    """Takes a tuple of a function and args, evaluates and returns result"""
+    """Takes a tuple of a function and args, evaluates and returns result
+
+    This function (in addition to itertools) gets around limitation that
+    multiple-argument sequences are not supported by multiprocessing.
+    """
     return f_args[0](*f_args[1:])

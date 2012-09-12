@@ -105,10 +105,11 @@ def run_tasks(procs, err_q, out_q, num):
     results=[None]*num;
     for i in range(num):
         idx, result = out_q.get()
-        results[idx] = result
+        results[idx] = numpy.array(result, dtype=object)
 
     # Remove extra dimension added by array_split
-    return results
+    return numpy.concatenate(results).tolist()
+
 
 
 def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
