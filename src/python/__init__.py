@@ -23,6 +23,7 @@ except RuntimeError:
     mpl.use('Agg')
 except ImportError:
     print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
+
 from readimage import Op_readimage
 from collapse import Op_collapse
 from preprocess import Op_preprocess

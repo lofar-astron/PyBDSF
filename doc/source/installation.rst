@@ -6,9 +6,9 @@ Downloading and installing
 .. note::
 
     If you are working on the LOFAR CEP I/II clusters, then PyBDSM is already installed. All that needs to be done is to initialize your environment as follows::
-    
+
         $ use LofIm
-        
+
 Downloading the code
 --------------------
 The latest version of the code may be obtained as a gzipped tar file from the STRW FTP server at ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM (e.g., ``PyBDSM-1.2.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
@@ -29,17 +29,6 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
     $ sudo ./b2 install
 
 
-.. note::
-
-    If you use the 64-bit EPD distribution on Mac OS X, there are problems with the default matplotlib backend that cause some of the plotting functionality of PyBDSM to be lost. To fix this problem, edit (or create) the ``~/.matplotlib/matplotlibrc`` file and add the line::
-    
-        backend : Qt4Agg
-        
-    Then add the following line to your ``.bash_profile``::
-    
-        export QT_API='pyside'
-
-
 Compiling and installing
 ------------------------
 Lastly, compile the software. To do so, change to the ``LOFAR`` directory and make a ``build/gnu_opt`` directory, go there, and execute ``make``::
@@ -49,8 +38,8 @@ Lastly, compile the software. To do so, change to the ``LOFAR`` directory and ma
     $ cd build/gnu_opt
     $ cmake -DBUILD_PACKAGES=PyBDSM -DUSE_LOG4CPLUS=OFF -DUSE_LOG4CXX=OFF ../..
     $ make install
-    
-If successful, PyBDSM should now be installed in ``LOFAR/build/gnu_opt/installed/``. 
+
+If successful, PyBDSM should now be installed in ``LOFAR/build/gnu_opt/installed/``.
 
 .. _add_to_path:
 
@@ -67,17 +56,17 @@ For the Bash shell::
 
     export LOFAR="<root directory of code tree>"
     source $LOFAR/build/gnu_opt/installed/lofarinit.sh
-    
+
 .. note::
 
      If you are working on the LOFAR CEP I/II clusters, then you need only to do::
-    
+
         $ use LofIm
 
 Keeping up-to-date
 ------------------
 PyBDSM is currently under active development, and bug fixes and improvements are frequently implemented. PyBDSM will automatically check for updates each time the interactive shell is started. To update PyBDSM to the latest version, download the new version and repeat the above steps.
-    
+
 Major updates will be listed in :ref:`new`.
-        
+
 

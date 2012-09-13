@@ -670,26 +670,57 @@ class Op_rmsimage(Op):
 
         # Step 2: borders of the image
         if bounds[0]:
+            coord_list = []
+            ind_list = []
             for j in range(boxcount[1]):
                 if use_extrapolation:
-                    ind = [-BS, arr.shape[0], j*SS,j*SS+BS]
-                    self.for_masked(mean_map, rms_map, mask, arr, ind,
-                                    kappa, [-2, j+1])
+                    coord_list.append((-2, j+1))
+                    ind_list.append([-BS, arr.shape[0], j*SS,j*SS+BS])
                 else:
-                    ind = [-BS, arr_pad.shape[0], j*SS,j*SS+BS]
-                    self.for_masked(mean_map, rms_map, mask_pad, arr_pad, ind,
-                                    kappa, [-1, j])
+                    coord_list.append((-1, j))
+                    ind_list.append([-BS, arr_pad.shape[0], j*SS,j*SS+BS])
+            if use_extrapolation:
+                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
+                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        ind_list, itertools.repeat(mask), itertools.repeat(arr),
+                        itertools.repeat(kappa)), numcores=ncores)
+            else:
+                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
+                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
+                        itertools.repeat(kappa)), numcores=ncores)
+
+            for i, co in enumerate(coord_list):
+                cm, cr = cm_cr_list[i]
+                mean_map[co] = cm
+                rms_map[co] = cr
+
 
         if bounds[1]:
+            coord_list = []
+            ind_list = []
             for i in range(boxcount[0]):
                 if use_extrapolation:
-                    ind = [i*SS,i*SS+BS, -BS,arr.shape[1]]
-                    self.for_masked(mean_map, rms_map, mask, arr, ind,
-                                    kappa, [i+1, -2])
+                    coord_list.append((i+1, -2))
+                    ind_list.append([i*SS,i*SS+BS, -BS,arr.shape[1]])
                 else:
-                    ind = [i*SS,i*SS+BS, -BS,arr_pad.shape[1]]
-                    self.for_masked(mean_map, rms_map, mask_pad, arr_pad, ind,
-                                    kappa, [i, -1])
+                    coord_list.append((i, -1))
+                    ind_list.append([i*SS,i*SS+BS, -BS,arr_pad.shape[1]])
+            if use_extrapolation:
+                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
+                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        ind_list, itertools.repeat(mask), itertools.repeat(arr),
+                        itertools.repeat(kappa)), numcores=ncores)
+            else:
+                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
+                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
+                        itertools.repeat(kappa)), numcores=ncores)
+
+            for i, co in enumerate(coord_list):
+                cm, cr = cm_cr_list[i]
+                mean_map[co] = cm
+                rms_map[co] = cr
 
         if bounds.all():
                 if use_extrapolation:
