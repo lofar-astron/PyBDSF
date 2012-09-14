@@ -2,12 +2,12 @@
 
 Defines operation Op_islands which does island detection.
 Current implementation uses scipy.ndimage operations for island detection.
-While it's implemented to work for images of arbitrary dimensionality, 
-the bug in the current version of scipy (0.6) often causes crashes 
+While it's implemented to work for images of arbitrary dimensionality,
+the bug in the current version of scipy (0.6) often causes crashes
 (or just wrong results) for 3D inputs.
 
-If this (scipy.ndimage.label) isn't fixed by the time we need 3D source 
-extraction, one will have to adopt my old pixel-runs algorithm for 3D data. 
+If this (scipy.ndimage.label) isn't fixed by the time we need 3D source
+extraction, one will have to adopt my old pixel-runs algorithm for 3D data.
 Check out islands.py rev. 1362 from repository for it.
 """
 
@@ -30,13 +30,13 @@ class Op_islands(Op):
     """Detect islands of emission in the image
 
     All detected islands are stored in the list img.islands,
-    where each individual island is represented as an instance 
+    where each individual island is represented as an instance
     of class Island.
-    
-    The option to detect islands on a different "detection" 
+
+    The option to detect islands on a different "detection"
     image is also available. This option is useful for example
     when a primary beam correction is used -- it is generally
-    better to detect sources on the uncorrected image, but 
+    better to detect sources on the uncorrected image, but
     to measure them on the corrected image.
 
     Prerequisites: module rmsimage should be run first.
@@ -58,8 +58,8 @@ class Op_islands(Op):
 
             det_chain, det_opts = self.setpara_bdsm(img, opts.detection_image)
             det_img = Image(det_opts)
-            det_img.log = 'Detection image'            
-            success = _run_op_list(det_img, det_chain)                    
+            det_img.log = 'Detection image'
+            success = _run_op_list(det_img, det_chain)
             if not success:
                 return
 
@@ -68,7 +68,7 @@ class Op_islands(Op):
             ch0_shape = img.ch0.shape
             if det_shape != ch0_shape:
                 raise RuntimeError("Detection image shape does not match that of input image.")
-            
+
             # Run through islands and correct the rms, mean and max values
             img.island_labels = det_img.island_labels
             corr_islands = []
@@ -81,10 +81,10 @@ class Op_islands(Op):
         else:
             img.islands = self.ndimage_alg(img, opts)
             img.nisl = len(img.islands)
-    
+
             mylogger.userinfo(mylog, "Number of islands found", '%i' %
                               len(img.islands))
-            
+
             pyrank = N.zeros(img.ch0.shape, dtype=int) - 1
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
@@ -92,13 +92,13 @@ class Op_islands(Op):
                     pyrank[isl.bbox] = N.invert(isl.mask_active)-1
                 else:
                     pyrank[isl.bbox] = N.invert(isl.mask_active)*i
-                
+
             if opts.output_all: write_islands(img)
             if opts.savefits_rankim:
                 func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', pyrank, img)
 
             img.pyrank = pyrank
-            
+
         img.completed_Ops.append('islands')
         return img
 
@@ -106,11 +106,11 @@ class Op_islands(Op):
         """Island detection using scipy.ndimage
 
         Use scipy.ndimage.label to detect islands of emission in the image.
-        Island is defined as group of tightly connected (8-connectivity 
+        Island is defined as group of tightly connected (8-connectivity
         for 2D images) pixels with emission.
 
         The following cuts are applied:
-         - pixel is considered to have emission if it is 'thresh_isl' times 
+         - pixel is considered to have emission if it is 'thresh_isl' times
            higher than RMS.
          - Island should have at least 'minsize' active pixels
          - There should be at lease 1 pixel in the island which is 'thresh_pix'
@@ -128,7 +128,7 @@ class Op_islands(Op):
         ### islands detection
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
 
-        image = img.ch0 
+        image = img.ch0
         mask = img.mask
         rms = img.rms
         mean = img.mean
@@ -186,7 +186,7 @@ class Op_islands(Op):
         opts['filename'] = det_file
         opts['detection_image'] = ''
         opts['polarisation_do'] = False
-        
+
         ops = []
         for op in chain:
           if isinstance(op, (ClassType, TypeType)):
@@ -224,7 +224,8 @@ class Island(object):
     convex_def  = Float(doc="Convex deficiency, with first order correction for edge effect")
     islmean     = Float(doc="a constant value to subtract from image before fitting")
 
-    def __init__(self, img, mask, mean, rms, labels, bbox, idx, beamarea):
+    def __init__(self, img, mask, mean, rms, labels, bbox, idx,
+                 beamarea, origin=None, noise_mask=None, copy=False):
         """Create Island instance.
 
         Parameters:
@@ -233,32 +234,44 @@ class Island(object):
         bbox: slices
         """
         TCInit(self)
-        
-        ### we make bbox slightly bigger
-        self.oldbbox = bbox
-        self.oldidx = idx
-        bbox = self.__expand_bbox(bbox, img.shape)
-        origin = [b.start for b in bbox]   # easier in case ndim > 2
-        data = img[bbox]
 
-        ### create (inverted) masks
-        # Note that mask_active is the island mask; mask_noisy is just
-        # the noisy pixels in the island image. If you want to mask the
-        # noisy pixels as well, set the mask to:
-        #     mask = mask_active + mask_noisy
-        isl_mask = (labels[bbox] == idx)
-        noise_mask = (labels[bbox] == 0)
-        N.logical_or(noise_mask, isl_mask, noise_mask)
+        if not copy:
+            ### we make bbox slightly bigger
+            self.oldbbox = bbox
+            self.oldidx = idx
+            bbox = self.__expand_bbox(bbox, img.shape)
+            origin = [b.start for b in bbox]   # easier in case ndim > 2
+            data = img[bbox]
+            bbox_rms_im = rms[bbox]
+            bbox_mean_im = mean[bbox]
 
-        isl_size = isl_mask.sum()
+            ### create (inverted) masks
+            # Note that mask_active is the island mask; mask_noisy marks only
+            # the noisy pixels in the island image. If you want to mask the
+            # noisy pixels, set the final mask to:
+            #     mask = mask_active + mask_noisy
+            isl_mask = (labels[bbox] == idx)
+            noise_mask = (labels[bbox] == 0)
+            N.logical_or(noise_mask, isl_mask, noise_mask)
 
-        ### invert masks
-        N.logical_not(isl_mask, isl_mask)
-        N.logical_not(noise_mask, noise_mask)
-        if isinstance(mask, N.ndarray):
-            noise_mask[mask[bbox]] = True
+            ### invert masks
+            N.logical_not(isl_mask, isl_mask)
+            N.logical_not(noise_mask, noise_mask)
+            if isinstance(mask, N.ndarray):
+                noise_mask[mask[bbox]] = True
+
+        else:
+            if origin == None:
+                origin = [b.start for b in bbox]
+            isl_mask = mask
+            if noise_mask == None:
+                noise_mask = mask
+            data = img
+            bbox_rms_im = rms
+            bbox_mean_im = mean
 
         ### finish initialization
+        isl_size = N.sum(~isl_mask)
         self.bbox = bbox
         self.origin = origin
         self.image = data
@@ -267,10 +280,8 @@ class Island(object):
         self.shape = data.shape
         self.size_active = isl_size
         self.max_value = N.max(self.image*~self.mask_active)
-        bbox_rms_im = rms[bbox]
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_rms_im))
         self.rms  = bbox_rms_im[in_bbox_and_unmasked].mean()
-        bbox_mean_im = mean[bbox]
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
         self.mean  = bbox_mean_im[in_bbox_and_unmasked].mean()
         self.total_flux = N.nansum(self.image[in_bbox_and_unmasked])/beamarea
@@ -278,23 +289,61 @@ class Island(object):
         self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
         self.border = self.get_border()
 
+    def __setstate__(self, state):
+        """Needed for multiprocessing"""
+        self.mean = state['mean']
+        self.rms = state['rms']
+        self.image = state['image']
+        self.islmean = state['islmean']
+        self.mask_active = state['mask_active']
+        self.size_active = state['size_active']
+        self.shape = state['shape']
+        self.origin = state['origin']
+        self.island_id = state['island_id']
+
+    def __getstate__(self):
+        """Needed for multiprocessing"""
+        state = {}
+        state['mean'] = self.mean
+        state['rms'] = self.rms
+        state['image'] = self.image
+        state['islmean'] = self.islmean
+        state['mask_active'] = self.mask_active
+        state['size_active'] = self.size_active
+        state['shape'] = self.shape
+        state['origin'] = self.origin
+        state['island_id'] = self.island_id
+        return state
+
     ### do map etc in case of ndim image
     def __expand_bbox(self, bbox, shape):
         """Expand bbox of the image by 1 pixel"""
         def __expand(bbox, shape):
             return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
-        return map(__expand, bbox, shape) 
+        return map(__expand, bbox, shape)
 
-    def copy(self, img):
-        mask, mean, rms = img.mask, img.mean, img.rms
-        image = img.ch0; labels = img.island_labels; bbox = self.oldbbox; idx = self.oldidx
-        return Island(image, mask, mean, rms, labels, bbox, idx, img.pixel_beamarea)
+#     def copy(self, img):
+#         mask, mean, rms = img.mask, img.mean, img.rms
+#         image = img.ch0; labels = img.island_labels; bbox = self.oldbbox; idx = self.oldidx
+#         return Island(image, mask, mean, rms, labels, bbox, idx, img.pixel_beamarea)
+
+    def copy(self, pixel_beamarea):
+        mask = self.mask_active
+        noise_mask = self.mask_noisy
+        mean = N.zeros(mask.shape) + self.mean
+        rms =  N.zeros(mask.shape) + self.rms
+        image = self.image
+        bbox = self.bbox
+        idx = self.oldidx
+        origin = self.origin
+        return Island(image, mask, mean, rms, None, bbox, idx, pixel_beamarea,
+                      origin=origin, noise_mask=noise_mask, copy=True)
 
     def get_border(self):
         """ From all valid island pixels, generate the border."""
         mask = ~self.mask_active
         border = N.transpose(N.asarray(N.where(mask - nd.binary_erosion(mask)))) + self.origin
-        
+
         return N.transpose(N.array(border))
 
 

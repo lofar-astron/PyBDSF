@@ -12,7 +12,7 @@ class StatusBar():
     #           (shared resource)
     # comp: amount of '=' to display in the progress bar
     # started: whether or not the statusbar has been started
-    # color: color of text 
+    # color: color of text
     def __init__(self, text, pos=0, max=100, color='\033[0m'):
         self.text = text
         self.pos = pos
@@ -27,11 +27,10 @@ class StatusBar():
             self.comp = int(float(self.pos) / self.max * self.columns)
         else:
             self.comp = 0
-            
+
     # find number of columns in terminal
     def __getsize(self):
         try:
-#             rows, columns = os.popen('stty size', 'r').read().split()
             rows, columns = func.getTerminalSize()
         except ValueError:
             rows = columns = 0
@@ -65,7 +64,7 @@ class StatusBar():
         self.busy_char = busy_chars[self.spin_pos]
         sys.stdout.write(self.color + busy_chars[self.spin_pos] + '\x1b[1D' + '\033[0m')
         sys.stdout.flush()
-        
+
     # increment number of completed items
     def increment(self):
         self.inc = 1
@@ -88,4 +87,3 @@ class StatusBar():
     def start(self):
         self.started = 1
         self.__print()
-

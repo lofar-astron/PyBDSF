@@ -71,9 +71,9 @@ c! if code='s' then each pt belongs to one bin. If not then fuzzy tesselation
            end if               ! minind(i,j) is number of nearest generator
           end do
          end do
-        end do      
+        end do
 c!
-        if (code.eq.'s') then   
+        if (code.eq.'s') then
          do j=1,m
           do i=1,n
            volrank(i,j)=1.d0*minind(i,j)
@@ -83,6 +83,7 @@ c!
          do j=1,m
           do i=1,n
            do k=1,ngens
+            l=minind(i,j)
             if (k.ne.l) then
              if (niter.eq.0) then
               wts=1.d0
@@ -97,7 +98,7 @@ c!
      /            (j-ygens(minind(i,j)))*(j-ygens(minind(i,j))))/wts
              if (dist.le.(1.d0+eps)*dist1)
      /           volrank(i,j)=volrank(i,j)+1.d0*(minind(i,j)+k)
-            end if           
+            end if
            end do
           end do
          end do
@@ -111,7 +112,7 @@ c!
         implicit none
         integer n,m,x,areavec(x),i,j
         real*8 volrank(n,m)
-        
+
         do i=1,x
          areavec(i)=0
         end do
@@ -157,7 +158,7 @@ c! define huge 3d arrays which crash.
          x(i)=x(i)/npix(i)
          y(i)=y(i)/npix(i)
         end do
-        
+
         do i=1,ngens
          npix(i)=0
         end do
@@ -173,7 +174,7 @@ c! define huge 3d arrays which crash.
           npix(ind)=npix(ind)+1
          end do
         end do
-        
+
         do i=1,ngens
          roundfac(i)=(sumrad(i)/npix(i))/(sqrt(area(i)/pi))
         end do
@@ -181,7 +182,7 @@ c! define huge 3d arrays which crash.
         do k=1,ngens
          roundpix(k)=1.d0/(sumrad(k)/npix(k))
         end do
-        
+
         return
         end
 

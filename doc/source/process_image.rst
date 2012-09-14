@@ -4,12 +4,12 @@
 ``process_image``: processing an image
 ***********************************************
 
-A standard analysis is performed using the ``process_image`` task. This task reads in the input image, calculates background rms and mean images, finds islands of emission, fits Gaussians to the islands, and groups the Gaussians into sources. Furthermore, the ``process_image`` task encompases a number of modules that allow decomposing an image into shapelets, calculating source spectral indices, deriving source polarization properties, and correcting for PSF variations across the image. 
+A standard analysis is performed using the ``process_image`` task. This task reads in the input image, calculates background rms and mean images, finds islands of emission, fits Gaussians to the islands, and groups the Gaussians into sources. Furthermore, the ``process_image`` task encompases a number of modules that allow decomposing an image into shapelets, calculating source spectral indices, deriving source polarization properties, and correcting for PSF variations across the image.
 
 When process_image is executed, PyBDSM performs the following steps in
 order:
 
-#. Reads in the image and collapses specific frequency channels with weights (see :ref:`multichan_opts`) and produces a 'continuum' image (the ch0 image) for all polarisations with which source detection is done. 
+#. Reads in the image and collapses specific frequency channels with weights (see :ref:`multichan_opts`) and produces a 'continuum' image (the ch0 image) for all polarisations with which source detection is done.
 
 #. Calculates basic statistics of the image and sensible values of the processing parameters. First, the number of beams per
    source is calculated (see :ref:`algorithms` for details), using a
@@ -23,7 +23,7 @@ order:
    ratio of expected false pixels to true pixels.
 
 #. Calculates the rms and mean images. The 3-sigma clipped rms and mean are calculated
-   inside boxes of defined by the :term:`rms_box` parameter. Optionally, these images can be calculated using 
+   inside boxes of defined by the :term:`rms_box` parameter. Optionally, these images can be calculated using
    adaptive scaling of this box, so that a smaller box (defined the the :term:`rms_box_bright` parameter) is used near bright sources (where strong artifacts are more likely). Intermediate values
    are calculated using bicubic spline interpolation by default (the order of the spline interpolation can be set with the :term:`spline_rank` parameter). Depending on the resulting statistics (see :ref:`algorithms` for details), we either adopt the rms image or a constant rms
    in the following analysis.
@@ -47,7 +47,7 @@ order:
    statistics in the source area and in the island are computed and
    stored. Errors on each of the fitted parameters are computed using the
    formulae in Condon (1997) [#f1]_.
-   
+
 #. Groups nearby Gaussians within an island into sources. See :ref:`grouping`
    for details. Fluxes for the grouped Gaussians are summed to obtain the
    total flux of the source (the uncertainty is calculated by summing the
@@ -62,15 +62,15 @@ order:
 #. Continues with further processing, if the user has specified that one or more of the following modules be used:
 
     * Shapelet decomposition (see :ref:`shapelet_do` for details)
-    
+
     * Wavelet decomposition (see :ref:`atrous_do` for details)
-    
+
     * Estimation of PSF variation (see :ref:`psf_vary_do` for details)
-    
+
     * Calculation of polarization properties (see :ref:`polarisation_do` for details)
-    
+
     * Calculation of spectral indices (see :ref:`spectralindex_do` for details)
-    
+
 .. _general_pars:
 
 General reduction parameters
@@ -81,44 +81,44 @@ Type ``inp process_image`` to list the main reduction parameters:
 
     PROCESS_IMAGE: Find and measure sources in an image.
     ================================================================================
-    :term:`filename` ................. '': Input image file name   
+    :term:`filename` ................. '': Input image file name
     :term:`adaptive_rms_box` ..... False : Use adaptive rms_box when determining rms and
-                                   mean maps                    
-    :term:`advanced_opts` ........ False : Show advanced options                       
+                                   mean maps
+    :term:`advanced_opts` ........ False : Show advanced options
     :term:`atrous_do` ............ False : Decompose Gaussian residual image into multiple
-                                   scales                                      
+                                   scales
     :term:`beam` .................. None : FWHM of restoring beam. Specify as (maj, min, pos
                                    ang E of N) in degrees. E.g., beam = (0.06, 0.02,
-                                   13.3). None => get from header              
-    :term:`flagging_opts` ........ False : Show options for Gaussian flagging          
+                                   13.3). None => get from header
+    :term:`flagging_opts` ........ False : Show options for Gaussian flagging
     :term:`frequency` ............. None : Frequency in Hz of input image. E.g., frequency =
                                    74e6. None => get from header. For more than one
-                                   channel, use the frequency_sp parameter.    
-    :term:`interactive` .......... False : Use interactive mode                        
+                                   channel, use the frequency_sp parameter.
+    :term:`interactive` .......... False : Use interactive mode
     :term:`mean_map` .......... 'default': Background mean map: 'default' => calc whether to
                                    use or not, 'zero' => 0, 'const' => clipped mean,
-                                   'map' => use 2-D map.                       
-    :term:`multichan_opts` ....... False : Show options for multi-channel images       
-    :term:`output_opts` .......... False : Show output options                         
-    :term:`polarisation_do` ...... False : Find polarisation properties                
-    :term:`psf_vary_do` .......... False : Calculate PSF variation across image        
+                                   'map' => use 2-D map.
+    :term:`multichan_opts` ....... False : Show options for multi-channel images
+    :term:`output_opts` .......... False : Show output options
+    :term:`polarisation_do` ...... False : Find polarisation properties
+    :term:`psf_vary_do` .......... False : Calculate PSF variation across image
     :term:`rms_box` ............... None : Box size, step size for rms/mean map calculation.
                                    Specify as (box, step) in pixels. E.g., rms_box =
-                                   (40, 10) => box of 40x40 pixels, step of 10 
-                                   pixels. None => calculate inside program    
+                                   (40, 10) => box of 40x40 pixels, step of 10
+                                   pixels. None => calculate inside program
     :term:`rms_map` ............... None : Background rms map: True => use 2-D rms map;
                                    False => use constant rms; None => calculate
-                                   inside program                              
-    :term:`shapelet_do` .......... False : Decompose islands into shapelets            
+                                   inside program
+    :term:`shapelet_do` .......... False : Decompose islands into shapelets
     :term:`spectralindex_do` ..... False : Calculate spectral indices (for multi-channel
-                                   image)                                      
+                                   image)
     :term:`thresh` ................ None : Type of thresholding: None => calculate inside
-                                   program, 'fdr' => use false detection rate  
-                                   algorithm, 'hard' => use sigma clipping     
+                                   program, 'fdr' => use false detection rate
+                                   algorithm, 'hard' => use sigma clipping
     :term:`thresh_isl` ............. 3.0 : Threshold for the island boundary in number of
-                                   sigma above the mean. Determines extent of 
-                                   island used for fitting                  
-    :term:`thresh_pix` ............. 5.0 : Source detection threshold: threshold for the 
+                                   sigma above the mean. Determines extent of
+                                   island used for fitting
+    :term:`thresh_pix` ............. 5.0 : Source detection threshold: threshold for the
                                    island peak in number of sigma above the mean. If
                                    false detection rate thresholding is used, this
                                    value is ignored and thresh_pix is calculated
@@ -135,7 +135,7 @@ Each of the parameters is described in detail below.
 
     advanced_opts
         This parameter is a Boolean (default is ``False``). If ``True``, the advanced options are shown. See :ref:`advanced_opts` for details of the advanced options.
-        
+
     atrous_do
         This parameter is a Boolean (default is ``False``). If ``True``, wavelet decomposition will be performed. See :ref:`atrous_do` for details of the options.
 
@@ -160,16 +160,16 @@ Each of the parameters is described in detail below.
     mean_map
         This parameter is a string (default is ``'default'``) that determines how the background mean map is computed and
         how it is used further.
-    
+
         If ``'const'``\, then the value of the clipped mean of the entire image (set
         by the ``kappa_clip`` option) is used as the background mean map.
-    
+
         If ``'zero'``\, then a value of zero is used.
-    
+
         If ``'map'``\, then the 2-dimensional mean map is computed and used. The
         resulting mean map is largely determined by the value of the ``rms_box``
         parameter (see the ``rms_box`` parameter for more information).
-    
+
         If ``'default'``\, then PyBDSM will attempt to determine automatically
         whether to use a 2-dimensional map or a constant one as follows. First,
         the image is assumed to be confused if ``bmpersrc_th`` < 25 or the ratio of
@@ -178,7 +178,7 @@ Each of the parameters is described in detail below.
         spatial variation is significant. If so, then a 2-D map is used and, if
         not, then the mean map is set to either 0.0 or a constant depending on
         whether the image is thought to be confused or not.
-    
+
         Generally, ``'default'`` works well. However, if there is significant
         extended emission in the image, it is often necessary to force the use
         of a constant mean map using either ``'const'`` or ``'mean'``\.
@@ -202,7 +202,7 @@ Each of the parameters is described in detail below.
         second, stepsize, is the number of pixels by which this box is moved for
         the next measurement. If ``None``\, then suitable values are calculated
         internally.
-        
+
         In general, it is best to choose a box size that corresponds to the
         typical scale of artifacts in the image, such as those that are common
         around bright sources. Too small of a box size will effectively raise
@@ -210,9 +210,9 @@ Each of the parameters is described in detail below.
         too large a box size can result in underestimates of the rms due to
         oversmoothing. A step size of 1/3 to 1/4 of the box size usually works
         well.
-        
+
         .. note::
-        
+
             The :term:`spline_rank` parameter also affects the rms and mean maps. If you find ringing artifacts in the rms or mean maps near bright sources, try adjusting this parameter.
 
     rms_map
@@ -223,7 +223,7 @@ Each of the parameters is described in detail below.
         constant value is assumed. The rms image used for each channel in
         computing the spectral index follows what was done for the
         channel-collapsed image.
-        
+
         Generally, the default value works well. However, if there is significant extended
         emission in the image, it is often necessary to force the use of a
         constant rms map by setting ``rms_map = False``.
@@ -250,7 +250,7 @@ Each of the parameters is described in detail below.
         considered in the fits. A lower value will produce larger islands. Use
         the thresh_pix parameter to set the detection threshold for sources.
         Generally, ``thresh_isl`` should be lower than ``thresh_pix``\.
-        
+
         Only regions above the absolute threshold will be used. The absolute
         threshold is calculated as ``abs_thr = mean + thresh_isl * rms``\. Use the
         ``mean_map`` and ``rms_map`` parameters to control the way the mean and rms are
@@ -260,13 +260,13 @@ Each of the parameters is described in detail below.
         This parameter is a float (default is 5.0) that sets the source detection threshold in number of
         sigma above the mean. If false detection rate thresholding is used, this
         value is ignored and ``thresh_pix`` is calculated inside the program
-        
+
         This parameter sets the overall detection threshold for islands (i.e.
         ``thresh_pix = 5`` will find all sources with peak flux densities per beam of 5-sigma or
         greater). Use the ``thresh_isl`` parameter to control how much of each
         island is used in fitting. Generally, ``thresh_pix`` should be larger than
         ``thresh_isl``.
-        
+
         Only islands with peaks above the absolute threshold will be used. The
         absolute threshold is calculated as ``abs_thr = mean + thresh_pix * rms``\.
         Use the ``mean_map`` and ``rms_map`` parameters to control the way the mean and
@@ -285,12 +285,12 @@ Use the ``rms_box`` parameter to set the large-scale box and the ``rms_box_brigh
 
     adaptive_rms_box ...... True : Use adaptive rms_box when determining rms and mean maps
       :term:`adaptive_thresh` ..... None : Sources with pixels above adaptive_thresh*
-                                   clipped_rms will be considered as bright sources (i.e., 
-                                   with potential artifacts). None => calculate inside 
-                                   program            
-      :term:`rms_box_bright` ...... None : Box size, step size for rms/mean map 
-                                   calculation near bright sources. Specify as (box, step) 
-                                   in pixels. None => calculate inside program                              
+                                   clipped_rms will be considered as bright sources (i.e.,
+                                   with potential artifacts). None => calculate inside
+                                   program
+      :term:`rms_box_bright` ...... None : Box size, step size for rms/mean map
+                                   calculation near bright sources. Specify as (box, step)
+                                   in pixels. None => calculate inside program
 
 .. glossary::
 
@@ -314,68 +314,70 @@ The advanced options are:
 
     advanced_opts ......... True : Show advanced options
       :term:`aperture` ............ None : Radius of aperture in pixels inside which aperture
-                                   fluxes are measured for each source. None => no aperture 
+                                   fluxes are measured for each source. None => no aperture
                                    fluxes measured
-      :term:`blank_zeros` ........ False : Blank zeros in the image                    
-      :term:`bmpersrc_th` ......... None : Theoretical estimate of number of beams per 
-                                   source. None => calculate inside program    
+      :term:`blank_zeros` ........ False : Blank zeros in the image
+      :term:`bmpersrc_th` ......... None : Theoretical estimate of number of beams per
+                                   source. None => calculate inside program
       :term:`check_outsideuniv` .. False : Check for pixels outside the universe
-      :term:`detection_image` ........ '': Detection image file name used only for 
-                                   detecting islands of emission. Source 
+      :term:`detection_image` ........ '': Detection image file name used only for
+                                   detecting islands of emission. Source
                                    measurement is still done on the main image
-      :term:`do_mc_errors` ....... False : Estimate uncertainties for 'M'-type sources 
+      :term:`do_mc_errors` ....... False : Estimate uncertainties for 'M'-type sources
                                    using Monte Carlo method
-      :term:`fdr_alpha` ........... 0.05 : Alpha for FDR algorithm for thresholds      
+      :term:`fdr_alpha` ........... 0.05 : Alpha for FDR algorithm for thresholds
       :term:`fdr_ratio` ............ 0.1 : For thresh = None; if #false_pix / #source_pix <
                                    fdr_ratio, thresh = 'hard' else thresh = 'fdr'
       :term:`fittedimage_clip` ..... 0.1 : Sigma for clipping Gaussians while creating fitted
-                                   image                                       
+                                   image
       :term:`group_by_isl` ....... False : Group all Gaussians in each island into a single
-                                   source                                      
+                                   source
       :term:`group_tol` ............ 1.0 : Tolerance for grouping of Gaussians into sources:
-                                   larger values will result in larger sources 
+                                   larger values will result in larger sources
       :term:`ini_gausfit` ..... 'default': Initial guess for Gaussian parameters: 'default',
-                                   'fbdsm', or 'nobeam'                        
-      :term:`kappa_clip` ........... 3.0 : Kappa for clipped mean and rms              
+                                   'fbdsm', or 'nobeam'
+      :term:`kappa_clip` ........... 3.0 : Kappa for clipped mean and rms
       :term:`minpix_isl` .......... None : Minimal number of pixels with emission per island.
-                                   None -> calculate inside program            
+                                   None -> calculate inside program
+      :term:`ncores` .............. None : Number of cores to use during fitting, None => use
+                                   all
       :term:`peak_fit` ............ True : Find and fit peaks of large islands before fitting
-                                   entire island                               
+                                   entire island
       :term:`peak_maxsize` ........ 30.0 : If island size in beam area is more than this,
-                                   attempt to fit peaks separately (if         
-                                   peak_fit=True). Min value is 30             
+                                   attempt to fit peaks separately (if
+                                   peak_fit=True). Min value is 30
       :term:`rms_value` ........... None : Value of constant rms in Jy/beam to use if rms_map
-                                   = False. None => calculate inside program   
+                                   = False. None => calculate inside program
       :term:`spline_rank` ............ 3 : Rank of the interpolating function for rms/mean
-                                   map                                         
+                                   map
       :term:`split_isl` ........... True : Split island if it is too large, has a large
                                    convex deficiency and it opens well. If it doesn't
                                    open well, then isl.mean = isl.clipped_mean, and
                                    is taken for fitting. Splitting, if needed, is
-                                   always done for wavelet images              
+                                   always done for wavelet images
       :term:`splitisl_maxsize` .... 50.0 : If island size in beam area is more than this,
-                                   consider splitting island. Min value is 50  
+                                   consider splitting island. Min value is 50
       :term:`stop_at` ............. None : Stops after: 'isl' = island finding step or 'read'
-                                   = image reading step                        
+                                   = image reading step
       :term:`trim_box` ............ None : Do source detection on only a part of the image.
                                    Specify as (xmin, xmax, ymin, ymax) in pixels.
                                    E.g., trim_box = (120, 840, 15, 895). None => use
-                                   entire image                                
+                                   entire image
 
 .. glossary::
 
     aperture
         This parameter is a float (default is ``None``) that sets the radius (in
-        pixels) inside which the aperture flux is measured for each source. 
-        The aperture is centered on the centroid of the source. Errors are 
+        pixels) inside which the aperture flux is measured for each source.
+        The aperture is centered on the centroid of the source. Errors are
         calculated from the mean of the rms map inside the aperture.
-    
+
     blank_zeros
         This parameter is a Boolean (default is ``False``). If ``True``, all
         pixels in the input image with values of 0.0 are blanked. If ``False``,
         any such pixels are left unblanked (and hence will affect the rms and
         mean maps, etc.). Pixels with a value of NaN are always blanked.
-        
+
     bmpersrc_th
         This parameter is a float (default is ``None``) that sets the
         theoretical estimate of number of beams per source. If ``None``, the
@@ -383,7 +385,7 @@ The advanced options are:
         pixels in the image, n is the number of pixels in the image whose value
         is greater than 5 times the clipped rms, and alpha is the slope of the
         differential source counts distribution, assumed to be 2.5.
-        
+
         The value of ``bmpersrc_th`` is used
         to estimate the average separation in pixels between two sources, which
         in turn is used to estimate the boxsize for calculating the background
@@ -391,7 +393,7 @@ The advanced options are:
         of clipped mean to clipped rms of the image is greater than 0.1), the
         image is assumed to be confused and hence the background mean is put to
         zero.
-        
+
     check_outsideuniv
         This parameter is a Boolean (default is ``False``). If ``True``, then
         the coordinate of each pixel is examined to check if it is outside the
@@ -400,14 +402,14 @@ The advanced options are:
         are blanked (since imaging software do not do this on their own). Note
         that this process takes a lot of time, as every pixel is checked in case
         weird geometries and projections are used.
-       
+
     detection_image
         This parameter is a string (default is ``''``) that sets the detection
         image file name used only for detecting islands of emission. Source
         measurement is still done on the main image. The detection image can be
         a FITS or CASA 2-, 3-, or 4-D cube and must have the same size and WCS
         parameters as the main image.
-    
+
     do_mc_errors
         This parameter is a Boolean (default is ``False``). If ``True``,
         uncertainties on the sizes and positions of 'M'-type sources due to
@@ -431,26 +433,26 @@ The advanced options are:
         This parameter is a float (default is 0.1). When ``thresh = None``, if
         #false_pix / #source_pix < fdr_ratio, ``thresh = 'hard'`` otherwise
         ``thresh = 'fdr'``.
-    
+
     fittedimage_clip
         This parameter is a float (default is 0.1). When the residual image is
         being made after Gaussian decomposition, the model images for each
         fitted Gaussian are constructed up to a size 2b, such that the amplitude
         of the Gaussian falls to a value of ``fitted_image_clip`` times the
         local rms, b pixels from the peak.
-        
+
     group_by_isl
         This parameter is a Boolean (default is ``False``). If True, all
         Gaussians in the island belong to a single source. If False, grouping is
         controlled by the group_tol parameter.
-        
+
     group_tol
         This parameter is a float (default is 1.0) that sets the tolerance for grouping of Gaussians into sources: larger values will
         result in larger sources. Sources are created by grouping nearby Gaussians as follows: (1) If the
         minimum value between two Gaussians in an island is more than ``group_tol * thresh_isl * rms_clip``\, and (2) if the centres are seperated by a
         distance less than 0.5*``group_tol`` of the sum of their FWHMs along the PA
         of the line joining them, they belong to the same island.
-        
+
     ini_gausfit
         This parameter is a string (default is ``'default'``). These are three different ways of estimating the initial guess for
         fitting of Gaussians to an island of emission. If ``'default'``, the maximum
@@ -465,7 +467,7 @@ The advanced options are:
         the beam and is generally slower than the other methods. For wavelet
         images, the value used for the original image is used for wavelet order
         j <= 3 and ``'nobeam'`` for higher orders.
-                
+
     kappa_clip
         This parameter is a float (default is 3.0) that is the factor used for Kappa-alpha clipping, as in
         AIPS. For an image with few source pixels added on to (Gaussian) noise
@@ -478,50 +480,52 @@ The advanced options are:
         value for this parameter ~3-5. A large fraction of source pixels, less
         number of pixels in total, or significant non-Gaussianity of the
         underlying noise will all lead to non-convergence.
-        
+
     minpix_isl
         This parameter is an integer (default is ``None``) that sets the minimum number of pixels in an island
-        for the island to be included. If
-        ``None``\, the number of pixels is set to 1/3 of the area of an unresolved source
+        for the island to be included. If ``None``, the number of pixels is set to 1/3 of the area of an unresolved source
         using the beam and pixel size information in the image header. It is set
         to 6 pixels for all wavelet images.
-        
+
+    ncores
+        This parameter is an integer (default is ``None``) that sets the number of cores to use during fitting. If ``None``, all available cores are used (one core is reserved for plotting).
+
     peak_fit
         This parameter is a Boolean (default is ``True``). When True, PyBDSM will identify and fit peaks of emission in large islands iteratively (the size of islands for which peak fitting is done is controlled with the peak_maxsize option), using a maximum of 10 Gaussians per iteration. Enabling this option will generally speed up fitting (by factors of many for large islands), but may result in somewhat higher residuals.
-        
+
     peak_maxsize
         This parameter is a float (default is 30.0). If island size in beam area is more than this value, attempt to fit peaks
         iteratively (if ``peak_fit = True``). The minimum value is 30.
-        
+
     rms_value
-        This parameter is a float (default is ``None``) that sets the value of constant rms in Jy/beam to use if ``rms_map = False``. If ``None``, the value is 
+        This parameter is a float (default is ``None``) that sets the value of constant rms in Jy/beam to use if ``rms_map = False``. If ``None``, the value is
         calculated inside the program.
-        
+
     spline_rank
         This parameter is an integer (default is 3) that sets the order of the interpolating spline function
         to interpolate the background rms and mean maps over the entire image.
 
         .. note::
-        
-            Bicubic interpolation (the default) can cause ringing artifacts to appear in the rms and mean maps in regions where sharp changes occur. If you find such artifacts, try changing the :term:`spline_rank` parameter.
-      
+
+            Bicubic interpolation (the default) can cause ringing artifacts to appear in the rms and mean maps in regions where sharp changes occur. These artifacts can result in regions with negative values. If you find such artifacts, try changing the :term:`spline_rank` parameter.
+
     split_isl
         This parameter is a Boolean (default is ``True``). If ``True``, an island is split if it is too large, has a large convex deficiency and it
         opens well. If it doesn't open well, then ``isl.mean = isl.clipped_mean``,
         and is taken for fitting. Splitting, if needed, is always done for
         wavelet images
-        
+
     splitisl_maxsize
         This parameter is a float (default is 50.0). If island size in beam area is more than this, consider splitting
         island. The minimum value is 50.
-        
+
     stop_at
         This parameter is a string (default is ``None``) that stops an analysis after: 'isl' = island finding step or 'read' = image reading step.
-       
+
     trim_box
         This parameter is a tuple (default is ``None``) that defines a subregion of the image on which to do source detection. It is specified as (xmin, xmax,
         ymin, ymax) in pixels. E.g., ``trim_box = (120, 840, 15, 895)``\. If ``None``, the entire image is used.
-    
+
 
 .. _flagging_opts:
 
@@ -537,21 +541,21 @@ The options for flagging of Gaussians are:
 
 .. parsed-literal::
 
-    flagging_opts ......... True : Show options for Gaussian flagging          
-      :term:`flag_bordersize` ........ 0 : Flag Gaussian if centre is outside border - 
-                                   flag_bordersize pixels                      
+    flagging_opts ......... True : Show options for Gaussian flagging
+      :term:`flag_bordersize` ........ 0 : Flag Gaussian if centre is outside border -
+                                   flag_bordersize pixels
       :term:`flag_maxsize_bm` ..... 50.0 : Flag Gaussian if area greater than flag_maxsize_bm
-                                   times beam area                             
-      :term:`flag_maxsize_isl` ..... 1.0 : Flag Gaussian if x, y bounding box around   
-                                   sigma-contour is factor times island bbox   
+                                   times beam area
+      :term:`flag_maxsize_isl` ..... 1.0 : Flag Gaussian if x, y bounding box around
+                                   sigma-contour is factor times island bbox
       :term:`flag_maxsnr` .......... 1.5 : Flag Gaussian if peak is greater than flag_maxsnr
-                                   times max value in island                   
+                                   times max value in island
       :term:`flag_minsize_bm` ...... 0.7 : Flag Gaussian if flag_smallsrc = True and area
                                    smaller than flag_minsize_bm times beam area
       :term:`flag_minsnr` .......... 0.9 : Flag Gaussian if peak is less than flag_minsnr
-                                   times thresh_pix times local rms            
+                                   times thresh_pix times local rms
       :term:`flag_smallsrc` ...... False : Flag sources smaller than flag_minsize_bm times
-                                   beam area                                   
+                                   beam area
 
 .. glossary::
 
@@ -559,47 +563,47 @@ The options for flagging of Gaussians are:
         This parameter is an integer (default is 0). Any fitted Gaussian whose centre is ``flag_bordersize`` pixels outside the island
         bounding box is flagged. The flag value is increased by 4 (for x) and 8
         (for y).
-        
+
     flag_maxsize_bm
         This parameter is a float (default is 25.0). Any fitted Gaussian whose size is greater than ``flag_maxsize_bm`` times the
         synthesized beam is flagged. The flag value is increased by 64.
 
     flag_maxsize_fwhm
         This parameter is a float (default is 0.3). Any fitted Gaussian whose contour of ``flag_maxsize_fwhm`` times the FWHM falls outside the island is flagged. The flag value is increased by 256.
-    
+
     flag_maxsize_isl
         This parameter is a float (default is 1.0). Any fitted Gaussian whose maximum x-dimension is larger than
         ``flag_maxsize_isl`` times the x-dimension of the island (and likewise for
         the y-dimension) is flagged. The flag value is increased by 16 (for x)
         and 32 (for y).
-    
+
     flag_maxsnr
         This parameter is a float (default is 1.5). Any fitted Gaussian whose peak is greater than ``flag_maxsnr`` times
         the value of the image at the peak of the Gaussian is flagged. The flag value is increased
         by 2.
-    
+
     flag_minsize_bm
         This parameter is a float (default is 0.7). If ``flag_smallsrc`` is True, then any fitted Gaussian whose size is less
         than ``flag_maxsize_bm`` times the synthesized beam is flagged. The Gaussian
         flag is increased by 128.
-    
+
     flag_minsnr
         This parameter is a float (default is 0.7). Any fitted Gaussian whose peak is less than ``flag_minsnr`` times ``thresh_pix``
         times the local rms is flagged. The flag value is increased by 1.
-    
+
     flag_smallsrc
         This parameter is a Boolean (default is ``False``). If ``True``\, then fitted Gaussians whose size is less than ``flag_minsize_bm``
         times the synthesized beam area are flagged.  When combining Gaussians
         into sources, an error is raised if a 2x2 box with the peak of the
         Gaussian does not have all four pixels belonging to the source. Usually
-        this means that the Gaussian is an artifact or has a very small size. 
+        this means that the Gaussian is an artifact or has a very small size.
 
         If ``False``\, then if either of the sizes of the fitted Gaussian is zero,
         then the Gaussian is flagged.
 
         If the image is barely Nyquist sampled, this flag is best set to ``False``\.
         This flag is automatically set to ``False`` while decomposing wavelet images
-        into Gaussians. 
+        into Gaussians.
 
 .. _output_opts:
 
@@ -611,35 +615,35 @@ The output options are:
 
 .. parsed-literal::
 
-    output_opts ........... True : Show output options                         
+    output_opts ........... True : Show output options
       :term:`bbs_patches` ......... None : For BBS format, type of patch to use: None => no
                                    patches. 'single' => all Gaussians in one patch.
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
-                                   source are grouped into one patch           
+                                   source are grouped into one patch
       :term:`indir` ............... None : Directory of input FITS files. None => get from
-                                   filename                                    
-      :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,   
+                                   filename
+      :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
                                    delete existing files or append a new directory
       :term:`output_all` ......... False : Write out all files automatically to directory
-                                   'filename_pybdsm'                           
+                                   'filename_pybdsm'
       :term:`output_fbdsm` ....... False : write out fBDSM format output files for use in
-                                   Anaamika                                    
-      :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end     
+                                   Anaamika
+      :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end
       :term:`plot_islands` ....... False : Make separate plots of each island during fitting
                                    (for large images, this may take a long time and a
-                                   lot of memory)                              
-      :term:`print_timing` ....... False : Print basic timing information              
+                                   lot of memory)
+      :term:`print_timing` ....... False : Print basic timing information
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
-                                   sent to the log file as usual               
-      :term:`savefits_meanim` .... False : Save background mean image as fits file     
-      :term:`savefits_normim` .... False : Save norm image as fits file                
-      :term:`savefits_rankim` .... False : Save island rank image as fits file         
-      :term:`savefits_residim` ... False : Save residual image as fits file            
-      :term:`savefits_rmsim` ..... False : Save background rms image as fits file      
+                                   sent to the log file as usual
+      :term:`savefits_meanim` .... False : Save background mean image as fits file
+      :term:`savefits_normim` .... False : Save norm image as fits file
+      :term:`savefits_rankim` .... False : Save island rank image as fits file
+      :term:`savefits_residim` ... False : Save residual image as fits file
+      :term:`savefits_rmsim` ..... False : Save background rms image as fits file
       :term:`solnname` ............ None : Name of the run, to be appended to the name of the
-                                   output directory                            
-      :term:`verbose_fitting` .... False : Print out extra information during fitting  
+                                   output directory
+      :term:`verbose_fitting` .... False : Print out extra information during fitting
 
 .. glossary::
 
@@ -648,42 +652,42 @@ The output options are:
         determines whether all Gaussians are in a single patch (``'single'``), there are no
         patches (``None``), all Gaussians for a given source are in a separate patch (``'source'``), or
         each Gaussian gets its own patch (``'gaussian'``).
-        
+
         If you wish to have patches defined by island, then set
         ``group_by_isl = True`` before fitting to force all
         Gaussians in an island to be in a single source. Then set
         ``bbs_patches = 'source'`` when writing the catalog.
-        
+
     indir
         This parameter is a string (default is ``None``) that sets the directory of input FITS files. If ``None``, the directory is defined by the input filename.
-        
+
     opdir_overwrite
         This parameter is a string (default is ``'overwrite'``) that determines whether existing output files are overwritten or not.
-        
+
     output_all
         This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'filename_pybdsm'``.
-        
+
     output_fbdsm
         This parameter is a Boolean (default is ``False``). If ``True``\, write out fBDSM format output files for use in Anaamika.
-        
+
     plot_allgaus
         This parameter is a Boolean (default is ``False``). If ``True``\, make a plot of all Gaussians at the end.
-    
+
     plot_islands
         This parameter is a Boolean (default is ``False``). If ``True``\, make separate plots of each island during fitting
         (for large images, this may take a long time and a
         lot of memory).
-    
+
     print_timing
         This parameter is a Boolean (default is ``False``). If ``True``\, print basic timing information.
-    
+
     quiet
         This parameter is a Boolean (default is ``False``). If ``True``\, suppress text output to screen. Output is still
         sent to the log file as usual.
-    
+
     savefits_meanim
         This parameter is a Boolean (default is ``False``). If ``True``\, save background mean image as a FITS file.
-    
+
     savefits_normim
         This parameter is a Boolean (default is ``False``). If ``True``\, save norm image as a FITS file.
 
@@ -699,11 +703,11 @@ The output options are:
     solnname
         This parameter is a string (default is ``None``) that sets the name of the run, to be appended to the name of the
         output directory.
-        
+
     verbose_fitting
         This parameter is a Boolean (default is ``False``). If ``True``\, print out extra information during fitting.
-      
-    
+
+
 
 .. _multichan_opts:
 
@@ -715,28 +719,28 @@ The options concerning multichannel images are:
 
 .. parsed-literal::
 
-    multichan_opts ........ True : Show options for multi-channel images       
+    multichan_opts ........ True : Show options for multi-channel images
       :term:`beam_sp_derive` ..... False : If True and beam_spectrum is None, then assume
                                    header beam is for median frequency and scales
-                                   with frequency for channels                 
+                                   with frequency for channels
       :term:`beam_spectrum` ....... None : FWHM of synthesized beam per channel. Specify as
-                                   [(bmaj_ch1, bmin_ch1, bpa_ch1), (bmaj_ch2,  
-                                   bmin_ch2, bpa_ch2), etc.] in degrees. E.g., 
+                                   [(bmaj_ch1, bmin_ch1, bpa_ch1), (bmaj_ch2,
+                                   bmin_ch2, bpa_ch2), etc.] in degrees. E.g.,
                                    beam_spectrum = [(0.01, 0.01, 45.0), (0.02, 0.01,
                                    34.0)] for two channels. None => all equal to beam
       :term:`collapse_av` ........... [] : List of channels to average if collapse_mode =
-                                   'average'; None => all                      
+                                   'average'; None => all
       :term:`collapse_ch0` ........... 0 : Number of the channel for source extraction, if
-                                   collapse_mode = 'single'                    
+                                   collapse_mode = 'single'
       :term:`collapse_mode` ... 'average': Collapse method: 'average' or 'single'. Average
                                    channels or take single channel to perform source
-                                   detection on                                
+                                   detection on
       :term:`collapse_wt` ....... 'unity': Weighting: 'unity' or 'rms'. Average channels with
                                    weights = 1 or 1/rms_clip^2 if collapse_mode =
-                                   'average'                                   
+                                   'average'
       :term:`frequency_sp` ........ None : Frequency in Hz of channels in input image when
                                    more than one channel is present. E.g., frequency
-                                   = [74e6, 153e6]. None => get from header    
+                                   = [74e6, 153e6]. None => get from header
 
 .. glossary::
 
@@ -745,8 +749,8 @@ The options concerning multichannel images are:
         beam in the header is for the median frequency of the image cube and
         scale accordingly to calculate the beam per channel. If ``False``, then a
         constant value of the beam is taken instead.
-               
-    beam_spectrum 
+
+    beam_spectrum
         his parameter is a list of tuples (default is ``None``) that sets the FWHM of synthesized beam per channel. Specify as [(bmaj_ch1, bmin_ch1,
         bpa_ch1), (bmaj_ch2, bmin_ch2, bpa_ch2), etc.] in degrees. E.g.,
         ``beam_spectrum = [(0.01, 0.01, 45.0), (0.02, 0.01, 34.0)]`` for two
@@ -755,34 +759,34 @@ The options concerning multichannel images are:
         If ``None``, then the channel-dependent restoring beam is either assumed to
         be a constant or to scale with frequency, depending on whether the
         parameter ``beam_sp_derive`` is ``False`` or ``True``.
-               
+
     collapse_av
         This parameter is a list of integers (default is ``[]``) that specifies the channels to be averaged to produce the
         continuum image for performing source extraction, if ``collapse_mode`` is
         ``'average'``. If the value is ``[]``, then all channels are used. Otherwise, the
         value is a Python list of channel numbers.
-               
-    collapse_ch0 
+
+    collapse_ch0
         This parameter is an integer (default is 0) that specifies the number of the channel for source extraction, if ``collapse_mode = 'single'``.
-               
+
     collapse_mode
         This parameter is a string (default is ``'average'``) that determines whether, when multiple channels are present,
         the source extraction is done on a single channel (``'single'``) or an average of many
-        channels (``'average'``).       
-               
+        channels (``'average'``).
+
     collapse_wt
         This parameter is a string (default is ``'unity'``). When ``collapse_mode`` is ``'average'``, then if this value is ``'unity'``, the
         channels given by ``collapse_av`` are averaged with unit weights and if
         ``'rms'``, then they are averaged with weights which are inverse square of
         the clipped rms of each channel image.
-               
+
     frequency_sp
         This parameter is a list of floats (default is ``None``) that sets the frequency in Hz of channels in input image when more than one channel is present. E.g., ``frequency_sp = [74e6, 153e6]``.
-    
+
         If the frequency is not given by the user, then it is looked for in the
         image header. If not found, then an error is raised. PyBDSM will not
         work without the knowledge of the frequency.
-    
+
 
 .. _atrous_do:
 
@@ -803,18 +807,18 @@ The options for this module are as follows:
 .. parsed-literal::
 
     atrous_do ............. True : Decompose Gaussian residual image into multiple
-                                   scales                                      
+                                   scales
       :term:`atrous_bdsm_do` ...... True : Perform source extraction on each wavelet scale
       :term:`atrous_jmax` ............ 0 : Max allowed wavelength order, 0 => calculate
-                                   inside program                              
+                                   inside program
       :term:`atrous_lpf` ........... 'b3': Low pass filter, either 'b3' or 'tr', for B3
-                                   spline or Triangle                          
+                                   spline or Triangle
 
 .. glossary::
 
     atrous_bdsm_do
-        This parameter is a Boolean (default is ``False``). If ``True``\, PyBDSM performs source extraction on each wavelet scale. 
-        
+        This parameter is a Boolean (default is ``False``). If ``True``\, PyBDSM performs source extraction on each wavelet scale.
+
     atrous_jmax
         This parameter is an integer (default is 0) which is the maximum order of the *à trous* wavelet
         decomposition. If 0 (or <0 or >15), then the value is determined within
@@ -823,7 +827,7 @@ The options for this module are as follows:
         the minimum of the residual image size (n, m) in pixels and l is the
         length of the filter *à trous* lpf (see the ``atrous_lpf`` parameter for more
         info).
-        
+
         A sensible value is such that the size of the kernel is not more than
         3-4 times smaller than the smallest image dimension.
 
@@ -833,7 +837,7 @@ The options for this module are as follows:
         wavelets. The B3 spline is [1, 4, 6, 4, 1] and the triangle is [1, 2,
         1], normalised so that the sum is unity. The lengths of the filters are
         hence 5 and 3 respectively.
-        
+
 .. _psf_vary_do:
 
 PSF variation module
@@ -844,7 +848,7 @@ If ``psf_vary_do = True``, then the spatial variations in the PSF are estimated 
 
 * Next the image is tessellated using Voronoi tessellation to produce tiles within which the PSF shape is calculated (and assumed to be constant). The list of probable unresolved sources is filtered to select "calibrator" sources to use to determine the tessellation tiles. These sources are the brightest sources (known as the primary generators), defined as those sources that have SNRs in the top fraction of sources defined by ``psf_snrtop`` and that also have SNRs greater than ``psf_snrcutstack``. These sources are then grouped by their proximity, if they are within 50% of the distance to third closest source.
 
-* The unresolved sources within each tile that have SNRs greater than ``psf_snrcutstack`` are then stacked to form a high-SNR PSF. For each tile, this PSF is fit with a Gaussian to recover its size. The significance of the variation in the sizes across the image is quantified. 
+* The unresolved sources within each tile that have SNRs greater than ``psf_snrcutstack`` are then stacked to form a high-SNR PSF. For each tile, this PSF is fit with a Gaussian to recover its size. The significance of the variation in the sizes across the image is quantified.
 
 * If the variation is significant, the major axis, minor axis, and position angle are then interpolated across the image. Where there is sufficient information, the interpolation is done using Delaunay triangulation; otherwise, the values within the tiles defined by tessellation are simply set to those of the appropriate PSF.
 
@@ -854,22 +858,22 @@ The options for this module are as follows:
 
 .. parsed-literal::
 
-    psf_vary_do ........... True : Calculate PSF variation across image 
-      :term:`psf_high_snr` ........ None : SNR above which all sources are taken to be 
+    psf_vary_do ........... True : Calculate PSF variation across image
+      :term:`psf_high_snr` ........ None : SNR above which all sources are taken to be
                                    unresolved. E.g., psf_high_snr = 20.0. None => no
-                                   such selection is made                      
-      :term:`psf_itess_method` ....... 0 : 0 = normal, 1 = 0 + round, 2 = LogSNR, 3 =  
-                                   SqrtLogSNR                                  
-      :term:`psf_kappa2` ........... 2.0 : Kappa for clipping for analytic fit         
-      :term:`psf_nsig` ............. 3.0 : Kappa for clipping within each bin          
+                                   such selection is made
+      :term:`psf_itess_method` ....... 0 : 0 = normal, 1 = 0 + round, 2 = LogSNR, 3 =
+                                   SqrtLogSNR
+      :term:`psf_kappa2` ........... 2.0 : Kappa for clipping for analytic fit
+      :term:`psf_nsig` ............. 3.0 : Kappa for clipping within each bin
       :term:`psf_over` ............... 2 : Factor of nyquist sample for binning bmaj, etc. vs
-                                   SNR                                         
-      :term:`psf_snrcut` .......... 10.0 : Minimum SNR for statistics                  
+                                   SNR
+      :term:`psf_snrcut` .......... 10.0 : Minimum SNR for statistics
       :term:`psf_snrcutstack` ..... 15.0 : Unresolved sources with higher SNR taken for
-                                   stacked psfs                                
+                                   stacked psfs
       :term:`psf_snrtop` .......... 0.15 : Fraction of SNR > snrcut as primary generators
-      :term:`psf_stype_only` ...... True : Restrict sources used in PSF variation 
-                                   estimating to be only of type 'S'                                    
+      :term:`psf_stype_only` ...... True : Restrict sources used in PSF variation
+                                   estimating to be only of type 'S'
 
 .. glossary::
 
@@ -893,27 +897,27 @@ The options for this module are as follows:
         are binned and fitted with analytical functions. Those Gaussians which
         are within ``psf_kappa2`` times the fitted rms from the fitted median are
         then considered 'unresolved' and are used further to estimate the PSFs.
-    
+
     psf_nsig
         This parameter is a float (default is 3.0). When constructing a set of 'unresolved' sources for psf estimation, the
         (clipped) median, rms and mean of major and minor axis sizes of
         Gaussians versus SNR within each bin is calculated using ``kappa = psf_nsig``.
-    
+
     psf_over
         This parameter is an integer (default is 2). When constructing a set of 'unresolved' sources for psf estimation, this parameter controls the factor of nyquist sample for binning bmaj, etc. vs SNR.
-    
+
     psf_snrcut
         This parameter is a float (default is 10.0). Only Gaussians with SNR greater than this are considered for processing.
         The minimum value is 5.0
-    
+
     psf_snrcutstack
         This parameter is a float (default is 15.0). Only Gaussians with SNR greater than this are used for estimating PSF
         images in each tile.
-    
+
     psf_snrtop
         This parameter is a float (default is 0.15). If ``psf_generators`` is 'calibrator', then the peak pixels of Gaussians
         which are the ``psf_snrtop`` fraction of the SNR distribution are taken as Voronoi
-        generators. 
+        generators.
 
     psf_stype_only
         This parameter is a Boolean (default is ``False``). If ``True``\, sources are restricted to be only of type 'S'.
@@ -929,9 +933,9 @@ If ``spectralindex_do = True`` (and the input image has more than one frequency)
 * Neighboring channels are averages to attempt to obtain the target SNR per channel for a given source, set by the ``specind_snr`` parameter.
 
     .. note::
-    
+
         No color corrections are applied during averaging. However, unless the source spectral index is very steep or the channels are very wide, the correction is minimal. See :ref:`colorcorrections` for details.
-   
+
 * Flux densities are measured for both individual Gaussians and for total sources. Once source flux densities have been measured in each channel, the SEDs are fit with a polynomial function. The best-fit parameters are then included in any catalogs that are written out (see :ref:`write_catalog`). In addition, plots of the fits can be viewed with the ``show_fit`` task (see :ref:`showfit`).
 
 The options for this module are as follows:
@@ -939,39 +943,39 @@ The options for this module are as follows:
 .. parsed-literal::
 
     spectralindex_do ...... True : Calculate spectral indices (for multi-channel
-                                   image)                                      
+                                   image)
       :term:`flagchan_rms` ........ True : Flag channels before (averaging and) extracting
-                                   spectral index, if their rms if more than 5 
+                                   spectral index, if their rms if more than 5
                                    (clipped) sigma outside the median rms over all
                                    channels, but only if <= 10% of channels
-      :term:`flagchan_snr` ........ True : Flag channels that do not meet SNR criterion set 
+      :term:`flagchan_snr` ........ True : Flag channels that do not meet SNR criterion set
                                    by specind_snr
-      :term:`specind_maxchan` ........ 0 : Maximum number of channels to average for a 
+      :term:`specind_maxchan` ........ 0 : Maximum number of channels to average for a
                                    given source when when attempting to meet target
-                                   SNR. 1 => no averaging; 0 => no maximum                                     
-      :term:`specind_snr` .......... 3.0 : Target SNR to use when fitting power law. If 
-                                   there is insufficient SNR, neighboring channels 
-                                   are averaged to obtain the target SNR                                  
+                                   SNR. 1 => no averaging; 0 => no maximum
+      :term:`specind_snr` .......... 3.0 : Target SNR to use when fitting power law. If
+                                   there is insufficient SNR, neighboring channels
+                                   are averaged to obtain the target SNR
 
 .. glossary::
 
-    flagchan_rms         
+    flagchan_rms
         This parameter is a Boolean (default is ``True``). If ``True``, then the clipped rms and median (r and m) of the clipped rms of
         each channel is calculated. Those channels whose clipped rms is greater
         than 4r away from m are flagged prior to averaging and calculating
         spectral indices from the image cube. However, these channels are
         flagged only if the total number of these bad channels does not exceed
-        10% of the total number of channels themselves.                 
-    
+        10% of the total number of channels themselves.
+
     flagchan_snr
         This parameter is a Boolean (default is ``True``). If ``True``, then flux densities in channels that do not meet the target SNR are not used in fitting.
-               
+
     specind_maxchan
         This parameter is an integer (default is 0) that sets the maximum number of channels that can be averaged together to attempt to reach the target SNR set by the ``specind_snr`` parameter. If 0, there is no limit to the number of channels that can be averaged. If 1, no averaging will be done.
-    
+
     specind_snr
         This parameter is a float (default is 3.0) that sets the target SNR to use when fitting for the spectral index. If there is insufficient SNR, neighboring channels are averaged to obtain the target SNR. The maximum allowable number of channels to average is determined by the ``specind_maxchan`` parameter. Channels (after averaging) that fail to meet the target SNR are not used in fitting.
-    
+
 .. _polarisation_do:
 
 Polarization module
@@ -979,7 +983,7 @@ Polarization module
 If ``polarisation_do = True``, then the polarization properties of the sources are calculated. First, if ``pi_fit = True``, source detection is performed on the polarized intensity (PI) image [#f3]_ to detect sources without Stokes I counterparts. The polarization module then calculates the I, Q, U, and V flux densities, the total, linear, and circular polarisation fractions and the linear polarisation angle of each Gaussian and source. The linear polarisation angle is defined from North, with positive angles towards East. Flux densities are calculated by fitting the normalization of the Gaussians found using the Stokes I or PI images.
 
 For linearly polarised emission, the signal and noise add vectorially, giving a
-Rice distribution instead of a Gaussian one. To correct for this, a bias 
+Rice distribution instead of a Gaussian one. To correct for this, a bias
 is estimated and removed from the polarisation fraction using the same method used for the
 NVSS catalog (see ftp://ftp.cv.nrao.edu/pub/nvss/catalog.ps). Errors on the linear and total
 polarisation fractions and polarisation angle are estimated using the debiased polarised flux density
@@ -989,23 +993,23 @@ The options for this module are as follows:
 
 .. parsed-literal::
 
-    polarisation_do ....... True : Find polarisation properties                
-      :term:`pi_fit` .............. True : Check the polarized intesity (PI) image for 
-                                   sources not found in Stokes I                                    
-      :term:`pi_thresh_isl` ....... None : Threshold for PI island boundary in number 
-                                   of sigma above the mean. None => use thresh_isl                
-      :term:`pi_thresh_pix` ....... None : Source detection threshold for PI image: 
-                                   threshold for the island peak in number of sigma 
+    polarisation_do ....... True : Find polarisation properties
+      :term:`pi_fit` .............. True : Check the polarized intesity (PI) image for
+                                   sources not found in Stokes I
+      :term:`pi_thresh_isl` ....... None : Threshold for PI island boundary in number
+                                   of sigma above the mean. None => use thresh_isl
+      :term:`pi_thresh_pix` ....... None : Source detection threshold for PI image:
+                                   threshold for the island peak in number of sigma
                                    above the mean. None => use thresh_pix
 
 .. glossary::
 
-    pi_fit    
+    pi_fit
         This parameter is a Boolean (default is ``True``). If ``True``, the polarized intensity image is searched for sources not
         present in the Stokes I image. If any such sources are found, they are
         added to the the Stokes I source lists. Use the ``pi_thresh_pix`` and
         ``pi_thresh_isl`` parameters to control island detection in the PI image.
-    
+
     pi_thresh_isl
         This parameter is a float (default is ``None``) that determines the region to which fitting is done in the
         polarized intensity (PI) image. If ``None``, the value is set to that of the ``thresh_isl`` parameter. A higher value will produce smaller
@@ -1044,7 +1048,7 @@ intersection point of these two zero-crossing vectors is then taken as the prope
 expansion for the image. If this procedure does not work, then the first moment is taken as
 the center.
 
-This updated center position is used to compute the optimal :math:`\beta`, which is taken as the value of 
+This updated center position is used to compute the optimal :math:`\beta`, which is taken as the value of
 :math:`\beta` that minimises the residual rms in the island area. Using this :math:`\beta`, the center is computed
 once more and the final shapelet deocmposition is then made.
 
@@ -1052,28 +1056,28 @@ The options for this module are as follows:
 
 .. parsed-literal::
 
-    shapelet_do ........... True : Decompose islands into shapelets            
-      :term:`shapelet_basis` .. 'cartesian': Basis set for shapelet decomposition:       
-                                   'cartesian' or 'polar'                      
+    shapelet_do ........... True : Decompose islands into shapelets
+      :term:`shapelet_basis` .. 'cartesian': Basis set for shapelet decomposition:
+                                   'cartesian' or 'polar'
       :term:`shapelet_fitmode` .... 'fit': Calculate shapelet coeff's by fitting ('fit') or
-                                   integrating (None)                          
+                                   integrating (None)
 
 .. glossary::
 
     shapelet_basis
         This parameter is a string (default is ``'cartesian'``) that determines the type of shapelet
         basis used. Currently however, only cartesian is supported.
-  
+
     shapelet_fitmode
         This parameter is a string (default is ``'fit'``) that determines the method of calculating
         shapelet coefficients. If ``None``, then these are calculated by integrating
         (actually, by summing over pixels, which introduces errors due to
         discretisation). If 'fit', then the coefficients are found by
         least-squares fitting of the shapelet basis functions to the image.
-           
+
 .. rubric:: Footnotes
 
-.. [#f1] Condon, J. J. 1997, PASP, 109, 166 
+.. [#f1] Condon, J. J. 1997, PASP, 109, 166
 
 .. [#f2] Hopkins, A. M., Miller, C. J., Connolly, A. J., et al.  2002, AJ, 123, 1086
 

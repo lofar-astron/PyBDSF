@@ -1,6 +1,6 @@
 
 """
-        Compute a-trous wavelet transform of the gaussian residual image. 
+        Compute a-trous wavelet transform of the gaussian residual image.
         Do source extraction on this if asked.
 """
 
@@ -30,6 +30,10 @@ from gaul2srl import Op_gaul2srl
 from make_residimage import Op_make_residimage
 from output import Op_outlist
 from interface import raw_input_no_history
+import multi_proc as mp
+import itertools
+import statusbar
+
 
 jmax = Int(doc = "Maximum order of a-trous wavelet decomposition")
 lpf = String(doc = "Low pass filter used for a-trous wavelet decomposition")
@@ -45,6 +49,7 @@ class Op_wavelet_atrous(Op):
     def __call__(self, img):
 
         mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Wavelet")
+
         if img.opts.atrous_do:
           mylog.info("Decomposing gaussian residual image into a-trous wavelets")
           bdir = img.basedir + '/wavelet/'
@@ -67,8 +72,8 @@ class Op_wavelet_atrous(Op):
           if lpf not in ['b3', 'tr']: lpf = 'b3'
           jmax = img.opts.atrous_jmax
           l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
-          if jmax < 1 or jmax > 15:                   # determine jmax 
-            # Check if largest island size is 
+          if jmax < 1 or jmax > 15:                   # determine jmax
+            # Check if largest island size is
             # smaller than 1/3 of image size. If so, use it to determine jmax.
             min_size = min(resid.shape)
             max_isl_shape = (0, 0)
@@ -156,13 +161,27 @@ class Op_wavelet_atrous(Op):
                     # Delete islands that do not share any pixels with
                     # islands in original ch0 image.
                     good_isl = []
+
                     # Make original rank image boolean; rank counts from 0, with -1 being
                     # outside any island
                     orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+
                     # Multiply rank images
                     valid_islands = orig_rankim_bool * (wimg.pyrank + 1)
-                    for wvisl in wimg.islands:
-                        if wvisl.island_id in valid_islands - 1:
+
+                    bar = statusbar.StatusBar('Checking for valid islands .............. : ', 0, wimg.nisl)
+                    if img.opts.quiet == False:
+                        bar.start()
+
+                    # Now call the parallel mapping function. Returns True or
+                    # False for each island.
+                    check_list = mp.parallel_map(func.eval_func_tuple,
+                        itertools.izip(itertools.repeat(self.check_island),
+                        wimg.islands, itertools.repeat(valid_islands)),
+                        numcores=img.opts.ncores, bar=bar)
+
+                    for idx, wvisl in enumerate(wimg.islands):
+                        if check_list[idx]:
                             wvisl.valid = True
                             good_isl.append(wvisl)
                         else:
@@ -286,7 +305,7 @@ class Op_wavelet_atrous(Op):
         from types import ClassType, TypeType
 
         chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
-               Op_gausfit(), Op_gaul2srl, Op_make_residimage()]
+               Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
 
         opts = {'thresh':'hard'}
         opts['thresh_pix'] = 3.0
@@ -347,6 +366,13 @@ class Op_wavelet_atrous(Op):
         wimg.use_io = img.use_io
 
 #######################################################################################################
+    def check_island(self, isl, valid_islands):
+        if isl.island_id in valid_islands - 1:
+            return True
+        else:
+            return False
+
+#######################################################################################################
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
         import functions as func
         from make_residimage import Op_make_residimage as opp
@@ -389,7 +415,7 @@ class Op_wavelet_atrous(Op):
                 for pyrsrc in lpyr:
                   belongs = pyrsrc.belongs(img, isl)
                   if belongs: dumr.append(pyrsrc.pyr_id)
-                #if len(dumr) > 1: 
+                #if len(dumr) > 1:
                 #        raise RuntimeError("Source in lower wavelet level belongs to more than one higher level.")
                 if len(dumr) == 1:
                   dumr = dumr[0]
