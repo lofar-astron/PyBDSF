@@ -1,16 +1,16 @@
 c! roundness modified for python
 
         subroutine pytess_roundness(n,m,ngens,xgens,ygens,
-     /             snrgens,wts,eps,code,volrank)
+     /             snrgens,eps,code,volrank)
         implicit none
         integer n,m,ngens,i,areavec(ngens)
         integer roundfacold(ngens),niter
         real*8 volrank(n,m),xgens(ngens),ygens(ngens),snrgens(ngens)
-        real*8 wts(ngens),eps,roundfac(ngens)
+        real*8 eps,roundfac(ngens)
         real*8 roundpix(ngens),x(ngens),y(ngens)
         character code*1
 
-cf2py   intent(in) n,m,ngens,xgens,ygens,snrgens,wts,code,eps
+cf2py   intent(in) n,m,ngens,xgens,ygens,snrgens,code,eps
 cf2py   intent(out) volrank
 
         do i=1,ngens
