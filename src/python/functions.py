@@ -1184,36 +1184,39 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
 def write_image_to_file(use, filename, image, img, outdir=None,
                                            clobber=True):
-    """ Writes image array to dir/filename using pyfits or pyrap.  """
+    """ Writes image array to dir/filename using pyfits"""
     import numpy as N
     import os
     import mylogger
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Writefile")
 
-    if outdir == None:
-      outdir = img.indir
-    if not os.path.exists(outdir) and outdir != '':
-        os.mkdir(outdir)
+    if filename == 'SAMP':
+        import tempfile
+        if not hasattr(img,'samp_client'):
+            s, private_key = start_samp_proxy()
+            img.samp_client = s
+            img.samp_key = private_key
 
-    #if use == 'fits':
-    import pyfits
-    if os.path.exists(outdir + filename):
-        if clobber:
-            os.remove(outdir + filename)
-        else:
-            return
-
-    temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
-    temp_im.writeto(outdir + filename,  clobber=clobber)
-    #if use == 'rap':
-    #  import pyrap.images as pim
-    #  mylog.info("Using the input file as template for writing Casa Image. No guarantees")
-    #  im = pim.image(img.opts.fits_name)
-    #  #im.saveas(indir+filename)
-    #  im = pim.image(indir+filename)
-    #  im.putdata(image)
-    #  im.saveas(indir+filename)
+        # Broadcast image to SAMP Hub
+        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
+        tfile = tempfile.NamedTemporaryFile(delete=False)
+        temp_im.writeto(tfile.name,  clobber=clobber)
+        send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
+    else:
+        # Write image to FITS file
+        import pyfits
+        if outdir == None:
+            outdir = img.indir
+        if not os.path.exists(outdir) and outdir != '':
+            os.mkdir(outdir)
+        if os.path.exists(outdir + filename):
+            if clobber:
+                os.remove(outdir + filename)
+            else:
+                return
+        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
+        temp_im.writeto(outdir + filename,  clobber=clobber)
 
 def make_fits_image(imagedata, wcsobj, beam, freq):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
@@ -1626,3 +1629,69 @@ def eval_func_tuple(f_args):
     multiple-argument sequences are not supported by multiprocessing.
     """
     return f_args[0](*f_args[1:])
+
+
+def start_samp_proxy():
+    """Starts (registers) and returns a SAMP proxy"""
+    import os
+    import xmlrpclib
+
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        HUB_PARAMS = {}
+        for line in open(lockfile):
+            if not line.startswith('#'):
+                key, value = line.split('=', 1)
+                HUB_PARAMS[key] = value.strip()
+
+    # Set up proxy
+    s = xmlrpclib.ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
+
+    # Register with Hub
+    metadata = {"samp.name": 'PyBDSM', "samp.description.text": 'PyBDSM: the Python Blob Detection and Source Measurement software'}
+    result = s.samp.hub.register(HUB_PARAMS['samp.secret'])
+    private_key = result['samp.private-key']
+    s.samp.hub.declareMetadata(private_key, metadata)
+    return s, private_key
+
+
+def stop_samp_proxy(s, private_key):
+    """Stops (unregisters) a SAMP proxy"""
+    import os
+
+    lockfile = os.path.expanduser('~/.samp')
+    if os.path.exists(lockfile):
+        s.samp.hub.unregister(private_key)
+
+
+def send_fits_image(s, private_key, name, file_path):
+    """Send a SAMP notification to load a fits image."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "image.load.fits"
+    message['samp.params'] = {}
+    message['samp.params']['url'] = 'file://' + os.path.abspath(file_path)
+    message['samp.params']['name'] = name
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_fits_table(s, private_key, name, file_path):
+    """Send a SAMP notification to load a fits table."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "table.load.fits"
+    message['samp.params'] = {}
+    message['samp.params']['url'] = 'file://' + os.path.abspath(file_path)
+    message['samp.params']['name'] = name
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
