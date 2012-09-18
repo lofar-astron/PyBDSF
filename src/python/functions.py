@@ -1657,13 +1657,14 @@ def start_samp_proxy():
     return s, private_key
 
 
-def stop_samp_proxy(s, private_key):
+def stop_samp_proxy(img):
     """Stops (unregisters) a SAMP proxy"""
     import os
 
-    lockfile = os.path.expanduser('~/.samp')
-    if os.path.exists(lockfile):
-        s.samp.hub.unregister(private_key)
+    if hasattr(img, 'samp_client'):
+        lockfile = os.path.expanduser('~/.samp')
+        if os.path.exists(lockfile):
+            img.samp_client.samp.hub.unregister(img.samp_key)
 
 
 def send_fits_image(s, private_key, name, file_path):

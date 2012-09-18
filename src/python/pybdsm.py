@@ -740,8 +740,4 @@ except ImportError:
     ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
 ipshell()
 
-# Clean up
-if hasattr(_img,'samp_client'):
-    lofar.bdsm.functions.stop_samp_proxy(_img.samp_client, _img.samp_key)
-
 
