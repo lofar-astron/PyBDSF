@@ -120,6 +120,10 @@ bool dn2g_fit(MGFunction &fcn, bool final, int verbose)
 static void dn2g_f(int &n, int &p, double *x, int &nf, double *F,
 		   void *uiparm, void *urparm, void *ufparm)
 {
+  (void)nf;
+  (void)uiparm;
+  (void)urparm;
+
   MGFunction *fcn = (MGFunction *)ufparm;
 
   assert(n == fcn->data_size());
@@ -132,6 +136,10 @@ static void dn2g_f(int &n, int &p, double *x, int &nf, double *F,
 static void dn2g_df(int &n, int &p, double *x, int &nf, double *J,
 		    void *uiparm, void *urparm, void *ufparm)
 {
+  (void)nf;
+  (void)uiparm;
+  (void)urparm;
+
   MGFunction *fcn = (MGFunction *)ufparm;
 
   assert(n == fcn->data_size());

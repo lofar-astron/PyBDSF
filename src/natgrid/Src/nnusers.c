@@ -1,6 +1,6 @@
 #include "nnuheads.h"
 #include "nnuhead.h"
-
+#include <stdlib.h>
 
 /*
  *  Get values for float parameters.

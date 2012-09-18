@@ -23,10 +23,10 @@ class Op_make_residimage(Op):
     """Creates an image from the fitted gaussians
     or shapelets.
 
-    The resulting model image is stored in the 
+    The resulting model image is stored in the
     resid_gaus or resid_shap attribute.
 
-    Prerequisites: module gausfit or shapelets should 
+    Prerequisites: module gausfit or shapelets should
     be run first.
     """
 
@@ -56,8 +56,8 @@ class Op_make_residimage(Op):
             x_ax, y_ax = N.mgrid[bbox]
             ffimg = func.gaussian_fcn(g, x_ax, y_ax)
             img.resid_gaus[bbox] = img.resid_gaus[bbox] - ffimg
-            img.model_gaus[bbox] = img.model_gaus[bbox] + ffimg                
-    
+            img.model_gaus[bbox] = img.model_gaus[bbox] + ffimg
+
         # Apply mask to model and resid images
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
@@ -97,12 +97,13 @@ class Op_make_residimage(Op):
                 for g in src.gaussians:
                     g.gresid_rms = N.std(resid)
                     g.gresid_mean = N.mean(resid)
-                    
+
         # Calculate some statistics for the Gaussian residual image
-        mean = N.mean(img.resid_gaus, axis=None)
-        std_dev = N.std(img.resid_gaus, axis=None)
-        skew = stats.skew(img.resid_gaus, axis=None)
-        kurt = stats.kurtosis(img.resid_gaus, axis=None)
+        non_masked = N.where(~N.isnan(img.ch0))
+        mean = N.mean(img.resid_gaus[non_masked], axis=None)
+        std_dev = N.std(img.resid_gaus[non_masked], axis=None)
+        skew = stats.skew(img.resid_gaus[non_masked], axis=None)
+        kurt = stats.kurtosis(img.resid_gaus[non_masked], axis=None)
         mylog.info("Statistics of the Gaussian residual image:")
         mylog.info("        mean: %.3e (Jy/beam)" % mean)
         mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
@@ -123,7 +124,7 @@ class Op_make_residimage(Op):
                                         isl.shapelet_nmax, isl.shapelet_cf
                 image_recons=reconstruct_shapelets(isl.shape, mask, basis, beta, cen, nmax, cf)
                 fimg[isl.bbox] += image_recons
-           
+
             img.model_shap = fimg
             img.resid_shap = img.ch0 - fimg
             # Apply mask to model and resid images
@@ -135,7 +136,7 @@ class Op_make_residimage(Op):
                 pix_masked = N.where(mask == True)
                 img.model_shap[pix_masked] = N.nan
                 img.resid_shap[pix_masked] = N.nan
-                
+
             if img.opts.output_all:
                 func.write_image_to_file(img.use_io, img.imagename + '.resid_shap.fits', img.resid_shap, img, resdir)
                 mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.resid_shap.fits'))
@@ -156,10 +157,11 @@ class Op_make_residimage(Op):
                         g.sresid_mean = N.mean(resid)
 
             # Calculate some statistics for the Shapelet residual image
-            mean = N.mean(img.resid_gaus, axis=None)
-            std_dev = N.std(img.resid_gaus, axis=None)
-            skew = stats.skew(img.resid_gaus, axis=None)
-            kurt = stats.kurtosis(img.resid_gaus, axis=None)
+            non_masked = N.where(~N.isnan(img.ch0))
+            mean = N.mean(img.resid_gaus[non_masked], axis=None)
+            std_dev = N.std(img.resid_gaus[non_masked], axis=None)
+            skew = stats.skew(img.resid_gaus[non_masked], axis=None)
+            kurt = stats.kurtosis(img.resid_gaus[non_masked], axis=None)
             mylog.info("Statistics of the Shapelet residual image:")
             mylog.info("        mean: %.3e (Jy/beam)" % mean)
             mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
