@@ -1038,7 +1038,9 @@ class Opts(object):
                              doc = "Print debug info to the logfile",
                              group = "hidden")
     outfile = Option(None, String(),
-                             doc = "Output file name. None => file is named automatically",
+                             doc = "Output file name. None => file is named "\
+                                 "automatically; 'SAMP' => send to SAMP Hub "\
+                                 "(e.g., to TOPCAT, ds9, or Aladin)",
                              group = 'hidden')
     clobber = Bool(False,
                              doc = "Overwrite existing file?",

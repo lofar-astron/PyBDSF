@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.4'
+__version__ = '1.4.0'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -27,9 +27,18 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2011/09/18 - Added option to send images and catalogs to a SAMP hub
+        (activated by setting outfile = 'SAMP' in the export_image and
+        write_catalog tasks).
+
+    2011/09/13 - Improved speed of plotting when images are large and in
+        mean/rms map generation. Fixed bug that caused residual image
+        statistics to fail when NaNs are present.
+
     2011/09/11 - Version 1.4.0
 
-    2012/09/11 - Parallelized Gaussian fitting and shapelet decomposition.
+    2012/09/11 - Parallelized Gaussian fitting, shapelet decomposition,
+        validation of wavelet islands, and mean/rms map generation.
         The number of cores to be used can be specified with the "ncores"
         option (default is to use all). Fixed bug in SED plotting in
         the show_fit task.

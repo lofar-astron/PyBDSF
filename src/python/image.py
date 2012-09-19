@@ -121,15 +121,26 @@ class Image(object):
         return True
 
     def export_image(self, **kwargs):
-          """Export an internal image to a file."""
-          import interface
-          interface.export_image(self, **kwargs)
+        """Export an internal image to a file."""
+        import interface
+        try:
+            interface.export_image(self, **kwargs)
+        except RuntimeError, err:
+            if self._is_interactive_shell:
+                print "\n\033[31;1mERROR\033[0m: " + str(err)
+            else:
+                raise RuntimeError(str(err))
 
     def write_catalog(self, **kwargs):
         """Write the Gaussian, source, or shapelet list to a file"""
         import interface
-        interface.write_catalog(self, **kwargs)
-    write_gaul = write_catalog # for legacy scripts
+        try:
+            interface.write_catalog(self, **kwargs)
+        except RuntimeError, err:
+            if self._is_interactive_shell:
+                print "\n\033[31;1mERROR\033[0m: " + str(err)
+            else:
+                raise RuntimeError(str(err))
 
 
 class Op(object):

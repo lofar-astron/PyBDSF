@@ -1,5 +1,6 @@
 #include "nnuheadd.h"
 #include "nnuhead.h"
+#include <stdlib.h>
 
 extern   int   error_status;
 

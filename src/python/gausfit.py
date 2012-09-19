@@ -70,7 +70,6 @@ class Op_gausfit(Op):
 
         # Set up multiproccessing. First create a simple copy of the Image
         # object that contains the minimal data needed.
-        gaus_list = []
         opts_dict = opts.to_dict()
         img_simple = Image(opts_dict)
         img_simple.pixel_beamarea = img.pixel_beamarea
@@ -86,19 +85,14 @@ class Op_gausfit(Op):
         for isl in img.islands:
             weights.append(isl.size_active)
 
-        # Now call the parallel mapping function. We use eval_func_tuple() and
-        # itertools to get around limitation that multiple-argument sequences
-        # are not supported.
-        result = mp.parallel_map(func.eval_func_tuple,
+        # Now call the parallel mapping function. Returns a list of [gaul, fgaul]
+        # for each island.
+        gaus_list = mp.parallel_map(func.eval_func_tuple,
                     itertools.izip(itertools.repeat(self.process_island),
                     img.islands, itertools.repeat(img_simple),
                     itertools.repeat(opts)), numcores=opts.ncores,
                     bar=bar, weights=weights)
-        for core_result in result:
-            gaus_list += core_result
 
-        if len(img.islands) == 1:
-            gaus_list = [gaus_list]
         for isl in img.islands:
             ### now convert gaussians into Gaussian objects and store
             idx = isl.island_id

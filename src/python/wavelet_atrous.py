@@ -161,9 +161,11 @@ class Op_wavelet_atrous(Op):
                     # Delete islands that do not share any pixels with
                     # islands in original ch0 image.
                     good_isl = []
+
                     # Make original rank image boolean; rank counts from 0, with -1 being
                     # outside any island
                     orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+
                     # Multiply rank images
                     valid_islands = orig_rankim_bool * (wimg.pyrank + 1)
 
@@ -171,13 +173,12 @@ class Op_wavelet_atrous(Op):
                     if img.opts.quiet == False:
                         bar.start()
 
-                    check_list = []
-                    result = mp.parallel_map(func.eval_func_tuple,
+                    # Now call the parallel mapping function. Returns True or
+                    # False for each island.
+                    check_list = mp.parallel_map(func.eval_func_tuple,
                         itertools.izip(itertools.repeat(self.check_island),
                         wimg.islands, itertools.repeat(valid_islands)),
                         numcores=img.opts.ncores, bar=bar)
-                    for core_result in result:
-                        check_list += core_result
 
                     for idx, wvisl in enumerate(wimg.islands):
                         if check_list[idx]:

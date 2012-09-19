@@ -336,10 +336,10 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 
             if 'PSF' in titles[i]:
                 cmd = 'ax' + str(i+1) + ".imshow(N.transpose(im), origin=origin, "\
-                      "interpolation='bilinear', cmap=gray_palette)"
+                      "interpolation='nearest', cmap=gray_palette)"
             else:
                 cmd = 'ax' + str(i+1) + ".imshow(N.transpose(im), origin=origin, "\
-                      "interpolation='bilinear',vmin=vmin, vmax=vmax, cmap=gray_palette)"
+                      "interpolation='nearest',vmin=vmin, vmax=vmax, cmap=gray_palette)"
             exec cmd
             cmd = 'ax' + str(i+1) + '.format_coord = format_coord_'+names[i]
             exec cmd

@@ -483,13 +483,12 @@ The advanced options are:
 
     minpix_isl
         This parameter is an integer (default is ``None``) that sets the minimum number of pixels in an island
-        for the island to be included. If
-        ``None``\, the number of pixels is set to 1/3 of the area of an unresolved source
+        for the island to be included. If ``None``, the number of pixels is set to 1/3 of the area of an unresolved source
         using the beam and pixel size information in the image header. It is set
         to 6 pixels for all wavelet images.
 
     ncores
-        This parameter is an integer (default is ``None``) that sets the number of cores to use during fitting.
+        This parameter is an integer (default is ``None``) that sets the number of cores to use during fitting. If ``None``, all available cores are used (one core is reserved for plotting).
 
     peak_fit
         This parameter is a Boolean (default is ``True``). When True, PyBDSM will identify and fit peaks of emission in large islands iteratively (the size of islands for which peak fitting is done is controlled with the peak_maxsize option), using a maximum of 10 Gaussians per iteration. Enabling this option will generally speed up fitting (by factors of many for large islands), but may result in somewhat higher residuals.
@@ -508,7 +507,7 @@ The advanced options are:
 
         .. note::
 
-            Bicubic interpolation (the default) can cause ringing artifacts to appear in the rms and mean maps in regions where sharp changes occur. If you find such artifacts, try changing the :term:`spline_rank` parameter.
+            Bicubic interpolation (the default) can cause ringing artifacts to appear in the rms and mean maps in regions where sharp changes occur. These artifacts can result in regions with negative values. If you find such artifacts, try changing the :term:`spline_rank` parameter.
 
     split_isl
         This parameter is a Boolean (default is ``True``). If ``True``, an island is split if it is too large, has a large convex deficiency and it
