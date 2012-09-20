@@ -23,6 +23,7 @@ except RuntimeError:
     mpl.use('Agg')
 except ImportError:
     print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
+
 from readimage import Op_readimage
 from collapse import Op_collapse
 from preprocess import Op_preprocess
@@ -45,15 +46,15 @@ default_chain = [Op_readimage(),
                  Op_collapse(),
                  Op_preprocess(),
                  Op_rmsimage(),
-                 Op_threshold(), 
+                 Op_threshold(),
                  Op_islands(),
-                 Op_gausfit(), 
+                 Op_gausfit(),
                  Op_wavelet_atrous(),
-                 Op_gaul2srl(), 
+                 Op_gaul2srl(),
                  Op_shapelets(),
                  Op_spectralindex(),
                  Op_polarisation(),
-                 Op_make_residimage(), 
+                 Op_make_residimage(),
                  Op_psf_vary(),
                  Op_outlist(),
                  Op_cleanup()
@@ -63,11 +64,11 @@ fits_chain = default_chain # for legacy scripts
 def execute(chain, opts):
     """Execute chain.
 
-    Create new Image with given options and apply chain of 
+    Create new Image with given options and apply chain of
     operations to it. The opts input must be a dictionary.
     """
     from image import Image
-    import mylogger 
+    import mylogger
 
     if opts.has_key('quiet'):
         quiet = opts['quiet']
@@ -80,7 +81,7 @@ def execute(chain, opts):
     log_filename = opts["filename"] + '.pybdsm.log'
     mylogger.init_logger(log_filename, quiet=quiet, debug=debug)
     mylog = mylogger.logging.getLogger("PyBDSM.Init")
-    mylog.info("Running PyBDSM on "+opts["filename"])
+    mylog.info("Processing "+opts["filename"])
 
     try:
         img = Image(opts)
@@ -106,7 +107,8 @@ def _run_op_list(img, chain):
     from types import ClassType, TypeType
     from interface import raw_input_no_history
     from gausfit import Op_gausfit
-    
+    import mylogger
+
     ops = []
     stopat = img.opts.stop_at
     # Make sure all op's are instances
@@ -117,6 +119,18 @@ def _run_op_list(img, chain):
             ops.append(op)
         if stopat == 'read' and isinstance(op, Op_readimage): break
         if stopat == 'isl' and isinstance(op, Op_islands): break
+
+    # Log all non-default parameters
+    mylog = mylogger.logging.getLogger("PyBDSM.Init")
+    mylog.info("PyBDSM version %s (LUS revision %s)"
+                             % (__version__, __revision__))
+    mylog.info("Non-default input parameters:")
+    user_opts = img.opts.to_list()
+    for user_opt in user_opts:
+        k, v = user_opt
+        val = img.opts.__getattribute__(k)
+        if val != v._default and v.group() != 'hidden':
+            mylog.info('    %-20s : %s' % (k, repr(val)))
 
     # Run all op's
     dc = '\033[34;1m'
@@ -169,12 +183,31 @@ def _run_op_list(img, chain):
         print "="*36
         print "%18s : %10s" % ("Module", "Time (sec)")
         print "-"*36
-        for op in chain:
-            print "%18s : %f" % (op.__class__.__name__, 
+        for i, op in enumerate(chain):
+            if hasattr(op, '__start_time'):
+                print "%18s : %f" % (op.__class__.__name__,
                                  (op.__stop_time - op.__start_time))
+                indx_stop = i
         print "="*36
         print "%18s : %f" % ("Total",
-                             (chain[-1].__stop_time - chain[0].__start_time))
+                             (chain[indx_stop].__stop_time - chain[0].__start_time))
+
+    # Log all internally derived parameters
+    mylog = mylogger.logging.getLogger("PyBDSM.Final")
+    mylog.info("Internally derived input parameters:")
+    import inspect
+    import types
+
+    for attr in inspect.getmembers(img.opts):
+        if attr[0][0] != '_':
+            if isinstance(attr[1], (int, str, bool, float, types.NoneType, tuple, list)):
+                if hasattr(img, attr[0]):
+                    used = img.__getattribute__(attr[0])
+                    if used != attr[1] and isinstance(used, (int, str, bool, float,
+                                                             types.NoneType, tuple,
+                                                             list)):
+
+                        mylog.info('    %-20s : %s' % (attr[0], repr(used)))
 
     return True
 
@@ -182,8 +215,8 @@ def process_image(input, **kwargs):
     """Run a standard analysis and returns the associated Image object.
 
     The input can be a FITS or CASA image, a PyBDSM parameter save
-    file, or a dictionary of options. Partial names are allowed for the 
-    parameters as long as they are unique. Parameters are set to default 
+    file, or a dictionary of options. Partial names are allowed for the
+    parameters as long as they are unique. Parameters are set to default
     values if par = ''.
 
     Examples:
@@ -197,7 +230,7 @@ def process_image(input, **kwargs):
     from interface import load_pars
     from image import Image
     import os
-    
+
     # Try to load input assuming it's a parameter save file or a dictionary.
     # load_pars returns None if this doesn't work.
     img, err = load_pars(input)

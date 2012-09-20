@@ -16,37 +16,38 @@ The task parameters are as follows:
 
     WRITE_CATALOG: Write the Gaussian, source, or shapelet list to a file.
     ================================================================================
-    :term:`outfile` ............... None : Output file name. None => file is named     
-                                   automatically                               
+    :term:`outfile` ............... None : Output file name. None => file is named
+                                   automatically; 'SAMP' => send to SAMP Hub (e.g., to
+                                   TOPCAT, ds9, or Aladin)
     :term:`bbs_patches` ........... None : For BBS format, type of patch to use: None => no
                                    patches. 'single' => all Gaussians in one patch.
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
-                                   source are grouped into one patch           
-    :term:`catalog_type` ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian 
+                                   source are grouped into one patch
+    :term:`catalog_type` ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
                                    Gaussians), 'shap' - shapelet list (not yet
                                    supported)
-    :term:`clobber` .............. False : Overwrite existing file?                    
+    :term:`clobber` .............. False : Overwrite existing file?
     :term:`format` ................ 'bbs': Format of output Gaussian list: 'bbs', 'ds9',
                                    'fits', 'star', 'kvis', or 'ascii'
-    :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?  
+    :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?
     :term:`srcroot` ............... None : Root name for entries in the output catalog. None
                                    => use image file name
-                                   
+
 Each of the parameters is described in detail below.
 
 .. glossary::
 
     outfile
-        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically.
-    
+        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically. If 'SAMP' the table is sent to a running SAMP Hub (e.g., to TOPCAT or Aladin).
+
     bbs_patches
         This parameter is a string (default is ``None``) that sets the type of patch to use in BBS-formatted catalogs. When the Gaussian catalogue is written as a BBS-readable sky file, this
         determines whether all Gaussians are in a single patch (``'single'``), there are no
         patches (``None``), all Gaussians for a given source are in a separate patch (``'source'``), or
         each Gaussian gets its own patch (``'gaussian'``).
-        
+
         If you wish to have patches defined by island, then set
         ``group_by_isl = True`` before fitting to force all
         Gaussians in an island to be in a single source. Then set
@@ -55,39 +56,39 @@ Each of the parameters is described in detail below.
     catalog_type
         This parameter is a string (default is ``'gaul'``) that sets the type of catalog to write:  ``'gaul'`` - Gaussian list, ``'srl'`` - source list
         (formed by grouping Gaussians), ``'shap'`` - shapelet list (``'fits'`` format only)
-        
+
         .. note::
-        
+
             The choice of ``'srl'`` or ``'gaul'`` depends on whether you want all the source structure in your catalog or not. For example, if you are making a sky model for use as a model in calibration, you want to include all the source structure in your model, so you would use a Gaussian list (``'gaul'``), which writes each Gaussian. On the other hand, if you want to compare to other source catalogs, you want instead the total source flux densities, so use source lists (``'srl'``). For example, say you have a source that is unresolved in WENSS, but is resolved in your image into two nearby Gaussians that are grouped into a single source. In this case, you want to compare the sum of the Gaussians to the WENSS flux density, and hence should use a source list.
-        
+
     clobber
         This parameter is a Boolean (default is ``False``) that determines whether existing files are overwritten or not.
-        
+
     format
         This parameter is a string (default is ``'bbs'``) that sets the format of the output catalog. The following formats are supported:
 
         * ``'bbs'`` - BlackBoard Selfcal sky model format (Gaussian list only)
-        
+
         * ``'ds9'`` - ds9 region format
-        
+
         * ``'fits'`` - FITS catalog format, readable by many software packages, including IDL, TOPCAT, Python, fv, Aladin, etc.
-        
+
         * ``'star'`` - AIPS STAR format (Gaussian list only)
-        
+
         * ``'kvis'`` - kvis format (Gaussian list only)
-        
+
         * ``'ascii'`` - simple text file
-        
+
         Catalogues with the ``'fits'`` and ``'ascii'`` formats include all available
         information (see :ref:`output_cols` for column definitions). The
         other formats include only a subset of the full information.
 
     incl_chan
         This parameter is a Boolean (default is ``False``) that determines whether the total flux densities of each source measured in each channel by the spectral index module are included in the output.
-                 
+
     srcroot
         This parameter is a string (default is ``None``) that sets the root for source names in the output catalog.
-        
+
 
 .. _output_cols:
 
@@ -186,10 +187,10 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **Resid_Isl_mean:** the averge residual background mean value of the island, in Jy/beam
 
-* **S_Code:** a code that defines the source structure. 
+* **S_Code:** a code that defines the source structure.
     * 'S' = a single-Gaussian source that is the only source in the island
     * 'C' = a single-Gaussian source in an island with other sources
-    * 'M' = a multi-Gaussian source 
+    * 'M' = a multi-Gaussian source
 
 * **Spec_Indx:** the spectral index of the source
 

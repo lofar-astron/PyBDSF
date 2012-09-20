@@ -39,7 +39,7 @@ class Op_threshold(Op):
 	    if false_p < opts.fdr_ratio*source_p:
                 img.thresh = 'hard'
                 mylogger.userinfo(mylog, "Expected 5-sigma-clipped false detection rate < fdr_ratio")
-                mylogger.userinfo(mylog, "Using sigma-clipping thresholding")
+                mylogger.userinfo(mylog, "Using sigma-clipping ('hard') thresholding")
 	    else: 
                 img.thresh = 'fdr'
                 mylogger.userinfo(mylog, "Expected 5-sigma-clipped false detection rate > fdr_ratio")

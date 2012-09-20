@@ -1,5 +1,7 @@
+"""Plotting module
 
-""" Plot stuff """
+This module is used to display fits results.
+"""
 from image import *
 try:
     import matplotlib.pyplot as pl
@@ -16,6 +18,7 @@ from math import log10
 import functions as func
 from const import fwsig
 import os
+import numpy as N
 
 
 def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
@@ -24,7 +27,6 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 source_seds=False, ch0_flagged=False, pi_image=False,
                 psf_major=False, psf_minor=False, psf_pa=False):
     """Show the results of a fit."""
-    import numpy as N
     global img_ch0, img_rms, img_mean, img_gaus_mod, img_shap_mod
     global img_gaus_resid, img_shap_resid, pixels_per_beam, pix2sky
     global vmin, vmax, vmin_cur, vmax_cur, ch0min, ch0max, img_pi
@@ -34,7 +36,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     if not has_pl:
         print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
         return
-        
+
     # Define the images. The images are used both by imshow and by the
     # on_press() and coord_format event handlers
     pix2sky = img.pix2sky
@@ -62,7 +64,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         img_psf_maj = img.psf_vary_maj*fwsig
         img_psf_min = img.psf_vary_min*fwsig
         img_psf_pa = img.psf_vary_pa
-    
+
     # Construct lists of images, titles, etc.
     images = []
     titles = []
@@ -98,7 +100,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         else:
             images.append(img_pi)
             titles.append('Polarized Intensity Image')
-            names.append('ch0_pi')    
+            names.append('ch0_pi')
     if rms_image:
         images.append(img_rms)
         titles.append('Background rms Image')
@@ -161,7 +163,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 #                     j_list.append(l)
 #             j_set = set(j_list)
 #             j_with_gaus = list(j_set)
-#             index_first_waveplot = len(images) 
+#             index_first_waveplot = len(images)
 #             for i in range(len(j_with_gaus)):
 #                 images.append('wavelets')
 #                 names.append('pyrsrc'+str(i))
@@ -181,11 +183,11 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 images.append(img_psf_pa)
                 titles.append('PSF Pos. Angle FWhM (degrees)')
                 names.append('psf_pa')
-    
+
     if images == []:
         print 'No images to display.'
         return
-    
+
     im_mean = img.clipped_mean
     im_rms = img.clipped_rms
     if img.resid_gaus == None:
@@ -282,7 +284,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                                     valid = True
                                 if g.jlevel == 0 and valid:
                                     gidx = g.gaus_num
-                                    e = Ellipse(xy=g.centre_pix, width=g.size_pix[0], 
+                                    e = Ellipse(xy=g.centre_pix, width=g.size_pix[0],
                                                 height=g.size_pix[1], angle=g.size_pix[2]+90.0)
                                     ax.add_artist(e)
                                     e.set_picker(3)
@@ -297,10 +299,10 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                                     e.pflux = g.peak_flux
                 if len(img.islands) > 0:
                     island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
-                    isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color, 
+                    isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color,
                                     transOffset=ax.transData, sizes=(10.0,))
                     ax.add_collection(isl_borders)
-                
+
                 if hasattr(img, 'gaussians'):
                     for atrg in img.gaussians:
                         if atrg.jlevel > 0:
@@ -334,10 +336,10 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 
             if 'PSF' in titles[i]:
                 cmd = 'ax' + str(i+1) + ".imshow(N.transpose(im), origin=origin, "\
-                      "interpolation='bilinear', cmap=gray_palette)"            
+                      "interpolation='nearest', cmap=gray_palette)"
             else:
                 cmd = 'ax' + str(i+1) + ".imshow(N.transpose(im), origin=origin, "\
-                      "interpolation='bilinear',vmin=vmin, vmax=vmax, cmap=gray_palette)"
+                      "interpolation='nearest',vmin=vmin, vmax=vmax, cmap=gray_palette)"
             exec cmd
             cmd = 'ax' + str(i+1) + '.format_coord = format_coord_'+names[i]
             exec cmd
@@ -368,11 +370,12 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                     ".plot(ind[0]+isl.origin[0], "\
                     "ind[1]+isl.origin[1], '.', color=col)"
                 exec cmd
-           
+
     fig.canvas.mpl_connect('key_press_event', on_press)
     fig.canvas.mpl_connect('pick_event', on_pick)
     pl.show()
-    pl.close()
+    pl.close('all')
+
 
 def on_pick(event):
     global images
@@ -394,7 +397,7 @@ def on_pick(event):
                 ', isl #' + str(isl_id) + ', wav #' + str(wav_j) + \
                 '): F_tot = ' + str(round(tflux,3)) + ' Jy, F_peak = ' + \
                 str(round(pflux,4)) + ' Jy/beam'
-                
+
         # Change source SED
         # First check that SEDs are being plotted and that the selected Gaussian
         # is from the zeroth wavelet image
@@ -415,15 +418,15 @@ def on_pick(event):
     else:
         print 'Flagged Gaussian (flag = ' + str(g.flag) + '; use "' + \
             "help 'flagging_opts'" + '" for flag meanings)'
- 
+
     pl.draw()
-       
-    
+
+
 def on_press(event):
     """Handle keypresses"""
     from interface import raw_input_no_history
     import numpy
-    
+
     global img_ch0, img_rms, img_mean, img_gaus_mod, img_shap_mod
     global pixels_per_beam, vmin, vmax, vmin_cur, vmax_cur, img_pi
     global ch0min, ch0max, low, fig, images, src_list, srcid_cur
@@ -489,7 +492,7 @@ def on_press(event):
                 im.set_clim(minscl, maxscl)
         vmin_cur = minscl
         vmax_cur = maxscl
-        pl.draw()  
+        pl.draw()
     if event.key == 'c':
         # Change source SED
         # First check that SEDs are being plotted
@@ -653,13 +656,13 @@ def format_coord_psf_pa(x, y):
     im = img_psf_pa
     coord_str = make_coord_str(x, y, im, unit='degrees')
     return coord_str
-    
+
 def xy_to_radec_str(x, y):
     """Converts x, y in image coords to a sexigesimal string"""
     from output import ra2hhmmss, dec2ddmmss
     global pix2sky
     ra, dec = pix2sky([x, y])
-    
+
     ra = ra2hhmmss(ra)
     sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.1f" % (ra[2])).zfill(3)
     dec = dec2ddmmss(dec)
@@ -689,11 +692,11 @@ def plot_sed(src, ax):
     norm = src.spec_norm
     spin = src.spec_indx
     espin = src.e_spec_indx
-    y = src.specin_flux
-    ey = src.specin_fluxE
-    x = src.specin_freq
+    y = N.array(src.specin_flux)
+    ey = N.array(src.specin_fluxE)
+    x = N.array(src.specin_freq)
     ax.errorbar(N.log10(x/1e6), N.log10(y), yerr=ey/y, fmt='bo')
-    ax.plot(N.log10(x/1e6), N.log10(norm)+N.log10(x/src.specin_freq0)*spin, 
+    ax.plot(N.log10(x/1e6), N.log10(norm)+N.log10(x/src.specin_freq0)*spin,
             '-g', label="alpha = %.2f" % (spin,))
     pos = sky2pix(src.posn_sky_centroid)
     xpos = int(pos[0])
