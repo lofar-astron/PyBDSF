@@ -1044,7 +1044,10 @@ class Opts(object):
                              group = 'hidden')
     broadcast = Bool(False,
                              doc = "Broadcast Gaussian and source ids and "\
-                                 "coordinates to SAMP Hub?",
+                                 "coordinates to SAMP Hub?\nNote that for the "\
+                                 "IDs to be useful, a catalog must have been sent "\
+                                 "to the SAMP hub previously using the write_catalog "\
+                                 "task (with outfile = 'SAMP').",
                              group = 'hidden')
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
