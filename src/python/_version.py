@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,11 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2012/09/20 - Version 1.4.1
+
+    2012/09/20 - Fixed a bug in the wavelet module that caused a crash when
+        no Gaussians were fit to the ch0 image.
 
     2012/09/19 - Added "broadcast" option to show_fit task to send
     	coordinates and row highlight request to a SAMP hub when a Gaussian

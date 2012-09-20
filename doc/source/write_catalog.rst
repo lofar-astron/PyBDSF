@@ -40,7 +40,7 @@ Each of the parameters is described in detail below.
 .. glossary::
 
     outfile
-        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically. If 'SAMP' the table is sent to a running SAMP Hub (e.g., to TOPCAT or Aladin).
+        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically. If 'SAMP' the full catalog (i.e., ``format = 'fits'``) is sent to a running SAMP Hub (e.g., to TOPCAT or Aladin).
 
     bbs_patches
         This parameter is a string (default is ``None``) that sets the type of patch to use in BBS-formatted catalogs. When the Gaussian catalogue is written as a BBS-readable sky file, this
