@@ -25,17 +25,35 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 ch0_islands=True, gresid_image=True, sresid_image=False,
                 gmodel_image=True, smodel_image=False, pyramid_srcs=False,
                 source_seds=False, ch0_flagged=False, pi_image=False,
-                psf_major=False, psf_minor=False, psf_pa=False):
+                psf_major=False, psf_minor=False, psf_pa=False, broadcast=False):
     """Show the results of a fit."""
     global img_ch0, img_rms, img_mean, img_gaus_mod, img_shap_mod
     global img_gaus_resid, img_shap_resid, pixels_per_beam, pix2sky
     global vmin, vmax, vmin_cur, vmax_cur, ch0min, ch0max, img_pi
     global low, fig, images, src_list, srcid_cur, sky2pix, markers
-    global img_psf_maj, img_psf_min, img_psf_pa
+    global img_psf_maj, img_psf_min, img_psf_pa, do_broadcast, samp_client
+    global samp_key, samp_gaul_table_url, samp_srl_table_url
 
     if not has_pl:
         print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
         return
+    if hasattr(img, 'samp_client'):
+        samp_client = img.samp_client
+        samp_key = img.samp_key
+        if hasattr(img, 'samp_srl_table_url'):
+            samp_srl_table_url = img.samp_srl_table_url
+        else:
+            samp_srl_table_url = None
+        if hasattr(img, 'samp_gaul_table_url'):
+            samp_gaul_table_url = img.samp_gaul_table_url
+        else:
+            samp_gaul_table_url = None
+    else:
+        samp_clent = None
+        samp_key = None
+        samp_srl_table_url = None
+        samp_gaul_table_url = None
+    do_broadcast = broadcast
 
     # Define the images. The images are used both by imshow and by the
     # on_press() and coord_format event handlers
@@ -297,6 +315,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                                     e.isl_id = g.island_id
                                     e.tflux = g.total_flux
                                     e.pflux = g.peak_flux
+                                    e.centre_sky = g.centre_sky
                 if len(img.islands) > 0:
                     island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
                     isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color,
@@ -322,6 +341,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                             e.isl_id = atrg.island_id
                             e.tflux = atrg.total_flux
                             e.pflux = atrg.peak_flux
+                            e.centre_sky = atrg.centre_sky
 
             if 'Flagged' in titles[i]:
                 for iisl, isl in enumerate(img.islands):
@@ -378,8 +398,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 
 
 def on_pick(event):
-    global images
-    global srcid_cur
+    global images, srcid_cur, samp_client, samp_key, do_broadcast, samp_gaul_table_url, samp_srl_table_url
     g = event.artist
     if hasattr(g, 'gaus_id'):
         gaus_id = g.gaus_id
@@ -397,6 +416,14 @@ def on_pick(event):
                 ', isl #' + str(isl_id) + ', wav #' + str(wav_j) + \
                 '): F_tot = ' + str(round(tflux,3)) + ' Jy, F_peak = ' + \
                 str(round(pflux,4)) + ' Jy/beam'
+
+        # Transmit src_id, gaus_id, and coordinates to SAMP Hub (if we are connected)
+        if do_broadcast and samp_key != None:
+            if samp_gaul_table_url != None:
+                func.send_highlight_row(samp_client, samp_key, samp_gaul_table_url, gaus_id)
+            if samp_srl_table_url != None:
+                func.send_highlight_row(samp_client, samp_key, samp_srl_table_url, src_id)
+            func.send_coords(samp_client, samp_key, g.centre_sky)
 
         # Change source SED
         # First check that SEDs are being plotted and that the selected Gaussian

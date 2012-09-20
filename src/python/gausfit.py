@@ -48,6 +48,8 @@ class Op_gausfit(Op):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gausfit")
         if len(img.islands) == 0:
             img.gaussians = []
+            img.ngaus = 0
+            img.total_flux_gaus = 0.0
             img.completed_Ops.append('gausfit')
             return img
 

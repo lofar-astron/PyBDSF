@@ -32,7 +32,7 @@ Image.omega = Float(doc="Solid angle covered by the image")
 confused = String(doc = 'confused image or not')
 
 class Op_preprocess(Op):
-    """Preprocessing -- calculate some basic statistics and set 
+    """Preprocessing -- calculate some basic statistics and set
     processing parameters. Should assume that pixels outside the universe
     are blanked in QC ? """
 
@@ -84,7 +84,7 @@ class Op_preprocess(Op):
           mylogger.userinfo(mylog, "Determining the pixels outside the universe")
           noutside_univ = self.outside_univ(img)
           img.noutside_univ = noutside_univ
-          
+
           # If any are found, (re)mask the image
           if noutside_univ > 0:
               mask = N.isnan(img.ch0)
@@ -122,10 +122,10 @@ class Op_preprocess(Op):
 
         ### Total flux in ch0 image
         if 'atrous' in img.filename or hasattr(img, '_pi') or img.log == 'Detection image':
-            # Don't do this estimate for atrous wavelet images 
+            # Don't do this estimate for atrous wavelet images
             # or polarized intensity image,
             # as it doesn't give the correct flux. Also, ignore
-            # the flux in the detection image, as it's likely 
+            # the flux in the detection image, as it's likely
             # wrong (e.g., not corrected for the primary beam).
             img.ch0_sum_jy = 0
         else:
@@ -133,14 +133,14 @@ class Op_preprocess(Op):
             img.ch0_sum_jy = im_flux
             mylogger.userinfo(mylog, 'Flux from sum of (non-blank) pixels',
                               '%.3f Jy' % (im_flux,))
-        
+
         ### if image seems confused, then take background mean as zero instead
-        alpha_sourcecounts = 2.5  # approx diff src count slope. 2.2? 
+        alpha_sourcecounts = 2.5  # approx diff src count slope. 2.2?
         if opts.bmpersrc_th is None:
           n = (image >= 5.*crms).sum()
-          if n <= 0: 
+          if n <= 0:
             n = 1
-            mylog.warning('No pixels in image > 5-sigma.')
+            mylog.info('No pixels in image > 5-sigma.')
             mylog.info('Taking number of pixels above 5-sigma as 1.')
           img.bmpersrc_th = N.product(shape)/((alpha_sourcecounts-1.)*n)
           mylog.info('%s %6.2f' % ('Estimated bmpersrc_th = ', img.bmpersrc_th))
@@ -154,14 +154,14 @@ class Op_preprocess(Op):
             confused = True
         img.confused = confused
         mylog.info('Parameter confused is '+str(img.confused))
-            
+
         img.completed_Ops.append('preprocess')
         return img
 
     def outside_univ(self,img):
-        """ Checks if a pixel is outside the universe and is not blanked, 
+        """ Checks if a pixel is outside the universe and is not blanked,
         and blanks it. (fits files written by CASA dont do this).  """
-    
+
         noutside = 0
         n, m = img.ch0.shape
         for i in range(n):
@@ -172,10 +172,10 @@ class Op_preprocess(Op):
             try:
               skyc = img.pix2sky(pix1)
               pix2 = img.sky2pix(skyc)
-              if abs(pix1[0]-pix2[0]) > 0.5 or abs(pix1[1]-pix2[1]) > 0.5: out=True 
+              if abs(pix1[0]-pix2[0]) > 0.5 or abs(pix1[1]-pix2[1]) > 0.5: out=True
             except RuntimeError, err:
               pass
-            if out or ("8" in str(err)):  
+            if out or ("8" in str(err)):
               noutside += 1
               img.ch0[pix1] = float("NaN")
         return noutside

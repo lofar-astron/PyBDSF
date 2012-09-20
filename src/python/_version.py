@@ -27,15 +27,20 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2011/09/18 - Added option to send images and catalogs to a SAMP hub
+    2012/09/19 - Added "broadcast" option to show_fit task to send
+    	coordinates and row highlight request to a SAMP hub when a Gaussian
+    	is clicked. Fixed bug in aperture flux masking that sometimes caused
+    	the mask to be the wrong shape.
+
+    2012/09/18 - Added option to send images and catalogs to a SAMP hub
         (activated by setting outfile = 'SAMP' in the export_image and
         write_catalog tasks).
 
-    2011/09/13 - Improved speed of plotting when images are large and in
+    2012/09/13 - Improved speed of plotting when images are large and in
         mean/rms map generation. Fixed bug that caused residual image
         statistics to fail when NaNs are present.
 
-    2011/09/11 - Version 1.4.0
+    2012/09/11 - Version 1.4.0
 
     2012/09/11 - Parallelized Gaussian fitting, shapelet decomposition,
         validation of wavelet islands, and mean/rms map generation.

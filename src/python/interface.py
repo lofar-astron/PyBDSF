@@ -737,6 +737,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     if filename == 'SAMP':
         import tempfile
         import functions as func
+        import os
         if not hasattr(img,'samp_client'):
             s, private_key = func.start_samp_proxy()
             img.samp_client = s
@@ -746,8 +747,13 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         tfile = tempfile.NamedTemporaryFile(delete=False)
         filename = output.write_fits_list(img, filename=tfile.name,
                                              incl_chan=incl_chan,
-                                             clobber=clobber, objtype=catalog_type)
-        func.send_fits_table(img.samp_client, img.samp_key, 'PyBDSM table', tfile.name)
+                                             clobber=True, objtype=catalog_type)
+        table_name = 'PyBDSM '+ catalog_type + ' table'
+        if catalog_type == 'srl':
+            img.samp_srl_table_url = 'file://' + os.path.abspath(tfile.name)
+        if catalog_type == 'gaul':
+            img.samp_gaul_table_url = 'file://' + os.path.abspath(tfile.name)
+        func.send_fits_table(img.samp_client, img.samp_key, table_name, tfile.name)
         print '--> Table sent to SMAP hub'
         return True
     if format == 'fits':

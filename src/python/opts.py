@@ -1042,6 +1042,10 @@ class Opts(object):
                                  "automatically; 'SAMP' => send to SAMP Hub "\
                                  "(e.g., to TOPCAT, ds9, or Aladin)",
                              group = 'hidden')
+    broadcast = Bool(False,
+                             doc = "Broadcast Gaussian and source ids and "\
+                                 "coordinates to SAMP Hub?",
+                             group = 'hidden')
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
                              group = 'hidden')

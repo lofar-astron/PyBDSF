@@ -139,7 +139,13 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     size = len(sequence)
 
     if not _multi or size == 1:
-        return map(function, sequence)
+        results = map(function, sequence)
+        if bar != None:
+            if bar.started:
+                while bar.pos < bar.max:
+                    bar.increment()
+        return results
+
 
     # Set default number of cores to use. Leave one core free for pyplot.
     if numcores is None:
