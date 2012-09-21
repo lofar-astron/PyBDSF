@@ -11,7 +11,7 @@ Internally derived images (e.g, the Gaussian model image) can be exported to FIT
     EXPORT_IMAGE: Write one or more images to a file.
     ================================================================================
     :term:`outfile` ............... None : Output file name. None => file is named
-                                   automatically; 'SAMP' => send to SAMP Hub (e.g., to
+                                   automatically; 'SAMP' => send to SAMP hub (e.g., to
                                    TOPCAT, ds9, or Aladin)
     :term:`clobber` .............. False : Overwrite existing file?
     :term:`img_format` ........... 'fits': Format of output image: 'fits' or 'casa' (at the

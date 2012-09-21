@@ -17,7 +17,7 @@ The task parameters are as follows:
     WRITE_CATALOG: Write the Gaussian, source, or shapelet list to a file.
     ================================================================================
     :term:`outfile` ............... None : Output file name. None => file is named
-                                   automatically; 'SAMP' => send to SAMP Hub (e.g., to
+                                   automatically; 'SAMP' => send to SAMP hub (e.g., to
                                    TOPCAT, ds9, or Aladin)
     :term:`bbs_patches` ........... None : For BBS format, type of patch to use: None => no
                                    patches. 'single' => all Gaussians in one patch.

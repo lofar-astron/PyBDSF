@@ -58,9 +58,11 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
             if bar_state['started']:
                 bar.pos = bar_state['pos']
                 bar.spin_pos = bar_state['spin_pos']
-                bar.increment()
-                bar_state['pos'] += 1
-                bar_state['spin_pos'] += 1
+                bar.started = bar_state['started']
+                increment = bar.increment()
+                bar_state['started'] = bar.started
+                bar_state['pos'] += increment
+                bar_state['spin_pos'] += increment
                 if bar_state['spin_pos'] >= 4:
                     bar_state['spin_pos'] = 0
 
@@ -141,9 +143,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     if not _multi or size == 1:
         results = map(function, sequence)
         if bar != None:
-            if bar.started:
-                while bar.pos < bar.max:
-                    bar.increment()
+            bar.stop()
         return results
 
 
@@ -203,10 +203,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         results = run_tasks(procs, err_q, out_q, len(sequence))
         if bar != None:
             if bar.started:
-                bar.pos = bar_state['pos']
-                bar.spin_pos = bar_state['spin_pos']
-                while bar.pos < bar.max:
-                    bar.increment()
+                bar.stop()
         return results
 
     except KeyboardInterrupt:

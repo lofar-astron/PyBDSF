@@ -274,7 +274,6 @@ class Op_wavelet_atrous(Op):
                   break
 
           pdir = img.basedir + '/misc/'
-
           #self.morphfilter_pyramid(img, pdir)
           img.ngaus += ntot_wvgaus
           img.total_flux_gaus += total_flux

@@ -1039,12 +1039,13 @@ class Opts(object):
                              group = "hidden")
     outfile = Option(None, String(),
                              doc = "Output file name. None => file is named "\
-                                 "automatically; 'SAMP' => send to SAMP Hub "\
+                                 "automatically; 'SAMP' => send to SAMP hub "\
                                  "(e.g., to TOPCAT, ds9, or Aladin)",
                              group = 'hidden')
     broadcast = Bool(False,
-                             doc = "Broadcast Gaussian and source ids and "\
-                                 "coordinates to SAMP Hub?\nNote that for the "\
+                             doc = "Broadcast Gaussian and source IDs and "\
+                                 "coordinates to SAMP hub when a Gaussian is "\
+                                 "clicked?\nNote that for the "\
                                  "IDs to be useful, a catalog must have been sent "\
                                  "to the SAMP hub previously using the write_catalog "\
                                  "task (with outfile = 'SAMP').",

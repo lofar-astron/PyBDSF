@@ -344,7 +344,7 @@ def write_casa_gaul(img, filename=None, clobber=False):
     return filename
 
 
-def write_fits_list(img, filename=None, sort_by='indx', objtype='gaul',
+def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                     incl_chan=False, clobber=False):
     """ Write as FITS binary table.
     """

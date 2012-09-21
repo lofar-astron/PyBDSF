@@ -11,7 +11,7 @@ PyBDSM includes a task named ``show_fit`` that allows the user to quickly check 
     SHOW_FIT: Show results of fit.
     ================================================================================
     :term:`broadcast` ............ False : Broadcast Gaussian and source IDs and coordinates
-                                   to SAMP Hub?
+                                   to SAMP hub when a Gaussian is clicked?
     :term:`ch0_flagged` .......... False : Show the ch0 image with flagged Gaussians (if
                                    any) overplotted
     :term:`ch0_image` ............. True : Show the ch0 image. This is the image used for
@@ -39,7 +39,7 @@ Each of the parameters is described in detail below.
 .. glossary::
 
     broadcast
-        This parameter is a Boolean (default is ``False``) that determines whether the Gaussian and source IDs and coordinates are sent to a running SAMP Hub. Note that for the IDs to be useful, a catalog must have been sent to the SAMP hub previously using the ``write_catalog`` task (with ``outfile = 'SAMP'``).
+        This parameter is a Boolean (default is ``False``) that determines whether the Gaussian and source IDs and coordinates are sent to a running SAMP Hub when a Gaussian is clicked on. Note that for the IDs to be useful, a catalog must have been sent to the SAMP hub previously using the ``write_catalog`` task (with ``outfile = 'SAMP'``).
 
     ch0_flagged
         This parameter is a Boolean (default is ``False``) that determines whether to plot the ch0 image (the image used for source detection) with any flagged Gaussians overplotted.

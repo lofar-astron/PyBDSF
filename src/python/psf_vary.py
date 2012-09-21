@@ -168,6 +168,7 @@ class Op_psf_vary(Op):
                 psf_cf.append(cf)
                 if img.opts.quiet == False:
                     bar.increment()
+            bar.stop()
 
             # transpose the psf image list
             xt, yt = N.transpose(tile_coord)
@@ -226,6 +227,7 @@ class Op_psf_vary(Op):
 
                     if img.opts.quiet == False:
                         bar.increment()
+                bar.stop()
 
                 # Interpolate Gaussian parameters
                 psf_maj_int = self.interp_prop(psf_maj, psfcoords, image.shape)
@@ -279,6 +281,7 @@ class Op_psf_vary(Op):
                             bar2.spin()
                     if img.opts.quiet == False:
                         bar2.increment()
+                bar2.stop()
         img.completed_Ops.append('psf_vary')
 
 ##################################################################################################

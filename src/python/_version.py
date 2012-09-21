@@ -27,6 +27,11 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2012/09/21 - Fixed bug that resulted in output FITS gaul tables being
+        improperly sorted. Fixed cosmetic bug in the statusbar that could
+        sometimes cause improper formatting. Added example of SAMP usage
+        to the documentation.
+
     2012/09/20 - Version 1.4.1
 
     2012/09/20 - Fixed a bug in the wavelet module that caused a crash when
