@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,11 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2012/09/25 - Version 1.4.2
+
+    2012/09/25 - Dramatically reduced the time required to identify valid
+        wavelet islands.
 
     2012/09/21 - Fixed bug that resulted in output FITS gaul tables being
         improperly sorted. Fixed cosmetic bug in the statusbar that could

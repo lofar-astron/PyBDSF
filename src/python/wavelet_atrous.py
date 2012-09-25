@@ -173,21 +173,12 @@ class Op_wavelet_atrous(Op):
                         orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
 
                         # Multiply rank images
-                        valid_islands = orig_rankim_bool * (wimg.pyrank + 1)
+                        valid_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
 
-                        bar = statusbar.StatusBar('Checking for valid islands .............. : ', 0, wimg.nisl)
-                        if img.opts.quiet == False:
-                            bar.start()
-
-                        # Now call the parallel mapping function. Returns True or
-                        # False for each island.
-                        check_list = mp.parallel_map(func.eval_func_tuple,
-                            itertools.izip(itertools.repeat(self.check_island),
-                            wimg.islands, itertools.repeat(valid_islands)),
-                            numcores=img.opts.ncores, bar=bar)
-
+                        # Get unique island IDs
+                        valid_ids = set(valid_islands.flatten())
                         for idx, wvisl in enumerate(wimg.islands):
-                            if check_list[idx]:
+                            if idx in valid_ids:
                                 wvisl.valid = True
                                 good_isl.append(wvisl)
                             else:
@@ -197,6 +188,7 @@ class Op_wavelet_atrous(Op):
                         wimg.nisl = len(good_isl)
                         mylogger.userinfo(mylog, "Number of vaild islands found", '%i' %
                                   wimg.nisl)
+
                         # Renumber islands:
                         for wvindx, wvisl in enumerate(wimg.islands):
                             wvisl.island_id = wvindx
@@ -371,14 +363,7 @@ class Op_wavelet_atrous(Op):
         wimg.mask = mask
         wimg.use_io = img.use_io
 
-#######################################################################################################
-    def check_island(self, isl, valid_islands):
-        if isl.island_id in valid_islands - 1:
-            return True
-        else:
-            return False
-
-#######################################################################################################
+######################################################################################################
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
         import functions as func
         from make_residimage import Op_make_residimage as opp

@@ -4,6 +4,10 @@
 What's New
 **********
 
+Version 1.4.2 (2012/09/25):
+
+    * Dramatically reduced time required to identify valid wavelet islands. Fixed bug that resulted in output FITS gaul tables being improperly sorted.
+
 Version 1.4.1 (2012/09/11):
 
     * Added SAMP (Simple Application Messaging Protocol) support to the write_catalog, export_image, and show_fit tasks. These tasks can now use SAMP to communicate with other programs connected to a SAMP hub (e.g., ds9, Topcat, Aladin).
