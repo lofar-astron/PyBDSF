@@ -539,26 +539,23 @@ class Op_psf_vary(Op):
         snr=N.asarray(g_gauls[1])/N.asarray(g_gauls[8])
 
         index=snr.argsort()
-        snr = snr[index]
-        snr = snr[::-1]
+        snr_incr = snr[index]
+        snr = snr_incr[::-1]
         x = N.asarray(g_gauls[2])[index]
         y = N.asarray(g_gauls[3])[index]
 
-        cutoff = 0; npts = 0
+        cutoff = 0
         if generators == 'calibrators' or generators == 'field':
             if gencode != 'file':
                 gencode = 'list'
             if gencode == 'list':
                 cutoff = int(round(num*(snrtop)))
-                if cutoff == len(snr):
-                    cutoff -= 1
+                if cutoff > len(snr):
+                    cutoff = len(snr)
                 # Make sure we don't fall below snrcutstack (SNR cut for stacking of PSFs), since
                 # it makes no sense to make tiles with generators that fall below this cut.
                 if snr[cutoff] < snrcutstack:
-                    cutoff = snr.searchsorted(snrcutstack)
-                if cutoff < 2:
-                    cutoff = 2
-                npts = num - cutoff + 1
+                    cutoff = num - snr_incr.searchsorted(snrcutstack)
 
         if generators == 'calibrators':
             if gencode == 'file':
@@ -569,7 +566,7 @@ class Op_psf_vary(Op):
         x1.reverse()
         y1.reverse()
         snr1 = snr.tolist()
-        vorogenP = N.asarray([x1[0:cutoff-2], y1[0:cutoff-2], snr1[0:cutoff-2]])
+        vorogenP = N.asarray([x1[0:cutoff], y1[0:cutoff], snr1[0:cutoff]])
 
         vorogenS = None
 
