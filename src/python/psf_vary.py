@@ -232,7 +232,7 @@ class Op_psf_vary(Op):
                 bar.stop()
 
                 # Interpolate Gaussian parameters
-                if img.opts.aperture == None:
+                if img.aperture == None:
                     psf_maps = [psf_maj, psf_min, psf_pa, psfratio]
                 else:
                     psf_maps = [psf_maj, psf_min, psf_pa, psfratio, psfratio_aper]
@@ -245,9 +245,8 @@ class Op_psf_vary(Op):
                     psf_maps, itertools.repeat(psfcoords),
                     itertools.repeat(image.shape)), numcores=opts.ncores,
                     bar=bar)
-                if img.opts.aperture == None:
+                if img.aperture == None:
                     psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int = map_list
-                    psf_ratio_aper_int = N.zeros(psf_maj_int.shape)
                 else:
                     psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int = map_list
 
@@ -266,7 +265,7 @@ class Op_psf_vary(Op):
                         itertools.izip(itertools.repeat(self.blur_image),
                         psf_maps, itertools.repeat(sm_scale)), numcores=opts.ncores,
                         bar=bar)
-                    if img.opts.aperture == None:
+                    if img.aperture == None:
                         psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int = map_list
                     else:
                         psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int = map_list
@@ -276,7 +275,10 @@ class Op_psf_vary(Op):
                 psf_min_int = N.array(psf_min_int)
                 psf_pa_int = N.array(psf_pa_int)
                 psf_ratio_int = N.array(psf_ratio_int)
-                psf_ratio_aper_int = N.array(psf_ratio_aper_int)
+                if img.aperture == None:
+                    psf_ratio_aper_int = N.zeros(psf_maj_int.shape)
+                else:
+                    psf_ratio_aper_int = N.array(psf_ratio_aper_int)
 
                 # Store interpolated images. The major and minor axis images are
                 # the sigma in units of arcsec, the PA image in units of degrees east of
