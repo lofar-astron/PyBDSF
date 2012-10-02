@@ -1,4 +1,4 @@
-# some functions 
+# some functions
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
@@ -61,20 +61,20 @@ def func_poly2d(ord,p,x,y):
     """ 2d polynomial.
     ord=0 : z=p[0]
     ord=1 : z=p[0]+p[1]*x+p[2]*y
-    ord=2 : z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y 
+    ord=2 : z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y
     ord=3 : z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y+
               p[6]*x*x*x+p[7]*x*x*y+p[8]*x*y*y+p[9]*y*y*y"""
 
     if ord == 0:
         z=p[0]
-    if ord == 1: 
+    if ord == 1:
         z=p[0]+p[1]*x+p[2]*y
-    if ord == 2: 
+    if ord == 2:
         z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y
-    if ord == 3: 
+    if ord == 3:
         z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y+\
           p[6]*x*x*x+p[7]*x*x*y+p[8]*x*y*y+p[9]*y*y*y
-    if ord > 3: 
+    if ord > 3:
         print " We do not trust polynomial fits > 3 "
 	z = None
 
@@ -124,7 +124,7 @@ def cart2polar(cart, cen):
 def polar2cart(polar, cen):
     """ convert polar coordinates around cen to cartesian coordinates. theta is
     zero for +ve xaxis and goes counter clockwise. polar is a numpy array of [r], [heta]
-    and cart is a numpy array [x,y] where x and y are numpy arrays of all the (>0) 
+    and cart is a numpy array [x,y] where x and y are numpy arrays of all the (>0)
     values of coordinates."""
     import math
 
@@ -154,10 +154,10 @@ def gaus_pixval(g, pix):
     pixval = peak*exp(-0.5*(dr1*dr1+dr2*dr2))
 
     return pixval
-    
+
 def atanproper(dumr, dx, dy):
     from math import pi
-    
+
     ysign = (dy >= 0.0)
     xsign = (dx >= 0.0)
     if ysign and (not xsign): dumr = pi - dumr
@@ -180,13 +180,13 @@ def gdist_pa(pix1, pix2, gsize):
 
     psi = val - (gsize[2]+90.0)/180.0*pi
                                 # convert angle to eccentric anomaly
-    psi=atan(gsize[0]/gsize[1]*tan(psi))  
+    psi=atan(gsize[0]/gsize[1]*tan(psi))
     dumr2 = gsize[0]*cos(psi)
     dumr3 = gsize[1]*sin(psi)
     fwhm = sqrt(dumr2*dumr2+dumr3*dumr3)
- 
+
     return fwhm
-  
+
 def gaus_2d(c, x, y):
     """ x and y are 2d arrays with the x and y positions. """
     import math
@@ -202,7 +202,7 @@ def gaus_2d(c, x, y):
     return val
 
 def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
-    """ x and y are 2d arrays with the x and y positions. c is a list (of lists) of gaussian parameters to fit, p_tofix 
+    """ x and y are 2d arrays with the x and y positions. c is a list (of lists) of gaussian parameters to fit, p_tofix
     are gaussian parameters to fix. ind is a list with 0, 1; 1 = fit; 0 = fix. """
 
     import math
@@ -261,17 +261,17 @@ def corrected_size(size):
     from const import fwsig
 
     csize = [0,0,0]
-    csize[0] = size[0]*fwsig 
-    csize[1] = size[1]*fwsig  
+    csize[0] = size[0]*fwsig
+    csize[1] = size[1]*fwsig
     bpa = size[2]
-    pa = bpa-90.0            
+    pa = bpa-90.0
     pa = pa % 360
-    if pa < 0.0: pa = pa + 360.0  
-    if pa > 180.0: pa = pa - 180.0 
+    if pa < 0.0: pa = pa + 360.0
+    if pa > 180.0: pa = pa - 180.0
     csize[2] = pa
-  
+
     return csize
- 
+
 def drawellipse(g):
     import math
     import numpy as N
@@ -345,7 +345,7 @@ def drawsrc(src):
     return path
 
 def mask_fwhm(g, fac1, fac2, delc, shap):
-    """ take gaussian object g and make a mask (as True) for pixels which are outside (less flux) 
+    """ take gaussian object g and make a mask (as True) for pixels which are outside (less flux)
         fac1*FWHM and inside (more flux) fac2*FWHM. Also returns the values as well."""
     import math
     import numpy as N
@@ -363,8 +363,8 @@ def mask_fwhm(g, fac1, fac2, delc, shap):
     gau = gau * mask
 
     return mask, gau
-        
-def flatten(x): 
+
+def flatten(x):
     """flatten(sequence) -> list
     Taken from http://kogs-www.informatik.uni-hamburg.de/~meine/python_tricks
 
@@ -388,17 +388,17 @@ def flatten(x):
     return result
 
 def moment(x,mask=None):
-    """ 
-    Calculates first 3 moments of numpy array x. Only those values of x 
-    for which mask is False are used, if mask is given. Works for any 
-    dimension of x. 
+    """
+    Calculates first 3 moments of numpy array x. Only those values of x
+    for which mask is False are used, if mask is given. Works for any
+    dimension of x.
     """
     import numpy as N
 
     if mask == None:
         mask=N.zeros(x.shape, dtype=bool)
     m1=N.zeros(1)
-    m2=N.zeros(x.ndim) 
+    m2=N.zeros(x.ndim)
     m3=N.zeros(x.ndim)
     for i, val in N.ndenumerate(x):
         if not mask[i]:
@@ -410,7 +410,7 @@ def moment(x,mask=None):
     return m1, m2, m3
 
 def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
-    """ 
+    """
     Calls scipy.optimise.leastsq for a 1d function with a mask.
     Takes values only where mask=False.
     """
@@ -449,14 +449,14 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
       try:
         (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
       except TypeError:
-        # This error means no warning argument is available, so redirect stdout to a null device 
+        # This error means no warning argument is available, so redirect stdout to a null device
         # to suppress printing of (unnecessary) warning messages
         original_stdout = sys.stdout  # keep a reference to STDOUT
         sys.stdout = NullDevice()  # redirect the real STDOUT
         (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
         sys.stdout = original_stdout  # turn STDOUT back on
 
-      if do_err: 
+      if do_err:
         if cov != None:
           if N.sum(sig != 1.) > 0:
             err = N.array([sqrt(abs(cov[i,i])) for i in range(len(p))])
@@ -494,7 +494,7 @@ def std(y):
         return s*sqrt(float(l)/(l-1))
 
 def imageshift(image, shift):
-    """ Shifts a 2d-image by the tuple (shift). Positive shift is to the right and upwards. 
+    """ Shifts a 2d-image by the tuple (shift). Positive shift is to the right and upwards.
     This is done by fourier shifting. """
     import scipy
     from scipy import ndimage
@@ -524,7 +524,7 @@ def trans_gaul(q):
 def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     """ Compute 2d gaussian parameters from moment analysis, for an island with
         multiple gaussians. Compute only for gaussian with index (mask value) isrc.
-        Returns normalised peak, centroid, fwhm and P.A. assuming North is top. 
+        Returns normalised peak, centroid, fwhm and P.A. assuming North is top.
     """
     from math import sqrt, atan, pi
     from const import fwsig
@@ -554,9 +554,9 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
       mompara[5] = 0.5*dumr*180.0/pi - 90.0
       if mompara[5] < 0.0: mompara[5] += 180.0
     return mompara
-     
+
 def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
-    """ Fit 2d gaussian to data with x and y also being 2d numpy arrays with x and y positions. 
+    """ Fit 2d gaussian to data with x and y also being 2d numpy arrays with x and y positions.
         Takes an optional error array and a mask array (True => pixel is masked). """
     from scipy.optimize import leastsq
     import numpy as N
@@ -565,7 +565,7 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
     if mask != None and mask.shape != data.shape:
         print 'Data and mask array dont have the same shape, ignoring mask'
         mask = None
-    if err != None and err.shape != data.shape: 
+    if err != None and err.shape != data.shape:
         print 'Data and error array dont have the same shape, ignoring error'
         err = None
 
@@ -574,12 +574,12 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
 
     if err == None:
         errorfunction = lambda p: N.ravel(gaus_2d(p, x, y) - data)[g_ind]
-    else:  
+    else:
         errorfunction = lambda p: N.ravel((gaus_2d(p, x, y) - data)/err)[g_ind]
     try:
         p, success = leastsq(errorfunction, p_ini, warning=False)
     except TypeError:
-        # This error means no warning argument is available, so redirect stdout to a null device 
+        # This error means no warning argument is available, so redirect stdout to a null device
         # to suppress printing of warning messages
         original_stdout = sys.stdout  # keep a reference to STDOUT
         sys.stdout = NullDevice()  # redirect the real STDOUT
@@ -590,7 +590,7 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
     return p, success
 
 def deconv(gaus_bm, gaus_c):
-    """ Deconvolves gaus_bm from gaus_c to give gaus_dc. 
+    """ Deconvolves gaus_bm from gaus_c to give gaus_dc.
         Stolen shamelessly from aips DECONV.FOR.
         All PA is in degrees."""
     from math import pi, cos, sin, atan, sqrt
@@ -653,11 +653,11 @@ def deconv(gaus_bm, gaus_c):
     #ed_3 =e_3
     #else:
     #  pass
-      
+
     return gaus_d
 
 def deconv2(gaus_bm, gaus_c):
-    """ Deconvolves gaus_bm from gaus_c to give gaus_dc. 
+    """ Deconvolves gaus_bm from gaus_c to give gaus_dc.
         Stolen shamelessly from Miriad gaupar.for.
         All PA is in degrees.
 
@@ -665,7 +665,7 @@ def deconv2(gaus_bm, gaus_c):
    	 0   All OK.
      1   Result is pretty close to a point source.
 	 2   Illegal result.
-        
+
         """
     from math import pi, cos, sin, atan2, sqrt
 
@@ -680,11 +680,11 @@ def deconv2(gaus_bm, gaus_c):
     bmin1 = gaus_c[1]
     bmin2 = gaus_bm[1]
 
-    alpha = ( (bmaj1*cos(theta1))**2 + (bmin1*sin(theta1))**2 - 
+    alpha = ( (bmaj1*cos(theta1))**2 + (bmin1*sin(theta1))**2 -
               (bmaj2*cos(theta2))**2 - (bmin2*sin(theta2))**2 )
-    beta = ( (bmaj1*sin(theta1))**2 + (bmin1*cos(theta1))**2 - 
+    beta = ( (bmaj1*sin(theta1))**2 + (bmin1*cos(theta1))**2 -
              (bmaj2*sin(theta2))**2 - (bmin2*cos(theta2))**2 )
-    gamma = 2.0 * ( (bmin1**2-bmaj1**2)*sin(theta1)*cos(theta1) - 
+    gamma = 2.0 * ( (bmin1**2-bmaj1**2)*sin(theta1)*cos(theta1) -
                   (bmin2**2-bmaj2**2)*sin(theta2)*cos(theta2) )
 
     s = alpha + beta
@@ -724,7 +724,7 @@ def get_errors(img, p, stdav, bm_pix=None):
 
     mylog = mylogger.logging.getLogger("PyBDSM.Compute")
 
-    if len(p) % 7 > 0: 
+    if len(p) % 7 > 0:
       mylog.error("Gaussian parameters passed have to have 7n numbers")
     ngaus = len(p)/7
     errors = []
@@ -769,7 +769,7 @@ def fit_chisq(x, p, ep, mask, funct, order):
     import numpy as N
 
     ind = N.where(N.array(mask)==False)[0]
-    if order == 0: 
+    if order == 0:
       fit = [funct(p)]*len(p)
     else:
       fitpara, efit = fit_mask_1d(x, p, ep, mask, funct, True, order)
@@ -784,7 +784,7 @@ def fit_chisq(x, p, ep, mask, funct, order):
 def calc_chisq(x, y, ey, p, mask, funct, order):
     import numpy as N
 
-    if order == 0: 
+    if order == 0:
       fit = [funct(y)]*len(y)
     else:
       fit = funct(p, x)
@@ -823,7 +823,7 @@ def variance_of_wted_windowedmean(S_i, rms_i, chanmask, window_size):
       strt = i*window_size; stp = (i+1)*window_size
       if i == nwin-1: stp = nchan
       ind = N.arange(strt,stp)
-      m = chanmask[ind] 
+      m = chanmask[ind]
       index = [arg for ii,arg in enumerate(ind) if not m[ii]]
       if len(index) > 0:
         s = S_i[index]; r = rms_i[index]; w = wt[index]
@@ -835,18 +835,18 @@ def variance_of_wted_windowedmean(S_i, rms_i, chanmask, window_size):
         vars[i] = 0
         mask[i] = True
 
-    return fluxes, vars, mask 
+    return fluxes, vars, mask
 
 def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj=False):
     """ fitcode : 0=fit all; 1=fit amp; 2=fit amp, posn; 3=fit amp, size """
     from scipy.optimize import leastsq
     import numpy as N
     import sys
-   
+
     if mask != None and mask.shape != image.shape:
         print 'Data and mask array dont have the same shape, ignoring mask'
         mask = None
-    if err != None and err.shape != image.shape: 
+    if err != None and err.shape != image.shape:
         print 'Data and error array dont have the same shape, ignoring error'
         err = None
     if mask == None: mask = N.zeros(image.shape, bool)
@@ -854,7 +854,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
     g_ind = N.where(~N.ravel(mask))[0]
 
     ngaus = len(gaus)
-    if ngaus > 0: 
+    if ngaus > 0:
       p_ini = []
       for g in gaus:
         p_ini = p_ini + g2param(g, adj)
@@ -876,7 +876,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
       try:
           p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind), warning=False)
       except TypeError:
-          # This error means no warning argument is available, so redirect stdout to a null device 
+          # This error means no warning argument is available, so redirect stdout to a null device
           # to suppress printing of warning messages
           original_stdout = sys.stdout  # keep a reference to STDOUT
           sys.stdout = NullDevice()  # redirect the real STDOUT
@@ -900,15 +900,18 @@ def gaussian_fcn(g, x1, x2):
 
     Parameters:
     x1, x2: grid (as produced by numpy.mgrid f.e.)
-    g: Gaussian object
+    g: Gaussian object or list of Gaussian paramters
     """
     from math import radians, sin, cos
     from const import fwsig
     import numpy as N
 
-    A = g.peak_flux
-    C1, C2 = g.centre_pix
-    S1, S2, Th = g.size_pix
+    if isinstance(g, list):
+        A, C1, C2, S1, S2, Th = g
+    else:
+        A = g.peak_flux
+        C1, C2 = g.centre_pix
+        S1, S2, Th = g.size_pix
     S1 = S1/fwsig; S2 = S2/fwsig; Th = Th + 90.0 # Define theta = 0 on x-axis
 
     th = radians(Th)
@@ -934,7 +937,7 @@ def mclean(im1, c, beam):
     im1 = im1-im
 
     return im1
-     
+
 def arrstatmask(im, mask):
     """ Basic statistics for a masked array. dont wanna use numpy.ma """
     import numpy as N
@@ -969,7 +972,7 @@ def get_maxima(im, mask, thr, shape, beam):
         iniposn.append(c); inipeak.append(im[c])
         im1 = mclean(im1, c, beam)
 
-    return inipeak, iniposn, im1 
+    return inipeak, iniposn, im1
 
 def watershed(image, mask=None, markers=None, beam=None, thr=None):
       import numpy as N
@@ -986,7 +989,7 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
         ng = len(iniposn); markers = N.zeros(image.shape, int)
         for i in range(ng): markers[iniposn[i]] = i+2
         markers[N.unravel_index(N.argmin(image), image.shape)] = 1
-      
+
       im1 = cp(image)
       if im1.min() < 0.: im1 = im1-im1.min()
       im1 = 255 - im1/im1.max()*255
@@ -997,9 +1000,9 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
 def get_kwargs(kwargs, key, typ, default):
 
     obj = True
-    if kwargs.has_key(key): 
+    if kwargs.has_key(key):
       obj = kwargs[key]
-    if not isinstance(obj, typ): 
+    if not isinstance(obj, typ):
       obj = default
 
     return obj
@@ -1010,14 +1013,14 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import mylogger
     import os
     import numpy as N
-    
+
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
-    if indir == None or indir == './': 
+    if indir == None or indir == './':
         prefix = ''
-    else: 
+    else:
         prefix = indir + '/'
     image_file = prefix + filename
-    
+
     # Check that file exists
     if not os.path.exists(image_file):
         img._reason = 'File does not exist'
@@ -1026,7 +1029,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
-            import pyfits                
+            import pyfits
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             except IOError, err:
@@ -1041,7 +1044,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 return None
     else:
         # Simple check of whether pyrap and pyfits are available
-        # We need pyfits version 2.2 or greater to use the 
+        # We need pyfits version 2.2 or greater to use the
         # "ignore_missing_end" argument to pyfits.open().
         try:
             from distutils.version import StrictVersion
@@ -1130,7 +1133,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if coords.has_key('direction0'):
             ctype_in.append('DEC')
             ctype_in.append('RA')
-        
+
     ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
     indx_out = [-1, -1, -1, -1]
     indx_in = range(len(data.shape))
@@ -1172,7 +1175,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if xmax > data.shape[2]: xmax = data.shape[2]
         if ymax > data.shape[3]: ymax = data.shape[3]
         if xmin >= xmax or ymin >= ymax:
-            raise RuntimeError("The trim_box option does not specify a valid part of the image.")          
+            raise RuntimeError("The trim_box option does not specify a valid part of the image.")
         data = data[:, :, xmin:xmax, ymin:ymax]
     else:
         img.trim_box = None
@@ -1181,36 +1184,39 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
 def write_image_to_file(use, filename, image, img, outdir=None,
                                            clobber=True):
-    """ Writes image array to dir/filename using pyfits or pyrap.  """
+    """ Writes image array to dir/filename using pyfits"""
     import numpy as N
     import os
     import mylogger
-    
+
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Writefile")
 
-    if outdir == None:
-      outdir = img.indir
-    if not os.path.exists(outdir) and outdir != '':
-        os.mkdir(outdir)
-    
-    #if use == 'fits':
-    import pyfits
-    if os.path.exists(outdir + filename):
-        if clobber:
-            os.remove(outdir + filename)
-        else:
-            return
-        
-    temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
-    temp_im.writeto(outdir + filename,  clobber=clobber)
-    #if use == 'rap':
-    #  import pyrap.images as pim
-    #  mylog.info("Using the input file as template for writing Casa Image. No guarantees")      
-    #  im = pim.image(img.opts.fits_name)
-    #  #im.saveas(indir+filename)
-    #  im = pim.image(indir+filename)
-    #  im.putdata(image)
-    #  im.saveas(indir+filename)
+    if filename == 'SAMP':
+        import tempfile
+        if not hasattr(img,'samp_client'):
+            s, private_key = start_samp_proxy()
+            img.samp_client = s
+            img.samp_key = private_key
+
+        # Broadcast image to SAMP Hub
+        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
+        tfile = tempfile.NamedTemporaryFile(delete=False)
+        temp_im.writeto(tfile.name,  clobber=clobber)
+        send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
+    else:
+        # Write image to FITS file
+        import pyfits
+        if outdir == None:
+            outdir = img.indir
+        if not os.path.exists(outdir) and outdir != '':
+            os.mkdir(outdir)
+        if os.path.exists(outdir + filename):
+            if clobber:
+                os.remove(outdir + filename)
+            else:
+                return
+        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
+        temp_im.writeto(outdir + filename,  clobber=clobber)
 
 def make_fits_image(imagedata, wcsobj, beam, freq):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
@@ -1247,7 +1253,7 @@ def connect(mask):
 
     connectivity = nd.generate_binary_structure(2,2)
     labels, count = nd.label(mask, connectivity)
-    if count > 1 : 
+    if count > 1 :
       connected = 'multiple'
     else:
       connected = 'single'
@@ -1255,8 +1261,8 @@ def connect(mask):
     return connected, count
 
 def area_polygon(points):
-    """ Given an ANGLE ORDERED array points of [[x], [y]], find the total area by summing each successsive 
-    triangle with the centre """ 
+    """ Given an ANGLE ORDERED array points of [[x], [y]], find the total area by summing each successsive
+    triangle with the centre """
     import numpy as N
 
     x, y = points
@@ -1268,9 +1274,9 @@ def area_polygon(points):
       p1, p2, p3 = N.array([cenx, ceny]), N.array([x[i], y[i]]), N.array([x[i+1], y[i+1]])
       t_area= N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
       area += t_area
-      
+
     return area
-      
+
 def convexhull_deficiency(isl):
     """ Finds the convex hull for the island and returns the deficiency.
     Code taken from http://code.google.com/p/milo-lab/source/browse/trunk/src/toolbox/convexhull.py?spec=svn140&r=140
@@ -1291,11 +1297,11 @@ def convexhull_deficiency(isl):
         if delta[0] < 0:
             res += N.pi
         return res
-    
+
     def area_of_triangle(p1, p2, p3):
         """calculate area of any triangle given co-ordinates of the corners"""
         return N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
-    
+
     def convex_hull(points):
         """Calculate subset of points that make a convex hull around points
         Recursively eliminates points that lie inside two neighbouring points until only convex hull is remaining.
@@ -1325,7 +1331,7 @@ def convexhull_deficiency(isl):
                 n_pts = len(pts)
             k += 1
         return N.asarray(pts)
-    
+
     mask = ~isl.mask_active
     points = N.asarray(N.where(mask - nd.binary_erosion(mask)))
     hull_pts = list(convex_hull(points))   # these are already in angle-sorted order
@@ -1373,16 +1379,16 @@ def check_1pixcontacts(open):
       grid = cp(open[x-1:x+2, y-1:y+2]); grid[1,1] = 0
       grid = N.where(grid == open[tuple(pixel)], 1, 0)
       ll, nn = nd.label(grid, connectivity)
-      if nn > 1: 
+      if nn > 1:
         open[tuple(pixel)] = 0
 
     return open
 
 def assign_leftovers(mask, open, nisl, labels):
-    """ 
-    Given isl and the image of the mask after opening (open) and the number of new independent islands n, 
-    connect up the left over pixels to the new islands if they connect to only one island and not more. 
-    Assign the remaining to an island. We need to assign the leftout pixels to either of many sub islands. 
+    """
+    Given isl and the image of the mask after opening (open) and the number of new independent islands n,
+    connect up the left over pixels to the new islands if they connect to only one island and not more.
+    Assign the remaining to an island. We need to assign the leftout pixels to either of many sub islands.
     Easiest is to assign to the sub island with least size.
     """
     import scipy.ndimage as nd
@@ -1402,7 +1408,6 @@ def assign_leftovers(mask, open, nisl, labels):
       coords = N.transpose(N.where(mlabels==ii))  # the coordinates of island i of left-out pixels
       for co in coords:
         co8 = [[x,y] for x in range(co[0]-1,co[0]+2) for y in range(co[1]-1,co[1]+2) if x >=0 and y >=0 and x <n and y<m]
-#         co8 = [[x,y] for x in range(co[0]-1,co[0]+2) for y in range(co[1]-1,co[1]+2) if x >=0 and y >=0 and x <n and y<m]
         c_list.extend([tuple(cc) for cc in co8 if mlabels[tuple(cc)] == 0])
       c_list = list(set(c_list))     # to avoid duplicates
       vals = N.array([labels[c] for c in c_list])
@@ -1410,15 +1415,16 @@ def assign_leftovers(mask, open, nisl, labels):
       if len(belongs) == 0:
         # No suitable islands found => mask pixels
         for cc in coords:
-            mask[cc] = True
+            mask = (mlabels == ii)
+#             mask[cc] = True
             return None, mask
-      if len(belongs) == 1: 
-        for cc in coords: 
+      if len(belongs) == 1:
+        for cc in coords:
           labels[tuple(cc)] = belongs[0]
       else:                             # get the border pixels of the islands
         nn = [npix[b-1] for b in belongs]
         addto = belongs[N.argmin(nn)]
-        for cc in coords: 
+        for cc in coords:
           labels[tuple(cc)] = addto
 
     return labels, mask
@@ -1481,20 +1487,20 @@ def approx_equal(x, y, *args, **kwargs):
     # comparison.
     return _float_approx_equal(x, y, *args, **kwargs)
 
-def isl_tosplit(isl, img):
+def isl_tosplit(isl, opts):
     """ Splits an island and sends back parameters """
     import numpy as N
 
-    size_extra5 = img.opts.splitisl_size_extra5
-    frac_bigisl3 = img.opts.splitisl_frac_bigisl3
+    size_extra5 = opts.splitisl_size_extra5
+    frac_bigisl3 = opts.splitisl_frac_bigisl3
 
     connected, count = connect(isl.mask_active)
     index = 0
     n_subisl3, labels3, isl_pixs3 = open_isl(isl.mask_active, 3)
     n_subisl5, labels5, isl_pixs5 = open_isl(isl.mask_active, 5)
     isl_pixs3, isl_pixs5 = N.array(isl_pixs3), N.array(isl_pixs5)
-    
-                                # take open 3 or 5 
+
+                                # take open 3 or 5
     open3, open5 = False, False
     if n_subisl3 > 0 and isl_pixs3 != None:                                 # open 3 breaks up island
       max_sub3 = N.max(isl_pixs3)
@@ -1508,14 +1514,14 @@ def isl_tosplit(isl, img):
     else:
       if open3: index = 3; n_subisl = n_subisl3; labels = labels3
       else: index = 0
-    convex_def =  convexhull_deficiency(isl) 
+    convex_def =  convexhull_deficiency(isl)
     #print 'CONVEX = ',convex_def
 
-    if img.opts.plot_islands:
+    if opts.plot_islands:
         try:
             import matplotlib.pyplot as pl
             pl.figure()
-            pl.suptitle('Island '+str(isl.island_id) + ' ' + repr(img.waveletimage))
+            pl.suptitle('Island '+str(isl.island_id))
             pl.subplot(2,2,1); pl.imshow(N.transpose(isl.image*~isl.mask_active), origin='lower', interpolation='nearest'); pl.title('Image')
             pl.subplot(2,2,2); pl.imshow(N.transpose(labels3), origin='lower', interpolation='nearest'); pl.title('labels3')
             pl.subplot(2,2,3); pl.imshow(N.transpose(labels5), origin='lower', interpolation='nearest'); pl.title('labels5')
@@ -1532,14 +1538,14 @@ class NullDevice():
 
 def ch0_aperture_flux(img, posn_pix, aperture_pix):
     """Measure ch0 flux inside radius aperture_pix pixels centered on posn_pix.
-    
+
     Returns [flux, fluxE]
     """
     import numpy as N
-    
+
     if aperture_pix == None:
         return [0.0, 0.0]
-        
+
     # Make ch0 and rms subimages
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
@@ -1553,7 +1559,7 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     yhi = posn_pix[1]+int(aperture_pix)+1
     if yhi > img.ch0.shape[1]:
         yhi = img.ch0.shape[1]
-        
+
     aper_im = img.ch0[xlo:xhi, ylo:yhi]
     aper_rms = img.rms[xlo:xhi, ylo:yhi]
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
@@ -1563,8 +1569,8 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
 def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     """Returns aperture flux and error"""
     import numpy as N
-        
-    dist_mask = generate_aperture(aper_im.shape[1], aper_im.shape[0], posn_pix[1], posn_pix[0], aperture_pix)
+
+    dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[1], posn_pix[0], aperture_pix)
     aper_mask = N.where(dist_mask)
     if N.size(aper_mask) == 0:
         return [0.0, 0.0]
@@ -1576,7 +1582,7 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
 def generate_aperture(ysize, xsize, ycenter, xcenter, radius):
     """Makes a mask for a circular aperture"""
     import numpy
-    
+
     x, y = numpy.mgrid[0:ysize,0:xsize]
     return ((x - ycenter)**2 + (y - xcenter)**2 <= radius**2) * 1
 
@@ -1614,5 +1620,109 @@ def getTerminalSize():
     except:
         pass
     # Give up. return 0.
-    return (0, 0)            
+    return (0, 0)
 
+def eval_func_tuple(f_args):
+    """Takes a tuple of a function and args, evaluates and returns result
+
+    This function (in addition to itertools) gets around limitation that
+    multiple-argument sequences are not supported by multiprocessing.
+    """
+    return f_args[0](*f_args[1:])
+
+
+def start_samp_proxy():
+    """Starts (registers) and returns a SAMP proxy"""
+    import os
+    import xmlrpclib
+
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        HUB_PARAMS = {}
+        for line in open(lockfile):
+            if not line.startswith('#'):
+                key, value = line.split('=', 1)
+                HUB_PARAMS[key] = value.strip()
+
+    # Set up proxy
+    s = xmlrpclib.ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
+
+    # Register with Hub
+    metadata = {"samp.name": 'PyBDSM', "samp.description.text": 'PyBDSM: the Python Blob Detection and Source Measurement software'}
+    result = s.samp.hub.register(HUB_PARAMS['samp.secret'])
+    private_key = result['samp.private-key']
+    s.samp.hub.declareMetadata(private_key, metadata)
+    return s, private_key
+
+
+def stop_samp_proxy(img):
+    """Stops (unregisters) a SAMP proxy"""
+    import os
+
+    if hasattr(img, 'samp_client'):
+        lockfile = os.path.expanduser('~/.samp')
+        if os.path.exists(lockfile):
+            img.samp_client.samp.hub.unregister(img.samp_key)
+
+
+def send_fits_image(s, private_key, name, file_path):
+    """Send a SAMP notification to load a fits image."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "image.load.fits"
+    message['samp.params'] = {}
+    message['samp.params']['url'] = 'file://' + os.path.abspath(file_path)
+    message['samp.params']['name'] = name
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_fits_table(s, private_key, name, file_path):
+    """Send a SAMP notification to load a fits table."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "table.load.fits"
+    message['samp.params'] = {}
+    message['samp.params']['url'] = 'file://' + os.path.abspath(file_path)
+    message['samp.params']['name'] = name
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_highlight_row(s, private_key, url, row_id):
+    """Send a SAMP notification to highlight a row in a table."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "table.highlight.row"
+    message['samp.params'] = {}
+    message['samp.params']['row'] = str(row_id)
+    message['samp.params']['url'] = url
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_coords(s, private_key, coords):
+    """Send a SAMP notification to point at given coordinates."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "coord.pointAt.sky"
+    message['samp.params'] = {}
+    message['samp.params']['ra'] = str(coords[0])
+    message['samp.params']['dec'] = str(coords[1])
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)

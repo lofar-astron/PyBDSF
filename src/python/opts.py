@@ -27,7 +27,7 @@ class Op_new_op(Op):
     ## we need to add option my_new_opt
     pass
 
-## this will extend Opts class at runtime and ensure that 
+## this will extend Opts class at runtime and ensure that
 ## type-checking works properly.
 Opts.my_new_opt = Float(33, doc="docstring")
 """
@@ -517,6 +517,11 @@ class Opts(object):
                                 "should give better estimates of the uncertainites, "
                                 "particularly for complex sources composed of many "\
                                 "Gaussians.",
+                             group = "advanced_opts")
+    ncores = Option(None, Int(),
+                             doc = "Number of cores to use during fitting, None => "\
+                                "use all\n"\
+                                "Sets the number of cores to use during fitting.",
                              group = "advanced_opts")
 
     #--------------------------------ADAPTIVE RMS_BOX OPTIONS--------------------------------
@@ -1033,7 +1038,17 @@ class Opts(object):
                              doc = "Print debug info to the logfile",
                              group = "hidden")
     outfile = Option(None, String(),
-                             doc = "Output file name. None => file is named automatically",
+                             doc = "Output file name. None => file is named "\
+                                 "automatically; 'SAMP' => send to SAMP hub "\
+                                 "(e.g., to TOPCAT, ds9, or Aladin)",
+                             group = 'hidden')
+    broadcast = Bool(False,
+                             doc = "Broadcast Gaussian and source IDs and "\
+                                 "coordinates to SAMP hub when a Gaussian is "\
+                                 "clicked?\nNote that for the "\
+                                 "IDs to be useful, a catalog must have been sent "\
+                                 "to the SAMP hub previously using the write_catalog "\
+                                 "task (with outfile = 'SAMP').",
                              group = 'hidden')
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
@@ -1152,7 +1167,7 @@ class Opts(object):
 
 
     def __init__(self, values = None):
-        """Build an instance of Opts and (possibly) 
+        """Build an instance of Opts and (possibly)
         initialize some variables.
 
         Parameters:
@@ -1167,7 +1182,7 @@ class Opts(object):
         """
         'private' function performing parse of a string containing
         a bool representation as defined in the parameter set/otdb
-        implementation       
+        implementation
         """
         true_chars = ['t', 'T', 'y', 'Y', '1']
         false_chars = ['f', 'F', 'n', 'N', '0']
@@ -1217,7 +1232,7 @@ class Opts(object):
 
         opt_names should be a list of opt names as strings, but can be
         a string of a single opt name.
-        
+
         If None, set all opts to default values."""
         if opt_names == None:
             TCInit(self)
@@ -1271,3 +1286,13 @@ class Opts(object):
         opts_list = sorted(opts_list)
         return opts_list
 
+    def __setstate__(self, state):
+        self.set_opts(state)
+
+    def __getstate__(self):
+        import tc
+        state = {}
+        for k, v in self.__class__.__dict__.iteritems():
+            if isinstance(v, tc.TC):
+                state.update({k: self.__getattribute__(k)})
+        return state

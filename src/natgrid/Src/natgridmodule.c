@@ -247,7 +247,7 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
         write_float(numyout, title[4], fp, (float *)object_yo->data);
         write_float(numxout*numyout, title[5], fp, (float *)object_out->data);
 
-        close(fp);
+        fclose(fp);
     }
 
     return Py_BuildValue(("Oi"), object_out, ier);
@@ -738,7 +738,7 @@ static PyObject *nat_c_nnpntinits(PyObject *self, PyObject *args)
         write_float(npnts, title[1], fp, (float *)object_y->data);
         write_float(npnts, title[2], fp, (float *)object_z->data);
 
-        close(fp);
+        fclose(fp);
     }
 
     Py_INCREF(Py_None);
@@ -962,7 +962,7 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
         write_double(numyout, title[4], fp, (double *)object_yo->data);
         write_double(numxout*numyout, title[5], fp, (double *)object_out->data);
 
-        close(fp);
+        fclose(fp);
     }
 
     return Py_BuildValue(("Oi"), object_out, ier);
@@ -1265,7 +1265,7 @@ static PyObject *nat_c_nnpntinitd(PyObject *self, PyObject *args)
         write_double(npnts, title[1], fp, (double *)object_y->data);
         write_double(npnts, title[2], fp, (double *)object_z->data);
 
-        close(fp);
+        fclose(fp);
     }
 
     Py_INCREF(Py_None);

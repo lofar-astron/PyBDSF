@@ -18,13 +18,13 @@ from opts import *
 class Image(object):
     """Image is a primary data container for PyBDSM.
 
-    All the run-time data (such as image data, mask, etc.) 
-    is stored here. A number of type-checked properties 
+    All the run-time data (such as image data, mask, etc.)
+    is stored here. A number of type-checked properties
     are defined for the most basic image attributes, such
     as image data, mask, header, user options.
 
     There is little sense in declaring all possible attributes
-    right here as it will introduce unneeded dependencies 
+    right here as it will introduce unneeded dependencies
     between modules, thus most other attributes (like island lists,
     gaussian lists, etc) are inserted at run-time by the specific
     PyBDSM modules.
@@ -47,11 +47,29 @@ class Image(object):
         self.opts = Opts(opts)
         self.extraparams = {}
 
+    def __setstate__(self, state):
+        """Needed for multiprocessing"""
+        self.pixel_beamarea = state['pixel_beamarea']
+        self.pixel_beam = state['pixel_beam']
+        self.thresh_pix = state['thresh_pix']
+        self.minpix_isl = state['minpix_isl']
+        self.clipped_mean = state['clipped_mean']
+
+    def __getstate__(self):
+        """Needed for multiprocessing"""
+        state = {}
+        state['pixel_beamarea'] = self.pixel_beamarea
+        state['pixel_beam'] = self.pixel_beam
+        state['thresh_pix'] = self.thresh_pix
+        state['minpix_isl'] = self.minpix_isl
+        state['clipped_mean'] = self.clipped_mean
+        return state
+
     def list_pars(self):
         """List parameter values."""
         import interface
         interface.list_pars(self)
-        
+
     def set_pars(self, **kwargs):
         """Set parameter values."""
         import interface
@@ -62,7 +80,7 @@ class Image(object):
         import interface
         success = interface.process(self, **kwargs)
         return success
-    
+
     def save_pars(self, savefile=None):
         """Save parameter values."""
         import interface
@@ -101,18 +119,29 @@ class Image(object):
             return False
         plotresults.plotresults(self, **kwargs)
         return True
-        
+
     def export_image(self, **kwargs):
-          """Export an internal image to a file."""
-          import interface
-          interface.export_image(self, **kwargs)
-          
+        """Export an internal image to a file."""
+        import interface
+        try:
+            interface.export_image(self, **kwargs)
+        except RuntimeError, err:
+            if self._is_interactive_shell:
+                print "\n\033[31;1mERROR\033[0m: " + str(err)
+            else:
+                raise RuntimeError(str(err))
+
     def write_catalog(self, **kwargs):
         """Write the Gaussian, source, or shapelet list to a file"""
         import interface
-        interface.write_catalog(self, **kwargs)
-    write_gaul = write_catalog # for legacy scripts
-    
+        try:
+            interface.write_catalog(self, **kwargs)
+        except RuntimeError, err:
+            if self._is_interactive_shell:
+                print "\n\033[31;1mERROR\033[0m: " + str(err)
+            else:
+                raise RuntimeError(str(err))
+
 
 class Op(object):
     """Common base class for all PyBDSM operations.

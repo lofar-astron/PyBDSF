@@ -17,7 +17,7 @@ at the terminal prompt.
 
     If the above command does not work, make sure you environment is initialized correctly for PyBDSM (see :ref:`add_to_path`).
 
-The interactive environment will then load, and a welcome screen listing common commands and task will be shown. You will then be at the PyBDSM prompt, which looks like this::
+The interactive environment will then load, and a welcome screen listing common commands and tasks will be shown. You will then be at the PyBDSM prompt, which looks like this::
 
     BDSM [1]:
 
@@ -49,7 +49,7 @@ Simply typing ``help`` will start the Python help system.
 
 Logging
 -------
-Logging of all task output is done automatically to a log file. Logs for subsequent runs on the same image are appended to the end of the log file.
+Logging of all task output is done automatically to a log file. Logs for subsequent runs on the same image are appended to the end of the log file. The log for each run includes a listing of all the non-default and internally derived parameters, so that a run can be easily reproduced using only  information in the log.
 
 .. _commands:
 
