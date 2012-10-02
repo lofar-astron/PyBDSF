@@ -667,14 +667,14 @@ def format_coord_psf_maj(x, y):
     """Custom coordinate format for PSF major image"""
     global img_psf_maj
     im = img_psf_maj
-    coord_str = make_coord_str(x, y, im, unit='pixels')
+    coord_str = make_coord_str(x, y, im, unit='arcsec')
     return coord_str
 
 def format_coord_psf_min(x, y):
     """Custom coordinate format for PSF minor image"""
     global img_psf_min
     im = img_psf_min
-    coord_str = make_coord_str(x, y, im, unit='pixels')
+    coord_str = make_coord_str(x, y, im, unit='arcsec')
     return coord_str
 
 def format_coord_psf_pa(x, y):

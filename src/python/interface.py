@@ -545,9 +545,11 @@ def export_image(img, outfile=None, img_format='fits',
         'gaus_model' - Gaussian model image
         'shap_resid' - Shapelet model residual image
         'shap_model' - Shapelet model image
-        'psf_major' - PSF major axis FWHM image
-        'psf_minor' - PSF minor axis FWHM image
-        'psf_pa' - PSF position angle image
+        'psf_major' - PSF major axis FWHM image (FWHM in arcsec)
+        'psf_minor' - PSF minor axis FWHM image (FWHM in arcsec)
+        'psf_pa' - PSF position angle image (degrees east of north)
+        'psf_ratio' - PSF peak-to-total flux ratio (in units of 1/beam)
+        'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)
     """
     import os
     import functions as func
@@ -624,6 +626,14 @@ def export_image(img, outfile=None, img_format='fits',
         elif img_type == 'psf_pa':
             func.write_image_to_file(use_io, filename,
                                      img.psf_vary_pa, img, bdir,
+                                     clobber=clobber)
+        elif img_type == 'psf_ratio':
+            func.write_image_to_file(use_io, filename,
+                                     img.psf_vary_ratio, img, bdir,
+                                     clobber=clobber)
+        elif img_type == 'psf_ratio_aper':
+            func.write_image_to_file(use_io, filename,
+                                     img.psf_vary_ratio_aper, img, bdir,
                                      clobber=clobber)
         elif img_type == 'gaus_resid':
             im = img.resid_gaus

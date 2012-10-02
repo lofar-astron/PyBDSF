@@ -27,6 +27,11 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2012/10/02 - Fixed a bug in the PSF vary module that resulted in
+        incorrect PSF generators being used. Added an option to smooth
+        the resulting PSF images ("psf_smooth"). Parallelized the PSF
+        interpolation and smoothing steps. Improved PSF vary documentation.
+
     2012/09/25 - Version 1.4.2
 
     2012/09/25 - Dramatically reduced the time required to identify valid
