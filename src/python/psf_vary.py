@@ -554,7 +554,7 @@ class Op_psf_vary(Op):
                     cutoff = len(snr)
                 # Make sure we don't fall below snrcutstack (SNR cut for stacking of PSFs), since
                 # it makes no sense to make tiles with generators that fall below this cut.
-                if snr[cutoff] < snrcutstack:
+                if snr[cutoff-1] < snrcutstack:
                     cutoff = num - snr_incr.searchsorted(snrcutstack)
 
         if generators == 'calibrators':
