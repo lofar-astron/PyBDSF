@@ -247,7 +247,7 @@ class Op_psf_vary(Op):
                     bar=bar)
                 if img.opts.aperture == None:
                     psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int = map_list
-                    psf_ratio_aper_int = psfratio_aper
+                    psf_ratio_aper_int = N.zeros(psf_maj_int.shape)
                 else:
                     psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int = map_list
 
