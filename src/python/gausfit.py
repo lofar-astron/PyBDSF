@@ -48,6 +48,8 @@ class Op_gausfit(Op):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gausfit")
         if len(img.islands) == 0:
             img.gaussians = []
+            img.ngaus = 0
+            img.total_flux_gaus = 0.0
             img.completed_Ops.append('gausfit')
             return img
 
@@ -157,15 +159,13 @@ class Op_gausfit(Op):
         return img
 
 
-    def process_island(self, isl, img, opts=None, multi=True):
+    def process_island(self, isl, img, opts=None):
         """Processes a single island.
 
         Returns a list best-fit Gaussians and flagged Gaussians.
         """
         import functions as func
 
-        if multi == False:
-            global bar
         if opts == None:
             opts = img.opts
         iter_ngmax  = 10
@@ -201,26 +201,18 @@ class Op_gausfit(Op):
                     else:
                         sgaul, sfgaul = self.fit_island(islcp, opts, img)
                     gaul = gaul + sgaul; fgaul = fgaul + sfgaul
-                    if multi == False:
-                        if bar.started: bar.spin()
-                if multi == False:
-                    if bar.started: bar.increment()
             else:
                 isl.islmean = 0.0
                 if opts.peak_fit and size > peak_size:
                     gaul, fgaul = self.fit_island_iteratively(img, isl, iter_ngmax=iter_ngmax, opts=opts)
                 else:
                     gaul, fgaul = self.fit_island(isl, opts, img)
-                if multi == False:
-                    if bar.started: bar.increment()
 
         else:
             if opts.peak_fit and size > peak_size:
                 gaul, fgaul = self.fit_island_iteratively(img, isl, iter_ngmax=iter_ngmax, opts=opts)
             else:
                 gaul, fgaul = self.fit_island(isl, opts, img)
-            if multi == False:
-                if bar.started: bar.increment()
 
         # Return list of Gaussians
         return [gaul, fgaul]

@@ -17,7 +17,7 @@ The task parameters are as follows:
     WRITE_CATALOG: Write the Gaussian, source, or shapelet list to a file.
     ================================================================================
     :term:`outfile` ............... None : Output file name. None => file is named
-                                   automatically; 'SAMP' => send to SAMP Hub (e.g., to
+                                   automatically; 'SAMP' => send to SAMP hub (e.g., to
                                    TOPCAT, ds9, or Aladin)
     :term:`bbs_patches` ........... None : For BBS format, type of patch to use: None => no
                                    patches. 'single' => all Gaussians in one patch.
@@ -40,7 +40,7 @@ Each of the parameters is described in detail below.
 .. glossary::
 
     outfile
-        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically. If 'SAMP' the table is sent to a running SAMP Hub (e.g., to TOPCAT or Aladin).
+        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically. If 'SAMP' the full catalog (i.e., ``format = 'fits'``) is sent to a running SAMP Hub (e.g., to TOPCAT or Aladin).
 
     bbs_patches
         This parameter is a string (default is ``None``) that sets the type of patch to use in BBS-formatted catalogs. When the Gaussian catalogue is written as a BBS-readable sky file, this

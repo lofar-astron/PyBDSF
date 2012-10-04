@@ -385,7 +385,7 @@ def show_fit(**kwargs):
     Parameters: ch0_image, rms_image, mean_image, ch0_islands,
                 gresid_image, sresid_image, gmodel_image,
                 smodel_image, source_seds, ch0_flagged, pi_image,
-                psf_major, psf_minor, psf_pa
+                psf_major, psf_minor, psf_pa, broadcast
 
     For more information about a parameter, use help.  E.g.,
       > help 'ch0_image'
@@ -410,7 +410,7 @@ def show_fit(**kwargs):
 show_fit.arg_list = ['ch0_image', 'rms_image', 'mean_image', 'ch0_islands',
                      'gresid_image', 'sresid_image', 'gmodel_image',
                      'smodel_image', 'source_seds', 'ch0_flagged', 'pi_image',
-                     'psf_major', 'psf_minor', 'psf_pa']
+                     'psf_major', 'psf_minor', 'psf_pa', 'broadcast']
 show_fit.use_groups = False
 
 
@@ -739,9 +739,5 @@ except ImportError:
     ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
     ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
 ipshell()
-
-# Clean up
-if hasattr(_img,'samp_client'):
-    lofar.bdsm.functions.stop_samp_proxy(_img.samp_client, _img.samp_key)
 
 
