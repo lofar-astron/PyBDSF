@@ -189,7 +189,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         for indx, weight in enumerate(weights):
             temp_sum += weight
             if temp_sum > weight_per_core:
-                cut_values.append(indx)
+                cut_values.append(indx+1)
                 temp_sum = weight
         if len(cut_values) > numcores - 1:
             cut_values = cut_values[0:numcores-1]
