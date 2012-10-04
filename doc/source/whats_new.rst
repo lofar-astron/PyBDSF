@@ -6,7 +6,7 @@ What's New
 
 Version 1.4.3 (2012/10/04):
 
-    * Fixed a bug in the mean map calculation that caused mean maps with constant values (i.e., non-2D maps) to have vales of 0.0 unless "mean_map = 'const'" was explicitly specified.
+    * Fixed a bug in the mean map calculation that caused mean maps with constant values (i.e., non-2D maps) to have values of 0.0 Jy/beam unless "mean_map = 'const'" was explicitly specified.
 
     * Fixed a bug in the PSF vary module that resulted in incorrect PSF generators being used. Added an option to smooth the resulting PSF images ("psf_smooth"). Parallelized the PSF interpolation and smoothing steps. Improved PSF vary documentation.
 
