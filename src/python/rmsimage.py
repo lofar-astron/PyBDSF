@@ -340,8 +340,10 @@ class Op_rmsimage(Op):
                               '(%.5f, %.5f) Jy/beam' % (rms_min, rms_max))
 
           if img.mean_map_type != 'map':
-            val = 0.0
-            if opts.mean_map == 'const': val = img.clipped_mean
+            if opts.mean_map == 'zero':
+                val = 0.0
+            else:
+                val = img.clipped_mean
             mean[:] = val
             mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
                               str(round(val,5))+' Jy/beam')
