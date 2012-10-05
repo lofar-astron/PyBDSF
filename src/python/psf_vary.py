@@ -346,8 +346,8 @@ class Op_psf_vary(Op):
 
     def bindata(self, over,num): #ptpbin,nbin,ptplastbin, same as get_bins in fBDSM.
 
-        if num <100: ptpbin=num/5
-        if num >100: ptpbin=num/10
+        if num <= 100: ptpbin=num/5
+        if num > 100: ptpbin=num/10
         if num > 1000: ptpbin=num/20
         if ptpbin % 2 == 1: ptpbin=ptpbin+1
         if num < 10: ptpbin=num
