@@ -179,8 +179,12 @@ def gdist_pa(pix1, pix2, gsize):
         val = atanproper(dumr, dx, dy)
 
     psi = val - (gsize[2]+90.0)/180.0*pi
-                                # convert angle to eccentric anomaly
-    psi=atan(gsize[0]/gsize[1]*tan(psi))
+
+    # convert angle to eccentric anomaly
+    if approx_equal(gsize[1], 0.0):
+        psi = pi/2.0
+    else:
+        psi=atan(gsize[0]/gsize[1]*tan(psi))
     dumr2 = gsize[0]*cos(psi)
     dumr3 = gsize[1]*sin(psi)
     fwhm = sqrt(dumr2*dumr2+dumr3*dumr3)
