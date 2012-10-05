@@ -19,6 +19,9 @@ import nat
 from math import *
 import statusbar
 from const import fwsig
+import multi_proc as mp
+import itertools
+
 
 class Op_psf_vary(Op):
     """Computes variation of psf across the image """
@@ -128,7 +131,6 @@ class Op_psf_vary(Op):
         tile_prop = self.edit_vorogenlist(vorogenP, frac=0.9)
 
         # tesselate the image
-        #volrank, volrank_tilenum, wts = tesselate(vorogenP, vorogenS, tile_prop, tess_method, tess_sc, tess_fuzzy, \
         volrank, vorowts = self.tesselate(vorogenP, vorogenS, tile_prop, tess_method, tess_sc, tess_fuzzy, \
                   generators, gencode, image.shape)
         if opts.output_all:
@@ -230,35 +232,79 @@ class Op_psf_vary(Op):
                 bar.stop()
 
                 # Interpolate Gaussian parameters
-                psf_maj_int = self.interp_prop(psf_maj, psfcoords, image.shape)
-                psf_min_int = self.interp_prop(psf_min, psfcoords, image.shape)
-                psf_pa_int = self.interp_prop(psf_pa, psfcoords, image.shape)
-                psf_ratio_int = self.interp_prop(psfratio, psfcoords, image.shape)
-                psf_ratio_aper_int = self.interp_prop(psfratio_aper, psfcoords, image.shape)
+                if img.aperture == None:
+                    psf_maps = [psf_maj, psf_min, psf_pa, psfratio]
+                else:
+                    psf_maps = [psf_maj, psf_min, psf_pa, psfratio, psfratio_aper]
+                nimgs = len(psf_maps)
+                bar = statusbar.StatusBar('Interpolating PSF images ................ : ', 0, nimgs)
+                if img.opts.quiet == False:
+                    bar.start()
+                map_list = mp.parallel_map(func.eval_func_tuple,
+                    itertools.izip(itertools.repeat(self.interp_prop),
+                    psf_maps, itertools.repeat(psfcoords),
+                    itertools.repeat(image.shape)), numcores=opts.ncores,
+                    bar=bar)
+                if img.aperture == None:
+                    psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int = map_list
+                else:
+                    psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int = map_list
+
+                # Smooth if desired
+                if img.opts.psf_smooth != None:
+                    sm_scale = img.opts.psf_smooth / img.pix2beam([1.0, 1.0, 0.0])[0] / 3600.0 # pixels
+                    if img.opts.aperture == None:
+                        psf_maps = [psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int]
+                    else:
+                        psf_maps = [psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int]
+                    nimgs = len(psf_maps)
+                    bar = statusbar.StatusBar('Smoothing PSF images .................... : ', 0, nimgs)
+                    if img.opts.quiet == False:
+                        bar.start()
+                    map_list = mp.parallel_map(func.eval_func_tuple,
+                        itertools.izip(itertools.repeat(self.blur_image),
+                        psf_maps, itertools.repeat(sm_scale)), numcores=opts.ncores,
+                        bar=bar)
+                    if img.aperture == None:
+                        psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int = map_list
+                    else:
+                        psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int = map_list
+
+                # Make sure all smoothed, interpolated images are ndarrays
+                psf_maj_int = N.array(psf_maj_int)
+                psf_min_int = N.array(psf_min_int)
+                psf_pa_int = N.array(psf_pa_int)
+                psf_ratio_int = N.array(psf_ratio_int)
+                if img.aperture == None:
+                    psf_ratio_aper_int = N.zeros(psf_maj_int.shape)
+                else:
+                    psf_ratio_aper_int = N.array(psf_ratio_aper_int)
+
+                # Store interpolated images. The major and minor axis images are
+                # the sigma in units of arcsec, the PA image in units of degrees east of
+                # north, the ratio images in units of 1/beam.
+                img.psf_vary_maj = psf_maj_int * img.pix2beam([1.0, 1.0, 0.0])[0] * 3600.0 # sigma in arcsec
+                img.psf_vary_min = psf_min_int * img.pix2beam([1.0, 1.0, 0.0])[0] * 3600.0 # sigma in arcsec
+                img.psf_vary_pa = psf_pa_int
+                img.psf_vary_ratio = psf_ratio_int # in 1/beam
+                img.psf_vary_ratio_aper = psf_ratio_aper_int # in 1/beam
 
                 # Blank with NaNs if needed
                 mask = img.mask
                 if isinstance(mask, N.ndarray):
                     pix_masked = N.where(mask == True)
-                    psf_maj_int[pix_masked] = N.nan
-                    psf_min_int[pix_masked] = N.nan
-                    psf_pa_int[pix_masked] = N.nan
-                    psf_ratio_int[pix_masked] = N.nan
-                    psf_ratio_aper_int[pix_masked] = N.nan
-
-                # Store interpolated images
-                img.psf_vary_maj = psf_maj_int
-                img.psf_vary_min = psf_min_int
-                img.psf_vary_pa = psf_pa_int
-                img.psf_vary_ratio = psf_ratio_int
-                img.psf_vary_ratio_aper = psf_ratio_aper_int
+                    img.psf_vary_maj[pix_masked] = N.nan
+                    img.psf_vary_min[pix_masked] = N.nan
+                    img.psf_vary_pa[pix_masked] = N.nan
+                    img.psf_vary_ratio[pix_masked] = N.nan
+                    img.psf_vary_ratio_aper[pix_masked] = N.nan
 
                 if opts.output_all:
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', psf_maj_int*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', psf_min_int*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', psf_pa_int, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', psf_ratio_int, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio_aper.fits', psf_ratio_aper_int, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', img.psf_vary_maj*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', img.psf_vary_min*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', img.psf_vary_pa, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', img.psf_vary_ratio, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio_aper.fits', img.psf_vary_ratio_aper, img, dir)
 
                 # Loop through source and Gaussian lists and deconvolve the sizes using appropriate beam
                 bar2 = statusbar.StatusBar('Correcting deconvolved source sizes ..... : ', 0, img.nsrc)
@@ -300,8 +346,8 @@ class Op_psf_vary(Op):
 
     def bindata(self, over,num): #ptpbin,nbin,ptplastbin, same as get_bins in fBDSM.
 
-        if num <100: ptpbin=num/5
-        if num >100: ptpbin=num/10
+        if num <= 100: ptpbin=num/5
+        if num > 100: ptpbin=num/10
         if num > 1000: ptpbin=num/20
         if ptpbin % 2 == 1: ptpbin=ptpbin+1
         if num < 10: ptpbin=num
@@ -488,43 +534,30 @@ class Op_psf_vary(Op):
 ##################################################################################################
     def get_voronoi_generators(self, g_gauls, generators, gencode, snrcut, snrtop, snrbot, snrcutstack):
         """This gets the list of all voronoi generators. It is either the centres of the brightest
-        sources, or is imported from metadata (in future). generators=calib implies only one source
-        per facet, and sources between snrtop and snrmax are primary generators. generators=field
-        implies all sources between snrbot and snrtop are secondary generators. This is the same as
-        get_voronoi_generators.f in fBDSM. If calibrators='field' then vorogenS is a list of gen.s else
-        is None."""
+        sources, or is imported from metadata (in future)."""
         from math import sqrt
 
         num=len(g_gauls[0])
         snr=N.asarray(g_gauls[1])/N.asarray(g_gauls[8])
 
         index=snr.argsort()
-        snr = snr[index]
-#        snr = snr[::-1]
+        snr_incr = snr[index]
+        snr = snr_incr[::-1]
         x = N.asarray(g_gauls[2])[index]
         y = N.asarray(g_gauls[3])[index]
 
-        cutoff = 0; npts = 0
+        cutoff = 0
         if generators == 'calibrators' or generators == 'field':
-            if gencode != 'file': gencode = 'list'
+            if gencode != 'file':
+                gencode = 'list'
             if gencode == 'list':
                 cutoff = int(round(num*(snrtop)))
-                if cutoff == len(snr):
-                    cutoff -= 1
+                if cutoff > len(snr):
+                    cutoff = len(snr)
                 # Make sure we don't fall below snrcutstack (SNR cut for stacking of PSFs), since
                 # it makes no sense to make tiles with generators that fall below this cut.
-                if snr[cutoff] < snrcutstack: cutoff = snr.searchsorted(snrcutstack)
-                if cutoff < 2:
-                    cutoff = 2
-                npts = num - cutoff + 1
-
-#         if generators == 'field':
-#             cutoff = int(round(num*(1.0-snrtop)))
-#             if cutoff < 2:
-#                 cutoff = 2
-#             npts = num - cutoff + 1
-#             cutoffs = int(round(num*(1.0-snrbot)))
-#             nptss = cutoff - cutoffs
+                if snr[cutoff-1] < snrcutstack:
+                    cutoff = num - snr_incr.searchsorted(snrcutstack)
 
         if generators == 'calibrators':
             if gencode == 'file':
@@ -534,17 +567,10 @@ class Op_psf_vary(Op):
         y1 = y.tolist()
         x1.reverse()
         y1.reverse()
-        x=x1
-        y=y1
         snr1 = snr.tolist()
-        snr1.reverse()
-        snr = snr1
-        vorogenP = N.asarray([x[0:cutoff-2], y[0:cutoff-2], snr[0:cutoff-2]])
+        vorogenP = N.asarray([x1[0:cutoff], y1[0:cutoff], snr1[0:cutoff]])
 
-    # for generator=field
         vorogenS = None
-        if generators == 'field':
-            vorogenS = N.asarray([x[cutoff-2:cutoffs-2:-1], y[cutoff-2:cutoffs-2:-1], snr[cutoff-2:cutoffs-2:-1]])
 
         return vorogenP, vorogenS
 
@@ -554,9 +580,8 @@ class Op_psf_vary(Op):
         have more than one generator to be averaged. tile_list is a list of arrays, indexed
         by the tile number and each array is an array of numbers in the ngen list which are
         the generators in that tile. xtile, ytile and snrtile are arrays of length number_of_tiles
-        and have x,y,snr of each tile. The list of tiles is modified later
-        using the secondary list in tesselate. For now though, just group together gen.s
-        if closer than a fraction of dist to third closest. Same as edit_vorogenlist in fBDSM. """
+        and have x,y,snr of each tile. Group together generators
+        if closer than a fraction of dist to third closest."""
 
         xgen, ygen, snrgen = vorogenP
         flag = N.zeros(len(xgen))
@@ -784,6 +809,7 @@ class Op_psf_vary(Op):
         and pass it to stackpsf with a weight for each gaussian, to calculate the average psf per tile.
 
         Should define weights inside a tile to include closure errors """
+        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Psf_Vary")
 
         tile_list, tile_coord, tile_snr = tile_prop
         tr_gaul = self.trans_gaul(g_gauls)
@@ -795,10 +821,10 @@ class Op_psf_vary(Op):
         psfratio_aper = [] # ratio of peak flux to aperture flux
         srcpertile = N.zeros(ntile)
         snrpertile = N.zeros(ntile)
+        xt, yt = N.transpose(tile_coord)
 
         if plot:
           pl.figure(None)
-          xt, yt = N.transpose(tile_coord)
           colours=['b','g','r','c','m','y','k']*(len(xt)/7+1)
           pl.axis([0.0, image.shape[0], 0.0, image.shape[1]])
           pl.title('Tesselated image with tile centres and unresolved sources')
@@ -810,7 +836,6 @@ class Op_psf_vary(Op):
             tile_gauls = [n for n in tr if volrank[int(round(n[2])),int(round(n[3]))]-1 \
                        == itile]
             t_gauls = self.trans_gaul(tile_gauls)
-
             srcpertile[itile] = len(tile_gauls)
             if plot:
               pl.plot(t_gauls[2], t_gauls[3], 'x'+'k', mew=1.3)#colours[itile])
@@ -820,6 +845,8 @@ class Op_psf_vary(Op):
                 pl.plot(xx,yy,'-'+colours[itile])
             wts = N.asarray(t_gauls[1])/N.asarray(t_gauls[8])             # wt is SNR
             snrpertile[itile] = sum(wts)
+            mylog.info('PSF tile #%i (center = %i, %i): %i unresolved sources, SNR = %.1f' %
+                (itile, xt[itile], yt[itile], srcpertile[itile], snrpertile[itile]))
             a = self.stackpsf(image, beam, t_gauls, wts, cdelt, factor)
             psfimages.append(a)
             psfcoords.append([sum(N.asarray(t_gauls[2])*wts)/sum(wts), sum(N.asarray(t_gauls[3])*wts)/sum(wts)])
@@ -924,19 +951,6 @@ class Op_psf_vary(Op):
         yo=N.arange(0.0,round(imshape[1]), round(compress))
         rgrid=nat.Natgrid(xi,yi,xo,yo)
         prop_int = rgrid.rgrd(prop)
-#     	if img.masked:
-#     	    unmasked = N.where(~mask)
-#             stdprop = N.std(prop_int[unmasked])
-#             minprop = N.min(prop_int[unmasked])
-#             maxprop = N.max(prop_int[unmasked])
-#         else:
-#             stdprop = N.std(prop_int)
-#             minprop = N.min(prop_int)
-#             maxprop = N.max(prop_int)
-#         if (maxprop - minprop) > 3.0*stdprop:
-#             return prop_int
-#         else:
-#             return N.mean(prop_int)
         return prop_int
 
 ##################################################################################################
@@ -995,3 +1009,18 @@ class Op_psf_vary(Op):
 #
         return blah
 
+##################################################################################################
+    def blur_image(self, im, n, ny=None) :
+        """ blurs the image by convolving with a gaussian kernel of typical
+            size n. The optional keyword argument ny allows for a different
+            size in the y direction.
+        """
+        from scipy.ndimage import gaussian_filter
+
+        sx = n
+        if ny != None:
+            sy = ny
+        else:
+            sy = n
+        improc = gaussian_filter(im, [sy, sx])
+        return improc

@@ -240,6 +240,7 @@ class Op_gausfit(Op):
 
         """
         from _cbdsm import MGFunction
+
         if ffimg == None:
             fcn = MGFunction(isl.image-isl.islmean, isl.mask_active, 1)
         else:
@@ -300,13 +301,14 @@ class Op_gausfit(Op):
                    break
         if not fitok:
             # If normal fitting fails, try to fit 5 or fewer Gaussians to the island
-            ngmax = 5
+            ngmax = 6
             while not fitok and ngmax > 1:
-                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose)
                 ngmax -= 1
+                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                           beam, thr0, peak, shape, isl.mask_active,
                                           isl.image, size)
+
         sm_isl = nd.binary_dilation(isl.mask_active)
         if not fitok and N.sum(~sm_isl) >= img.minpix_isl:
             # If all else fails, shrink the island a little and try one last time
@@ -347,7 +349,6 @@ class Op_gausfit(Op):
                ng1 = len(gaul)
                if fitok and len(fgaul) == 0:
                    break
-
 
         ### return whatever we got
         isl.mg_fcn = fcn
@@ -807,7 +808,6 @@ class Op_gausfit(Op):
                 elif mask[tuple(pt)]:
                     flag += 256
                     break
-
         return flag
 
     def fixup_gaussian(self, isl, gaussian):

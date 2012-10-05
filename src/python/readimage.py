@@ -103,6 +103,10 @@ class Op_readimage(Op):
         root, ext = os.path.splitext(img.opts.filename)
         if ext in ['.fits', '.FITS', '.image']:
             fname = root
+        elif ext in ['.gz', '.GZ']:
+            root2, ext2 = os.path.splitext(root)
+            if ext2 in ['.fits', '.FITS', '.image']:
+                fname = root2
         else:
             fname = img.opts.filename
         img.filename = img.opts.filename
@@ -140,9 +144,9 @@ class Op_readimage(Op):
 
         Thanks to transpose operation done to image earlier we can use
         p2s & s2p transforms directly.
-        
+
         Both WCSLIB (from LOFAR svn) and PyWCS (http://stsdas.stsci.edu/
-        astrolib/pywcs/, available from https://trac6.assembla.com/astrolib) 
+        astrolib/pywcs/, available from https://trac6.assembla.com/astrolib)
         are supported.
         """
         try:
@@ -220,7 +224,7 @@ class Op_readimage(Op):
             img.sky2pix = t.s2p
         elif img.use_wcs == 'pywcs':
             # Here we define new p2s and s2p methods to match those of wcslib.
-            # Note that, due to a bug in pywcs version 1.10-4.7, the 
+            # Note that, due to a bug in pywcs version 1.10-4.7, the
             # "ra_dec_order" option cannot be used. When the bug is fixed,
             # this option should probably be re-enabled.
             def p2s(self, xy):
@@ -269,7 +273,7 @@ class Op_readimage(Op):
         ### define beam conversion routines:
         def beam2pix(x, location=None):
             """ Converts beam in deg to pixels.
-            
+
             location specifies the location in pixels (x, y) for which beam is desired
             Input beam angle should be degrees CCW from North.
             The output beam angle is degrees CCW from the +y axis of the image.
@@ -290,7 +294,7 @@ class Op_readimage(Op):
 
         def pix2beam(x, location=None):
             """ Converts beam in pixels to deg.
-            
+
             location specifies the location in pixels (x, y) for which beam is desired
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North.
@@ -376,7 +380,7 @@ class Op_readimage(Op):
         mylog = mylogger.logging.getLogger("PyBDSM.InitFreq")
         if img.opts.frequency_sp != None and img.image.shape[1] > 1:
             # If user specifies multiple frequencies, then let
-            # collapse.py do the initialization 
+            # collapse.py do the initialization
             img.cfreq = img.opts.frequency_sp[0]
             img.freq_pars = (0.0, 0.0, 0.0)
             mylog.info('Using user-specified frequencies.')
@@ -469,7 +473,7 @@ class Op_readimage(Op):
 
     def get_rot(self, img, location=None):
         """Returns CCW rotation angle (in degrees) between N and +y axis of image
-        
+
         location specifies the location in pixels (x, y) for which beam is desired
         """
         if location == None:
