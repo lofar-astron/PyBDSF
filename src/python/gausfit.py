@@ -100,10 +100,6 @@ class Op_gausfit(Op):
             idx = isl.island_id
             gaul = gaus_list[idx][0]
             fgaul = gaus_list[idx][1]
-            if gaul == None:
-                gaul = []
-            if fgaul == None:
-                fgaul = []
             gaul = [Gaussian(img, par, idx, gidx)
                         for (gidx, par) in enumerate(gaul)]
 

@@ -113,7 +113,6 @@ def run_tasks(procs, err_q, out_q, num):
     return numpy.concatenate(results).tolist()
 
 
-
 def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     """
     A parallelized version of the native Python map function that
