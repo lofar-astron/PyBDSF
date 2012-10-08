@@ -104,6 +104,8 @@ class Op_gausfit(Op):
                         for (gidx, par) in enumerate(gaul)]
 
             if len(gaul) == 0:
+                # No good Gaussians were fit. In this case, estimate island
+                # properties using moment analysis
                 gidx = 0
             fgaul= [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
                         for (gidx2, (flag, par)) in enumerate(fgaul)]
@@ -240,11 +242,13 @@ class Op_gausfit(Op):
 
         """
         from _cbdsm import MGFunction
+        import functions as func
 
         if ffimg == None:
-            fcn = MGFunction(isl.image-isl.islmean, isl.mask_active, 1)
+            fit_image = isl.image-isl.islmean
         else:
-            fcn = MGFunction(isl.image-isl.islmean-ffimg, isl.mask_active, 1)
+            fit_image = isl.image-isl.islmean-ffimg
+        fcn = MGFunction(fit_image, isl.mask_active, 1)
         beam = img.pixel_beam
 
         if abs(beam[0]/beam[1]) < 1.1:
@@ -311,11 +315,8 @@ class Op_gausfit(Op):
 
         sm_isl = nd.binary_dilation(isl.mask_active)
         if not fitok and N.sum(~sm_isl) >= img.minpix_isl:
-            # If all else fails, shrink the island a little and try one last time
-            if ffimg == None:
-                fcn = MGFunction(isl.image-isl.islmean, nd.binary_dilation(isl.mask_active), 1)
-            else:
-                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_dilation(isl.mask_active), 1)
+            # If fitting still fails, shrink the island a little and try again
+            fcn = MGFunction(fit_image, nd.binary_dilation(isl.mask_active), 1)
             gaul = []
             iter = 0
             ng1 = 0
@@ -331,11 +332,8 @@ class Op_gausfit(Op):
                    break
         lg_isl = nd.binary_erosion(isl.mask_active)
         if not fitok and N.sum(~lg_isl) >= img.minpix_isl:
-            # If all else fails, expand the island a little and try one last time
-            if ffimg == None:
-                fcn = MGFunction(isl.image-isl.islmean, nd.binary_erosion(isl.mask_active), 1)
-            else:
-                fcn = MGFunction(isl.image-isl.islmean-ffimg, nd.binary_erosion(isl.mask_active), 1)
+            # If fitting still fails, expand the island a little and try again
+            fcn = MGFunction(fit_image, nd.binary_erosion(isl.mask_active), 1)
             gaul = []
             iter = 0
             ng1 = 0
@@ -350,6 +348,27 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
 
+        if not fitok:
+            # If all else fails, use moment analysis
+            inisl = N.where(~isl.mask_active)
+            mask_id = N.zeros(isl.image.shape, dtype=int) - 1
+            mask_id[inisl] = isl.island_id
+            mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, img.pixel_beamarea, True)
+            mompara[5] += 90.0
+            if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
+                x1 = N.int(N.floor(mompara[1]))
+                y1 = N.int(N.floor(mompara[2]))
+                xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
+                t=(mompara[1]-x1)/(x1+1-x1)
+                u=(mompara[2]-y1)/(y1+1-y1)
+                s_peak=(1.0-t)*(1.0-u)*fit_image[x1,y1]+t*(1.0-u)*fit_image[x1+1,y1]+ \
+                     t*u*fit_image[x1+1,y1+1]+(1.0-t)*u*fit_image[x1,y1+1]
+                mompara[0] = s_peak
+                par = [mompara.tolist()]
+                gaul, fgaul = self.flag_gaussians(par, opts,
+                                                  beam, thr0, peak, shape, isl.mask_active,
+                                                  isl.image, size)
+
         ### return whatever we got
         isl.mg_fcn = fcn
         gaul  = [self.fixup_gaussian(isl, g) for g in gaul]
@@ -361,82 +380,6 @@ class Op_gausfit(Op):
             print 'Number of flagged Gaussians: %i' % (len(fgaul),)
         return gaul, fgaul
 
-    def deblend_and_fit(self, img, isl, opts=None):
-        """Deblends an island and then fits it"""
-        import functions as func
-        sgaul = []; sfgaul = []
-        gaul = []; fgaul = []
-        if opts == None:
-            opts = img.opts
-        thresh_isl = opts.thresh_isl
-        thresh_pix = opts.thresh_pix
-        thresh = opts.fittedimage_clip
-        rms = isl.rms
-        factor = 1.0
-        # Set desired size of sub-island. Don't let it get too small, or fitting
-        # won't work well.
-        maxsize = max(opts.peak_maxsize, (~isl.mask_active).sum()/img.pixel_beamarea/2.0)
-
-        if opts.verbose_fitting:
-            print 'Finding and fitting peaks of island ', isl.island_id
-        while True:
-            factor *= 1.2
-            if N.max(isl.image-isl.islmean-isl.mean)/thresh_isl/factor <= rms:
-                if int(factor) == 1:
-                    slices = []
-                break
-            mask_active_orig = isl.mask_active
-            act_pixels = (isl.image-isl.islmean-isl.mean)/thresh_isl/factor >= rms
-            N.logical_and(act_pixels, ~mask_active_orig, act_pixels)
-            rank = len(isl.shape)
-            # generates matrix for connectivity, in this case, 8-conn
-            connectivity = nd.generate_binary_structure(rank, rank)
-            # labels = matrix with value = (initial) island number
-            sub_labels, count = nd.label(act_pixels, connectivity)
-            # slices has limits of bounding box of each such island
-            slices = nd.find_objects(sub_labels)
-            if len(slices) == 0:
-                break
-            size = []
-            for idx, s in enumerate(slices):
-                idx += 1 # nd.labels indices are counted from 1
-                size.append((sub_labels[s] == idx).sum()*2.0)
-            # Check whether we have reduced the size of smallest island to less
-            # than maxsize; if not, continue with higher threshhold
-            if min(size) < maxsize*img.pixel_beamarea:
-                break
-        gaul = []; fgaul = []
-        n_subisl = len(slices)
-        if opts.verbose_fitting and n_subisl > 1:
-          print 'SEPARATED ISLAND INTO ',n_subisl,' PEAKS FOR ISLAND ',isl.island_id
-        for i_sub_isl in range(n_subisl):
-          islcp = isl.copy(img)
-          islcp.mask_active = N.where(sub_labels == i_sub_isl+1, False, True)
-          islcp.mask_noisy = N.where(sub_labels == i_sub_isl+1, False, True)
-          sgaul, sfgaul = self.fit_island(islcp, opts, img)
-          gaul = gaul + sgaul; fgaul = fgaul + sfgaul
-#           if bar.started: bar.spin()
-
-        # Now fit residuals
-        ffimg_tot = N.zeros(isl.shape)
-        if len(gaul) > 0:
-            gaul_obj_list = [Gaussian(img, par, isl.island_id, gidx) for (gidx, par) in enumerate(gaul)]
-            for g in gaul_obj_list:
-                g.centre_pix[0] -= isl.origin[0]
-                g.centre_pix[1] -= isl.origin[1]
-                C1, C2 = g.centre_pix
-                shape = isl.shape
-                b = find_bbox(thresh*isl.rms, g)
-                bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
-                            max(0, int(C2-b)):min(shape[1], int(C2+b+1))]
-                x_ax, y_ax = N.mgrid[bbox]
-                ffimg = func.gaussian_fcn(g, x_ax, y_ax)
-                ffimg_tot[bbox] += ffimg
-        if N.max(isl.image-ffimg_tot-isl.islmean-isl.mean)/thresh_pix >= rms:
-            sgaul, sfgaul = self.fit_island(isl, opts, img, ffimg=ffimg_tot)
-            gaul = gaul + sgaul; fgaul = fgaul + sfgaul
-
-        return gaul, fgaul
 
     def fit_island_iteratively(self, img, isl, iter_ngmax=5, opts=None):
         """Fits an island iteratively.

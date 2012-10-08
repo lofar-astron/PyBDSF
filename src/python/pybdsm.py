@@ -127,6 +127,12 @@ def tget(filename=None):
     import os
 
     global _img
+
+    # Check whether user has given a task name as input (as done in casapy).
+    # If so, reset filename to None.
+    if hasattr(filename, 'arg_list'):
+        filename = None
+
     if filename == None or filename == '':
         if os.path.isfile('pybdsm.last'):
             filename = 'pybdsm.last'

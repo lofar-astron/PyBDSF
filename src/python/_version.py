@@ -27,6 +27,9 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2012/10/05 - Added code to handle images with no unblanked pixels.
+        Improved fitting robustness.
+
     2012/10/04 - Version 1.4.3
 
     2012/10/04 - Fixed a bug in the mean map calculation that caused mean
