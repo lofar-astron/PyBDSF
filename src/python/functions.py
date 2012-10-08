@@ -179,8 +179,12 @@ def gdist_pa(pix1, pix2, gsize):
         val = atanproper(dumr, dx, dy)
 
     psi = val - (gsize[2]+90.0)/180.0*pi
-                                # convert angle to eccentric anomaly
-    psi=atan(gsize[0]/gsize[1]*tan(psi))
+
+    # convert angle to eccentric anomaly
+    if approx_equal(gsize[1], 0.0):
+        psi = pi/2.0
+    else:
+        psi=atan(gsize[0]/gsize[1]*tan(psi))
     dumr2 = gsize[0]*cos(psi)
     dumr3 = gsize[1]*sin(psi)
     fwhm = sqrt(dumr2*dumr2+dumr3*dumr3)
@@ -1570,7 +1574,7 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     """Returns aperture flux and error"""
     import numpy as N
 
-    dist_mask = generate_aperture(aper_im.shape[1], aper_im.shape[0], posn_pix[1], posn_pix[0], aperture_pix)
+    dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[1], posn_pix[0], aperture_pix)
     aper_mask = N.where(dist_mask)
     if N.size(aper_mask) == 0:
         return [0.0, 0.0]
@@ -1691,6 +1695,36 @@ def send_fits_table(s, private_key, name, file_path):
     message['samp.params'] = {}
     message['samp.params']['url'] = 'file://' + os.path.abspath(file_path)
     message['samp.params']['name'] = name
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_highlight_row(s, private_key, url, row_id):
+    """Send a SAMP notification to highlight a row in a table."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "table.highlight.row"
+    message['samp.params'] = {}
+    message['samp.params']['row'] = str(row_id)
+    message['samp.params']['url'] = url
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_coords(s, private_key, coords):
+    """Send a SAMP notification to point at given coordinates."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "coord.pointAt.sky"
+    message['samp.params'] = {}
+    message['samp.params']['ra'] = str(coords[0])
+    message['samp.params']['dec'] = str(coords[1])
     lockfile = os.path.expanduser('~/.samp')
     if not os.path.exists(lockfile):
         raise RuntimeError("A running SAMP hub was not found.")

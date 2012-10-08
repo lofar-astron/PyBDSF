@@ -7,7 +7,7 @@ Below is an example of running PyBDSM on an image composed primarily of point so
 ::
 
     $ pybdsm
-    
+
     PyBDSM version 1.1 (LOFAR revision 20883)
     ========================================================================
     PyBDSM commands
@@ -29,30 +29,30 @@ Below is an example of running PyBDSM on an image composed primarily of point so
       help 'par' .......... : Get help on a parameter (e.g., help 'rms_box')
       help changelog ...... : See list of recent changes
     ________________________________________________________________________
-    
+
 
     BDSM [1]: filename='VLSS.fits'
-    
+
 .. note::
 
     When PyBDSM starts up, the ``process_image`` task is automatically set to be the current task, so one does not need to set it with ``inp process_image``.
-    
+
 ::
 
     BDSM [2]: frequency=74e6
-    
+
 .. note::
 
     For this image, no frequency information was present in the image header, so the frequency must be specified manually.
-    
+
 ::
 
     BDSM [3]: interactive=T
-    
+
 .. note::
 
     It is often advisable to use the interactive mode when processing an image for the first time. This mode will display the islands that PyBDSM has found before proceeding to fitting, allowing the user to check that they are reasonable.
-            
+
 ::
 
     BDSM [4]: go
@@ -84,23 +84,23 @@ Below is an example of running PyBDSM on an image composed primarily of point so
       Press "m" ........ : Change min and max scaling values
       Press "n" ........ : Show / hide island IDs
       Press "0" ........ : Reset scaling to default
-      Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode, 
-                           toggled with the "zoom" button and indicated in 
+      Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode,
+                           toggled with the "zoom" button and indicated in
                            the lower right corner, must be off)
     ________________________________________________________________________
-    
+
 .. note::
 
     At this point, because ``interactive=True``, PyBDSM plots the islands. Once the plot window is closed, PyBDSM prompts the user to continue or to quit fitting:
 
 ::
 
-    Press enter to continue or 'q' to quit .. : 
+    Press enter to continue or 'q' to quit .. :
     Fitting islands with Gaussians .......... : [==========================================] 115/115
     Total number of Gaussians fit to image .. : 147
     Total flux in model ..................... : 211.800 Jy
     Number of sources formed from Gaussians   : 117
-    
+
 
 The ``process_image`` task has now finished. PyBDSM estimated a reasonable value for the ``rms_box`` parameter and determined that 2-D rms and mean maps were required to model the background of the image. Straightforward island thresholding at the 5-sigma level was used, and the minimum island size was set at 5 pixels. In total 115 islands were found, and 147 Gaussians were fit to these islands. These 147 Gaussians were then grouped into 117 sources. To check the fit, call the ``show_fit`` task:
 
@@ -115,8 +115,8 @@ The ``process_image`` task has now finished. PyBDSM estimated a reasonable value
       Press "m" ........ : Change min and max scaling values
       Press "n" ........ : Show / hide island IDs
       Press "0" ........ : Reset scaling to default
-      Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode, 
-                           toggled with the "zoom" button and indicated in 
+      Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode,
+                           toggled with the "zoom" button and indicated in
                            the lower right corner, must be off)
     ________________________________________________________________________
 
@@ -138,26 +138,26 @@ Lastly, the plot window is closed, and the source catalog is written out to an A
     --------> inp(write_catalog)
     WRITE_CATALOG: Write the Gaussian, source, or shapelet list to a file.
     ================================================================================
-    outfile ............... None : Output file name. None => file is named     
-                                   automatically                               
+    outfile ............... None : Output file name. None => file is named
+                                   automatically
     bbs_patches ........... None : For BBS format, type of patch to use: None => no
                                    patches. 'single' => all Gaussians in one patch.
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
-                                   source are grouped into one patch           
+                                   source are grouped into one patch
     catalog_type ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
-                                   Gaussians), 'shap' - shapelet list          
-    clobber .............. False : Overwrite existing file?                    
+                                   Gaussians), 'shap' - shapelet list
+    clobber .............. False : Overwrite existing file?
     format ................ 'bbs': Format of output catalog: 'bbs', 'ds9', 'fits',
-                                   'star', 'kvis', or 'ascii'                  
+                                   'star', 'kvis', or 'ascii'
     srcroot ............... None : Root name for entries in the output catalog. None
-                                   => use image file name                      
-    
+                                   => use image file name
+
     BDSM [7]: catalog_type='srl'
-    
+
     BDSM [8]: format='ascii'
-    
+
     BDSM [9]: go
     ---------> go()
     --> Wrote ASCII file 'VLSS.fits.pybdsm.srl'
@@ -166,7 +166,7 @@ Lastly, the plot window is closed, and the source catalog is written out to an A
 
 Image with artifacts
 --------------------
-Occasionally, an analysis run with the default parameters does not produce good results. For example, if there are significant deconvolution artifacts in the image, the ``thresh_isl``, ``thresh_pix``, or ``rms_box`` parameters might need to be changed to prevent PyBDSM from fitting Gaussians to such artifacts. An example of running PyBDSM with the default parameters on such an image is shown in the figures below. 
+Occasionally, an analysis run with the default parameters does not produce good results. For example, if there are significant deconvolution artifacts in the image, the ``thresh_isl``, ``thresh_pix``, or ``rms_box`` parameters might need to be changed to prevent PyBDSM from fitting Gaussians to such artifacts. An example of running PyBDSM with the default parameters on such an image is shown in the figures below.
 
 .. figure:: art_fit_def.png
    :scale: 50 %
@@ -225,48 +225,119 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
 .. note::
 
      If you are working on the LOFAR CEP I/II clusters, then at some point before running the script, you will need to do::
-    
+
         $ use LofIm
         $ use Pythonlibs
 
 ::
-    
+
     # pybdsm_example.py
     #
-    # This script fits a number of images automatically, writing out source 
+    # This script fits a number of images automatically, writing out source
     # catalogs and residual and model images for each input image. Call it
     # with "python pybdsm_example.py"
-    
+
     import lofar.bdsm as bdsm
-    
+
     # Define the list of images to process and the parameter save file
     input_images = ['a2597.fits', 'a2256_1.fits', 'a2256_2.fits',
                      'a2256_3.fits', 'a2256_4.fits', 'a2256_5.fits']
     save_file = 'a2256.sav'
-    
+
     # Now loop over the input images and process them
     for input_image in input_images:
-    
+
         if input_image == 'a2597.fits':
             # For this one image, run with different parameters.
-            # Note that the image name is the first argument to 
+            # Note that the image name is the first argument to
             # process_image:
             img = bdsm.process_image(input_image, rms_box=(100,20))
-    
+
         else:
             # For the other images, use the 'a2256.sav` parameter save file.
             # The quiet argument is used to supress output to the terminal
             # (it still goes to the log file).
-            # Note: when a save file is used, it must be given first in the 
+            # Note: when a save file is used, it must be given first in the
             # call to process_image:
-            img = bdsm.process_image(save_file, filename=input_image, quiet=True) 
+            img = bdsm.process_image(save_file, filename=input_image, quiet=True)
 
         # Write the source list catalog. File is named automatically.
-        img.write_catalog(format='fits', catalog_type='srl') 
+        img.write_catalog(format='fits', catalog_type='srl')
 
         # Write the residual image. File is name automatically.
-        img.export_image(img_type='gaus_resid') 
-        
+        img.export_image(img_type='gaus_resid')
+
         # Write the model image. File name is specified.
-        img.export_image(img_type='gaus_model', outfile=input_image+'.model') 
-        
+        img.export_image(img_type='gaus_model', outfile=input_image+'.model')
+
+
+.. _samp_example:
+
+Using SAMP interoperability
+---------------------------
+PyBDSM supports SAMP (Simple Application Messaging Protocol) to provide interoperability to other applications, such as TOPCAT [#f1]_, ds9 [#f2]_, and Aladin [#f3]_. To use this functionality, a SAMP hub must be running (both TOPCAT and Aladin come with SAMP hubs). Below is an example of using PyBDSM with TOPCAT. In this example, it is assumed that an image has already been processed with ``process_image``.
+
+::
+
+    BDSM [1]: process_image('VLSS.fits')
+    ...
+
+At this point, make sure that TOPCAT is started and its SAMP hub is running (activated by clicking the "Attempt to connect to SAMP hub" icon in the lower right-hand corner and selecting "Start internal hub"). Next, we send the PyBDSM source list to TOPCAT with ``write_catalog``:
+
+::
+
+    BSDM [2]: inp write_catalog
+    --------> inp(write_catalog)
+    WRITE_CATALOG: Write the Gaussian, source, or shapelet list to a file.
+    ================================================================================
+    outfile ............... None : Output file name. None => file is named
+                                   automatically; 'SAMP' => send to SAMP hub (e.g.,
+                                   to TOPCAT, ds9, or Aladin)
+    bbs_patches ........... None : For BBS format, type of patch to use: None => no
+                                   patches. 'single' => all Gaussians in one patch.
+                                   'gaussian' => each Gaussian gets its own patch.
+                                   'source' => all Gaussians belonging to a single
+                                   source are grouped into one patch
+    catalog_type ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
+                                   list, 'srl' - source list (formed by grouping
+                                   Gaussians), 'shap' - shapelet list
+    clobber .............. False : Overwrite existing file?
+    format ................ 'bbs': Format of output catalog: 'bbs', 'ds9', 'fits',
+                                   'star', 'kvis', or 'ascii'
+    srcroot ............... None : Root name for entries in the output catalog. None
+                                   => use image file name
+
+    BDSM [3]: outfile='SAMP'
+
+    BDSM [4]: catalog_type='srl'
+
+    BDSM [5]: go
+    ---------> go()
+    --> Table sent to SAMP hub.
+
+TOPCAT should automatically load the table. Double-click on the table name in TOPCAT to open the table viewer. We can use now the ``show_fit`` task to highlight the table row that corresponds to a source of interest. To do this, we start ``show_fit`` with ``broadcast = True``:
+
+::
+
+    BDSM [6]: show_fit(broadcast=T)
+    ========================================================================
+    NOTE -- With the mouse pointer in plot window:
+      Press "i" ........ : Get integrated flux densities and mean rms
+                           values for the visible portion of the image
+      Press "m" ........ : Change min and max scaling values
+      Press "n" ........ : Show / hide island IDs
+      Press "0" ........ : Reset scaling to default
+      Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode,
+                           toggled with the "zoom" button and indicated in
+                           the lower right corner, must be off)
+    ________________________________________________________________________
+
+Now, clicking on a Gaussian will highlight the row corresponding to the source to which the Gaussian belongs. Gaussian catalogs (i.e., made with ``catalog_type='srl'`` in ``write_catalog``) are also supported (and may be used simultaneously in TOPCAT with source catalogs).
+
+Images can be sent to ds9 or Aladin using the ``export_image`` task in the same way (with ``outfile = 'SAMP'``). Furthermore, if an image was sent, clicking on a Gaussian in the ``show_fit`` window will tell ds9 or Aladin to center their view on the coordinates of the Gaussian's center.
+
+
+.. rubric:: Footnotes
+.. [#f1] http://www.star.bristol.ac.uk/~mbt/topcat/
+.. [#f2] http://hea-www.harvard.edu/RD/ds9/site/Home.html
+.. [#f3] http://aladin.u-strasbg.fr

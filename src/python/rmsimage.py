@@ -214,7 +214,7 @@ class Op_rmsimage(Op):
           if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box2[0] > min(img.ch0.shape)/4.0:
             # rms box is too large - just use constant rms and mean
             self.output_rmsbox_size(img)
-            mylog.warning('Size of rms_box larger than 1/4 of image size')
+            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
             mylogger.userinfo(mylog, 'Using constant background rms and mean')
             img.use_rms_map = False
             img.mean_map_type = 'const'
@@ -236,8 +236,7 @@ class Op_rmsimage(Op):
                             new_step = int(new_width/3.0)
                             img.rms_box = (new_width, new_step)
                             if img.rms_box[0] > min(img.ch0.shape)/4.0:
-                                #self.output_rmsbox_size(img)
-                                mylog.warning('Size of rms_box larger than 1/4 of image size')
+                                mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
                                 mylogger.userinfo(mylog, 'Using constant background rms and mean')
                                 img.use_rms_map = False
                                 img.mean_map_type = 'const'
@@ -274,8 +273,7 @@ class Op_rmsimage(Op):
                                 new_step = int(new_width/3.0)
                                 img.rms_box = (new_width, new_step)
                                 if img.rms_box[0] > min(img.ch0.shape)/4.0:
-                                    #self.output_rmsbox_size(img)
-                                    mylog.warning('Size of rms_box larger than 1/4 of image size')
+                                    mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
                                     mylogger.userinfo(mylog, 'Using constant background rms and mean')
                                     img.use_rms_map = False
                                     img.mean_map_type = 'const'
@@ -340,8 +338,10 @@ class Op_rmsimage(Op):
                               '(%.5f, %.5f) Jy/beam' % (rms_min, rms_max))
 
           if img.mean_map_type != 'map':
-            val = 0.0
-            if opts.mean_map == 'const': val = img.clipped_mean
+            if opts.mean_map == 'zero':
+                val = 0.0
+            else:
+                val = img.clipped_mean
             mean[:] = val
             mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
                               str(round(val,5))+' Jy/beam')

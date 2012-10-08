@@ -11,14 +11,15 @@ Internally derived images (e.g, the Gaussian model image) can be exported to FIT
     EXPORT_IMAGE: Write one or more images to a file.
     ================================================================================
     :term:`outfile` ............... None : Output file name. None => file is named
-                                   automatically; 'SAMP' => send to SAMP Hub (e.g., to
+                                   automatically; 'SAMP' => send to SAMP hub (e.g., to
                                    TOPCAT, ds9, or Aladin)
     :term:`clobber` .............. False : Overwrite existing file?
     :term:`img_format` ........... 'fits': Format of output image: 'fits' or 'casa' (at the
                                    moment only 'fits' is supported)
     :term:`img_type` ....... 'gaus_resid': Type of image to export: 'gaus_resid',
                                    'shap_resid', 'rms', 'mean', 'gaus_model',
-                                   'shap_model', 'ch0', 'pi'
+                                   'shap_model', 'ch0', 'pi', 'psf_major', 'psf_minor',
+                                   'psf_pa', 'psf_ratio', 'psf_ratio_aper'
 
 Each of the parameters is described in detail below.
 
@@ -52,4 +53,14 @@ Each of the parameters is described in detail below.
         * ``'shap_resid'`` - Shapelet model residual image
 
         * ``'shap_model'`` - Shapelet model image
+
+        * ``'psf_major'`` - image of major axis FWHM variation (arcsec)
+
+        * ``'psf_minor'`` - image of minor axis FWHM variation (arcsec)
+
+        * ``'psf_pa'`` - image of position angle variation (degrees east of north)
+
+        * ``'psf_ratio'`` - image of peak-to-total flux variation (1/beam)
+
+        * ``'psf_ratio_aper'`` - image of peak-to-aperture flux variation (1/beam)
 

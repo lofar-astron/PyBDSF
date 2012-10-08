@@ -127,6 +127,12 @@ def tget(filename=None):
     import os
 
     global _img
+
+    # Check whether user has given a task name as input (as done in casapy).
+    # If so, reset filename to None.
+    if hasattr(filename, 'arg_list'):
+        filename = None
+
     if filename == None or filename == '':
         if os.path.isfile('pybdsm.last'):
             filename = 'pybdsm.last'
@@ -385,7 +391,7 @@ def show_fit(**kwargs):
     Parameters: ch0_image, rms_image, mean_image, ch0_islands,
                 gresid_image, sresid_image, gmodel_image,
                 smodel_image, source_seds, ch0_flagged, pi_image,
-                psf_major, psf_minor, psf_pa
+                psf_major, psf_minor, psf_pa, broadcast
 
     For more information about a parameter, use help.  E.g.,
       > help 'ch0_image'
@@ -410,7 +416,7 @@ def show_fit(**kwargs):
 show_fit.arg_list = ['ch0_image', 'rms_image', 'mean_image', 'ch0_islands',
                      'gresid_image', 'sresid_image', 'gmodel_image',
                      'smodel_image', 'source_seds', 'ch0_flagged', 'pi_image',
-                     'psf_major', 'psf_minor', 'psf_pa']
+                     'psf_major', 'psf_minor', 'psf_pa', 'broadcast']
 show_fit.use_groups = False
 
 

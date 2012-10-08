@@ -344,7 +344,7 @@ def write_casa_gaul(img, filename=None, clobber=False):
     return filename
 
 
-def write_fits_list(img, filename=None, sort_by='indx', objtype='gaul',
+def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                     incl_chan=False, clobber=False):
     """ Write as FITS binary table.
     """
@@ -770,10 +770,11 @@ def get_src(src_list, srcid):
     return None
 
 def list_and_sort_gaussians(img, patch=None, root=None,
-                            sort_by='index'):
+                            sort_by='index', incl_empty=False):
     """Returns sorted lists of Gaussians and their names and patch names.
 
     patch - can be "single", "gaussian", "source", or None
+    incl_empty - include islands to which no good Gaussians were fit?
 
     Returns (outlist, outnames, patchnames)
     outlist is [[g1, g2, g3], [g4], ...]
