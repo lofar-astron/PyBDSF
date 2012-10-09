@@ -620,7 +620,7 @@ class Opts(object):
                                  "flag_maxsnr times the image value at the peak "\
                                  "is flagged. The flag value is increased by 2.",
                              group = "flagging_opts")
-    flag_maxsize_isl = Float(1.0,
+    flag_maxsize_isl = Float(2.0,
                              doc = "Flag Gaussian if x, y bounding box "\
                                  "around sigma-contour is factor times island bbox\n"\
                                  "Any fitted Gaussian whose maximum x-dimension is "\
@@ -1084,6 +1084,15 @@ class Opts(object):
     incl_chan = Bool(False,
                              doc = "Include flux densities from each channel "\
                                  "(if any)?",
+                             group = 'hidden')
+    incl_empty = Bool(False,
+                             doc = "Include islands without any valid Gaussians "\
+                                 "(if any)?\n"\
+                                 "If True, islands for which Gaussian fitting "\
+                                 "failed will be included in the output catalog. "\
+                                 "In these cases, the source properties are "\
+                                 "estimated using moment analysis, and the source IDs "\
+                                 "are negative.",
                              group = 'hidden')
     catalog_type = Enum('gaul', 'shap', 'srl',
                              doc = "Type of catalog to write:  'gaul' - Gaussian "\
