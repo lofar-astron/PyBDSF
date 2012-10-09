@@ -60,7 +60,7 @@ class Op_collapse(Op):
               img.ch0 = ch0 = img.image[0, chan0]
               mylogger.userinfo(mylog, 'Source extraction will be ' \
                                     'done on channel', '%i (%.3f MHz)' % \
-                                    (chan0, img.cfreq/1e6))
+                                    (chan0, img.frequency/1e6))
             else:
               ch0images[ipol][:] = ch0[:] = img.image[ipol, chan0][:]
 
@@ -92,7 +92,7 @@ class Op_collapse(Op):
                                     'done on averaged ("ch0") image')
               mylogger.userinfo(mylog, 'Frequency of averaged '\
                                     'image', '%.3f MHz' % \
-                                    (img.cfreq/1e6,))
+                                    (img.frequency/1e6,))
               str1 = " ".join(str(n) for n in c_list)
               mylog.debug('%s %s' % ('Channels averaged : ', str1))
               str1 = " ".join(["%9.4e" % n for n in wtarr])
@@ -106,7 +106,7 @@ class Op_collapse(Op):
         # Only one channel in image
         img.ch0 = img.image[0, 0]
         mylogger.userinfo(mylog, 'Frequency of image',
-                          '%.3f MHz' % (img.cfreq/1e6,))
+                          '%.3f MHz' % (img.frequency/1e6,))
         if img.opts.polarisation_do:
           for pol in pols[1:]:
               if pol == 'Q': img.ch0_Q = img.image[1, 0][:]
@@ -245,8 +245,8 @@ def init_freq_collapse(img, wtarr):
         for i, ch in enumerate(c_list):
             sumwts += wtarr[i]
             sumfrq += freqs[ch]*wtarr[i]
-        img.cfreq = sumfrq / sumwts
-        img.freq_pars = (img.cfreq, 0.0, 0.0)
+        img.frequency = sumfrq / sumwts
+        img.freq_pars = (img.frequency, 0.0, 0.0)
     else:
         # Calculate from header info
         c_list = img.opts.collapse_av
@@ -263,4 +263,4 @@ def init_freq_collapse(img, wtarr):
                 sumwts += wtarr[i]
                 freq = crval+cdelt*(ch+1-crpix)
                 sumfrq += freq*wtarr[i]
-            img.cfreq = sumfrq / sumwts
+            img.frequency = sumfrq / sumwts

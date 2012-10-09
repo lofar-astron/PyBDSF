@@ -104,11 +104,12 @@ class Op_make_residimage(Op):
         std_dev = N.std(img.resid_gaus[non_masked], axis=None)
         skew = stats.skew(img.resid_gaus[non_masked], axis=None)
         kurt = stats.kurtosis(img.resid_gaus[non_masked], axis=None)
-        mylog.info("Statistics of the Gaussian residual image:")
-        mylog.info("        mean: %.3e (Jy/beam)" % mean)
-        mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
-        mylog.info("        skew: %.3f" % skew)
-        mylog.info("    kurtosis: %.3f" % kurt)
+        stat_msg = "Statistics of the Gaussian residual image:\n"
+        stat_msg += "        mean: %.3e (Jy/beam)\n" % mean
+        stat_msg += "    std. dev: %.3e (Jy/beam)\n" % std_dev
+        stat_msg += "        skew: %.3f\n" % skew
+        stat_msg += "    kurtosis: %.3f" % kurt
+        mylog.info(stat_msg)
 
         # Now residual image for shapelets
         if img.opts.shapelet_do:

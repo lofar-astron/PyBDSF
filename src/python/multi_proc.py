@@ -194,6 +194,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
             cut_values = cut_values[0:numcores-1]
         sequence = numpy.array_split(sequence, cut_values)
 
+    # Make sure there are no empty chunks at the end of the sequence
+    while len(sequence[-1]) == 0:
+        sequence.pop()
+
     procs = [multiprocessing.Process(target=worker,
              args=(function, ii, chunk, out_q, err_q, lock, bar, bar_state))
              for ii, chunk in enumerate(sequence)]

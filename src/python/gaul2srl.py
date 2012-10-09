@@ -18,6 +18,7 @@ Also, each island object of img.islands list has the source object island.source
 from image import *
 from islands import *
 from gausfit import Gaussian
+from interface import wrap
 import mylogger
 import numpy as N
 N.seterr(divide='raise')
@@ -43,6 +44,7 @@ class Op_gaul2srl(Op):
 
         src_index = -1
         sources = []
+        no_gaus_islands = []
         for iisl, isl in enumerate(img.islands):
             isl_sources = []
             g_list = []
@@ -59,13 +61,33 @@ class Op_gaul2srl(Op):
                 src_index, source = self.process_CM(img, g_list, isl, src_index)
                 sources.extend(source)
                 isl_sources.extend(source)
-
+            else:
+                if not img.waveletimage:
+                    no_gaus_islands.append((isl.island_id, isl.origin[0], isl.origin[1]))
             isl.sources = isl_sources
 
         img.sources = sources
         img.nsrc = src_index+1
         mylogger.userinfo(mylog, "Number of sources formed from Gaussians",
                           str(img.nsrc))
+        if not img.waveletimage and len(no_gaus_islands) > 0 and not img.opts.quiet:
+            message = 'Gaussian fitting failed for the following island'
+            if len(no_gaus_islands) == 1:
+                message += ':\n'
+            else:
+                message += 's:\n'
+            for isl_id in no_gaus_islands:
+                message += '    Island #%i (x=%i, y=%i)\n' % isl_id
+            if len(no_gaus_islands) == 1:
+                message += 'Please check this island. If it is a valid island and\n'
+            else:
+                message += 'Please check these islands. If they are valid islands and\n'
+            if img.opts.atrous_do:
+                message += 'should be fit, try adjusting the flagging options.'
+            else:
+                message += 'should be fit, try adjusting the flagging options or \n'\
+                           'enabling the wavelet module (with "atrous_do=True").'
+            mylog.warning(message)
 
         img.completed_Ops.append('gaul2srl')
 

@@ -23,7 +23,7 @@ Image.imagename = String(doc="Identifier name for output files")
 Image.filename = String(doc="Name of input file without FITS extension")
 Image.bbspatchnum = Int(doc="To keep track of patch number for bbs file "\
                             "for seperate patches per source")
-Image.cfreq = Float(doc="Frequency in the header")
+Image.frequency = Float(doc="Frequency in the header")
 Image.use_io = String(doc="pyfits or pyrap")
 Image.j = Int(doc="Wavelet order j, 0 for normal run")
 Image.freq_pars = Tuple((0.0, 0.0, 0.0),
@@ -381,12 +381,12 @@ class Op_readimage(Op):
         if img.opts.frequency_sp != None and img.image.shape[1] > 1:
             # If user specifies multiple frequencies, then let
             # collapse.py do the initialization
-            img.cfreq = img.opts.frequency_sp[0]
+            img.frequency = img.opts.frequency_sp[0]
             img.freq_pars = (0.0, 0.0, 0.0)
             mylog.info('Using user-specified frequencies.')
         elif img.opts.frequency != None and img.image.shape[1] == 1:
-            img.cfreq = img.opts.frequency
-            img.freq_pars = (img.cfreq, 0.0, 0.0)
+            img.frequency = img.opts.frequency
+            img.freq_pars = (img.frequency, 0.0, 0.0)
             mylog.info('Using user-specified frequency.')
         else:
             found = False
@@ -411,9 +411,9 @@ class Op_readimage(Op):
                             ff = crval + cdelt * (1. - crpix)
             if found:
                 if img.opts.frequency != None:
-                    img.cfreq = img.opts.frequency
+                    img.frequency = img.opts.frequency
                 else:
-                    img.cfreq = ff
+                    img.frequency = ff
                 img.freq_pars = (crval, cdelt, crpix)
             else:
                 raise RuntimeError('No frequency information found in image header.')

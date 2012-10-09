@@ -4,11 +4,23 @@
 What's New
 **********
 
+Version 1.4.4 (2012/10/09):
+
+    * Fixed a bug related to the parallelization of Gaussian fitting that could cause a crash due to improper mapping of island lists to processes.
+
+    * Improved logging.
+
+    * Added a warning when one or more islands are not fit (i.e., no valid, unflagged Gaussians were found).
+
+    * Added code to handle images with no unblanked pixels.
+
+    * Improved fitting robustness.
+
 Version 1.4.3 (2012/10/04):
 
-    * Fixed a bug in the mean map calculation that caused mean maps with constant values (i.e., non-2D maps) to have values of 0.0 Jy/beam unless "mean_map = 'const'" was explicitly specified.
+    * Fixed a bug in the mean map calculation that caused mean maps with constant values (i.e., non-2D maps) to have values of 0.0 Jy/beam unless ``mean_map = 'const'`` was explicitly specified.
 
-    * Fixed a bug in the PSF vary module that resulted in incorrect PSF generators being used. Added an option to smooth the resulting PSF images ("psf_smooth"). Parallelized the PSF interpolation and smoothing steps. Improved PSF vary documentation.
+    * Fixed a bug in the PSF vary module that resulted in incorrect PSF generators being used. Added an option to smooth the resulting PSF images (``psf_smooth``). Parallelized the PSF interpolation and smoothing steps. Improved PSF vary documentation.
 
 Version 1.4.2 (2012/09/25):
 

@@ -229,12 +229,13 @@ def _set_pars_from_prompt():
         # If an opt fails to set, replace its value in the namespace
         # with its current value in _img. Then print error so user knows.
         err_msg = str(err)
-        indx1 = err_msg.find('"') + 1
-        indx2 = err_msg.find('"', indx1)
-        k = err_msg[indx1:indx2]
+        err_msg_trim = err_msg.split('(')[0]
+        indx1 = err_msg_trim.find('"') + 1
+        indx2 = err_msg_trim.find('"', indx1)
+        k = err_msg_trim[indx1:indx2]
         orig_opt_val = opts[k]
         f_dict[k] = orig_opt_val
-        print '\033[31;1mERROR\033[0m: ' + str(err) + \
+        print '\033[31;1mERROR\033[0m: ' + err_msg_trim + \
               '\nResetting to previous value.'
         return False
 

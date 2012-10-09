@@ -620,7 +620,7 @@ class Opts(object):
                                  "flag_maxsnr times the image value at the peak "\
                                  "is flagged. The flag value is increased by 2.",
                              group = "flagging_opts")
-    flag_maxsize_isl = Float(1.5,
+    flag_maxsize_isl = Float(1.0,
                              doc = "Flag Gaussian if x, y bounding box "\
                                  "around sigma-contour is factor times island bbox\n"\
                                  "Any fitted Gaussian whose maximum x-dimension is "\

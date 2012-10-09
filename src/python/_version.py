@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.4.3'
+__version__ = '1.4.4'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,14 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2012/10/09 - Version 1.4.4
+
+    2012/10/09 - Improved logging. Added a warning when one or more islands
+        are not fit properly (i.e., no valid, unflagged Gaussians were
+        fit). Fixed a bug in parallelization of Gaussian fitting that
+        could cause a crash due to improper mapping of island lists to
+        processes.
 
     2012/10/05 - Added code to handle images with no unblanked pixels.
         Improved fitting robustness.
