@@ -104,8 +104,12 @@ class Op_gausfit(Op):
                         for (gidx, par) in enumerate(gaul)]
 
             if len(gaul) == 0:
-                # No good Gaussians were fit. In this case, estimate island
-                # properties using moment analysis
+                # No good Gaussians were fit. In this case, use the flagged
+                # Gaussian (estimated using moment analysis) as a dummy so
+                # that the source may still be included in output catalogs.
+                # These dummy Gaussians all have an ID of -1.
+#                 gaul= [Gaussian(img, par, idx, -1, flag)
+#                         for (gidx2, (flag, par)) in enumerate(fgaul)]
                 gidx = 0
             fgaul= [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
                         for (gidx2, (flag, par)) in enumerate(fgaul)]
@@ -118,6 +122,7 @@ class Op_gausfit(Op):
 
         ### put in the serial number of the gaussians for the whole image
         n = 0
+        nn = 0
         tot_flux = 0.0
         if img.waveletimage:
             # store the wavelet scale for each Gaussian
@@ -128,8 +133,12 @@ class Op_gausfit(Op):
         for isl in img.islands:
             m = 0
             for g in isl.gaul:
-                n += 1; m += 1
-                g.gaus_num = n - 1
+                if g.gaussian_idx == -1:
+                    nn -= 1; m = 0
+                    g.gaus_num = nn
+                else:
+                    n += 1; m += 1
+                    g.gaus_num = n - 1
                 tot_flux += g.total_flux
             isl.ngaus = m
         img.ngaus = n
@@ -164,7 +173,7 @@ class Op_gausfit(Op):
     def process_island(self, isl, img, opts=None):
         """Processes a single island.
 
-        Returns a list best-fit Gaussians and flagged Gaussians.
+        Returns a list of the best-fit Gaussians and flagged Gaussians.
         """
         import functions as func
 
@@ -349,25 +358,28 @@ class Op_gausfit(Op):
                    break
 
         if not fitok:
-            # If all else fails, use moment analysis
+            # If all else fails, try to use moment analysis
             inisl = N.where(~isl.mask_active)
             mask_id = N.zeros(isl.image.shape, dtype=int) - 1
             mask_id[inisl] = isl.island_id
-            mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, img.pixel_beamarea, True)
-            mompara[5] += 90.0
-            if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
-                x1 = N.int(N.floor(mompara[1]))
-                y1 = N.int(N.floor(mompara[2]))
-                xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
-                t=(mompara[1]-x1)/(x1+1-x1)
-                u=(mompara[2]-y1)/(y1+1-y1)
-                s_peak=(1.0-t)*(1.0-u)*fit_image[x1,y1]+t*(1.0-u)*fit_image[x1+1,y1]+ \
-                     t*u*fit_image[x1+1,y1+1]+(1.0-t)*u*fit_image[x1,y1+1]
-                mompara[0] = s_peak
-                par = [mompara.tolist()]
-                gaul, fgaul = self.flag_gaussians(par, opts,
-                                                  beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, size)
+            try:
+                mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, img.pixel_beamarea, True)
+                mompara[5] += 90.0
+                if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
+                    x1 = N.int(N.floor(mompara[1]))
+                    y1 = N.int(N.floor(mompara[2]))
+                    xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
+                    t=(mompara[1]-x1)/(x1+1-x1)
+                    u=(mompara[2]-y1)/(y1+1-y1)
+                    s_peak=(1.0-t)*(1.0-u)*fit_image[x1,y1]+t*(1.0-u)*fit_image[x1+1,y1]+ \
+                         t*u*fit_image[x1+1,y1+1]+(1.0-t)*u*fit_image[x1,y1+1]
+                    mompara[0] = s_peak
+                    par = [mompara.tolist()]
+                    gaul, fgaul = self.flag_gaussians(par, opts,
+                                                      beam, thr0, peak, shape, isl.mask_active,
+                                                      isl.image, size)
+            except:
+                pass
 
         ### return whatever we got
         isl.mg_fcn = fcn
@@ -575,7 +587,6 @@ class Op_gausfit(Op):
         verbose: whether to print fitting progress information
         """
         from _cbdsm import lmder_fit, dn2g_fit, dnsg_fit
-#         global bar
         fit = lmder_fit
         beam = list(beam)
 
@@ -594,7 +605,6 @@ class Op_gausfit(Op):
         ### iteratively add gaussians while there are high peaks
         ### in the image and fitting converges
         while fitok:
-#           if bar.started: bar.spin()
           peak, coords = fcn.find_peak()
           if peak < thr:  ### no good peaks left
               break

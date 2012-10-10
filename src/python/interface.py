@@ -676,7 +676,7 @@ def export_image(img, outfile=None, img_format='fits',
 
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
-               bbs_patches=None, incl_chan=True, clobber=False):
+               bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False):
     """Write the Gaussian, source, or shapelet list to a file. Returns True if
     successful, False if not.
 
@@ -703,6 +703,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
                      patch
         "source"   - sources are grouped by source into patches
     incl_chan - Include fluxes for each channel?
+    incl_empty - Include islands without any valid Gaussians (if any)?
     sort_by - Property to sort output list by:
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first
@@ -756,7 +757,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         # Broadcast fits table to SAMP Hub
         tfile = tempfile.NamedTemporaryFile(delete=False)
         filename = output.write_fits_list(img, filename=tfile.name,
-                                             incl_chan=incl_chan,
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
                                              clobber=True, objtype=catalog_type)
         table_name = 'PyBDSM '+ catalog_type + ' table'
         if catalog_type == 'srl':
@@ -768,7 +769,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         return True
     if format == 'fits':
         filename = output.write_fits_list(img, filename=filename,
-                                             incl_chan=incl_chan,
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
                                              clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -778,7 +779,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return True
     if format == 'ascii':
         filename = output.write_ascii_list(img, filename=filename,
-                                              incl_chan=incl_chan,
+                                              incl_chan=incl_chan, incl_empty=incl_empty,
                                               sort_by='index',
                                               clobber=clobber, objtype=catalog_type)
         if filename == None:

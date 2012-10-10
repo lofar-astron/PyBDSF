@@ -298,7 +298,7 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
 
 
 def write_ascii_list(img, filename=None, sort_by='indx',
-                     incl_chan=False, clobber=False, objtype='gaul'):
+                     incl_chan=False, incl_empty=False, clobber=False, objtype='gaul'):
     """Writes Gaussian list to an ASCII file"""
     import mylogger
     import os
@@ -345,7 +345,7 @@ def write_casa_gaul(img, filename=None, clobber=False):
 
 
 def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
-                    incl_chan=False, clobber=False):
+                    incl_chan=False, incl_empty=False, clobber=False):
     """ Write as FITS binary table.
     """
     import mylogger
@@ -380,6 +380,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                                                           incl_chan=img.opts.incl_chan,
                                                           incl_pol=img.opts.polarisation_do,
                                                           incl_aper=incl_aper,
+                                                          incl_empty=incl_empty,
                                                           nmax=nmax, nchan=img.nchan)
     out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax)
     col_list = []
@@ -507,51 +508,54 @@ def make_bbs_str(img, glist, gnames, patchnames):
       gaussians_in_patch = glist[pindx]
       names_in_patch = gnames[pindx]
       for gindx, g in enumerate(gaussians_in_patch):
-          src_name = names_in_patch[gindx]
-          ra, dec = g.centre_sky
-          if img.equinox == 1950:
-              ra, dec = B1950toJ2000([ra, dec])
-          ra = ra2hhmmss(ra)
-          sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.3f" % (ra[2])).zfill(6)
-          dec = dec2ddmmss(dec)
-          decsign = ('-' if dec[3] < 0 else '+')
-          sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.3f" % (dec[2])).zfill(6)
-          total = str("%.3e" % (g.total_flux))
-          deconv = g.deconv_size_sky
-          if deconv[0] == 0.0  and deconv[1] == 0.0:
-              stype = 'POINT'
-              deconv[2] = 0.0
+          if g.gaus_num >= 0 or (g.gaus_num < 0 and img.opts.incl_empty):
+              src_name = names_in_patch[gindx]
+              ra, dec = g.centre_sky
+              if img.equinox == 1950:
+                  ra, dec = B1950toJ2000([ra, dec])
+              ra = ra2hhmmss(ra)
+              sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.3f" % (ra[2])).zfill(6)
+              dec = dec2ddmmss(dec)
+              decsign = ('-' if dec[3] < 0 else '+')
+              sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.3f" % (dec[2])).zfill(6)
+              total = str("%.3e" % (g.total_flux))
+              deconv = g.deconv_size_sky
+              if deconv[0] == 0.0  and deconv[1] == 0.0:
+                  stype = 'POINT'
+                  deconv[2] = 0.0
+              else:
+                  stype = 'GAUSSIAN'
+              deconv1 = str("%.5e" % (deconv[0]*3600.0))
+              deconv2 = str("%.5e" % (deconv[1]*3600.0))
+              deconv3 = str("%.5e" % (deconv[2]))
+              deconvstr = deconv1 + ', ' + deconv2 + ', ' + deconv3
+              specin = '-0.8'
+              if hasattr(g, 'spec_indx'):
+                  if g.spec_indx != None and N.isfinite(g.spec_indx):
+                      specin = str("%.3e" % (g.spec_indx))
+              sep = ', '
+              if img.opts.polarisation_do:
+                  Q_flux = str("%.3e" % (g.total_flux_Q))
+                  U_flux = str("%.3e" % (g.total_flux_U))
+                  V_flux = str("%.3e" % (g.total_flux_V))
+              else:
+                  Q_flux = '0.0'
+                  U_flux = '0.0'
+                  V_flux = '0.0'
+              if patch_name == None:
+                  outstr_list.append(src_name + sep + stype + sep + sra + sep +
+                                     sdec + sep + total + sep + Q_flux + sep +
+                                     U_flux + sep + V_flux + sep +
+                                     deconvstr + sep + freq + sep +
+                                     '[' + specin + ']\n')
+              else:
+                  outstr_list.append(src_name + sep + stype + sep + patch_name +
+                                     sep + sra + sep + sdec + sep + total + sep +
+                                     Q_flux + sep + U_flux + sep + V_flux + sep +
+                                     deconvstr + sep + freq + sep +
+                                     '[' + specin + ']\n')
           else:
-              stype = 'GAUSSIAN'
-          deconv1 = str("%.5e" % (deconv[0]*3600.0))
-          deconv2 = str("%.5e" % (deconv[1]*3600.0))
-          deconv3 = str("%.5e" % (deconv[2]))
-          deconvstr = deconv1 + ', ' + deconv2 + ', ' + deconv3
-          specin = '-0.8'
-          if hasattr(g, 'spec_indx'):
-              if g.spec_indx != None and N.isfinite(g.spec_indx):
-                  specin = str("%.3e" % (g.spec_indx))
-          sep = ', '
-          if img.opts.polarisation_do:
-              Q_flux = str("%.3e" % (g.total_flux_Q))
-              U_flux = str("%.3e" % (g.total_flux_U))
-              V_flux = str("%.3e" % (g.total_flux_V))
-          else:
-              Q_flux = '0.0'
-              U_flux = '0.0'
-              V_flux = '0.0'
-          if patch_name == None:
-              outstr_list.append(src_name + sep + stype + sep + sra + sep +
-                                 sdec + sep + total + sep + Q_flux + sep +
-                                 U_flux + sep + V_flux + sep +
-                                 deconvstr + sep + freq + sep +
-                                 '[' + specin + ']\n')
-          else:
-              outstr_list.append(src_name + sep + stype + sep + patch_name +
-                                 sep + sra + sep + sdec + sep + total + sep +
-                                 Q_flux + sep + U_flux + sep + V_flux + sep +
-                                 deconvstr + sep + freq + sep +
-                                 '[' + specin + ']\n')
+            outstr_list.pop()
     return outstr_list
 
 def make_lsm_str(img, glist, gnames):
@@ -565,46 +569,47 @@ def make_lsm_str(img, glist, gnames):
     freq = "%.5e" % img.frequency
     outstr_list.append("## LSM file\n### Name  | RA (hr,min,sec) | DEC (deg,min,sec) | I | Q | U | V | SI | RM | eX | eY | eP | freq0\n\n")
     for gindx, g in enumerate(glist[0]):
-        src_name = gnames[0][gindx]
-        ra, dec = g.centre_sky
-        if img.equinox == 1950:
-            ra, dec = B1950toJ2000([ra, dec])
-        ra = ra2hhmmss(ra)
-        sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.3f" % (ra[2])).zfill(6)
-        dec = dec2ddmmss(dec)
-        decsign = ('-' if dec[3] < 0 else '+')
-        sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
-        size = g.size_sky #  degrees, in terms of FWHM
-        src_area = 1.1331*size[0]*size[1]*fwsig*fwsig*3600.0**2 # area of source in arcsec**2
-        peak = str("%.3e" % (g.total_flux/src_area)) # peak flux in Jy/arcsec**2
-        deconv = g.deconv_size_sky
-        if deconv[0] == 0.0  and deconv[1] == 0.0:
-            sname = 'P' + src_name
-            deconv[2] = 0.0
-        else:
-            sname = 'G' + src_name
-        deconv1 = str("%.5e" % (deconv[0]*N.pi/180.0/2.0))
-        deconv2 = str("%.5e" % (deconv[1]*N.pi/180.0/2.0))
-        deconv3 = str("%.5e" % (deconv[2]*N.pi/180.0/2.0))
-        deconvstr = deconv1 + ' ' + deconv2 + ' ' + deconv3
-        specin = '-0.8'
-        if hasattr(g, 'spec_indx'):
-            if g.spec_indx != None and N.isfinite(g.spec_indx):
-                specin = str("%.3e" % (g.spec_indx))
-        sep = ' '
-        if img.opts.polarisation_do:
-            Q_flux = str("%.3e" % (g.total_flux_Q/src_area))
-            U_flux = str("%.3e" % (g.total_flux_U/src_area))
-            V_flux = str("%.3e" % (g.total_flux_V/src_area))
-        else:
-            Q_flux = '0.0'
-            U_flux = '0.0'
-            V_flux = '0.0'
-        outstr_list.append(sname + sep + sra + sep +
-                               sdec + sep + peak + sep + Q_flux + sep +
-                               U_flux + sep + V_flux + sep +
-                               specin + sep + '0' + sep + deconvstr + sep +
-                               freq + sep + '\n')
+        if g.gaus_num >= 0 or (g.gaus_num < 0 and img.opts.incl_empty):
+            src_name = gnames[0][gindx]
+            ra, dec = g.centre_sky
+            if img.equinox == 1950:
+                ra, dec = B1950toJ2000([ra, dec])
+            ra = ra2hhmmss(ra)
+            sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.3f" % (ra[2])).zfill(6)
+            dec = dec2ddmmss(dec)
+            decsign = ('-' if dec[3] < 0 else '+')
+            sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
+            size = g.size_sky #  degrees, in terms of FWHM
+            src_area = 1.1331*size[0]*size[1]*fwsig*fwsig*3600.0**2 # area of source in arcsec**2
+            peak = str("%.3e" % (g.total_flux/src_area)) # peak flux in Jy/arcsec**2
+            deconv = g.deconv_size_sky
+            if deconv[0] == 0.0  and deconv[1] == 0.0:
+                sname = 'P' + src_name
+                deconv[2] = 0.0
+            else:
+                sname = 'G' + src_name
+            deconv1 = str("%.5e" % (deconv[0]*N.pi/180.0/2.0))
+            deconv2 = str("%.5e" % (deconv[1]*N.pi/180.0/2.0))
+            deconv3 = str("%.5e" % (deconv[2]*N.pi/180.0/2.0))
+            deconvstr = deconv1 + ' ' + deconv2 + ' ' + deconv3
+            specin = '-0.8'
+            if hasattr(g, 'spec_indx'):
+                if g.spec_indx != None and N.isfinite(g.spec_indx):
+                    specin = str("%.3e" % (g.spec_indx))
+            sep = ' '
+            if img.opts.polarisation_do:
+                Q_flux = str("%.3e" % (g.total_flux_Q/src_area))
+                U_flux = str("%.3e" % (g.total_flux_U/src_area))
+                V_flux = str("%.3e" % (g.total_flux_V/src_area))
+            else:
+                Q_flux = '0.0'
+                U_flux = '0.0'
+                V_flux = '0.0'
+            outstr_list.append(sname + sep + sra + sep +
+                                   sdec + sep + peak + sep + Q_flux + sep +
+                                   U_flux + sep + V_flux + sep +
+                                   specin + sep + '0' + sep + deconvstr + sep +
+                                   freq + sep + '\n')
     return outstr_list
 
 
@@ -629,29 +634,30 @@ def make_ds9_str(img, glist, gnames, deconvolve=False):
                            'move=1 delete=1 include=1 fixed=0 source\n'+equinox+'\n')
 
     for gindx, g in enumerate(glist[0]):
-        src_name = gnames[0][gindx]
-        try:
-            ra, dec = g.centre_sky
-        except AttributeError:
-            ra, dec = g.posn_sky_centroid
-        if deconvolve:
-            deconv = g.deconv_size_sky
-        else:
-            deconv = g.size_sky
-        if deconv[0] == 0.0 and deconv[1] == 0.0:
-            stype = 'POINT'
-            deconv[2] = 0.0
-            region = 'point(' + str(ra) + ',' + str(dec) + \
-                ') # point=cross width=2 text={' + src_name + '}\n'
-        else:
-            # ds9 can't handle 1-D Gaussians, so make sure they are 2-D
-            if deconv[0] < 1.0/3600.0: deconv[0] = 1.0/3600.0
-            if deconv[1] < 1.0/3600.0: deconv[1] = 1.0/3600.0
-            stype = 'GAUSSIAN'
-            region = 'ellipse(' + str(ra) + ',' + str(dec) + ',' + \
-                str(deconv[0]*3600.0) + '",' + str(deconv[1]*3600.0) + \
-                '",' + str(deconv[2]+90.0) + ') # text={' + src_name + '}\n'
-        outstr_list.append(region)
+        if g.gaus_num >= 0 or (g.gaus_num < 0 and img.opts.incl_empty):
+            src_name = gnames[0][gindx]
+            try:
+                ra, dec = g.centre_sky
+            except AttributeError:
+                ra, dec = g.posn_sky_centroid
+            if deconvolve:
+                deconv = g.deconv_size_sky
+            else:
+                deconv = g.size_sky
+            if deconv[0] == 0.0 and deconv[1] == 0.0:
+                stype = 'POINT'
+                deconv[2] = 0.0
+                region = 'point(' + str(ra) + ',' + str(dec) + \
+                    ') # point=cross width=2 text={' + src_name + '}\n'
+            else:
+                # ds9 can't handle 1-D Gaussians, so make sure they are 2-D
+                if deconv[0] < 1.0/3600.0: deconv[0] = 1.0/3600.0
+                if deconv[1] < 1.0/3600.0: deconv[1] = 1.0/3600.0
+                stype = 'GAUSSIAN'
+                region = 'ellipse(' + str(ra) + ',' + str(dec) + ',' + \
+                    str(deconv[0]*3600.0) + '",' + str(deconv[1]*3600.0) + \
+                    '",' + str(deconv[2]+90.0) + ') # text={' + src_name + '}\n'
+            outstr_list.append(region)
     return outstr_list
 
 
@@ -682,11 +688,13 @@ def make_ascii_str(img, glist, objtype='gaul'):
                                                               incl_chan=img.opts.incl_chan,
                                                               incl_pol=img.opts.polarisation_do,
                                                               incl_aper=incl_aper,
+                                                              incl_empty = img.opts.incl_empty,
                                                               nchan=img.nchan)
-        cformats[-1] += "\n"
-        if i == 0:
-            outstr_list.append("# " + " ".join(cnames) + "\n")
-        outstr_list.append(" ".join(cformats) % tuple(cvals))
+        if cvals != None:
+            cformats[-1] += "\n"
+            if i == 0:
+                outstr_list.append("# " + " ".join(cnames) + "\n")
+            outstr_list.append(" ".join(cformats) % tuple(cvals))
     return outstr_list
 
 
@@ -704,8 +712,10 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30):
                                                       incl_chan=img.opts.incl_chan,
                                                       incl_pol=img.opts.polarisation_do,
                                                       incl_aper=incl_aper,
+                                                      incl_empty=img.opts.incl_empty,
                                                       nmax=nmax, nchan=img.nchan)
-        out_list.append(cvals)
+        if cvals != None:
+            out_list.append(cvals)
     out_list = func.trans_gaul(out_list)
     return out_list
 
@@ -909,7 +919,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
 
 def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                         incl_chan=False, incl_pol=False, incl_aper=False,
-                        nmax=30, nchan=1):
+                        incl_empty=False, nmax=30, nchan=1):
     """Returns a list of column names, formats, and units for Gaussian, Source, or Shapelet"""
     import numpy as N
 
@@ -950,7 +960,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'shapelet_beta', 'shapelet_nmax', 'shapelet_cf']
     else:
         print 'Object type unrecongnized.'
-        return None
+        return (None, None, None, None)
     if incl_spin:
         names += ['spec_indx', 'e_spec_indx']
     if incl_chan:
@@ -1040,4 +1050,11 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                 cformats.append('%10f')
             if isinstance(v, str):
                 cformats.append('%4s')
+
+    if objtype == 'gaul':
+        if obj.gaus_num < 0 and not incl_empty:
+            return (None, cnames, cformats, cunits)
+    if objtype == 'srl':
+        if obj.source_id < 0 and not incl_empty:
+            return (None, cnames, cformats, cunits)
     return (cvals, cnames, cformats, cunits)

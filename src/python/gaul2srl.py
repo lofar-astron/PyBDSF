@@ -43,6 +43,7 @@ class Op_gaul2srl(Op):
             img.aperture = None
 
         src_index = -1
+        src_index_dum = 0
         sources = []
         no_gaus_islands = []
         for iisl, isl in enumerate(img.islands):
@@ -64,10 +65,16 @@ class Op_gaul2srl(Op):
             else:
                 if not img.waveletimage:
                     no_gaus_islands.append((isl.island_id, isl.origin[0], isl.origin[1]))
+                    # Put in the dummy Gaussian as the source and use negative IDs
+                    #g_list = isl.gaul
+                    #src_index_dum, source = self.process_single_gaussian(img, g_list, src_index_dum, code = 'S')
+                    #sources.append(source)
+                    #isl_sources.append(source)
+
             isl.sources = isl_sources
 
         img.sources = sources
-        img.nsrc = src_index+1
+        img.nsrc = src_index + 1
         mylogger.userinfo(mylog, "Number of sources formed from Gaussians",
                           str(img.nsrc))
         if not img.waveletimage and len(no_gaus_islands) > 0 and not img.opts.quiet:
@@ -114,7 +121,10 @@ class Op_gaul2srl(Op):
              posn_sky_max, size_sky, deconv_size_sky, bbox, ngaus, island_id, gaussians])
         source = Source(img, source_prop)
 
-        src_index += 1
+        if g.gaussian_idx == -1:
+            src_index -= 1
+        else:
+            src_index += 1
         g.source_id = src_index
         g.code = code
         source.source_id = src_index

@@ -27,6 +27,10 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2012/10/10 - Fixed a bug in Gaussian fitting that could cause a crash
+        when fitting fails. Fixed a bug in parallelization that could
+        cause a crash due to improper concatenation of result lists.
+
     2012/10/09 - Version 1.4.4
 
     2012/10/09 - Improved logging. Added a warning when one or more islands

@@ -194,7 +194,7 @@ class Op_psf_vary(Op):
                  basis, beta, cen, totpsfimage, plot)
             img.psf_images = aa
         else:
-            if ntile < 3:
+            if ntile < 4:
                 mylog.warning('Insufficient number of tiles to do interpolation of PSF variation')
                 return
             else:
