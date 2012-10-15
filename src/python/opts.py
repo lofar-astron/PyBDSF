@@ -1087,11 +1087,10 @@ class Opts(object):
                              group = 'hidden')
     incl_empty = Bool(False,
                              doc = "Include islands without any valid Gaussians "\
-                                 "(if any)?\n"\
+                                 "(source list only)?\n"\
                                  "If True, islands for which Gaussian fitting "\
                                  "failed will be included in the output catalog. "\
-                                 "In these cases, the source properties are "\
-                                 "estimated using moment analysis, and the source IDs "\
+                                 "In these cases, the source IDs "\
                                  "are negative.",
                              group = 'hidden')
     catalog_type = Enum('gaul', 'shap', 'srl',

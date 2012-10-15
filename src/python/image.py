@@ -41,6 +41,9 @@ class Image(object):
     basedir = String('DUMMY', doc="Base directory for output files")
     completed_Ops = List(String(), doc="List of completed operations")
     _is_interactive_shell = Bool(False, doc="PyBDSM is being used in the interactive shell")
+    waveletimage = Bool(False, doc="Image is a wavelet transform image")
+    _pi = Bool(False, doc="Image is a polarized intensity image")
+
 
 
     def __init__(self, opts):

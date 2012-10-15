@@ -100,22 +100,27 @@ class Op_gausfit(Op):
             idx = isl.island_id
             gaul = gaus_list[idx][0]
             fgaul = gaus_list[idx][1]
+            dgaul = []
             gaul = [Gaussian(img, par, idx, gidx)
                         for (gidx, par) in enumerate(gaul)]
 
             if len(gaul) == 0:
-                # No good Gaussians were fit. In this case, use the flagged
-                # Gaussian (estimated using moment analysis) as a dummy so
+                # No good Gaussians were fit. In this case, make a dummy
+                # Gaussian located at the island center so
                 # that the source may still be included in output catalogs.
-                # These dummy Gaussians all have an ID of -1.
-#                 gaul= [Gaussian(img, par, idx, -1, flag)
-#                         for (gidx2, (flag, par)) in enumerate(fgaul)]
+                # These dummy Gaussians all have an ID of -1. They do not
+                # appear in any of the source or island Gaussian lists except
+                # the island dgaul list.
+                posn = N.unravel_index(N.argmax(isl.image*~isl.mask_active), isl.shape) + N.array(isl.origin)
+                par = [isl.max_value, posn[0], posn[1], 0.0, 0.0, 0.0]
+                dgaul = [Gaussian(img, par, idx, -1)]
                 gidx = 0
             fgaul= [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
                         for (gidx2, (flag, par)) in enumerate(fgaul)]
 
             isl.gaul = gaul
             isl.fgaul= fgaul
+            isl.dgaul = dgaul
 
         gaussian_list = [g for isl in img.islands for g in isl.gaul]
         img.gaussians = gaussian_list
@@ -133,13 +138,13 @@ class Op_gausfit(Op):
         for isl in img.islands:
             m = 0
             for g in isl.gaul:
-                if g.gaussian_idx == -1:
-                    nn -= 1; m = 0
-                    g.gaus_num = nn
-                else:
-                    n += 1; m += 1
-                    g.gaus_num = n - 1
+                n += 1; m += 1
+                g.gaus_num = n - 1
                 tot_flux += g.total_flux
+            for dg in isl.dgaul:
+                nn -= 1
+                dg.gaus_num = nn
+
             isl.ngaus = m
         img.ngaus = n
         img.total_flux_gaus = tot_flux

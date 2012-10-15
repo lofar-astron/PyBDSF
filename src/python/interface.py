@@ -24,6 +24,7 @@ def process(img, **kwargs):
     # First, reset img to initial state (in case img is being reprocessed)
     if hasattr(img, 'use_io'): del img.use_io
     if hasattr(img, 'sources'): del img.sources
+    if hasattr(img, 'dsources'): del img.dsources
     if hasattr(img, 'gaussians'): del img.gaussians
     if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
     if hasattr(img, 'islands'): del img.islands
@@ -703,7 +704,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
                      patch
         "source"   - sources are grouped by source into patches
     incl_chan - Include fluxes for each channel?
-    incl_empty - Include islands without any valid Gaussians (if any)?
+    incl_empty - Include islands without any valid Gaussians (source list only)?
     sort_by - Property to sort output list by:
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first

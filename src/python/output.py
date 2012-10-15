@@ -266,7 +266,7 @@ def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
 
 
 def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
-                   clobber=False, objtype='gaul'):
+                   clobber=False, incl_empty=False, objtype='gaul'):
     """Writes Gaussian list to a ds9 region file"""
     import numpy as N
     from const import fwsig
@@ -279,10 +279,18 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
     elif objtype == 'srl':
         root = img.parentname
         outl = [img.sources]
+        if incl_empty:
+            # Append the dummy sources for islands without any unflagged Gaussians
+            outl[0] += img.dsources
         outn = []
         for src in img.sources:
             outn.append(root + '_i' + str(src.island_id) + '_s' +
                             str(src.source_id))
+        if incl_empty:
+            # Append the dummy sources for islands without any unflagged Gaussians
+            for dsrc in img.dsources:
+                outn.append(root + '_i' + str(dsrc.island_id) + '_s' +
+                            str(dsrc.source_id))
         outn = [outn]
     outstr_list = make_ds9_str(img, outl, outn, deconvolve=deconvolve)
     if filename == None:
@@ -308,6 +316,9 @@ def write_ascii_list(img, filename=None, sort_by='indx',
         outl, outn, patl = list_and_sort_gaussians(img, patch=None, sort_by=sort_by)
     elif objtype == 'srl':
         outl = [img.sources]
+        if incl_empty:
+            # Append the dummy sources for islands without any unflagged Gaussians
+            outl[0] += img.dsources
     outstr_list = make_ascii_str(img, outl, objtype=objtype)
     if filename == None:
         if objtype == 'gaul':
@@ -359,6 +370,9 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         outl, outn, patl = list_and_sort_gaussians(img, patch=None, sort_by=sort_by)
     elif objtype == 'srl':
         outl = [img.sources]
+        if incl_empty:
+            # Append the dummy sources for islands without any unflagged Gaussians
+            outl[0] += img.dsources
     elif objtype == 'shap':
         outl = [img.islands]
 

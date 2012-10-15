@@ -452,7 +452,7 @@ def write_catalog(**kwargs):
         print "\n\033[31;1mAborted\033[0m"
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
-                          'incl_chan', 'clobber', 'catalog_type']#, 'incl_empty']
+                          'incl_chan', 'clobber', 'catalog_type', 'incl_empty']
 write_catalog.use_groups = False
 
 
