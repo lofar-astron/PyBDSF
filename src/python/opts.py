@@ -1093,6 +1093,13 @@ class Opts(object):
                                  "In these cases, the source IDs "\
                                  "are negative.",
                              group = 'hidden')
+    force_output = Bool(False,
+                             doc = "Force creation of output file, even if the "\
+                                 "catalog is empty?\n"\
+                                 "If True, the output catalog will be created, "\
+                                 "even if there are no sources. In this case, "\
+                                 "the catalog will have a header but no entries.",
+                             group = 'hidden')
     catalog_type = Enum('gaul', 'shap', 'srl',
                              doc = "Type of catalog to write:  'gaul' - Gaussian "\
                                  "list, 'srl' - source list (formed "\
@@ -1223,7 +1230,7 @@ class Opts(object):
                 # and then try to parse it
                 if hasattr(self, k):
                     if isinstance(self.__getattribute__(k), bool):
-                        if isinstance(v, bool):
+                        if isinstance(v, bool) or v == None:
                             # just enter the bool into the parameter
                             pass
                         elif isinstance(v, basestring):
