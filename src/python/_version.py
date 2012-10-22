@@ -27,7 +27,10 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2012/10/09 - Version 1.4.5
+    2012/10/22 - Added option ("force_output") to force output of catalogs
+        even if they are empty (when no sources are found).
+
+    2012/10/12 - Version 1.4.5
 
     2012/10/12 - Added option ("incl_empty") to include empty islands (that
         have no un-flagged Gaussians) in output catalogs. Any such empty
