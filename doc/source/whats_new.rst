@@ -4,6 +4,14 @@
 What's New
 **********
 
+Version 1.4.5 (2012/10/12):
+
+    * Added option (``incl_empty``) to include empty islands (that have no un-flagged Gaussians) in output catalogs. Any such empty islands are given negative source IDs and have positions given by the location of the peak of the island.
+
+    * Fixed a bug in Gaussian fitting that could cause a crash when fitting fails.
+
+    * Fixed a bug in parallelization that could cause a crash due to improper concatenation of result lists.
+
 Version 1.4.4 (2012/10/09):
 
     * Fixed a bug related to the parallelization of Gaussian fitting that could cause a crash due to improper mapping of island lists to processes.
