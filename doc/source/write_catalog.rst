@@ -32,6 +32,8 @@ The task parameters are as follows:
     :term:`format` ................ 'bbs': Format of output Gaussian list: 'bbs', 'ds9',
                                    'fits', 'star', 'kvis', or 'ascii'
     :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?
+    :term:`incl_empty` ........... False : Include islands without any valid Gaussians
+                                   (source list only)?
     :term:`srcroot` ............... None : Root name for entries in the output catalog. None
                                    => use image file name
 
@@ -85,6 +87,9 @@ Each of the parameters is described in detail below.
 
     incl_chan
         This parameter is a Boolean (default is ``False``) that determines whether the total flux densities of each source measured in each channel by the spectral index module are included in the output.
+
+    incl_empty
+        This parameter is a Boolean (default is ``False``) that determines whether islands without any valid Gaussians are included in the output catalog. This option is only available for source lists. If True, islands for which Gaussian fitting failed will be included in the output catalog. In these cases, the source IDs are negative.
 
     srcroot
         This parameter is a string (default is ``None``) that sets the root for source names in the output catalog.

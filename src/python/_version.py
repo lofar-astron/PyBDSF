@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.4.4'
+__version__ = '1.4.5'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,20 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2012/10/22 - Added option ("force_output") to force output of catalogs
+        even if they are empty (when no sources are found).
+
+    2012/10/12 - Version 1.4.5
+
+    2012/10/12 - Added option ("incl_empty") to include empty islands (that
+        have no un-flagged Gaussians) in output catalogs. Any such empty
+        islands are given negative source IDs and positions given by the
+        location of the peak of the island.
+
+    2012/10/10 - Fixed a bug in Gaussian fitting that could cause a crash
+        when fitting fails. Fixed a bug in parallelization that could
+        cause a crash due to improper concatenation of result lists.
 
     2012/10/09 - Version 1.4.4
 

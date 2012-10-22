@@ -112,7 +112,6 @@ class Op_readimage(Op):
         img.filename = img.opts.filename
         img.parentname = fname
         img.imagename = fname + '.pybdsm'
-        img.waveletimage = False
         if img.opts.output_all:
             # Set up directory to write output to
             basedir = './' + fname + '_pybdsm'

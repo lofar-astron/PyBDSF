@@ -24,6 +24,7 @@ def process(img, **kwargs):
     # First, reset img to initial state (in case img is being reprocessed)
     if hasattr(img, 'use_io'): del img.use_io
     if hasattr(img, 'sources'): del img.sources
+    if hasattr(img, 'dsources'): del img.dsources
     if hasattr(img, 'gaussians'): del img.gaussians
     if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
     if hasattr(img, 'islands'): del img.islands
@@ -676,7 +677,8 @@ def export_image(img, outfile=None, img_format='fits',
 
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
-               bbs_patches=None, incl_chan=True, clobber=False):
+               bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False,
+               force_output=False):
     """Write the Gaussian, source, or shapelet list to a file. Returns True if
     successful, False if not.
 
@@ -703,9 +705,11 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
                      patch
         "source"   - sources are grouped by source into patches
     incl_chan - Include fluxes for each channel?
+    incl_empty - Include islands without any valid Gaussians (source list only)?
     sort_by - Property to sort output list by:
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first
+    force_output - Force the creation of a catalog, even if it is empty
     clobber - Overwrite existing file?
     """
     import output
@@ -738,9 +742,10 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         print '\033[91mERROR\033[0m: catalog_type must be "gaul", '\
               '"srl", or "shap"'
         return False
-    if img.ngaus == 0:
-        print 'No Gaussians were fit to image. Output file not written.'
-        return False
+    if (len(img.sources) == 0 and not incl_empty) or (len(img.sources) == 0 and len(img.dsources) == 0 and incl_empty):
+        if not force_output:
+            print 'No sources were found in the image. Output file not written.'
+            return False
     if filename == '': filename = None
 
     # Now go format by format and call appropriate function
@@ -756,7 +761,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         # Broadcast fits table to SAMP Hub
         tfile = tempfile.NamedTemporaryFile(delete=False)
         filename = output.write_fits_list(img, filename=tfile.name,
-                                             incl_chan=incl_chan,
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
                                              clobber=True, objtype=catalog_type)
         table_name = 'PyBDSM '+ catalog_type + ' table'
         if catalog_type == 'srl':
@@ -768,7 +773,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         return True
     if format == 'fits':
         filename = output.write_fits_list(img, filename=filename,
-                                             incl_chan=incl_chan,
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
                                              clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -778,7 +783,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return True
     if format == 'ascii':
         filename = output.write_ascii_list(img, filename=filename,
-                                              incl_chan=incl_chan,
+                                              incl_chan=incl_chan, incl_empty=incl_empty,
                                               sort_by='index',
                                               clobber=clobber, objtype=catalog_type)
         if filename == None:

@@ -620,7 +620,7 @@ class Opts(object):
                                  "flag_maxsnr times the image value at the peak "\
                                  "is flagged. The flag value is increased by 2.",
                              group = "flagging_opts")
-    flag_maxsize_isl = Float(1.0,
+    flag_maxsize_isl = Float(2.0,
                              doc = "Flag Gaussian if x, y bounding box "\
                                  "around sigma-contour is factor times island bbox\n"\
                                  "Any fitted Gaussian whose maximum x-dimension is "\
@@ -1085,6 +1085,21 @@ class Opts(object):
                              doc = "Include flux densities from each channel "\
                                  "(if any)?",
                              group = 'hidden')
+    incl_empty = Bool(False,
+                             doc = "Include islands without any valid Gaussians "\
+                                 "(source list only)?\n"\
+                                 "If True, islands for which Gaussian fitting "\
+                                 "failed will be included in the output catalog. "\
+                                 "In these cases, the source IDs "\
+                                 "are negative.",
+                             group = 'hidden')
+    force_output = Bool(False,
+                             doc = "Force creation of output file, even if the "\
+                                 "catalog is empty?\n"\
+                                 "If True, the output catalog will be created, "\
+                                 "even if there are no sources. In this case, "\
+                                 "the catalog will have a header but no entries.",
+                             group = 'hidden')
     catalog_type = Enum('gaul', 'shap', 'srl',
                              doc = "Type of catalog to write:  'gaul' - Gaussian "\
                                  "list, 'srl' - source list (formed "\
@@ -1215,7 +1230,7 @@ class Opts(object):
                 # and then try to parse it
                 if hasattr(self, k):
                     if isinstance(self.__getattribute__(k), bool):
-                        if isinstance(v, bool):
+                        if isinstance(v, bool) or v == None:
                             # just enter the bool into the parameter
                             pass
                         elif isinstance(v, basestring):

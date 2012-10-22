@@ -909,7 +909,7 @@ The options for this module are as follows:
         This parameter is an integer (default is 2). When constructing a set of 'unresolved' sources for psf estimation, this parameter controls the factor of nyquist sample for binning bmaj, etc. vs SNR.
 
     psf_smooth
-        This parameter is a float (default is ``None``) that sets the smoothing scale used to smooth the interpolated images. Generally, artifacts due to noise and the interpolation can be significantly reduced if the smoothing scale is similar to the typical source separation scale.
+        This parameter is a float (default is ``None``) that sets the smoothing scale (in arcsec) used to smooth the interpolated images. Generally, artifacts due to noise and the interpolation can be significantly reduced if the smoothing scale is similar to the typical source separation scale.
 
     psf_snrcut
         This parameter is a float (default is 10.0). Only Gaussians with SNR greater than this are considered for processing.
