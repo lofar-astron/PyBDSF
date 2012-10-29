@@ -1015,8 +1015,14 @@ def get_kwargs(kwargs, key, typ, default):
     return obj
 
 def read_image_from_file(filename, img, indir, quiet=False):
-    """ Reads data and header from indir/filename using either pyfits or pyrap depending on
-         img.use_io = 'fits'/'rap' """
+    """ Reads data and header from indir/filename.
+
+    We can use either pyfits or pyrap depending on the value
+    of img.use_io = 'fits'/'rap'
+
+    PyFITS is required, as it is used to standardize the header format. pyrap
+    is optional.
+    """
     import mylogger
     import os
     import numpy as N
@@ -1059,35 +1065,25 @@ def read_image_from_file(filename, img, indir, quiet=False):
             if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
                 has_pyfits = True
             else:
-                has_pyfits = False
-                e_pyfits = 'PyFITS version < 2.2'
+                raise RuntimeError("PyFITS (version 2.2 or greater) is required.")
         except ImportError, err:
-            has_pyfits = False
-            e_pyfits = str(err)
+            raise RuntimeError("PyFITS is required.")
         try:
             import pyrap.images as pim
             has_pyrap = True
         except ImportError, err:
             has_pyrap = False
             e_pyrap = str(err)
-        if not has_pyrap and not has_pyfits:
-            raise RuntimeError("Neither PyFITS (version 2.2 or greater) nor Pyrap is available. Image cannot be read.\nOriginal errors: \n {0}\n {1}".format(e_pyfits, e_pyrap))
 
         # First assume image is a fits file, and use pyfits to open it (if
         # available). If that fails, try to use pyrap if available.
         failed_read = False
         reason = 0
         try:
-            if has_pyfits:
-                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-                img.use_io = 'fits'
-            else:
-                reason = 2 # Pyfits unavailable
-                raise IOError("PyFITS unavailable")
+            fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+            img.use_io = 'fits'
         except IOError, err:
             e_pyfits = str(err)
-            if reason == 0:
-                reason = 1 # Pyfits available but cannot read file
             if has_pyrap:
                 try:
                     inputimage = pim.image(image_file)
@@ -1099,8 +1095,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             else:
                 failed_read = True
                 e_pyrap = "Pyrap unavailable"
-                if reason == 1:
-                    img._reason = 'Problem reading file.'
+                img._reason = 'Problem reading file.'
         if failed_read:
             img._reason += '\nOriginal errors: {0}\n {1}'.format(e_pyfits, e_pyrap)
             return None
@@ -1110,7 +1105,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
         data = inputimage.getdata()
-        hdr = inputimage.info()
+        hdr = convert_pyrap_header(inputimage)
     if img.use_io == 'fits':
         data = fits[0].data
         hdr = fits[0].header
@@ -1118,28 +1113,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
     # Make sure data is in proper order. Final order is [pol, chan, x (RA), y (DEC)],
     # so we need to rearrange dimensions if they are not in this order. Use the
-    # ctype FITS keywords or equivalent in pyrap to determine order of dimensions.
+    # ctype FITS keywords to determine order of dimensions.
     mylog.info("Original data shape of " + image_file +': ' +str(data.shape))
     ctype_in = []
+    for i in range(len(data.shape)):
+        key_val_raw = hdr['CTYPE' + str(i+1)]
+        key_val = key_val_raw.split('-')[0]
+        ctype_in.append(key_val.strip())
     if img.use_io == 'fits':
-        for i in range(len(data.shape)):
-            key_val_raw = hdr['CTYPE' + str(i+1)]
-            key_val = key_val_raw.split('-')[0]
-            ctype_in.append(key_val.strip())
         ctype_in.reverse() # Need to reverse order, as pyfits does this
-    if img.use_io == 'rap':
-        coords = hdr['coordinates']
-        if coords.has_key('spectral2'):
-            ctype_in.append('FREQ')
-        elif coords.has_key('stokes2'):
-            ctype_in.append('STOKES')
-        if coords.has_key('spectral1'):
-            ctype_in.append('FREQ')
-        elif coords.has_key('stokes1'):
-            ctype_in.append('STOKES')
-        if coords.has_key('direction0'):
-            ctype_in.append('DEC')
-            ctype_in.append('RA')
 
     ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
     indx_out = [-1, -1, -1, -1]
@@ -1184,10 +1166,26 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if xmin >= xmax or ymin >= ymax:
             raise RuntimeError("The trim_box option does not specify a valid part of the image.")
         data = data[:, :, xmin:xmax, ymin:ymax]
+
+        # Adjust WCS keywords
+        hdr['crpix1'] -= xmin
+        hdr['crpix2'] -= ymin
     else:
         img.trim_box = None
 
     return data, hdr
+
+
+def convert_pyrap_header(pyrap_image):
+    """Converts a pyrap header to a PyFITS header."""
+    import tempfile
+    import pyfits
+
+    tfile = tempfile.NamedTemporaryFile(delete=False)
+    pyrap_image.tofits(tfile)
+    hdr = pyfits.get_header(tfile)
+    return hdr
+
 
 def write_image_to_file(use, filename, image, img, outdir=None,
                                            clobber=True):
@@ -1232,24 +1230,9 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
     header = hdulist[0].header
-    header.update('CTYPE1', wcsobj.ctype[0])
-    header.update('CRVAL1', wcsobj.crval[0])
-    header.update('CDELT1', wcsobj.cdelt[0])
-    header.update('CRPIX1', wcsobj.crpix[0])
-    header.update('CTYPE2', wcsobj.ctype[1])
-    header.update('CRVAL2', wcsobj.crval[1])
-    header.update('CDELT2', wcsobj.cdelt[1])
-    header.update('CRPIX2', wcsobj.crpix[1])
-    if hasattr(wcsobj, 'crota'):
-        header.update('CROTA1', wcsobj.crota[0])
-        header.update('CROTA2', wcsobj.crota[1])
-    header.update('BMAJ', beam[0])
-    header.update('BMIN', beam[1])
-    header.update('BPA', beam[2])
-    header.update('CTYPE3', 'FREQ')
-    header.update('CRVAL3', freq[0])
-    header.update('CDELT3', freq[1])
-    header.update('CRPIX3', freq[2])
+    wcs_header = wcsobj.to_header()
+    for key in wcs_header.keys():
+        header.update(key, wcs_header[key])
     hdulist[0].header = header
     return hdulist
 
