@@ -1182,8 +1182,8 @@ def convert_pyrap_header(pyrap_image):
     import pyfits
 
     tfile = tempfile.NamedTemporaryFile(delete=False)
-    pyrap_image.tofits(tfile)
-    hdr = pyfits.get_header(tfile)
+    pyrap_image.tofits(tfile.name)
+    hdr = pyfits.get_header(tfile.name)
     return hdr
 
 
