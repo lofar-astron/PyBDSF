@@ -677,7 +677,8 @@ def export_image(img, outfile=None, img_format='fits',
 
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
-               bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False):
+               bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False,
+               force_output=False):
     """Write the Gaussian, source, or shapelet list to a file. Returns True if
     successful, False if not.
 
@@ -708,6 +709,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     sort_by - Property to sort output list by:
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first
+    force_output - Force the creation of a catalog, even if it is empty
     clobber - Overwrite existing file?
     """
     import output
@@ -740,9 +742,10 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         print '\033[91mERROR\033[0m: catalog_type must be "gaul", '\
               '"srl", or "shap"'
         return False
-    if img.ngaus == 0:
-        print 'No Gaussians were fit to image. Output file not written.'
-        return False
+    if (len(img.sources) == 0 and not incl_empty) or (len(img.sources) == 0 and len(img.dsources) == 0 and incl_empty):
+        if not force_output:
+            print 'No sources were found in the image. Output file not written.'
+            return False
     if filename == '': filename = None
 
     # Now go format by format and call appropriate function

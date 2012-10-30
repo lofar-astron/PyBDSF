@@ -388,20 +388,23 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         incl_aper = True
     else:
         incl_aper = False
-    cvals, cnames, cformats, cunits = make_output_columns(outl[0][0], fits=True,
-                                                          objtype=objtype,
-                                                          incl_spin=img.opts.spectralindex_do,
-                                                          incl_chan=img.opts.incl_chan,
-                                                          incl_pol=img.opts.polarisation_do,
-                                                          incl_aper=incl_aper,
-                                                          incl_empty=incl_empty,
-                                                          nmax=nmax, nchan=img.nchan)
+    if len(outl[0]) > 0:
+        cvals, cnames, cformats, cunits = make_output_columns(outl[0][0], fits=True,
+                                                              objtype=objtype,
+                                                              incl_spin=img.opts.spectralindex_do,
+                                                              incl_chan=img.opts.incl_chan,
+                                                              incl_pol=img.opts.polarisation_do,
+                                                              incl_aper=incl_aper,
+                                                              incl_empty=incl_empty,
+                                                              nmax=nmax, nchan=img.nchan)
     out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax)
     col_list = []
     for ind, col in enumerate(out_list):
       list1 = pyfits.Column(name=cnames[ind], format=cformats[ind],
                             unit=cunits[ind], array=N.array(out_list[ind]))
       col_list.append(list1)
+    if len(col_list) == 0:
+        col_list = [pyfits.Column(name='Blank', format='1J')]
     tbhdu = pyfits.new_table(col_list)
     if objtype == 'gaul':
         tbhdu.header.add_comment('Gaussian list for '+img.filename)
@@ -504,7 +507,14 @@ def make_bbs_str(img, glist, gnames, patchnames):
 
     outstr_list = []
     freq = "%.5e" % img.frequency
-    if patchnames[0] == None:
+
+    if len(patchnames) == 0:
+        # Handle empty list: just write default header
+        outstr_list.append("format = Name, Type, Ra, Dec, I, Q, U, V, "\
+                               "MajorAxis, MinorAxis, Orientation, "\
+                               "ReferenceFrequency='"+freq+"', "\
+                               "SpectralIndex='[]'\n\n")
+    elif patchnames[0] == None:
         outstr_list.append("format = Name, Type, Ra, Dec, I, Q, U, V, "\
                                "MajorAxis, MinorAxis, Orientation, "\
                                "ReferenceFrequency='"+freq+"', "\

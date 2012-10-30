@@ -408,6 +408,7 @@ class Op_rmsimage(Op):
                        logname=None, ncores=None):
         """Calls map_2d and checks for problems"""
         rms_ok = False
+        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
         opts = img.opts
         while not rms_ok:
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
