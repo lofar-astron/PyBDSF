@@ -2,7 +2,7 @@
 
 Defines operation Op_threshold. If the option 'thresh' is defined
 as 'fdr' then the value of thresh_pix is estimated using the
-False Detection Rate algorithm (using the user defined value 
+False Detection Rate algorithm (using the user defined value
 of fdr_alpha). If thresh is None, then the false detection
 probability is first calculated, and if the number of false source
 pixels is more than fdr_ratio times the estimated number of true source
@@ -34,13 +34,13 @@ class Op_threshold(Op):
 
 	if img.opts.thresh is None:
             source_p = self.get_srcp(img)
-	    cutoff = 5.0 
+	    cutoff = 5.0
 	    false_p = 0.5*erfc(cutoff/sq2)*size
 	    if false_p < opts.fdr_ratio*source_p:
                 img.thresh = 'hard'
                 mylogger.userinfo(mylog, "Expected 5-sigma-clipped false detection rate < fdr_ratio")
                 mylogger.userinfo(mylog, "Using sigma-clipping ('hard') thresholding")
-	    else: 
+	    else:
                 img.thresh = 'fdr'
                 mylogger.userinfo(mylog, "Expected 5-sigma-clipped false detection rate > fdr_ratio")
                 mylogger.userinfo(mylog, "Using FDR (False Detection Rate) thresholding")
@@ -49,7 +49,7 @@ class Op_threshold(Op):
             mylog.debug("Threshold for pixels set to : "+str.swapcase(img.thresh))
         else:
             img.thresh = img.opts.thresh
-            
+
 	if img.thresh=='fdr':
             cdelt = img.wcs_obj.acdelt[:2]
 	    bm = (img.beam[0], img.beam[1])
@@ -79,7 +79,7 @@ class Op_threshold(Op):
                 mylogger.userinfo(mylog, "FDR threshold (replaces thresh_pix)", str(round(sigcrit, 4)))
         else:
             img.thresh_pix = opts.thresh_pix
-        
+
         img.completed_Ops.append('threshold')
         return img
 
@@ -88,7 +88,7 @@ class Op_threshold(Op):
         fwsig = const.fwsig
 	cutoff = 5.0
 	spin = -0.80
-	freq = img.cfreq 
+	freq = img.frequency
         bm = (img.beam[0], img.beam[1])
         cdelt = img.wcs_obj.acdelt[:2]
 	x = 2.0*pi*N.product(bm)/abs(N.product(cdelt))/(fwsig*fwsig)*img.omega
@@ -98,7 +98,7 @@ class Op_threshold(Op):
 	scnum = sc.n
         index = 0
 	for i,s in enumerate(scflux):
-            if s < smin_L: 
+            if s < smin_L:
                 index = i
                 break
 	n1 = scnum[index]; n2 = scnum[-1]

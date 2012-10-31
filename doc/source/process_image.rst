@@ -850,7 +850,7 @@ If ``psf_vary_do = True``, then the spatial variations in the PSF are estimated 
 
 * The unresolved sources within each tile that have SNRs greater than ``psf_snrcutstack`` are then stacked to form a high-SNR PSF. For each tile, this PSF is fit with a Gaussian to recover its size. The significance of the variation in the sizes across the image is quantified.
 
-* If the variation is significant, the major axis, minor axis, and position angle are then interpolated across the image. Where there is sufficient information, the interpolation is done using Delaunay triangulation; otherwise, the values within the tiles defined by tessellation are simply set to those of the appropriate PSF.
+* If the variation is significant, the major axis, minor axis, and position angle are then interpolated across the image. Smoothing can be applied to these images to smooth out artifacts due to noise and the interpolation. Additionally, images are made of the ratio of peak-to-total flux and peak-to-aperture flux (if an aperture is specified). These ratio images provide conversions from total flux to peak flux for point sources. In the absence of smearing effects, these ratios should be around unity. However, if ionospheric effects are present, significant smearing can be present. In this case, these ratio images can be useful, for example, in determining the sensitivity at a particular location in the image to a point source with a given total flux.
 
 * Lastly, the deconvolved source sizes are adjusted to include the PSF variation as a function of position.
 
@@ -868,6 +868,8 @@ The options for this module are as follows:
       :term:`psf_nsig` ............. 3.0 : Kappa for clipping within each bin
       :term:`psf_over` ............... 2 : Factor of nyquist sample for binning bmaj, etc. vs
                                    SNR
+      :term:`psf_smooth` .......... None : Size of Gaussian to use for smoothing of
+                                   interpolated images in arcsec. None => no smoothing
       :term:`psf_snrcut` .......... 10.0 : Minimum SNR for statistics
       :term:`psf_snrcutstack` ..... 15.0 : Unresolved sources with higher SNR taken for
                                    stacked psfs
@@ -905,6 +907,9 @@ The options for this module are as follows:
 
     psf_over
         This parameter is an integer (default is 2). When constructing a set of 'unresolved' sources for psf estimation, this parameter controls the factor of nyquist sample for binning bmaj, etc. vs SNR.
+
+    psf_smooth
+        This parameter is a float (default is ``None``) that sets the smoothing scale (in arcsec) used to smooth the interpolated images. Generally, artifacts due to noise and the interpolation can be significantly reduced if the smoothing scale is similar to the typical source separation scale.
 
     psf_snrcut
         This parameter is a float (default is 10.0). Only Gaussians with SNR greater than this are considered for processing.

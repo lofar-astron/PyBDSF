@@ -24,6 +24,7 @@ def process(img, **kwargs):
     # First, reset img to initial state (in case img is being reprocessed)
     if hasattr(img, 'use_io'): del img.use_io
     if hasattr(img, 'sources'): del img.sources
+    if hasattr(img, 'dsources'): del img.dsources
     if hasattr(img, 'gaussians'): del img.gaussians
     if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
     if hasattr(img, 'islands'): del img.islands
@@ -545,9 +546,11 @@ def export_image(img, outfile=None, img_format='fits',
         'gaus_model' - Gaussian model image
         'shap_resid' - Shapelet model residual image
         'shap_model' - Shapelet model image
-        'psf_major' - PSF major axis FWHM image
-        'psf_minor' - PSF minor axis FWHM image
-        'psf_pa' - PSF position angle image
+        'psf_major' - PSF major axis FWHM image (FWHM in arcsec)
+        'psf_minor' - PSF minor axis FWHM image (FWHM in arcsec)
+        'psf_pa' - PSF position angle image (degrees east of north)
+        'psf_ratio' - PSF peak-to-total flux ratio (in units of 1/beam)
+        'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)
     """
     import os
     import functions as func
@@ -625,6 +628,14 @@ def export_image(img, outfile=None, img_format='fits',
             func.write_image_to_file(use_io, filename,
                                      img.psf_vary_pa, img, bdir,
                                      clobber=clobber)
+        elif img_type == 'psf_ratio':
+            func.write_image_to_file(use_io, filename,
+                                     img.psf_vary_ratio, img, bdir,
+                                     clobber=clobber)
+        elif img_type == 'psf_ratio_aper':
+            func.write_image_to_file(use_io, filename,
+                                     img.psf_vary_ratio_aper, img, bdir,
+                                     clobber=clobber)
         elif img_type == 'gaus_resid':
             im = img.resid_gaus
             func.write_image_to_file(use_io, filename,
@@ -666,7 +677,8 @@ def export_image(img, outfile=None, img_format='fits',
 
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
-               bbs_patches=None, incl_chan=True, clobber=False):
+               bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False,
+               force_output=False):
     """Write the Gaussian, source, or shapelet list to a file. Returns True if
     successful, False if not.
 
@@ -693,9 +705,11 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
                      patch
         "source"   - sources are grouped by source into patches
     incl_chan - Include fluxes for each channel?
+    incl_empty - Include islands without any valid Gaussians (source list only)?
     sort_by - Property to sort output list by:
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first
+    force_output - Force the creation of a catalog, even if it is empty
     clobber - Overwrite existing file?
     """
     import output
@@ -728,15 +742,17 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         print '\033[91mERROR\033[0m: catalog_type must be "gaul", '\
               '"srl", or "shap"'
         return False
-    if img.ngaus == 0:
-        print 'No Gaussians were fit to image. Output file not written.'
-        return False
+    if (len(img.sources) == 0 and not incl_empty) or (len(img.sources) == 0 and len(img.dsources) == 0 and incl_empty):
+        if not force_output:
+            print 'No sources were found in the image. Output file not written.'
+            return False
     if filename == '': filename = None
 
     # Now go format by format and call appropriate function
     if filename == 'SAMP':
         import tempfile
         import functions as func
+        import os
         if not hasattr(img,'samp_client'):
             s, private_key = func.start_samp_proxy()
             img.samp_client = s
@@ -745,14 +761,19 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         # Broadcast fits table to SAMP Hub
         tfile = tempfile.NamedTemporaryFile(delete=False)
         filename = output.write_fits_list(img, filename=tfile.name,
-                                             incl_chan=incl_chan,
-                                             clobber=clobber, objtype=catalog_type)
-        func.send_fits_table(img.samp_client, img.samp_key, 'PyBDSM table', tfile.name)
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
+                                             clobber=True, objtype=catalog_type)
+        table_name = 'PyBDSM '+ catalog_type + ' table'
+        if catalog_type == 'srl':
+            img.samp_srl_table_url = 'file://' + os.path.abspath(tfile.name)
+        if catalog_type == 'gaul':
+            img.samp_gaul_table_url = 'file://' + os.path.abspath(tfile.name)
+        func.send_fits_table(img.samp_client, img.samp_key, table_name, tfile.name)
         print '--> Table sent to SMAP hub'
         return True
     if format == 'fits':
         filename = output.write_fits_list(img, filename=filename,
-                                             incl_chan=incl_chan,
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
                                              clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -762,7 +783,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return True
     if format == 'ascii':
         filename = output.write_ascii_list(img, filename=filename,
-                                              incl_chan=incl_chan,
+                                              incl_chan=incl_chan, incl_empty=incl_empty,
                                               sort_by='index',
                                               clobber=clobber, objtype=catalog_type)
         if filename == None:

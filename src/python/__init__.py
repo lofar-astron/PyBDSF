@@ -124,13 +124,14 @@ def _run_op_list(img, chain):
     mylog = mylogger.logging.getLogger("PyBDSM.Init")
     mylog.info("PyBDSM version %s (LUS revision %s)"
                              % (__version__, __revision__))
-    mylog.info("Non-default input parameters:")
+    par_msg = "Non-default input parameters:\n"
     user_opts = img.opts.to_list()
     for user_opt in user_opts:
         k, v = user_opt
         val = img.opts.__getattribute__(k)
         if val != v._default and v.group() != 'hidden':
-            mylog.info('    %-20s : %s' % (k, repr(val)))
+            par_msg += '    %-20s : %s\n' % (k, repr(val))
+    mylog.info(par_msg[:-1]) # -1 is to trim final newline
 
     # Run all op's
     dc = '\033[34;1m'
@@ -194,7 +195,7 @@ def _run_op_list(img, chain):
 
     # Log all internally derived parameters
     mylog = mylogger.logging.getLogger("PyBDSM.Final")
-    mylog.info("Internally derived input parameters:")
+    par_msg = "Internally derived parameters:\n"
     import inspect
     import types
 
@@ -207,7 +208,8 @@ def _run_op_list(img, chain):
                                                              types.NoneType, tuple,
                                                              list)):
 
-                        mylog.info('    %-20s : %s' % (attr[0], repr(used)))
+                        par_msg += '    %-20s : %s\n' % (attr[0], repr(used))
+    mylog.info(par_msg[:-1]) # -1 is to trim final newline
 
     return True
 

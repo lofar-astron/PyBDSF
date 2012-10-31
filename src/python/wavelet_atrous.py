@@ -51,6 +51,11 @@ class Op_wavelet_atrous(Op):
         mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Wavelet")
 
         if img.opts.atrous_do:
+          if img.nisl == 0:
+            mylog.warning("No islands found. Skipping wavelet decomposition.")
+            img.completed_Ops.append('wavelet_atrous')
+            return
+
           mylog.info("Decomposing gaussian residual image into a-trous wavelets")
           bdir = img.basedir + '/wavelet/'
           if img.opts.output_all:
@@ -158,51 +163,45 @@ class Op_wavelet_atrous(Op):
               for op in wchain:
                 op(wimg)
                 if isinstance(op, Op_islands):
-                    # Delete islands that do not share any pixels with
-                    # islands in original ch0 image.
-                    good_isl = []
+                    if wimg.nisl > 0:
+                        # Delete islands that do not share any pixels with
+                        # islands in original ch0 image.
+                        good_isl = []
 
-                    # Make original rank image boolean; rank counts from 0, with -1 being
-                    # outside any island
-                    orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+                        # Make original rank image boolean; rank counts from 0, with -1 being
+                        # outside any island
+                        orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
 
-                    # Multiply rank images
-                    valid_islands = orig_rankim_bool * (wimg.pyrank + 1)
+                        # Multiply rank images
+                        valid_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
 
-                    bar = statusbar.StatusBar('Checking for valid islands .............. : ', 0, wimg.nisl)
-                    if img.opts.quiet == False:
-                        bar.start()
+                        # Get unique island IDs
+                        valid_ids = set(valid_islands.flatten())
+                        for idx, wvisl in enumerate(wimg.islands):
+                            if idx in valid_ids:
+                                wvisl.valid = True
+                                good_isl.append(wvisl)
+                            else:
+                                wvisl.valid = False
 
-                    # Now call the parallel mapping function. Returns True or
-                    # False for each island.
-                    check_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.check_island),
-                        wimg.islands, itertools.repeat(valid_islands)),
-                        numcores=img.opts.ncores, bar=bar)
+                        wimg.islands = good_isl
+                        wimg.nisl = len(good_isl)
+                        mylogger.userinfo(mylog, "Number of vaild islands found", '%i' %
+                                  wimg.nisl)
 
-                    for idx, wvisl in enumerate(wimg.islands):
-                        if check_list[idx]:
-                            wvisl.valid = True
-                            good_isl.append(wvisl)
-                        else:
-                            wvisl.valid = False
-
-                    wimg.islands = good_isl
-                    wimg.nisl = len(good_isl)
-                    mylogger.userinfo(mylog, "Number of vaild islands found", '%i' %
-                              wimg.nisl)
-                    # Renumber islands:
-                    for wvindx, wvisl in enumerate(wimg.islands):
-                        wvisl.island_id = wvindx
+                        # Renumber islands:
+                        for wvindx, wvisl in enumerate(wimg.islands):
+                            wvisl.island_id = wvindx
 
                 if isinstance(op, Op_gaul2srl):
                   # Restrict Gaussians to original ch0 islands.
                   gaul = wimg.gaussians
                   tot_flux = 0.0
                   nwvgaus = 0
-
-                  # TODO fix following when img.ngaus == 0!
-                  gaus_id = img.gaussians[-1].gaus_num
+                  if img.ngaus == 0:
+                    gaus_id = -1
+                  else:
+                    gaus_id = img.gaussians[-1].gaus_num
                   for isl in img.islands:
                       wvgaul = []
                       for g in gaul:
@@ -267,11 +266,10 @@ class Op_wavelet_atrous(Op):
                   break
 
           pdir = img.basedir + '/misc/'
-
           #self.morphfilter_pyramid(img, pdir)
           img.ngaus += ntot_wvgaus
           img.total_flux_gaus += total_flux
-          mylogger.userinfo(mylog, "Total flux density in model over all scales" , '%.3f Jy' % img.total_flux_gaus)
+          mylogger.userinfo(mylog, "Total flux density in model on all scales" , '%.3f Jy' % img.total_flux_gaus)
           if img.opts.output_all:
               func.write_image_to_file(img.use_io, img.imagename + '.atrous.cJ.fits',
                                        im_new, img, bdir)
@@ -365,14 +363,7 @@ class Op_wavelet_atrous(Op):
         wimg.mask = mask
         wimg.use_io = img.use_io
 
-#######################################################################################################
-    def check_island(self, isl, valid_islands):
-        if isl.island_id in valid_islands - 1:
-            return True
-        else:
-            return False
-
-#######################################################################################################
+######################################################################################################
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
         import functions as func
         from make_residimage import Op_make_residimage as opp

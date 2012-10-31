@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.4.0'
+__version__ = '1.4.5'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -27,15 +27,73 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2011/09/18 - Added option to send images and catalogs to a SAMP hub
+    2012/10/22 - Added option ("force_output") to force output of catalogs
+        even if they are empty (when no sources are found).
+
+    2012/10/12 - Version 1.4.5
+
+    2012/10/12 - Added option ("incl_empty") to include empty islands (that
+        have no un-flagged Gaussians) in output catalogs. Any such empty
+        islands are given negative source IDs and positions given by the
+        location of the peak of the island.
+
+    2012/10/10 - Fixed a bug in Gaussian fitting that could cause a crash
+        when fitting fails. Fixed a bug in parallelization that could
+        cause a crash due to improper concatenation of result lists.
+
+    2012/10/09 - Version 1.4.4
+
+    2012/10/09 - Improved logging. Added a warning when one or more islands
+        are not fit properly (i.e., no valid, unflagged Gaussians were
+        fit). Fixed a bug in parallelization of Gaussian fitting that
+        could cause a crash due to improper mapping of island lists to
+        processes.
+
+    2012/10/05 - Added code to handle images with no unblanked pixels.
+        Improved fitting robustness.
+
+    2012/10/04 - Version 1.4.3
+
+    2012/10/04 - Fixed a bug in the mean map calculation that caused mean
+        maps with constant values (i.e., non-2D maps) to have values of
+        0.0 Jy/beam unless "mean_map = 'const'" was explicitly specified.
+        Fixed a bug in Gaussian fitting that could cause an island to be
+        skipped.
+
+    2012/10/02 - Fixed a bug in the PSF vary module that resulted in
+        incorrect PSF generators being used. Added an option to smooth
+        the resulting PSF images ("psf_smooth"). Parallelized the PSF
+        interpolation and smoothing steps. Improved PSF vary documentation.
+
+    2012/09/25 - Version 1.4.2
+
+    2012/09/25 - Dramatically reduced the time required to identify valid
+        wavelet islands.
+
+    2012/09/21 - Fixed bug that resulted in output FITS gaul tables being
+        improperly sorted. Fixed cosmetic bug in the statusbar that could
+        sometimes cause improper formatting. Added example of SAMP usage
+        to the documentation.
+
+    2012/09/20 - Version 1.4.1
+
+    2012/09/20 - Fixed a bug in the wavelet module that caused a crash when
+        no Gaussians were fit to the ch0 image.
+
+    2012/09/19 - Added "broadcast" option to show_fit task to send
+    	coordinates and row highlight request to a SAMP hub when a Gaussian
+    	is clicked. Fixed bug in aperture flux masking that sometimes caused
+    	the mask to be the wrong shape.
+
+    2012/09/18 - Added option to send images and catalogs to a SAMP hub
         (activated by setting outfile = 'SAMP' in the export_image and
         write_catalog tasks).
 
-    2011/09/13 - Improved speed of plotting when images are large and in
+    2012/09/13 - Improved speed of plotting when images are large and in
         mean/rms map generation. Fixed bug that caused residual image
         statistics to fail when NaNs are present.
 
-    2011/09/11 - Version 1.4.0
+    2012/09/11 - Version 1.4.0
 
     2012/09/11 - Parallelized Gaussian fitting, shapelet decomposition,
         validation of wavelet islands, and mean/rms map generation.

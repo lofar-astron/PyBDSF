@@ -620,7 +620,7 @@ class Opts(object):
                                  "flag_maxsnr times the image value at the peak "\
                                  "is flagged. The flag value is increased by 2.",
                              group = "flagging_opts")
-    flag_maxsize_isl = Float(1.0,
+    flag_maxsize_isl = Float(2.0,
                              doc = "Flag Gaussian if x, y bounding box "\
                                  "around sigma-contour is factor times island bbox\n"\
                                  "Any fitted Gaussian whose maximum x-dimension is "\
@@ -879,6 +879,11 @@ class Opts(object):
                                  "considered 'unresolved' and are used further to "\
                                  "estimate the PSFs.",
                              group = "psf_vary_do")
+    psf_smooth = Option(None, Float(),
+                             doc = "Size of Gaussian to use for smoothing of "\
+                                 "interpolated images in arcsec. None => no "\
+                                 "smoothing",
+                             group = "psf_vary_do")
     psf_snrcut = Float(10.0,
                              doc = "Minimum SNR for statistics\n"\
                                  "Only Gaussians with SNR greater than this are "\
@@ -1039,8 +1044,16 @@ class Opts(object):
                              group = "hidden")
     outfile = Option(None, String(),
                              doc = "Output file name. None => file is named "\
-                                 "automatically; 'SAMP' => send to SAMP Hub "\
+                                 "automatically; 'SAMP' => send to SAMP hub "\
                                  "(e.g., to TOPCAT, ds9, or Aladin)",
+                             group = 'hidden')
+    broadcast = Bool(False,
+                             doc = "Broadcast Gaussian and source IDs and "\
+                                 "coordinates to SAMP hub when a Gaussian is "\
+                                 "clicked?\nNote that for the "\
+                                 "IDs to be useful, a catalog must have been sent "\
+                                 "to the SAMP hub previously using the write_catalog "\
+                                 "task (with outfile = 'SAMP').",
                              group = 'hidden')
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
@@ -1072,6 +1085,21 @@ class Opts(object):
                              doc = "Include flux densities from each channel "\
                                  "(if any)?",
                              group = 'hidden')
+    incl_empty = Bool(False,
+                             doc = "Include islands without any valid Gaussians "\
+                                 "(source list only)?\n"\
+                                 "If True, islands for which Gaussian fitting "\
+                                 "failed will be included in the output catalog. "\
+                                 "In these cases, the source IDs "\
+                                 "are negative.",
+                             group = 'hidden')
+    force_output = Bool(False,
+                             doc = "Force creation of output file, even if the "\
+                                 "catalog is empty?\n"\
+                                 "If True, the output catalog will be created, "\
+                                 "even if there are no sources. In this case, "\
+                                 "the catalog will have a header but no entries.",
+                             group = 'hidden')
     catalog_type = Enum('gaul', 'shap', 'srl',
                              doc = "Type of catalog to write:  'gaul' - Gaussian "\
                                  "list, 'srl' - source list (formed "\
@@ -1085,7 +1113,7 @@ class Opts(object):
                              group = 'hidden')
     img_type = Enum('gaus_resid', 'shap_resid', 'rms', 'mean', 'gaus_model',
                              'shap_model', 'ch0', 'pi', 'psf_major', 'psf_minor',
-                             'psf_pa',
+                             'psf_pa', 'psf_ratio', 'psf_ratio_aper',
                              doc = "Type of image to export: 'gaus_resid', "\
                                  "'shap_resid', 'rms', 'mean', 'gaus_model', "\
                                  "'shap_model', 'ch0', 'pi', 'psf_major', "\
@@ -1099,9 +1127,11 @@ class Opts(object):
                                  "'gaus_model' - Gaussian model image\n"\
                                  "'shap_resid' - Shapelet model residual image\n"\
                                  "'shap_model' - Shapelet model image\n"\
-                                 "'psf_major' - PSF major axis FWHM (in pixels) image\n"\
-                                 "'psf_minor' - PSF minor axis FWHM (in pixels) image\n"\
-                                 "'psf_pa' - PSF position angle (E from N in degrees) image\n",
+                                 "'psf_major' - PSF major axis FWHM image (FWHM in arcsec)\n"\
+                                 "'psf_minor' - PSF minor axis FWHM image (FWHM in arcsec)\n"\
+                                 "'psf_pa' - PSF position angle image (degrees east of north)\n"\
+                                 "'psf_ratio' - PSF peak-to-total flux ratio (in units of 1/beam)\n"\
+                                 "'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)",
                              group = 'hidden')
     ch0_image = Bool(True,
                              doc = "Show the ch0 image. This is the image used for "\
@@ -1146,11 +1176,11 @@ class Opts(object):
                              group = "hidden")
     psf_major = Bool(False,
                              doc = "Show the PSF major axis variation (values are "\
-                                 "FWHM in pixels)",
+                                 "FWHM in arcsec)",
                              group = "hidden")
     psf_minor = Bool(False,
                              doc = "Show the FWHM of PSF minor axis variation (values are "\
-                                 "FWHM in pixels)",
+                                 "FWHM in arcsec)",
                              group = "hidden")
     psf_pa = Bool(False,
                              doc = "Show the PSF position angle variation (values are "\
@@ -1200,7 +1230,7 @@ class Opts(object):
                 # and then try to parse it
                 if hasattr(self, k):
                     if isinstance(self.__getattribute__(k), bool):
-                        if isinstance(v, bool):
+                        if isinstance(v, bool) or v == None:
                             # just enter the bool into the parameter
                             pass
                         elif isinstance(v, basestring):

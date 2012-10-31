@@ -172,7 +172,6 @@ class Op_rmsimage(Op):
         if opts.rms_box is None or (opts.rms_box_bright is None and do_adapt):
             if do_adapt:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size_highthresh*2.0))
-#                 bsize = int(max(brightsize, min_size_allowed, max_isl_size_lowthresh))
             else:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size*2.0))
             bsize2 = int(max(min(img.ch0.shape)/10.0, max_isl_size*5.0))
@@ -185,22 +184,25 @@ class Op_rmsimage(Op):
             bstep = int(round(min(bsize/3., min(shape)/10.)))
             bstep2 = int(round(min(bsize2/3., min(shape)/10.)))
             if opts.rms_box_bright is None:
-                img.rms_box = (bsize, bstep)
+                img.rms_box_bright = (bsize, bstep)
             else:
-                img.rms_box = opts.rms_box_bright
+                img.rms_box_bright = opts.rms_box_bright
             if opts.rms_box is None:
-                img.rms_box2 = (bsize2, bstep2)
-            else:
-                img.rms_box2 = opts.rms_box
-        else:
-            if do_adapt:
-                img.rms_box = opts.rms_box_bright
-                img.rms_box2 = opts.rms_box
+                img.rms_box = (bsize2, bstep2)
             else:
                 img.rms_box = opts.rms_box
-                img.rms_box2 = opts.rms_box
+        else:
+            if do_adapt:
+                img.rms_box_bright = opts.rms_box_bright
+                img.rms_box = opts.rms_box
+            else:
+                img.rms_box_bright = opts.rms_box
+                img.rms_box = opts.rms_box
+        if do_adapt:
+            map_opts = (opts.kappa_clip, img.rms_box_bright, opts.spline_rank)
+        else:
+            map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)
 
-        map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)
         for ipol, pol in enumerate(pols):
           data = ch0_images[ipol]
           mean = N.zeros(data.shape, dtype=N.float32)
@@ -211,85 +213,28 @@ class Op_rmsimage(Op):
               pol_txt = ''
 
           ## calculate rms/mean maps if needed
-          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box2[0] > min(img.ch0.shape)/4.0:
+          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(img.ch0.shape)/4.0:
             # rms box is too large - just use constant rms and mean
             self.output_rmsbox_size(img)
-            mylog.warning('Size of rms_box larger than 1/4 of image size')
+            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
             mylogger.userinfo(mylog, 'Using constant background rms and mean')
             img.use_rms_map = False
             img.mean_map_type = 'const'
           else:
             if (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
               if len(data.shape) == 2:   ## 2d case
-                rms_ok = False
-                while not rms_ok:
-                    self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
-                                bright_pt_coords=isl_pos, rms_box2=img.rms_box2,
+                mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
+                                bright_pt_coords=isl_pos, rms_box2=img.rms_box,
                                 logname="PyBDSM."+img.log, ncores=img.opts.ncores)
-                    if N.any(rms < 0.0):
-                        rms_ok = False
-                        if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
-                            # Increase box by 20%
-                            new_width = int(img.rms_box[0]*1.2)
-                            if new_width == img.rms_box[0]:
-                                new_width = img.rms_box[0] + 1
-                            new_step = int(new_width/3.0)
-                            img.rms_box = (new_width, new_step)
-                            if img.rms_box[0] > min(img.ch0.shape)/4.0:
-                                #self.output_rmsbox_size(img)
-                                mylog.warning('Size of rms_box larger than 1/4 of image size')
-                                mylogger.userinfo(mylog, 'Using constant background rms and mean')
-                                img.use_rms_map = False
-                                img.mean_map_type = 'const'
-                                rms_ok = True
-                            else:
-                                map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)
-                        else:
-                            # User has specified box size, use order=1 to prevent negatives
-                            if opts.spline_rank > 1:
-                                mylog.warning('Negative values found in rms map interpolated with spline_rank = %i' % opts.spline_rank)
-                                mylog.warning('Using spline_rank = 1 (bilinear interpolation) instead')
-                                map_opts = (opts.kappa_clip, img.rms_box, 1)
-                    else:
-                        rms_ok = True
-
               elif len(data.shape) == 3: ## 3d case
                 if not isinstance(mask, N.ndarray):
                   mask = N.zeros(data.shape[0], dtype=bool)
                 for i in range(data.shape[0]):
                     ## iterate each plane
-                    rms_ok = False
-                    while not rms_ok:
-                        self.map_2d(data[i], mean[i], rms[i], mask[i], *map_opts,
+                    mean, rms = self.calculate_maps(img, data[i], mean[i], rms[i], mask[i], map_opts,
                                     do_adapt=do_adapt, bright_pt_coords=isl_pos,
-                                    rms_box2=img.rms_box2, logname="PyBDSM."+img.log,
+                                    rms_box2=img.rms_box, logname="PyBDSM."+img.log,
                                     ncores=img.opts.ncores)
-                        if N.any(rms[i] < 0.0):
-                            rms_ok = False
-                            if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
-                                # Increase box by 20%
-                                new_width = int(img.rms_box[0]*1.2)
-                                if new_width == img.rms_box[0]:
-                                    new_width = img.rms_box[0] + 1
-                                new_step = int(new_width/3.0)
-                                img.rms_box = (new_width, new_step)
-                                if img.rms_box[0] > min(img.ch0.shape)/4.0:
-                                    #self.output_rmsbox_size(img)
-                                    mylog.warning('Size of rms_box larger than 1/4 of image size')
-                                    mylogger.userinfo(mylog, 'Using constant background rms and mean')
-                                    img.use_rms_map = False
-                                    img.mean_map_type = 'const'
-                                    rms_ok = True
-                                else:
-                                    map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)
-                            else:
-                                # User has specified box size, use order=1 to prevent negatives
-                                if opts.spline_rank > 1:
-                                    mylog.warning('Negative values found in rms map interpolated with spline_rank = %i' % opts.spline_rank)
-                                    mylog.warning('Using spline_rank = 1 (bilinear interpolation) instead')
-                                    map_opts = (opts.kappa_clip, img.rms_box, 1)
-                        else:
-                            rms_ok = True
               else:
                 mylog.critical('Image shape not handleable' + pol_txt)
                 raise RuntimeError("Can't handle array of this shape" + pol_txt)
@@ -340,8 +285,10 @@ class Op_rmsimage(Op):
                               '(%.5f, %.5f) Jy/beam' % (rms_min, rms_max))
 
           if img.mean_map_type != 'map':
-            val = 0.0
-            if opts.mean_map == 'const': val = img.clipped_mean
+            if opts.mean_map == 'zero':
+                val = 0.0
+            else:
+                val = img.clipped_mean
             mean[:] = val
             mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
                               str(round(val,5))+' Jy/beam')
@@ -454,6 +401,67 @@ class Op_rmsimage(Op):
           mylogger.userinfo(mylog, 'Variation in mean image not significant')
 
         return img
+
+
+    def calculate_maps(self, img, data, mean, rms, mask, map_opts, do_adapt,
+                       bright_pt_coords=[], rms_box2=None,
+                       logname=None, ncores=None):
+        """Calls map_2d and checks for problems"""
+        rms_ok = False
+        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
+        opts = img.opts
+        while not rms_ok:
+            self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
+                        bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
+                        logname=logname, ncores=ncores)
+            if N.any(rms < 0.0):
+                rms_ok = False
+                if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
+                    # Increase box by 20%
+                    if do_adapt:
+                        new_width = int(img.rms_box_bright[0]*1.2)
+                        if new_width == img.rms_box_bright[0]:
+                            new_width = img.rms_box_bright[0] + 1
+                        new_step = int(new_width/3.0)
+                        img.rms_box_bright = (new_width, new_step)
+                        if img.rms_box_bright[0] > min(img.ch0.shape)/4.0:
+                            mylogger.userinfo(mylog, 'Size of rms_box_bright larger than 1/4 of image size')
+                            mylogger.userinfo(mylog, 'Using constant background rms and mean')
+                            img.use_rms_map = False
+                            img.rms_box = img.rms_box_bright
+                            img.mean_map_type = 'const'
+                            rms_ok = True
+                        else:
+                            map_opts = (opts.kappa_clip, img.rms_box_bright, opts.spline_rank)
+                    else:
+                        new_width = int(img.rms_box[0]*1.2)
+                        if new_width == img.rms_box[0]:
+                            new_width = img.rms_box[0] + 1
+                        new_step = int(new_width/3.0)
+                        img.rms_box = (new_width, new_step)
+                        if img.rms_box[0] > min(img.ch0.shape)/4.0:
+                            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
+                            mylogger.userinfo(mylog, 'Using constant background rms and mean')
+                            img.use_rms_map = False
+                            img.mean_map_type = 'const'
+                            rms_ok = True
+                        else:
+                            map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)
+
+                else:
+                    # User has specified box size, use order=1 to prevent negatives
+                    if opts.spline_rank > 1:
+                        mylog.warning('Negative values found in rms map interpolated with spline_rank = %i' % opts.spline_rank)
+                        mylog.warning('Using spline_rank = 1 (bilinear interpolation) instead')
+                        if do_adapt:
+                            map_opts = (opts.kappa_clip, img.rms_box_bright, 1)
+                        else:
+                            map_opts = (opts.kappa_clip, img.rms_box, 1)
+            else:
+                rms_ok = True
+
+        return mean, rms
+
 
     def map_2d(self, arr, out_mean, out_rms, mask=False,
                kappa=3, box=None, interp=1, do_adapt=False,
@@ -604,12 +612,8 @@ class Op_rmsimage(Op):
         if float(BS)/float(imgshape[0]) < 0.1 and \
                 float(BS)/float(imgshape[1]) < 0.1:
             use_extrapolation = True
-            mylog.info('Using simple extrapolation for edges of mean '\
-                           'and rms maps')
         else:
             use_extrapolation = False
-            mylog.info('Using padded array for edges of mean '\
-                           'and rms maps')
 
         if use_extrapolation:
             boxcount = 1 + (imgshape - BS)/SS
@@ -968,26 +972,26 @@ class Op_rmsimage(Op):
           if do_adapt:
               if opts.rms_box_bright is None:
                   mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
-                                    '(' + str(img.rms_box[0]) + ', ' +
-                                    str(img.rms_box[1]) + ') pixels (small scale)')
+                                    '(' + str(img.rms_box_bright[0]) + ', ' +
+                                    str(img.rms_box_bright[1]) + ') pixels (small scale)')
               else:
                   mylogger.userinfo(mylog, 'Using user-specified rms_box',
-                                    '(' + str(img.rms_box[0]) + ', ' +
-                                    str(img.rms_box[1]) + ') pixels (small scale)')
+                                    '(' + str(img.rms_box_bright[0]) + ', ' +
+                                    str(img.rms_box_bright[1]) + ') pixels (small scale)')
               if opts.rms_box is None:
                   mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
-                                    '(' + str(img.rms_box2[0]) + ', ' +
-                                    str(img.rms_box2[1]) + ') pixels (large scale)')
+                                    '(' + str(img.rms_box[0]) + ', ' +
+                                    str(img.rms_box[1]) + ') pixels (large scale)')
               else:
                   mylogger.userinfo(mylog, 'Using user-specified rms_box',
-                                    '(' + str(img.rms_box2[0]) + ', ' +
-                                    str(img.rms_box2[1]) + ') pixels (large scale)')
+                                    '(' + str(img.rms_box[0]) + ', ' +
+                                    str(img.rms_box[1]) + ') pixels (large scale)')
           else:
               if opts.rms_box is None:
                   mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
-                                '(' + str(img.rms_box2[0]) + ', ' +
-                                str(img.rms_box2[1]) + ') pixels')
+                                '(' + str(img.rms_box[0]) + ', ' +
+                                str(img.rms_box[1]) + ') pixels')
               else:
                   mylogger.userinfo(mylog, 'Using user-specified rms_box',
-                                    '(' + str(img.rms_box2[0]) + ', ' +
-                                    str(img.rms_box2[1]) + ') pixels')
+                                    '(' + str(img.rms_box[0]) + ', ' +
+                                    str(img.rms_box[1]) + ') pixels')

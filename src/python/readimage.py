@@ -23,7 +23,7 @@ Image.imagename = String(doc="Identifier name for output files")
 Image.filename = String(doc="Name of input file without FITS extension")
 Image.bbspatchnum = Int(doc="To keep track of patch number for bbs file "\
                             "for seperate patches per source")
-Image.cfreq = Float(doc="Frequency in the header")
+Image.frequency = Float(doc="Frequency in the header")
 Image.use_io = String(doc="pyfits or pyrap")
 Image.j = Int(doc="Wavelet order j, 0 for normal run")
 Image.freq_pars = Tuple((0.0, 0.0, 0.0),
@@ -103,12 +103,15 @@ class Op_readimage(Op):
         root, ext = os.path.splitext(img.opts.filename)
         if ext in ['.fits', '.FITS', '.image']:
             fname = root
+        elif ext in ['.gz', '.GZ']:
+            root2, ext2 = os.path.splitext(root)
+            if ext2 in ['.fits', '.FITS', '.image']:
+                fname = root2
         else:
             fname = img.opts.filename
         img.filename = img.opts.filename
         img.parentname = fname
         img.imagename = fname + '.pybdsm'
-        img.waveletimage = False
         if img.opts.output_all:
             # Set up directory to write output to
             basedir = './' + fname + '_pybdsm'
@@ -140,9 +143,9 @@ class Op_readimage(Op):
 
         Thanks to transpose operation done to image earlier we can use
         p2s & s2p transforms directly.
-        
+
         Both WCSLIB (from LOFAR svn) and PyWCS (http://stsdas.stsci.edu/
-        astrolib/pywcs/, available from https://trac6.assembla.com/astrolib) 
+        astrolib/pywcs/, available from https://trac6.assembla.com/astrolib)
         are supported.
         """
         try:
@@ -220,7 +223,7 @@ class Op_readimage(Op):
             img.sky2pix = t.s2p
         elif img.use_wcs == 'pywcs':
             # Here we define new p2s and s2p methods to match those of wcslib.
-            # Note that, due to a bug in pywcs version 1.10-4.7, the 
+            # Note that, due to a bug in pywcs version 1.10-4.7, the
             # "ra_dec_order" option cannot be used. When the bug is fixed,
             # this option should probably be re-enabled.
             def p2s(self, xy):
@@ -269,7 +272,7 @@ class Op_readimage(Op):
         ### define beam conversion routines:
         def beam2pix(x, location=None):
             """ Converts beam in deg to pixels.
-            
+
             location specifies the location in pixels (x, y) for which beam is desired
             Input beam angle should be degrees CCW from North.
             The output beam angle is degrees CCW from the +y axis of the image.
@@ -290,7 +293,7 @@ class Op_readimage(Op):
 
         def pix2beam(x, location=None):
             """ Converts beam in pixels to deg.
-            
+
             location specifies the location in pixels (x, y) for which beam is desired
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North.
@@ -376,13 +379,13 @@ class Op_readimage(Op):
         mylog = mylogger.logging.getLogger("PyBDSM.InitFreq")
         if img.opts.frequency_sp != None and img.image.shape[1] > 1:
             # If user specifies multiple frequencies, then let
-            # collapse.py do the initialization 
-            img.cfreq = img.opts.frequency_sp[0]
+            # collapse.py do the initialization
+            img.frequency = img.opts.frequency_sp[0]
             img.freq_pars = (0.0, 0.0, 0.0)
             mylog.info('Using user-specified frequencies.')
         elif img.opts.frequency != None and img.image.shape[1] == 1:
-            img.cfreq = img.opts.frequency
-            img.freq_pars = (img.cfreq, 0.0, 0.0)
+            img.frequency = img.opts.frequency
+            img.freq_pars = (img.frequency, 0.0, 0.0)
             mylog.info('Using user-specified frequency.')
         else:
             found = False
@@ -407,9 +410,9 @@ class Op_readimage(Op):
                             ff = crval + cdelt * (1. - crpix)
             if found:
                 if img.opts.frequency != None:
-                    img.cfreq = img.opts.frequency
+                    img.frequency = img.opts.frequency
                 else:
-                    img.cfreq = ff
+                    img.frequency = ff
                 img.freq_pars = (crval, cdelt, crpix)
             else:
                 raise RuntimeError('No frequency information found in image header.')
@@ -469,7 +472,7 @@ class Op_readimage(Op):
 
     def get_rot(self, img, location=None):
         """Returns CCW rotation angle (in degrees) between N and +y axis of image
-        
+
         location specifies the location in pixels (x, y) for which beam is desired
         """
         if location == None:

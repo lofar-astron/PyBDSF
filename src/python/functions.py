@@ -179,8 +179,12 @@ def gdist_pa(pix1, pix2, gsize):
         val = atanproper(dumr, dx, dy)
 
     psi = val - (gsize[2]+90.0)/180.0*pi
-                                # convert angle to eccentric anomaly
-    psi=atan(gsize[0]/gsize[1]*tan(psi))
+
+    # convert angle to eccentric anomaly
+    if approx_equal(gsize[1], 0.0):
+        psi = pi/2.0
+    else:
+        psi=atan(gsize[0]/gsize[1]*tan(psi))
     dumr2 = gsize[0]*cos(psi)
     dumr3 = gsize[1]*sin(psi)
     fwhm = sqrt(dumr2*dumr2+dumr3*dumr3)
@@ -514,11 +518,12 @@ def imageshift(image, shift):
 def trans_gaul(q):
     " transposes a tuple "
     y=[]
-    for i in range(len(q[0])):
-        elem=[]
-        for j in range(len(q)):
-            elem.append(q[j][i])
-        y.append(elem)
+    if len(q) > 0:
+        for i in range(len(q[0])):
+            elem=[]
+            for j in range(len(q)):
+                elem.append(q[j][i])
+            y.append(elem)
     return y
 
 def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
@@ -730,38 +735,41 @@ def get_errors(img, p, stdav, bm_pix=None):
     errors = []
     for i in range(ngaus):
       pp = p[i*7:i*7+7]
-                                        ### Now do error analysis as in Condon (and fBDSM)
+      ### Now do error analysis as in Condon (and fBDSM)
       size = pp[3:6]
       size = corrected_size(size) # angle is now degrees CCW from +y-axis
-      sq2 = sqrt(2.0)
-      if bm_pix == None:
-          bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
-      dumr = sqrt(abs(size[0]*size[1]/(4.0*bm_pix[0]*bm_pix[1])))
-      dumrr1 = 1.0+bm_pix[0]*bm_pix[1]/(size[0]*size[0])
-      dumrr2 = 1.0+bm_pix[0]*bm_pix[1]/(size[1]*size[1])
-      dumrr3 = dumr*pp[0]/stdav
-      d1 = sqrt(8.0*log(2.0))
-      d2 = (size[0]*size[0]-size[1]*size[1])/(size[0]*size[0])
-      try:
-          e_peak = pp[0]*sq2/(dumrr3*pow(dumrr1,0.75)*pow(dumrr2,0.75))
-          e_maj=size[0]*sq2/(dumrr3*pow(dumrr1,1.25)*pow(dumrr2,0.25))
-          e_min=size[1]*sq2/(dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))  # in fw
-          pa_rad = size[2]*pi/180.0
-          e_x0 = sqrt( (e_maj*N.sin(pa_rad))**2 + (e_min*N.cos(pa_rad))**2 ) / d1
-          e_y0 = sqrt( (e_maj*N.cos(pa_rad))**2 + (e_min*N.sin(pa_rad))**2 ) / d1
-          e_pa=2.0/(d2*dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))
-          e_pa=e_pa*180.0/pi
-          e_tot=pp[0]*sqrt(e_peak*e_peak/(pp[0]*pp[0])+(0.25/dumr/dumr)*(e_maj*e_maj/(size[0]*size[0])+e_min*e_min/(size[1]*size[1])))
-      except:
-          e_peak = 0.0
-          e_x0 = 0.0
-          e_y0 = 0.0
-          e_maj = 0.0
-          e_min = 0.0
-          e_pa = 0.0
-          e_tot = 0.0
-      if abs(e_pa) > 180.0: e_pa=180.0  # dont know why i did this
-      errors = errors + [e_peak, e_x0, e_y0, e_maj, e_min, e_pa, e_tot]
+      if size[0] == 0.0 or size[1] == 0.0:
+        errors = errors + [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      else:
+        sq2 = sqrt(2.0)
+        if bm_pix == None:
+            bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
+        dumr = sqrt(abs(size[0]*size[1]/(4.0*bm_pix[0]*bm_pix[1])))
+        dumrr1 = 1.0+bm_pix[0]*bm_pix[1]/(size[0]*size[0])
+        dumrr2 = 1.0+bm_pix[0]*bm_pix[1]/(size[1]*size[1])
+        dumrr3 = dumr*pp[0]/stdav
+        d1 = sqrt(8.0*log(2.0))
+        d2 = (size[0]*size[0]-size[1]*size[1])/(size[0]*size[0])
+        try:
+            e_peak = pp[0]*sq2/(dumrr3*pow(dumrr1,0.75)*pow(dumrr2,0.75))
+            e_maj=size[0]*sq2/(dumrr3*pow(dumrr1,1.25)*pow(dumrr2,0.25))
+            e_min=size[1]*sq2/(dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))  # in fw
+            pa_rad = size[2]*pi/180.0
+            e_x0 = sqrt( (e_maj*N.sin(pa_rad))**2 + (e_min*N.cos(pa_rad))**2 ) / d1
+            e_y0 = sqrt( (e_maj*N.cos(pa_rad))**2 + (e_min*N.sin(pa_rad))**2 ) / d1
+            e_pa=2.0/(d2*dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))
+            e_pa=e_pa*180.0/pi
+            e_tot=pp[0]*sqrt(e_peak*e_peak/(pp[0]*pp[0])+(0.25/dumr/dumr)*(e_maj*e_maj/(size[0]*size[0])+e_min*e_min/(size[1]*size[1])))
+        except:
+            e_peak = 0.0
+            e_x0 = 0.0
+            e_y0 = 0.0
+            e_maj = 0.0
+            e_min = 0.0
+            e_pa = 0.0
+            e_tot = 0.0
+        if abs(e_pa) > 180.0: e_pa=180.0  # dont know why i did this
+        errors = errors + [e_peak, e_x0, e_y0, e_maj, e_min, e_pa, e_tot]
 
     return errors
 
@@ -1570,7 +1578,7 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     """Returns aperture flux and error"""
     import numpy as N
 
-    dist_mask = generate_aperture(aper_im.shape[1], aper_im.shape[0], posn_pix[1], posn_pix[0], aperture_pix)
+    dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[1], posn_pix[0], aperture_pix)
     aper_mask = N.where(dist_mask)
     if N.size(aper_mask) == 0:
         return [0.0, 0.0]
@@ -1691,6 +1699,36 @@ def send_fits_table(s, private_key, name, file_path):
     message['samp.params'] = {}
     message['samp.params']['url'] = 'file://' + os.path.abspath(file_path)
     message['samp.params']['name'] = name
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_highlight_row(s, private_key, url, row_id):
+    """Send a SAMP notification to highlight a row in a table."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "table.highlight.row"
+    message['samp.params'] = {}
+    message['samp.params']['row'] = str(row_id)
+    message['samp.params']['url'] = url
+    lockfile = os.path.expanduser('~/.samp')
+    if not os.path.exists(lockfile):
+        raise RuntimeError("A running SAMP hub was not found.")
+    else:
+        s.samp.hub.notifyAll(private_key, message)
+
+def send_coords(s, private_key, coords):
+    """Send a SAMP notification to point at given coordinates."""
+    import os
+
+    message = {}
+    message['samp.mtype'] = "coord.pointAt.sky"
+    message['samp.params'] = {}
+    message['samp.params']['ra'] = str(coords[0])
+    message['samp.params']['dec'] = str(coords[1])
     lockfile = os.path.expanduser('~/.samp')
     if not os.path.exists(lockfile):
         raise RuntimeError("A running SAMP hub was not found.")

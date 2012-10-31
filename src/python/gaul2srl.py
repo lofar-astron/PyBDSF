@@ -18,6 +18,7 @@ Also, each island object of img.islands list has the source object island.source
 from image import *
 from islands import *
 from gausfit import Gaussian
+from interface import wrap
 import mylogger
 import numpy as N
 N.seterr(divide='raise')
@@ -42,9 +43,13 @@ class Op_gaul2srl(Op):
             img.aperture = None
 
         src_index = -1
+        dsrc_index = 0
         sources = []
+        dsources = []
+        no_gaus_islands = []
         for iisl, isl in enumerate(img.islands):
             isl_sources = []
+            isl_dsources = []
             g_list = []
             for g in isl.gaul:
                 if g.flag == 0:
@@ -59,13 +64,43 @@ class Op_gaul2srl(Op):
                 src_index, source = self.process_CM(img, g_list, isl, src_index)
                 sources.extend(source)
                 isl_sources.extend(source)
+            else:
+                if not img.waveletimage:
+                    dg = isl.dgaul[0]
+                    no_gaus_islands.append((isl.island_id, dg.centre_pix[0], dg.centre_pix[1]))
+                    # Put in the dummy Source as the source and use negative IDs
+                    g_list = isl.dgaul
+                    dsrc_index, dsource = self.process_single_gaussian(img, g_list, dsrc_index, code = 'S')
+                    dsources.append(dsource)
+                    isl_dsources.append(dsource)
 
             isl.sources = isl_sources
-
+            isl.dsources = isl_dsources
         img.sources = sources
-        img.nsrc = src_index+1
+        img.dsources = dsources
+        img.nsrc = src_index + 1
         mylogger.userinfo(mylog, "Number of sources formed from Gaussians",
                           str(img.nsrc))
+        if not img.waveletimage and not img._pi and len(no_gaus_islands) > 0 and not img.opts.quiet:
+            message = 'All Gaussians were flagged for the following island'
+            if len(no_gaus_islands) == 1:
+                message += ':\n'
+            else:
+                message += 's:\n'
+            for isl_id in no_gaus_islands:
+                message += '    Island #%i (x=%i, y=%i)\n' % isl_id
+            if len(no_gaus_islands) == 1:
+                message += 'Please check this island. If it is a valid island and\n'
+            else:
+                message += 'Please check these islands. If they are valid islands and\n'
+            if img.opts.atrous_do:
+                message += 'should be fit, try adjusting the flagging options (use\n'\
+                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians).'
+            else:
+                message += 'should be fit, try adjusting the flagging options (use\n'\
+                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians)\n'\
+                           'or enabling the wavelet module (with "atrous_do=True").'
+            mylog.warning(message)
 
         img.completed_Ops.append('gaul2srl')
 
@@ -85,14 +120,20 @@ class Op_gaul2srl(Op):
         bbox = img.islands[g.island_id].bbox
         ngaus = 1
         island_id = g.island_id
-        gaussians = list([g])
+        if g.gaus_num < 0:
+            gaussians = []
+        else:
+            gaussians = list([g])
         aper_flux = func.ch0_aperture_flux(img, g.centre_pix, img.aperture)
 
         source_prop = list([code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid, \
              posn_sky_max, size_sky, deconv_size_sky, bbox, ngaus, island_id, gaussians])
         source = Source(img, source_prop)
 
-        src_index += 1
+        if g.gaussian_idx == -1:
+            src_index -= 1
+        else:
+            src_index += 1
         g.source_id = src_index
         g.code = code
         source.source_id = src_index

@@ -127,6 +127,12 @@ def tget(filename=None):
     import os
 
     global _img
+
+    # Check whether user has given a task name as input (as done in casapy).
+    # If so, reset filename to None.
+    if hasattr(filename, 'arg_list'):
+        filename = None
+
     if filename == None or filename == '':
         if os.path.isfile('pybdsm.last'):
             filename = 'pybdsm.last'
@@ -223,12 +229,13 @@ def _set_pars_from_prompt():
         # If an opt fails to set, replace its value in the namespace
         # with its current value in _img. Then print error so user knows.
         err_msg = str(err)
-        indx1 = err_msg.find('"') + 1
-        indx2 = err_msg.find('"', indx1)
-        k = err_msg[indx1:indx2]
+        err_msg_trim = err_msg.split('(')[0]
+        indx1 = err_msg_trim.find('"') + 1
+        indx2 = err_msg_trim.find('"', indx1)
+        k = err_msg_trim[indx1:indx2]
         orig_opt_val = opts[k]
         f_dict[k] = orig_opt_val
-        print '\033[31;1mERROR\033[0m: ' + str(err) + \
+        print '\033[31;1mERROR\033[0m: ' + err_msg_trim + \
               '\nResetting to previous value.'
         return False
 
@@ -385,7 +392,7 @@ def show_fit(**kwargs):
     Parameters: ch0_image, rms_image, mean_image, ch0_islands,
                 gresid_image, sresid_image, gmodel_image,
                 smodel_image, source_seds, ch0_flagged, pi_image,
-                psf_major, psf_minor, psf_pa
+                psf_major, psf_minor, psf_pa, broadcast
 
     For more information about a parameter, use help.  E.g.,
       > help 'ch0_image'
@@ -410,7 +417,7 @@ def show_fit(**kwargs):
 show_fit.arg_list = ['ch0_image', 'rms_image', 'mean_image', 'ch0_islands',
                      'gresid_image', 'sresid_image', 'gmodel_image',
                      'smodel_image', 'source_seds', 'ch0_flagged', 'pi_image',
-                     'psf_major', 'psf_minor', 'psf_pa']
+                     'psf_major', 'psf_minor', 'psf_pa', 'broadcast']
 show_fit.use_groups = False
 
 
@@ -422,7 +429,7 @@ def write_catalog(**kwargs):
     "help 'format'" for more information.
 
     Parameters: outfile, format, srcroot, bbs_patches, incl_wavelet, clobber,
-                catalog_type
+                catalog_type, incl_empty
 
     For more information about a parameter, use help.  E.g.,
       > help 'bbs_patches'
@@ -445,7 +452,7 @@ def write_catalog(**kwargs):
         print "\n\033[31;1mAborted\033[0m"
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
-                          'incl_chan', 'clobber', 'catalog_type']
+                          'incl_chan', 'clobber', 'catalog_type', 'incl_empty']
 write_catalog.use_groups = False
 
 

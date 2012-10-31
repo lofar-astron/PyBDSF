@@ -4,6 +4,40 @@
 What's New
 **********
 
+Version 1.4.5 (2012/10/12):
+
+    * Added option (``incl_empty``) to include empty islands (that have no un-flagged Gaussians) in output catalogs. Any such empty islands are given negative source IDs and have positions given by the location of the peak of the island.
+
+    * Fixed a bug in Gaussian fitting that could cause a crash when fitting fails.
+
+    * Fixed a bug in parallelization that could cause a crash due to improper concatenation of result lists.
+
+Version 1.4.4 (2012/10/09):
+
+    * Fixed a bug related to the parallelization of Gaussian fitting that could cause a crash due to improper mapping of island lists to processes.
+
+    * Improved logging.
+
+    * Added a warning when one or more islands are not fit (i.e., no valid, unflagged Gaussians were found).
+
+    * Added code to handle images with no unblanked pixels.
+
+    * Improved fitting robustness.
+
+Version 1.4.3 (2012/10/04):
+
+    * Fixed a bug in the mean map calculation that caused mean maps with constant values (i.e., non-2D maps) to have values of 0.0 Jy/beam unless ``mean_map = 'const'`` was explicitly specified.
+
+    * Fixed a bug in the PSF vary module that resulted in incorrect PSF generators being used. Added an option to smooth the resulting PSF images (``psf_smooth``). Parallelized the PSF interpolation and smoothing steps. Improved PSF vary documentation.
+
+Version 1.4.2 (2012/09/25):
+
+    * Dramatically reduced time required to identify valid wavelet islands. Fixed bug that resulted in output FITS gaul tables being improperly sorted.
+
+Version 1.4.1 (2012/09/11):
+
+    * Added SAMP (Simple Application Messaging Protocol) support to the write_catalog, export_image, and show_fit tasks. These tasks can now use SAMP to communicate with other programs connected to a SAMP hub (e.g., ds9, Topcat, Aladin).
+
 Version 1.4.0 (2012/09/11):
 
     * Parallelized Gaussian fitting, shapelet decomposition, validation of wavelet islands, and mean/rms map generation. The number of cores to be used can be specified with the ``ncores`` option (default is to use all).

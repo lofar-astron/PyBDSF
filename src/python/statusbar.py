@@ -73,7 +73,6 @@ class StatusBar():
             self.comp = self.columns
             self.busy_char = ''
             self.__print()
-            sys.stdout.write('\n')
             return 0
         else:
             self.pos += self.inc
@@ -87,3 +86,13 @@ class StatusBar():
     def start(self):
         self.started = 1
         self.__print()
+
+    def stop(self):
+        if self.started:
+            self.pos = self.max
+            self.comp = self.columns
+            self.busy_char = ''
+            self.__print()
+            sys.stdout.write('\n')
+            self.started = 0
+            return 0

@@ -58,9 +58,11 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
             if bar_state['started']:
                 bar.pos = bar_state['pos']
                 bar.spin_pos = bar_state['spin_pos']
-                bar.increment()
-                bar_state['pos'] += 1
-                bar_state['spin_pos'] += 1
+                bar.started = bar_state['started']
+                increment = bar.increment()
+                bar_state['started'] = bar.started
+                bar_state['pos'] += increment
+                bar_state['spin_pos'] += increment
                 if bar_state['spin_pos'] >= 4:
                     bar_state['spin_pos'] = 0
 
@@ -105,11 +107,14 @@ def run_tasks(procs, err_q, out_q, num):
     results=[None]*num;
     for i in range(num):
         idx, result = out_q.get()
-        results[idx] = numpy.array(result, dtype=object)
+        results[idx] = result
 
     # Remove extra dimension added by array_split
-    return numpy.concatenate(results).tolist()
+    result_list = []
+    for result in results:
+            result_list += result
 
+    return result_list
 
 
 def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
@@ -139,7 +144,11 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     size = len(sequence)
 
     if not _multi or size == 1:
-        return map(function, sequence)
+        results = map(function, sequence)
+        if bar != None:
+            bar.stop()
+        return results
+
 
     # Set default number of cores to use. Leave one core free for pyplot.
     if numcores is None:
@@ -183,11 +192,15 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         for indx, weight in enumerate(weights):
             temp_sum += weight
             if temp_sum > weight_per_core:
-                cut_values.append(indx)
+                cut_values.append(indx+1)
                 temp_sum = weight
         if len(cut_values) > numcores - 1:
             cut_values = cut_values[0:numcores-1]
         sequence = numpy.array_split(sequence, cut_values)
+
+    # Make sure there are no empty chunks at the end of the sequence
+    while len(sequence[-1]) == 0:
+        sequence.pop()
 
     procs = [multiprocessing.Process(target=worker,
              args=(function, ii, chunk, out_q, err_q, lock, bar, bar_state))
@@ -197,10 +210,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         results = run_tasks(procs, err_q, out_q, len(sequence))
         if bar != None:
             if bar.started:
-                bar.pos = bar_state['pos']
-                bar.spin_pos = bar_state['spin_pos']
-                while bar.pos < bar.max:
-                    bar.increment()
+                bar.stop()
         return results
 
     except KeyboardInterrupt:
