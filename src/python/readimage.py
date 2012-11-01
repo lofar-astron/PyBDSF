@@ -234,26 +234,6 @@ class Op_readimage(Op):
         if img.opts.beam is not None:
             beam = img.opts.beam
         else:
-#             if img.use_io == 'rap':
-#                 iminfo = hdr['imageinfo']
-#                 if iminfo.has_key('restoringbeam'):
-#                     beaminfo = iminfo['restoringbeam']
-#                     if beaminfo.has_key('major') and beaminfo.has_key('minor') and beaminfo.has_key('major'):
-#                         bmaj = beaminfo['major']['value']
-#                         bmin = beaminfo['minor']['value']
-#                         bpa = beaminfo['positionangle']['value']
-#                         # make sure all values are in degrees
-#                         if beaminfo['major']['unit'] == 'arcsec':
-#                             bmaj = bmaj / 3600.0
-#                         if beaminfo['minor']['unit'] == 'arcsec':
-#                             bmin = bmin / 3600.0
-#                         if beaminfo['major']['unit'] == 'rad':
-#                             bmaj = bmaj * 180.0 / N.pi
-#                         if beaminfo['minor']['unit'] == 'rad':
-#                             bmin = bmin * 180.0 / N.pi
-#                         beam = (bmaj, bmin, bpa) # all degrees
-#                         found = True
-#             if img.use_io == 'fits':
             try:
                 beam = (hdr['BMAJ'], hdr['BMIN'], hdr['BPA'])
                 found = True
@@ -371,43 +351,28 @@ class Op_readimage(Op):
         """
         code = -1
         year = None
-        if img.use_io == 'rap':
-            hdr = img.header['coordinates']['direction0']
-            code = -1
-            year = None
-            if hdr.has_key('system'):
-                year = hdr['system']
-                if isinstance(year, str):     # Check for 'J2000' or 'B1950' values
-                    tst = year[:1]
-                    if (tst == 'J') or (tst == 'B'):
-                        year = float(year[1:])
-                        if tst == 'J': code = 3
-                        if tst == 'B': code = 2
-                else:
-                    code = 0
-        if img.use_io == 'fits':
-            hdr = img.header
-            if 'EQUINOX' in hdr:
-                year = hdr['EQUINOX']
-                if isinstance(year, str):     # Check for 'J2000' or 'B1950' values
-                    tst = year[:1]
-                    if (tst == 'J') or (tst == 'B'):
-                        year = float(year[1:])
-                        if tst == 'J': code = 3
-                        if tst == 'B': code = 2
-                else:
-                    code = 0
+        hdr = img.header
+        if 'EQUINOX' in hdr:
+            year = hdr['EQUINOX']
+            if isinstance(year, str):     # Check for 'J2000' or 'B1950' values
+                tst = year[:1]
+                if (tst == 'J') or (tst == 'B'):
+                    year = float(year[1:])
+                    if tst == 'J': code = 3
+                    if tst == 'B': code = 2
             else:
-                if 'EPOCH' in hdr: # Check EPOCH if EQUINOX not found
-                    year = hdr['EPOCH']
-                    code = 1
-                else:
-                    if 'RADECSYS' in hdr:
-                        sys = hdr['RADECSYS']
-                        code = 4
-                        if sys[:3] == 'ICR': year = 2000.0
-                        if sys[:3] == 'FK5': year = 2000.0
-                        if sys[:3] == 'FK4': year = 1950.0
+                code = 0
+        else:
+            if 'EPOCH' in hdr: # Check EPOCH if EQUINOX not found
+                year = hdr['EPOCH']
+                code = 1
+            else:
+                if 'RADECSYS' in hdr:
+                    sys = hdr['RADECSYS']
+                    code = 4
+                    if sys[:3] == 'ICR': year = 2000.0
+                    if sys[:3] == 'FK5': year = 2000.0
+                    if sys[:3] == 'FK4': year = 1950.0
         return year, code
 
     def get_rot(self, img, location=None):
