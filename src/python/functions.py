@@ -1105,7 +1105,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
         data = inputimage.getdata()
-        data, hdr = convert_pyrap_header(inputimage)
+        hdr = convert_pyrap_header(inputimage)
     if img.use_io == 'fits':
         data = fits[0].data
         hdr = fits[0].header

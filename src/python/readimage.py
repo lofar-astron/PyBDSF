@@ -234,48 +234,48 @@ class Op_readimage(Op):
         if img.opts.beam is not None:
             beam = img.opts.beam
         else:
-            if img.use_io == 'rap':
-                iminfo = hdr['imageinfo']
-                if iminfo.has_key('restoringbeam'):
-                    beaminfo = iminfo['restoringbeam']
-                    if beaminfo.has_key('major') and beaminfo.has_key('minor') and beaminfo.has_key('major'):
-                        bmaj = beaminfo['major']['value']
-                        bmin = beaminfo['minor']['value']
-                        bpa = beaminfo['positionangle']['value']
-                        # make sure all values are in degrees
-                        if beaminfo['major']['unit'] == 'arcsec':
-                            bmaj = bmaj / 3600.0
-                        if beaminfo['minor']['unit'] == 'arcsec':
-                            bmin = bmin / 3600.0
-                        if beaminfo['major']['unit'] == 'rad':
-                            bmaj = bmaj * 180.0 / N.pi
-                        if beaminfo['minor']['unit'] == 'rad':
-                            bmin = bmin * 180.0 / N.pi
-                        beam = (bmaj, bmin, bpa) # all degrees
-                        found = True
-            if img.use_io == 'fits':
-                try:
-                    beam = (hdr['BMAJ'], hdr['BMIN'], hdr['BPA'])
-                    found = True
-                except:
-                    ### try see if AIPS as put the beam in HISTORY as usual
-                   for h in hdr.get_history():
-                      # Check if h is a string or a FITS Card object (long headers are
-                      # split into Cards as of PyFITS 3.0.4)
-                      if not isinstance(h, str):
-                        hstr = h.value
-                      else:
-                        hstr = h
-                      if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
+#             if img.use_io == 'rap':
+#                 iminfo = hdr['imageinfo']
+#                 if iminfo.has_key('restoringbeam'):
+#                     beaminfo = iminfo['restoringbeam']
+#                     if beaminfo.has_key('major') and beaminfo.has_key('minor') and beaminfo.has_key('major'):
+#                         bmaj = beaminfo['major']['value']
+#                         bmin = beaminfo['minor']['value']
+#                         bpa = beaminfo['positionangle']['value']
+#                         # make sure all values are in degrees
+#                         if beaminfo['major']['unit'] == 'arcsec':
+#                             bmaj = bmaj / 3600.0
+#                         if beaminfo['minor']['unit'] == 'arcsec':
+#                             bmin = bmin / 3600.0
+#                         if beaminfo['major']['unit'] == 'rad':
+#                             bmaj = bmaj * 180.0 / N.pi
+#                         if beaminfo['minor']['unit'] == 'rad':
+#                             bmin = bmin * 180.0 / N.pi
+#                         beam = (bmaj, bmin, bpa) # all degrees
+#                         found = True
+#             if img.use_io == 'fits':
+            try:
+                beam = (hdr['BMAJ'], hdr['BMIN'], hdr['BPA'])
+                found = True
+            except:
+                ### try see if AIPS as put the beam in HISTORY as usual
+               for h in hdr.get_history():
+                  # Check if h is a string or a FITS Card object (long headers are
+                  # split into Cards as of PyFITS 3.0.4)
+                  if not isinstance(h, str):
+                    hstr = h.value
+                  else:
+                    hstr = h
+                  if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
+                    try:
+                        dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
+                    except ValueError:
                         try:
-                            dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
+                            dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
                         except ValueError:
-                            try:
-                                dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
-                            except ValueError:
-                                break
-                        beam = (float(bmaj), float(bmin), float(bpa))
-                        found = True
+                            break
+                    beam = (float(bmaj), float(bmin), float(bpa))
+                    found = True
             if not found: raise RuntimeError("No beam information found in image header.")
 
         ### convert beam into pixels (at image center)
