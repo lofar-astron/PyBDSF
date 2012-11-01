@@ -149,6 +149,7 @@ class Op_readimage(Op):
 
         hdr = img.header
         t = WCS(hdr)
+        t.wcs.fix()
 
         acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
 
@@ -328,7 +329,6 @@ class Op_readimage(Op):
                 # celestial) are striped out.
                 #
                 # First, convert frequency to Hz if needed:
-                img.wcs_obj.wcs.spcfix()
                 img.wcs_obj.wcs.sptr('FREQ-???')
                 naxis = img.wcs_obj.wcs.naxis
                 def p2f(self, spec_pix):

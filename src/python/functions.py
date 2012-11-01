@@ -1105,7 +1105,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
         data = inputimage.getdata()
-        hdr = convert_pyrap_header(inputimage)
+        data, hdr = convert_pyrap_header(inputimage)
     if img.use_io == 'fits':
         data = fits[0].data
         hdr = fits[0].header
@@ -1123,6 +1123,18 @@ def read_image_from_file(filename, img, indir, quiet=False):
     if img.use_io == 'fits':
         ctype_in.reverse() # Need to reverse order, as pyfits does this
 
+    if 'RA' not in ctype_in or 'DEC' not in ctype_in:
+        raise RuntimeError("Image data not found")
+    if 'FREQ' not in ctype_in:
+        from pywcs import WCS
+        t = WCS(hdr)
+        t.wcs.fix()
+        spec_indx = t.wcs.spec
+        if spec_indx != -1:
+            ctype_in.reverse()
+            ctype_in[spec_indx] = 'FREQ'
+            ctype_in.reverse()
+
     ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
     indx_out = [-1, -1, -1, -1]
     indx_in = range(len(data.shape))
@@ -1130,10 +1142,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         for j in range(4):
             if ctype_in[i] == ctype_out[j]:
                 indx_out[j] = i
-    if indx_out[2] == -1 or indx_out[3] == -1:
-        sys.exit("Image data not found")
-    else:
-        shape_out = [1, 1, data.shape[indx_out[2]], data.shape[indx_out[3]]]
+    shape_out = [1, 1, data.shape[indx_out[2]], data.shape[indx_out[3]]]
     if indx_out[0] != -1:
         shape_out[0] = data.shape[indx_out[0]]
     if indx_out[1] != -1:
