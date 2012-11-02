@@ -1120,12 +1120,11 @@ def read_image_from_file(filename, img, indir, quiet=False):
         key_val_raw = hdr['CTYPE' + str(i+1)]
         key_val = key_val_raw.split('-')[0]
         ctype_in.append(key_val.strip())
-    if img.use_io == 'fits':
-        ctype_in.reverse() # Need to reverse order, as pyfits does this
+    ctype_in.reverse() # Need to reverse order, as pyfits does this
 
     if 'RA' not in ctype_in or 'DEC' not in ctype_in:
         raise RuntimeError("Image data not found")
-    if 'FREQ' not in ctype_in:
+    if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         from pywcs import WCS
         t = WCS(hdr)
         t.wcs.fix()

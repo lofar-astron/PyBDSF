@@ -73,7 +73,7 @@ class Op_islands(Op):
             img.island_labels = det_img.island_labels
             corr_islands = []
             for isl in det_img.islands:
-                corr_islands.append(isl.copy(img))
+                corr_islands.append(isl.copy(img, img.pixel_beamarea))
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
