@@ -36,6 +36,8 @@ def changelog():
 
     2012/10/09 - Version 1.4.5
 
+    2012/10/12 - Version 1.4.5
+
     2012/10/12 - Added option ("incl_empty") to include empty islands (that
         have no un-flagged Gaussians) in output catalogs. Any such empty
         islands are given negative source IDs and positions given by the

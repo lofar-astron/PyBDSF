@@ -518,11 +518,12 @@ def imageshift(image, shift):
 def trans_gaul(q):
     " transposes a tuple "
     y=[]
-    for i in range(len(q[0])):
-        elem=[]
-        for j in range(len(q)):
-            elem.append(q[j][i])
-        y.append(elem)
+    if len(q) > 0:
+        for i in range(len(q[0])):
+            elem=[]
+            for j in range(len(q)):
+                elem.append(q[j][i])
+            y.append(elem)
     return y
 
 def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
