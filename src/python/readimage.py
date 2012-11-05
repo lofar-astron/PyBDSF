@@ -161,14 +161,14 @@ class Op_readimage(Op):
             for i in range(t.wcs.naxis - 2):
                 xy.append(0)
             xy_arr = N.array([xy])
-            sky = self.wcs_pix2sky(xy_arr, 0, ra_dec_order=True)
+            sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
             return sky.tolist()[0][0:2]
         def s2p(self, rd):
             rd = list(rd)
             for i in range(t.wcs.naxis - 2):
                 rd.append(0)
             rd_arr = N.array([rd])
-            pix = self.wcs_sky2pix(rd_arr, 0, ra_dec_order=True)
+            pix = self.wcs_sky2pix(rd_arr, 0)#, ra_dec_order=True)
             return pix.tolist()[0][0:2]
         instancemethod = type(t.wcs_pix2sky)
         t.p2s = instancemethod(p2s, t, WCS)
