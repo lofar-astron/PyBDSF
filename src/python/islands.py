@@ -73,7 +73,7 @@ class Op_islands(Op):
             img.island_labels = det_img.island_labels
             corr_islands = []
             for isl in det_img.islands:
-                corr_islands.append(isl.copy(img.pixel_beamarea))
+                corr_islands.append(isl.copy(img))
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
@@ -269,9 +269,6 @@ class Island(object):
             data = img
             bbox_rms_im = rms
             bbox_mean_im = mean
-            self.oldbbox = bbox
-            self.oldidx = idx
-
 
         ### finish initialization
         isl_size = N.sum(~isl_mask)
@@ -299,13 +296,10 @@ class Island(object):
         self.image = state['image']
         self.islmean = state['islmean']
         self.mask_active = state['mask_active']
-        self.mask_noisy = state['mask_noisy']
         self.size_active = state['size_active']
         self.shape = state['shape']
         self.origin = state['origin']
         self.island_id = state['island_id']
-        self.oldidx = state['oldidx']
-        self.bbox = state['bbox']
 
     def __getstate__(self):
         """Needed for multiprocessing"""
@@ -315,13 +309,10 @@ class Island(object):
         state['image'] = self.image
         state['islmean'] = self.islmean
         state['mask_active'] = self.mask_active
-        state['mask_noisy'] = self.mask_noisy
         state['size_active'] = self.size_active
         state['shape'] = self.shape
         state['origin'] = self.origin
         state['island_id'] = self.island_id
-        state['oldidx'] = self.oldidx
-        state['bbox'] = self.bbox
         return state
 
     ### do map etc in case of ndim image
@@ -330,6 +321,11 @@ class Island(object):
         def __expand(bbox, shape):
             return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
         return map(__expand, bbox, shape)
+
+#     def copy(self, img):
+#         mask, mean, rms = img.mask, img.mean, img.rms
+#         image = img.ch0; labels = img.island_labels; bbox = self.oldbbox; idx = self.oldidx
+#         return Island(image, mask, mean, rms, labels, bbox, idx, img.pixel_beamarea)
 
     def copy(self, pixel_beamarea):
         mask = self.mask_active

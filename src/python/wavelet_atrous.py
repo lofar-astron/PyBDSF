@@ -156,6 +156,7 @@ class Op_wavelet_atrous(Op):
               wimg.extraparams['bbsappend'] = True
               wimg.bbspatchnum = img.bbspatchnum
               wimg.waveletimage = True
+              wimg.use_wcs = img.use_wcs
               wimg.j = j
               self.FITS_simple(wimg, img, w, '.atrous.' + suffix)
               img.atrous_opts.append(wimg.opts)

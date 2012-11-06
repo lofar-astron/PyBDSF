@@ -157,6 +157,7 @@ class Op_polarisation(Op):
               pimg.pix2coord = img.pix2coord
               pimg.wcs_obj = img.wcs_obj
               pimg.mask = mask
+              pimg.use_wcs = img.use_wcs
               pimg.ch0 = ch0_pi
               pimg._pi = True
 
