@@ -1241,9 +1241,19 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     header = hdulist[0].header
 
     # Add WCS info
-    wcs_header = wcsobj.to_header()
-    for key in wcs_header.keys():
-        header.update(key, wcs_header[key])
+#     wcs_header = wcsobj.to_header()
+#     for key in wcs_header.keys():
+#         header.update(key, wcs_header[key])
+    header.update('CRVAL1', wcsobj.wcs.crval[0])
+    header.update('CDELT1', wcsobj.wcs.cdelt[0])
+    header.update('CRPIX1', wcsobj.wcs.crpix[0])
+    header.update('CUNIT1', wcsobj.wcs.cunit[0])
+    header.update('CTYPE1', wcsobj.wcs.ctype[0])
+    header.update('CRVAL2', wcsobj.wcs.crval[1])
+    header.update('CDELT2', wcsobj.wcs.cdelt[1])
+    header.update('CRPIX2', wcsobj.wcs.crpix[1])
+    header.update('CUNIT2', wcsobj.wcs.cunit[1])
+    header.update('CTYPE2', wcsobj.wcs.ctype[1])
 
     # Add STOKES info
     header.update('CRVAL3', 1)
@@ -1253,14 +1263,11 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     header.update('CTYPE3', 'STOKES')
 
     # Add or alter frequency info if needed
-    if wcsobj.wcs.spec != -1:
-        header.update('CRVAL' + str(wcsobj.wcs.spec + 1), freq)
-    else:
-        header.update('CRVAL4', freq)
-        header.update('CDELT4', 0.0)
-        header.update('CRPIX4', 1)
-        header.update('CUNIT4', 'Hz')
-        header.update('CTYPE4', 'FREQ')
+    header.update('CRVAL4', freq)
+    header.update('CDELT4', 0.0)
+    header.update('CRPIX4', 1)
+    header.update('CUNIT4', 'Hz')
+    header.update('CTYPE4', 'FREQ')
 
     # Add beam info
     header.update('BMAJ', beam[0])
