@@ -143,122 +143,42 @@ class Op_readimage(Op):
 
         Thanks to transpose operation done to image earlier we can use
         p2s & s2p transforms directly.
-
-        Both WCSLIB (from LOFAR svn) and PyWCS (http://stsdas.stsci.edu/
-        astrolib/pywcs/, available from https://trac6.assembla.com/astrolib)
-        are supported.
         """
-        try:
-            import wcslib
-            img.use_wcs = 'wcslib'
-        except ImportError, ewcslib:
-            try:
-                import pywcs
-                img.use_wcs = 'pywcs'
-            except ImportError, e:
-                # Expose original exception details to outside world
-                raise RuntimeError(
-                    "Either WCSLIB or PyWCS is required."
-                    " Original error: \n {0}\n {1}".format(str(ewcslib), str(e)))
         from math import pi
+        from pywcs import WCS
 
         hdr = img.header
-        if img.use_wcs == 'wcslib':
-            t = wcslib.wcs()
-        elif img.use_wcs == 'pywcs':
-            t = pywcs.WCS(naxis=2)
+        t = WCS(hdr)
+        t.wcs.fix()
 
-        if img.use_io == 'fits':
-          crval = [hdr['crval1'], hdr['crval2']]
-          crpix = [hdr['crpix1'], hdr['crpix2']]
-          cdelt = [hdr['cdelt1'], hdr['cdelt2']]
-          acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
-          ctype = [hdr['ctype1'], hdr['ctype2']]
-          if 'crota1' in hdr:
-            crota = [hdr['crota1'], hdr['crota2']]
-          else:
-            crota = [0.0, 0.0]
-          if 'cunit1' in hdr:
-            cunit = [hdr['cunit1'], hdr['cunit2']]
-          else:
-            cunit = []
+        acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
 
-        if img.use_io == 'rap':
-          wcs_dict = hdr['coordinates']['direction0']
-          coord_dict = {'degree' : 1.0, 'arcsec' : 1.0 / 3600, 'rad' : 180.0 / pi}
-          iterlist = range(2)
-          co_conv = [coord_dict[wcs_dict['units'][i]] for i in iterlist]
-          crval = [wcs_dict.get('crval')[i] * co_conv[i] for i in iterlist]
-          crpix = [wcs_dict.get('crpix')[i] for i in iterlist]
-          cdelt = [wcs_dict.get('cdelt')[i] * co_conv[i] for i in iterlist]
-          acdelt = [abs(wcs_dict.get('cdelt')[i]) * co_conv[i] for i in iterlist]
-          ctype = ['RA---' + wcs_dict.get('projection'), 'DEC--' + wcs_dict.get('projection')]
-          if wcs_dict.has_key('crota1'):
-            crota = [wcs_dict.get('crota')[i] for i in iterlist]
-          else:
-            crota = [0.0, 0.0]
-          if wcs_dict.has_key('cunit1'):
-            cunit = [wcs_dict.get('cunit')[i] for i in iterlist]
-          else:
-            cunit = []
+        # Here we define p2s and s2p to allow celestial coordinate
+        # transformations. Transformations for other axes (e.g.,
+        # spectral) are striped out.
+        def p2s(self, xy):
+            xy = list(xy)
+            for i in range(t.wcs.naxis - 2):
+                xy.append(0)
+            xy_arr = N.array([xy])
+            sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
+            return sky.tolist()[0][0:2]
+        def s2p(self, rd):
+            rd = list(rd)
+            for i in range(t.wcs.naxis - 2):
+                rd.append(0)
+            rd_arr = N.array([rd])
+            pix = self.wcs_sky2pix(rd_arr, 0)#, ra_dec_order=True)
+            return pix.tolist()[0][0:2]
+        instancemethod = type(t.wcs_pix2sky)
+        t.p2s = instancemethod(p2s, t, WCS)
+        instancemethod = type(t.wcs_sky2pix)
+        t.s2p = instancemethod(s2p, t, WCS)
 
-        # Check if user has specified a subimage. If so, adjust crpix
-        if img.opts.trim_box != None:
-            xmin, xmax, ymin, ymax = img.trim_box
-            crpix[0] -= xmin
-            crpix[1] -= ymin
-
-        if img.use_wcs == 'wcslib':
-            t.crval = tuple(crval)
-            t.crpix = tuple(crpix)
-            t.cdelt = tuple(cdelt)
-            t.acdelt = tuple(acdelt)
-            t.ctype = tuple(ctype)
-            t.crota = tuple(crota)
-            if cunit != []:
-                t.cunit = tuple(cunit)
-            t.wcsset()
-            img.wcs_obj = t
-            img.pix2sky = t.p2s
-            img.sky2pix = t.s2p
-        elif img.use_wcs == 'pywcs':
-            # Here we define new p2s and s2p methods to match those of wcslib.
-            # Note that, due to a bug in pywcs version 1.10-4.7, the
-            # "ra_dec_order" option cannot be used. When the bug is fixed,
-            # this option should probably be re-enabled.
-            def p2s(self, xy):
-                xy_arr = N.array([xy])
-                sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
-                return sky.tolist()[0]
-            def s2p(self, rd):
-                rd_arr = N.array([rd])
-                pix = self.wcs_sky2pix(rd_arr, 0)#, ra_dec_order=True)
-                return pix.tolist()[0]
-            instancemethod = type(t.wcs_pix2sky)
-            t.p2s = instancemethod(p2s, t, pywcs.WCS)
-            instancemethod = type(t.wcs_sky2pix)
-            t.s2p = instancemethod(s2p, t, pywcs.WCS)
-
-            t.wcs.crval = crval
-            t.wcs.crpix = crpix
-            t.wcs.cdelt = cdelt
-            t.wcs.ctype = ctype
-            t.wcs.crota = crota
-            if cunit != []:
-                t.wcs.cunit = cunit
-
-            img.wcs_obj = t
-            img.wcs_obj.acdelt = acdelt
-            img.wcs_obj.crval = crval
-            img.wcs_obj.crpix = crpix
-            img.wcs_obj.cdelt = cdelt
-            img.wcs_obj.ctype = ctype
-            img.wcs_obj.crota = crota
-            if cunit != []:
-                img.wcs_obj.cunit = cunit
-
-            img.pix2sky = t.p2s
-            img.sky2pix = t.s2p
+        img.wcs_obj = t
+        img.wcs_obj.acdelt = acdelt
+        img.pix2sky = t.p2s
+        img.sky2pix = t.s2p
 
     def init_beam(self, img):
         """Initialize beam parameters, and conversion routines
@@ -314,48 +234,28 @@ class Op_readimage(Op):
         if img.opts.beam is not None:
             beam = img.opts.beam
         else:
-            if img.use_io == 'rap':
-                iminfo = hdr['imageinfo']
-                if iminfo.has_key('restoringbeam'):
-                    beaminfo = iminfo['restoringbeam']
-                    if beaminfo.has_key('major') and beaminfo.has_key('minor') and beaminfo.has_key('major'):
-                        bmaj = beaminfo['major']['value']
-                        bmin = beaminfo['minor']['value']
-                        bpa = beaminfo['positionangle']['value']
-                        # make sure all values are in degrees
-                        if beaminfo['major']['unit'] == 'arcsec':
-                            bmaj = bmaj / 3600.0
-                        if beaminfo['minor']['unit'] == 'arcsec':
-                            bmin = bmin / 3600.0
-                        if beaminfo['major']['unit'] == 'rad':
-                            bmaj = bmaj * 180.0 / N.pi
-                        if beaminfo['minor']['unit'] == 'rad':
-                            bmin = bmin * 180.0 / N.pi
-                        beam = (bmaj, bmin, bpa) # all degrees
-                        found = True
-            if img.use_io == 'fits':
-                try:
-                    beam = (hdr['BMAJ'], hdr['BMIN'], hdr['BPA'])
-                    found = True
-                except:
-                    ### try see if AIPS as put the beam in HISTORY as usual
-                   for h in hdr.get_history():
-                      # Check if h is a string or a FITS Card object (long headers are
-                      # split into Cards as of PyFITS 3.0.4)
-                      if not isinstance(h, str):
-                        hstr = h.value
-                      else:
-                        hstr = h
-                      if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
+            try:
+                beam = (hdr['BMAJ'], hdr['BMIN'], hdr['BPA'])
+                found = True
+            except:
+                ### try see if AIPS as put the beam in HISTORY as usual
+               for h in hdr.get_history():
+                  # Check if h is a string or a FITS Card object (long headers are
+                  # split into Cards as of PyFITS 3.0.4)
+                  if not isinstance(h, str):
+                    hstr = h.value
+                  else:
+                    hstr = h
+                  if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
+                    try:
+                        dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
+                    except ValueError:
                         try:
-                            dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
+                            dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
                         except ValueError:
-                            try:
-                                dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
-                            except ValueError:
-                                break
-                        beam = (float(bmaj), float(bmin), float(bpa))
-                        found = True
+                            break
+                    beam = (float(bmaj), float(bmin), float(bpa))
+                    found = True
             if not found: raise RuntimeError("No beam information found in image header.")
 
         ### convert beam into pixels (at image center)
@@ -375,7 +275,19 @@ class Op_readimage(Op):
                                                     round(beam[2], 1)))
 
     def init_freq(self, img):
-        """Initialize frequency parameters and store them"""
+        """Initialize frequency parameters and store them.
+
+        Basically, PyBDSM uses two frequency parameters:
+
+            img.frequency - the reference frequency in Hz of the ch0 image
+            img.freq_pars - the crval, crpix, and cdelt values for the
+                            frequency axis in Hz
+
+        If the input frequency info (in the WCS) is not in Hz, it is
+        converted.
+        """
+        from pywcs import WCS, UnitConverter
+
         mylog = mylogger.logging.getLogger("PyBDSM.InitFreq")
         if img.opts.frequency_sp != None and img.image.shape[1] > 1:
             # If user specifies multiple frequencies, then let
@@ -388,34 +300,42 @@ class Op_readimage(Op):
             img.freq_pars = (img.frequency, 0.0, 0.0)
             mylog.info('Using user-specified frequency.')
         else:
-            found = False
-            hdr = img.header
-            if img.use_io == 'rap':
-                if hdr['coordinates'].has_key('spectral2'):
-                    found = True
-                    spec_dict = hdr['coordinates']['spectral2']['wcs']
-                    crval, cdelt, crpix = spec_dict.get('crval'), \
-                        spec_dict.get('cdelt'), spec_dict.get('crpix')
-                    ff = crval + cdelt * (1. - crpix)
+            spec_indx = img.wcs_obj.wcs.spec
+            if spec_indx == -1:
+                raise RuntimeError('No frequency information found in image header.')
+            else:
+                # Here we define p2f and f2p to allow pixel to frequency
+                # transformations. Transformations for other axes (e.g.,
+                # celestial) are striped out.
+                #
+                # First, convert frequency to Hz if needed:
+                img.wcs_obj.wcs.sptr('FREQ-???')
+                naxis = img.wcs_obj.wcs.naxis
+                def p2f(self, spec_pix):
+                    spec_list = []
+                    for i in range(naxis):
+                        spec_list.append(0)
+                    spec_list[spec_indx] = spec_pix
+                    spec_pix_arr = N.array([spec_list])
+                    freq = self.wcs_pix2sky(spec_pix_arr, 0)
+                    return freq.tolist()[0][spec_indx]
+                def f2p(self, freq):
+                    freq_list = []
+                    for i in range(naxis):
+                        freq_list.append(0)
+                    freq_list[spec_indx] = freq
+                    freq_arr = N.array([freq_list])
+                    pix = self.wcs_sky2pix(freq_arr, 0)
+                    return pix.tolist()[0][spec_indx]
+                instancemethod = type(img.wcs_obj.wcs_pix2sky)
+                img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj, WCS)
+                instancemethod = type(img.wcs_obj.wcs_sky2pix)
+                img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj, WCS)
 
-            if img.use_io == 'fits':
-                nax = hdr['naxis']
-                if nax > 2:
-                    for i in range(nax):
-                        s = str(i + 1)
-                        if hdr['ctype' + s][0:4] == 'FREQ':
-                            found = True
-                            crval, cdelt, crpix = hdr['CRVAL' + s], \
-                                hdr['CDELT' + s], hdr['CRPIX' + s]
-                            ff = crval + cdelt * (1. - crpix)
-            if found:
                 if img.opts.frequency != None:
                     img.frequency = img.opts.frequency
                 else:
-                    img.frequency = ff
-                img.freq_pars = (crval, cdelt, crpix)
-            else:
-                raise RuntimeError('No frequency information found in image header.')
+                    img.frequency = img.wcs_obj.p2f(0)
 
     def get_equinox(self, img):
         """Gets the equinox from the header.
@@ -431,43 +351,28 @@ class Op_readimage(Op):
         """
         code = -1
         year = None
-        if img.use_io == 'rap':
-            hdr = img.header['coordinates']['direction0']
-            code = -1
-            year = None
-            if hdr.has_key('system'):
-                year = hdr['system']
-                if isinstance(year, str):     # Check for 'J2000' or 'B1950' values
-                    tst = year[:1]
-                    if (tst == 'J') or (tst == 'B'):
-                        year = float(year[1:])
-                        if tst == 'J': code = 3
-                        if tst == 'B': code = 2
-                else:
-                    code = 0
-        if img.use_io == 'fits':
-            hdr = img.header
-            if 'EQUINOX' in hdr:
-                year = hdr['EQUINOX']
-                if isinstance(year, str):     # Check for 'J2000' or 'B1950' values
-                    tst = year[:1]
-                    if (tst == 'J') or (tst == 'B'):
-                        year = float(year[1:])
-                        if tst == 'J': code = 3
-                        if tst == 'B': code = 2
-                else:
-                    code = 0
+        hdr = img.header
+        if 'EQUINOX' in hdr:
+            year = hdr['EQUINOX']
+            if isinstance(year, str):     # Check for 'J2000' or 'B1950' values
+                tst = year[:1]
+                if (tst == 'J') or (tst == 'B'):
+                    year = float(year[1:])
+                    if tst == 'J': code = 3
+                    if tst == 'B': code = 2
             else:
-                if 'EPOCH' in hdr: # Check EPOCH if EQUINOX not found
-                    year = hdr['EPOCH']
-                    code = 1
-                else:
-                    if 'RADECSYS' in hdr:
-                        sys = hdr['RADECSYS']
-                        code = 4
-                        if sys[:3] == 'ICR': year = 2000.0
-                        if sys[:3] == 'FK5': year = 2000.0
-                        if sys[:3] == 'FK4': year = 1950.0
+                code = 0
+        else:
+            if 'EPOCH' in hdr: # Check EPOCH if EQUINOX not found
+                year = hdr['EPOCH']
+                code = 1
+            else:
+                if 'RADECSYS' in hdr:
+                    sys = hdr['RADECSYS']
+                    code = 4
+                    if sys[:3] == 'ICR': year = 2000.0
+                    if sys[:3] == 'FK5': year = 2000.0
+                    if sys[:3] == 'FK4': year = 1950.0
         return year, code
 
     def get_rot(self, img, location=None):

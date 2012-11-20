@@ -407,6 +407,7 @@ class Op_rmsimage(Op):
                        bright_pt_coords=[], rms_box2=None,
                        logname=None, ncores=None):
         """Calls map_2d and checks for problems"""
+        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
         rms_ok = False
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
         opts = img.opts

@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.4.5'
+__version__ = '1.5'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -27,8 +27,12 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2012/10/22 - Added option ("force_output") to force output of catalogs
-        even if they are empty (when no sources are found).
+    2012/10/29 - Version 1.5.0
+
+    2012/10/29 - Improved handling of WCS information so that a much
+        greater variety of WCS systems may be used. Fixed a bug in logging
+        that occurred when negative values were found in the rms map.
+        Updated installation instructions.
 
     2012/10/12 - Version 1.4.5
 
