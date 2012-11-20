@@ -306,14 +306,15 @@ class Op_spectralindex(Op):
         img.beam_spectrum = sbeam
         img.freq = N.zeros(shp[1])
         crval, cdelt, crpix = img.freq_pars
-        if img.wcs_obj.wcs.spec == -1 and \
+        if crval == 0.0 and cdelt == 0.0 and crpix == 0.0 and \
                 img.opts.frequency_sp == None:
             raise RuntimeError("Frequency info not found in header "\
                                    "and frequencies not specified by user")
         else:
             if img.opts.frequency_sp == None:
                 for ichan in range(shp[1]):
-                    img.freq[ichan] = img.wcs_obj.p2f(ichan)
+                    ich = ichan+1
+                    img.freq[ichan] = crval+cdelt*(ich-crpix) #ff = crval+cdelt*(1.-crpix)
             else:
                 if len(img.opts.frequency_sp) != shp[1]:
                     raise RuntimeError("Number of channels does not match number "\

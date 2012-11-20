@@ -253,13 +253,14 @@ def init_freq_collapse(img, wtarr):
         if c_list == []: c_list = N.arange(img.image.shape[1])
         sumwts = 0.0
         sumfrq = 0.0
-        spec_indx = img.wcs_obj.wcs.spec
-        if spec_indx == -1 and img.opts.frequency_sp == None:
+        crval, cdelt, crpix = img.freq_pars
+        if crval == 0.0 and cdelt == 0.0 and crpix == 0.0 and \
+                img.opts.frequency_sp == None:
             raise RuntimeError("Frequency information not found in header and frequencies "\
                          "not specified by user")
         else:
             for i, ch in enumerate(c_list):
                 sumwts += wtarr[i]
-                freq = img.wcs_obj.p2f(ch)
+                freq = crval+cdelt*(ch+1-crpix)
                 sumfrq += freq*wtarr[i]
             img.frequency = sumfrq / sumwts

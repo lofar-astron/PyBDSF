@@ -19,7 +19,7 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
 
 * Python 2.6 or newer (including NumPy, SciPy, Matplotlib, and IPython). The easiest way to install Python and all of the required modules is to use the 64-bit EPD Python distribution, available at http://enthought.com/products/epd.php. For academic users, a free version is available at http://www.enthought.com/products/edudownload.php.
 * gfortran. Binaries are available from http://gcc.gnu.org/wiki/GFortranBinaries.
-* PyFITS. You can get PyFITS from www.stsci.edu/institute/software_hardware/pyfits (if you use the EPD Python distribution described above, PyFITS is already included in that).
+* PyWCS. You can get PyWCS from https://trac6.assembla.com/astrolib.
 * Boost. Get the latest version from http://www.boost.org. Only the Python libraries need to be compiled. For example, on a Mac, do the following (which assumes the latest version is ``boost_1_49_0.tar.gz``)::
 
     $ cd /usr/local/
@@ -27,18 +27,6 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
     $ cd boost_1_49_0/
     $ sudo ./bootstrap.sh --with-libraries=python
     $ sudo ./b2 install
-
-.. note::
-
-    If you're using a Mac with OS 10.8 (Mountain Lion), you need to do use the clang compiler rather than the default gcc compiler. To do this, copy the following lines into a blank file and save the file as ``LOFAR/CMake/variants/hostname.variants``, where ``hostname`` is the name of your Mac (shown under System Preferences -> Sharing)::
-
-        option(USE_SHMEM "No shmem" OFF)
-        option(USE_THREADS "No threads" OFF)
-        set(GNU_COMPILERS GNU_C GNU_CXX GNU_ASM)
-        set(GNU_C    /usr/bin/clang )  # GNU C compiler
-        set(GNU_CXX  /usr/bin/g++ )  # GNU C++ compiler
-        set(GNU_ASM  /usr/bin/clang )  # GNU assembler
-
 
 
 Compiling and installing
