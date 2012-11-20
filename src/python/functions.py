@@ -1213,7 +1213,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             img.samp_key = private_key
 
         # Broadcast image to SAMP Hub
-        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
+        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.frequency)
         tfile = tempfile.NamedTemporaryFile(delete=False)
         temp_im.writeto(tfile.name,  clobber=clobber)
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
@@ -1229,19 +1229,44 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                 os.remove(outdir + filename)
             else:
                 return
-        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.freq_pars)
+        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.frequency)
         temp_im.writeto(outdir + filename,  clobber=clobber)
 
 def make_fits_image(imagedata, wcsobj, beam, freq):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
     import pyfits
-    shape_out = [1, imagedata.shape[0], imagedata.shape[1]]
+    shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
     hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
     header = hdulist[0].header
+
+    # Add WCS info
     wcs_header = wcsobj.to_header()
     for key in wcs_header.keys():
         header.update(key, wcs_header[key])
+
+    # Add STOKES info
+    header.update('CRVAL3', 1)
+    header.update('CDELT3', 1)
+    header.update('CRPIX3', 1)
+    header.update('CUNIT3', '')
+    header.update('CTYPE3', 'STOKES')
+
+    # Add or alter frequency info if needed
+    if wcsobj.wcs.spec != -1:
+        header.update('CRVAL' + str(wcsobj.wcs.spec + 1), freq)
+    else:
+        header.update('CRVAL4', freq)
+        header.update('CDELT4', 0.0)
+        header.update('CRPIX4', 1)
+        header.update('CUNIT4', 'Hz')
+        header.update('CTYPE4', 'FREQ')
+
+    # Add beam info
+    header.update('BMAJ', beam[0])
+    header.update('BMIN', beam[1])
+    header.update('BPA', beam[2])
+
     hdulist[0].header = header
     return hdulist
 

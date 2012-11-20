@@ -34,8 +34,6 @@ def changelog():
         that occurred when negative values were found in the rms map.
         Updated installation instructions.
 
-    2012/10/09 - Version 1.4.5
-
     2012/10/12 - Version 1.4.5
 
     2012/10/12 - Added option ("incl_empty") to include empty islands (that
