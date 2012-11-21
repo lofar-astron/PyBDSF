@@ -69,11 +69,13 @@ class Op_islands(Op):
             if det_shape != ch0_shape:
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
-            # Run through islands and correct the rms, mean and max values
+            # Run through islands and correct the image and rms, mean and max values
             img.island_labels = det_img.island_labels
             corr_islands = []
-            for isl in det_img.islands:
-                corr_islands.append(isl.copy(img.pixel_beamarea))
+            for i, isl in enumerate(det_img.islands):
+                islcp = isl.copy(img.pixel_beamarea, image=img.ch0[isl.bbox], mean=img.mean[isl.bbox], rms=img.rms[isl.bbox])
+                islcp.island_id = i
+                corr_islands.append(islcp)
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
@@ -331,12 +333,16 @@ class Island(object):
             return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
         return map(__expand, bbox, shape)
 
-    def copy(self, pixel_beamarea):
+    def copy(self, pixel_beamarea, image=None, mean=None, rms=None):
         mask = self.mask_active
         noise_mask = self.mask_noisy
-        mean = N.zeros(mask.shape) + self.mean
-        rms =  N.zeros(mask.shape) + self.rms
-        image = self.image
+        if image == None:
+            image = self.image
+        if mean == None:
+            mean = N.zeros(mask.shape) + self.mean
+        if rms == None:
+            rms =  N.zeros(mask.shape) + self.rms
+
         bbox = self.bbox
         idx = self.oldidx
         origin = self.origin

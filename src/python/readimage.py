@@ -112,14 +112,13 @@ class Op_readimage(Op):
         img.filename = img.opts.filename
         img.parentname = fname
         img.imagename = fname + '.pybdsm'
+        img.basedir = './' + fname + '_pybdsm/'
         if img.opts.output_all:
             # Set up directory to write output to
-            basedir = './' + fname + '_pybdsm'
             opdir = img.opts.opdir_overwrite
             if opdir not in ['overwrite', 'append']:
                 img.opts.opdir_overwrite = 'append'
                 mylog.info('Appending output files in directory ' + basedir)
-            img.basedir = basedir + '/'
             if img.opts.solnname != None: img.basedir += img.opts.solnname + '_'
             img.basedir += time.strftime("%d%b%Y_%H.%M.%S")
 
