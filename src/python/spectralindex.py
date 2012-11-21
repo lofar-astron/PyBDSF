@@ -1,6 +1,6 @@
 """Module Spectral index.
-    
-   This module calculates spectral indices for Gaussians and sources for a multichannel cube. 
+
+   This module calculates spectral indices for Gaussians and sources for a multichannel cube.
 
 """
 
@@ -10,7 +10,7 @@ import mylogger
 from gaul2srl import Source
 from copy import deepcopy as cp
 import _cbdsm
-import collapse 
+import collapse
 import sys
 import functions as func
 import time
@@ -24,34 +24,34 @@ Gaussian.specin_flux = List(Float(), doc = "Total flux density per channel, Jy",
 Gaussian.specin_fluxE = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
 Gaussian.specin_freq = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
 Source.spec_indx = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
-Source.e_spex_indx = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
+Source.e_spec_indx = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
 Source.specin_flux = List(Float(), doc = "Total flux density, Jy", colname=['Total_flux'], units=['Jy'])
 Source.specin_fluxE = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
 Source.specin_freq = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
 
 class Op_spectralindex(Op):
     """Computes spectral index of every gaussian and every source.
-    
+
     First do a quick fit to all channels to determine whether averaging over
     frequency is needed to obtain desired SNR (set by img.opts.specind_snr).
-    This averaging should be done separately for both Gaussians and 
+    This averaging should be done separately for both Gaussians and
     sources. For S and C sources, averaging only needs to be done once
     (as the sources have only one Gaussian).
-                        
+
     For M sources, averaging is needed twice: once to obtain the desired
     SNR for the faintest Gaussian in the source, and once to obtain the
     desired SNR for the source as a whole.
-                        
+
     If averaging is needed for a given source, don't let the
     number of resulting channels fall below 2. If it is not possible
     to obtain the desired SNR in 2 or more channels, set spec_indx of
     Gaussian/source to NaN.
-      
+
    """
 
     def __call__(self, img):
         global bar1
-         
+
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"SpectIndex")
         img.mylog = mylog
         if img.opts.spectralindex_do:
@@ -62,9 +62,9 @@ class Op_spectralindex(Op):
                 self.freq_beamsp_unav(img)
                 sbeam = img.beam_spectrum
                 freqin = img.freq
-                
+
                 # calc initial channel flags if needed
-                iniflags = self.iniflag(img)    
+                iniflags = self.iniflag(img)
                 img.specind_iniflags = iniflags
                 good_chans = N.where(iniflags == False)
                 unav_image = img.image[0][good_chans]
@@ -74,24 +74,24 @@ class Op_spectralindex(Op):
                 mylog.info('After initial flagging of channels by rms, %i good channels remain' % (nchan,))
                 if nmax_to_avg == 0:
                     nmax_to_avg = nchan
-                
+
                 # calculate the rms map of each unflagged channel
                 bar1 = statusbar.StatusBar('Determing rms for channels in image ..... : ', 0, nchan)
                 if img.opts.quiet == False:
                     bar1.start()
                 rms_spec = self.rms_spectrum(img, unav_image) # bar1 updated here
-        
+
                 bar2 = statusbar.StatusBar('Calculating spectral indices for sources  : ', 0, img.nsrc)
                 c_wts = img.opts.collapse_wt
                 snr_desired = img.opts.specind_snr
-        
+
                 if img.opts.quiet == False and img.opts.verbose_fitting == False:
                     bar2.start()
                 for src in img.sources:
                     isl = img.islands[src.island_id]
                     isl_bbox = isl.bbox
-                    
-                    # Fit each channel with ch0 Gaussian(s) of the source, 
+
+                    # Fit each channel with ch0 Gaussian(s) of the source,
                     # allowing only the normalization to vary.
                     chan_images = unav_image[:, isl_bbox[0], isl_bbox[1]]
                     chan_rms = rms_spec[:, isl_bbox[0], isl_bbox[1]]
@@ -102,7 +102,7 @@ class Op_spectralindex(Op):
                     # and is True if measured flux is upper limit. n_good_chan_per_gaus is array of N_gaussians
                     # that gives number of unmasked channels for each Gaussian.
                     gaus_mask, n_good_chan_per_gaus = self.mask_upper_limits(unavg_total_flux, e_unavg_total_flux, snr_desired)
-        
+
                     # Average if needed and fit again
                     # First find flux of faintest Gaussian of source and use it to estimate rms_desired
                     gflux = []
@@ -110,33 +110,33 @@ class Op_spectralindex(Op):
                         gflux.append(g.peak_flux)
                     rms_desired = min(gflux)/snr_desired
                     total_flux = unavg_total_flux
-                    e_total_flux = e_unavg_total_flux   
-                    freq_av = unav_freqs     
+                    e_total_flux = e_unavg_total_flux
+                    freq_av = unav_freqs
                     nchan = chan_images.shape[0]
                     nchan_prev = nchan
                     while min(n_good_chan_per_gaus) < 2 and nchan > 2:
-                        avimages, beamlist, freq_av, crms_av = self.windowaverage_cube(chan_images, rms_desired, chan_rms, 
+                        avimages, beamlist, freq_av, crms_av = self.windowaverage_cube(chan_images, rms_desired, chan_rms,
                                     c_wts, sbeam, freqin, nmax_to_avg=nmax_to_avg)
-                        total_flux, e_total_flux = self.fit_channels(img, avimages, crms_av, src, beamlist)                
+                        total_flux, e_total_flux = self.fit_channels(img, avimages, crms_av, src, beamlist)
                         gaus_mask, n_good_chan_per_gaus = self.mask_upper_limits(total_flux, e_total_flux, snr_desired)
                         nchan = avimages.shape[0]
                         if nchan == nchan_prev:
                             break
                         nchan_prev = nchan
                         rms_desired *= 0.8
-                    
+
                     # Now fit Gaussian fluxes to obtain spectral indices.
-                    # Only fit if there are detections (at specified sigma threshold) 
-                    # in at least two bands. If not, don't fit and set spec_indx 
+                    # Only fit if there are detections (at specified sigma threshold)
+                    # in at least two bands. If not, don't fit and set spec_indx
                     # and error to NaN.
                     for ig, gaussian in enumerate(src.gaussians):
                         npos = len(N.where(total_flux[:, ig] > 0.0)[0])
                         if img.opts.verbose_fitting:
                             if img.opts.flagchan_snr:
-                                print 'Gaussian #%i : averaged to %i channels, of which %i meet SNR criterion' % (gaussian.gaus_num, 
+                                print 'Gaussian #%i : averaged to %i channels, of which %i meet SNR criterion' % (gaussian.gaus_num,
                                        len(total_flux[:, ig]), n_good_chan_per_gaus[ig])
                             else:
-                                print 'Gaussian #%i : averaged to %i channels, all of which will be used' % (gaussian.gaus_num, 
+                                print 'Gaussian #%i : averaged to %i channels, all of which will be used' % (gaussian.gaus_num,
                                        len(total_flux[:, ig]))
                         if (img.opts.flagchan_snr and n_good_chan_per_gaus[ig] < 2) or npos < 2:
                             gaussian.spec_indx = N.NaN
@@ -160,7 +160,7 @@ class Op_spectralindex(Op):
                             gaussian.specin_fluxE = e_fluxes_to_fit.tolist()
                             gaussian.specin_freq = freqs_to_fit.tolist()
                             gaussian.specin_freq0 = N.median(freqs_to_fit)
-        
+
                     # Next fit total source fluxes for spectral index.
                     if len(src.gaussians) > 1:
                         # First, check unaveraged SNRs for total source.
@@ -169,18 +169,18 @@ class Op_spectralindex(Op):
                         src_total_flux[:,0] = N.sum(unavg_total_flux, 1) # sum over all Gaussians in source to obtain total fluxes in each channel
                         src_e_total_flux[:,0] = N.sqrt(N.sum(N.power(e_unavg_total_flux, 2.0), 1))
                         src_mask, n_good_chan = self.mask_upper_limits(src_total_flux, src_e_total_flux, snr_desired)
-                    
+
                         # Average if needed and fit again
                         rms_desired = src.peak_flux_max/snr_desired
                         total_flux = unavg_total_flux
                         e_total_flux = e_unavg_total_flux
-                        freq_av = unav_freqs     
+                        freq_av = unav_freqs
                         nchan = chan_images.shape[0]
                         nchan_prev = nchan
                         while n_good_chan < 2 and nchan > 2:
-                            avimages, beamlist, freq_av, crms_av = self.windowaverage_cube(chan_images, rms_desired, chan_rms, 
+                            avimages, beamlist, freq_av, crms_av = self.windowaverage_cube(chan_images, rms_desired, chan_rms,
                                         c_wts, sbeam, freqin, nmax_to_avg=nmax_to_avg)
-                            total_flux, e_total_flux = self.fit_channels(img, avimages, crms_av, src, beamlist)                
+                            total_flux, e_total_flux = self.fit_channels(img, avimages, crms_av, src, beamlist)
                             src_total_flux = N.sum(total_flux, 1) # sum over all Gaussians in source to obtain total fluxes in each channel
                             src_e_total_flux = N.sqrt(N.sum(N.power(e_total_flux, 2.0), 1))
                             src_mask, n_good_chan = self.mask_upper_limits(src_total_flux, src_e_total_flux, snr_desired)
@@ -189,18 +189,18 @@ class Op_spectralindex(Op):
                                 break
                             nchan_prev = nchan
                             rms_desired *= 0.8
-                        
+
                         # Now fit source for spectral index.
                         src_total_flux = src_total_flux.reshape((src_total_flux.shape[0],))
                         src_e_total_flux = src_e_total_flux.reshape((src_e_total_flux.shape[0],))
                         src_mask = src_mask.reshape((src_mask.shape[0],))
                         if img.opts.verbose_fitting:
                             if img.opts.flagchan_snr:
-                                print 'Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id, 
+                                print 'Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id,
                                       len(src_total_flux), nchan)
                             else:
-                                 print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id, 
-                                       len(src_total_flux))                           
+                                 print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id,
+                                       len(src_total_flux))
                         npos = len(N.where(src_total_flux > 0.0))
                         if (img.opts.flagchan_snr and n_good_chan < 2) or npos < 2:
                             src.spec_indx = N.NaN
@@ -249,11 +249,11 @@ class Op_spectralindex(Op):
 
 ####################################################################################
     def flagchans_rmschan(self, crms, zeroflags, iniflags, cutoff):
-        """ Calculate clipped rms (r1) of the rms as fn of channel, crms, with zeroflags 
+        """ Calculate clipped rms (r1) of the rms as fn of channel, crms, with zeroflags
         applied and kappa=cutoff. Then exclude crms=0 (for NaN mages etc) and get ch.s
         which are more than cutoff*r1 away from median of rms. If this is less than 10 %
-        of all channels, flag them. 
-        
+        of all channels, flag them.
+
         """
 
         # crms_rms and median dont include rms=0 channels
@@ -263,8 +263,8 @@ class Op_spectralindex(Op):
         median = N.median(N.delete(crms, zeroind))
         badind = N.where(N.abs(N.delete(crms, zeroind) - median)/crms_rms >=cutoff)[0]
         frac = len(badind)/(nchan - len(zeroind))
-            
-        if frac <= 0.1: 
+
+        if frac <= 0.1:
             badind = N.where(N.abs(crms - median)/crms_rms >=cutoff)[0]
             iniflags[badind] = True
 
@@ -274,7 +274,7 @@ class Op_spectralindex(Op):
     def iniflag(self, img):
         """ Calculate clipped rms of every channel, and then median and clipped rms of this rms distribution.
         Exclude channels where rms=0 (all pixels 0 or blanked) and of the remaining, if outliers beyond 5 sigma
-        are less then 10 % of number of channels, flag them. This is done only when flagchan_rms = True. 
+        are less then 10 % of number of channels, flag them. This is done only when flagchan_rms = True.
         If False, only rms=0 (meaning, entire channel image is zero or blanked) is flagged."""
 
         image = img.image
@@ -288,17 +288,17 @@ class Op_spectralindex(Op):
         iniflags = cp(zeroflags)
 
         if img.opts.flagchan_rms:
-            iniflags = self.flagchans_rmschan(crms, zeroflags, iniflags, 4.0) 
+            iniflags = self.flagchans_rmschan(crms, zeroflags, iniflags, 4.0)
 
         return iniflags
-        
+
 
 ####################################################################################
     def freq_beamsp_unav(self, img):
         """ Defines img.beam_spectrum and img.freq for the unaveraged cube. """
 
         shp = img.image.shape
-        sbeam = img.opts.beam_spectrum 
+        sbeam = img.opts.beam_spectrum
         if sbeam != None and len(sbeam) != shp[1]: sbeam = None  # sanity check
         if sbeam == None:
             sbeam = [img.beam]*shp[1]
@@ -306,15 +306,14 @@ class Op_spectralindex(Op):
         img.beam_spectrum = sbeam
         img.freq = N.zeros(shp[1])
         crval, cdelt, crpix = img.freq_pars
-        if crval == 0.0 and cdelt == 0.0 and crpix == 0.0 and \
+        if img.wcs_obj.wcs.spec == -1 and \
                 img.opts.frequency_sp == None:
             raise RuntimeError("Frequency info not found in header "\
                                    "and frequencies not specified by user")
         else:
             if img.opts.frequency_sp == None:
                 for ichan in range(shp[1]):
-                    ich = ichan+1
-                    img.freq[ichan] = crval+cdelt*(ich-crpix) #ff = crval+cdelt*(1.-crpix)
+                    img.freq[ichan] = img.wcs_obj.p2f(ichan)
             else:
                 if len(img.opts.frequency_sp) != shp[1]:
                     raise RuntimeError("Number of channels does not match number "\
@@ -353,7 +352,7 @@ class Op_spectralindex(Op):
             median_rms = rms_spec
 
         str1 = " ".join(["%9.4e" % n for n in img.channel_clippedrms])
-        if rms_map:        
+        if rms_map:
             mylog.debug('%s %s ' % ('Median rms of channels : ', str1))
             mylog.info('RMS image made for each channel')
         else:
@@ -366,7 +365,7 @@ class Op_spectralindex(Op):
 ####################################################################################
     def fit_specindex(self, freqarr, fluxarr, efluxarr, do_log=False):
         """ Fits spectral index to data.
-        
+
         do_log is True/False implies you fit spectral index in logFlux vs logFreq space or not."""
         import functions as func
         import math
@@ -384,7 +383,7 @@ class Op_spectralindex(Op):
         else:
           x = x/f0; y = flux; sig = eflux
           funct = func.sp_in
-          
+
         spin, espin = func.fit_mask_1d(x, y, sig, mask, funct, do_err=True, order=1)
 
         if do_log:
@@ -395,31 +394,31 @@ class Op_spectralindex(Op):
 
 
 ########################################################################################
-    
-    def windowaverage_cube(self, imagein, rms_desired, chanrms, c_wts, sbeam, 
+
+    def windowaverage_cube(self, imagein, rms_desired, chanrms, c_wts, sbeam,
                             freqin, n_min=2, nmax_to_avg=10):
         """Average neighboring channels of cube to obtain desired rms in at least n_min channels
-        
+
         The clipped rms of each channel is compared to the desired rms. If the
         clipped rms is too high, the channel is averaged with as many neighboring
         channels as necessary to obtain at least the desired rms. This is done
         until the number of OK channels is 2. The averaging is done first at
-        the frequency extremes, as frequency range the resulting averaged flux array 
+        the frequency extremes, as frequency range the resulting averaged flux array
         will be maximized.
-        
-        For example, if the desired rms is 0.1 and the list of rms's is: 
-        
+
+        For example, if the desired rms is 0.1 and the list of rms's is:
+
             [0.2, 0.2, 0.3, 0.2, 0.2]
-            
+
         the resulting channels that will be averaged are:
-        
+
             [[0, 1], [2], [3, 4]]
         """
         from math import sqrt
         from collapse import avspc_direct, avspc_blanks
-    
+
         nchan = imagein.shape[0]
-        
+
         # chan_list is a list of lists of channels to average. E.g., if we have
         # 5 channels and we want to average only the first 2:
         #     chan_list = [[0,1], [2], [3], [4]]
@@ -428,7 +427,7 @@ class Op_spectralindex(Op):
         else:
             crms = chanrms
         chan_list = self.get_avg_chan_list(rms_desired, crms, nmax_to_avg)
-        
+
         n_new = len(chan_list)
         beamlist = []
         crms_av = N.zeros(n_new)
@@ -438,7 +437,7 @@ class Op_spectralindex(Op):
         hasblanks = blank.any()
         for ichan, avg_list in enumerate(chan_list):
             if len(avg_list) > 1:
-                if not hasblanks: 
+                if not hasblanks:
                     imageout[ichan], dum = avspc_direct(avg_list, imagein, crms, c_wts)
                 else:
                     imageout[ichan], dum = avspc_blanks(avg_list, imagein, crms, c_wts)
@@ -451,9 +450,9 @@ class Op_spectralindex(Op):
                 beamlist.append(sbeam[avg_list[0]])
                 freq_av[ichan] = N.mean(freqin[avg_list[0]])
                 crms_av[ichan] = 1.0/sqrt(N.sum(1.0/crms[avg_list[0]]**2))
-                      
-        return imageout, beamlist, freq_av, crms_av 
-        
+
+        return imageout, beamlist, freq_av, crms_av
+
 
     def get_avg_chan_list(self, rms_desired, chanrms, nmax_to_avg):
         """Returns a list of channels to average to obtain given rms_desired
@@ -468,7 +467,7 @@ class Op_spectralindex(Op):
             rms_avg = chanrms[0]
             while rms_avg > rms_desired:
                 end += 1
-                chan_slice = slice(0, end)        
+                chan_slice = slice(0, end)
                 rms_avg = 1.0/N.sqrt(N.sum(1.0/N.array(chanrms)[chan_slice]**2))
                 if end == nchan or end == nmax_to_avg:
                     break
@@ -481,18 +480,18 @@ class Op_spectralindex(Op):
                 # and return.
                 chan_list = [range(0, int(float(nchan)/2.0)), range(int(float(nchan)/2.0), nchan)]
                 return chan_list
-                    
+
             # Average channels at end of list
             rms_avg = chanrms[-1]
             end = nchan
             start = nchan
             while rms_avg > rms_desired:
                 start -= 1
-                chan_slice = slice(start, end)        
+                chan_slice = slice(start, end)
                 rms_avg = 1.0/N.sqrt(N.sum(1.0/chanrms[chan_slice]/chanrms[chan_slice]))
                 if end-start == nmax_to_avg:
                     break
-                
+
             if start <= max(chan_list[0]):
                 # This means we cannot get two averaged channels with desired rms,
                 # so just average remaining channels
@@ -509,27 +508,27 @@ class Op_spectralindex(Op):
             for i in range(nchan):
                 chan_list.append([i])
         return chan_list
-        
+
 
     def fit_channels(self, img, chan_images, clip_rms, src, beamlist):
         """Fits normalizations of Gaussians in source to multiple channels
-        
-        If unresolved, the size of the Gaussians are adjusted to match the 
+
+        If unresolved, the size of the Gaussians are adjusted to match the
         channel's beam size (given by beamlist) before fitting.
-        
-        Returns array of total fluxes (N_channels x N_Gaussians) and array 
+
+        Returns array of total fluxes (N_channels x N_Gaussians) and array
         of errors (N_channels x N_Gaussians).
         """
         import functions as func
         from const import fwsig
-        
+
         isl = img.islands[src.island_id]
         isl_bbox = isl.bbox
         nchan = chan_images.shape[0]
         x, y = N.mgrid[isl_bbox]
         gg = src.gaussians
         fitfix = N.ones(len(gg)) # fit only normalization
-        srcmask = isl.mask_active 
+        srcmask = isl.mask_active
 
         total_flux = N.zeros((nchan, len(fitfix))) # array of fluxes: N_channels x N_Gaussians
         errors = N.zeros((nchan, len(fitfix))) # array of fluxes: N_channels x N_Gaussians
@@ -545,7 +544,7 @@ class Op_spectralindex(Op):
             rms_isl = N.mean(clip_rms[cind])
             errors[cind] = func.get_errors(img, p, rms_isl, bm_pix=(bm_pix[0]*fwsig, bm_pix[1]*fwsig, bm_pix[2]))[6]
             self.reset_size(gg)
-            
+
         return total_flux, errors
 
     def adjust_size_by_freq(self, beam_ch0, beam, gg):
@@ -559,12 +558,12 @@ class Op_spectralindex(Op):
                 g.size_pix_adj[1] *= beam[1] / beam_ch0[1]
             gg_adj.append(g)
         return gg_adj
-        
+
     def reset_size(self, gg):
         """Reset size of unresolved Gaussians to match the ch0 beam size"""
         for g in gg:
             if hasattr(g, 'size_pix_adj'): del g.size_pix_adj
-        
+
     def mask_upper_limits(self, total_flux, e_total_flux, threshold):
         """Returns mask of upper limits"""
         mask = N.zeros(total_flux.shape, dtype=bool)
@@ -587,14 +586,14 @@ class Op_spectralindex(Op):
                 if meas_flux < threshold * e_meas_flux:
                     # Upper limit
                     if is_src:
-                        mask[ichan] = True                
+                        mask[ichan] = True
                     else:
                         mask[ichan, ig] = True
                 else:
                     # Detection
                     if is_src:
                         ndet += 1
-                        mask[ichan] = False                    
+                        mask[ichan] = False
                     else:
                         ndet[ig] += 1
                         mask[ichan, ig] = False

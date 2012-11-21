@@ -368,7 +368,6 @@ void MGFunction::fcn_diff_transposed_gradient(double *buf) const
 void MGFunction::fcn_partial_gradient(double *buf) const
 {
   _update_fcache();
-  double *chk = buf;
 
   fcache_it f = mm_fcn.begin();
   unsigned didx, gidx = 0, ggidx = 0;

@@ -1,6 +1,7 @@
 """Display an animated statusbar"""
 import sys
 import os
+import functions as func
 
 class StatusBar():
     # class variables:
@@ -11,7 +12,7 @@ class StatusBar():
     #           (shared resource)
     # comp: amount of '=' to display in the progress bar
     # started: whether or not the statusbar has been started
-    # color: color of text 
+    # color: color of text
     def __init__(self, text, pos=0, max=100, color='\033[0m'):
         self.text = text
         self.pos = pos
@@ -27,47 +28,10 @@ class StatusBar():
         else:
             self.comp = 0
 
-    def getTerminalSize(self):
-        """
-        returns (lines:int, cols:int)
-        """
-        import os, struct
-        def ioctl_GWINSZ(fd):
-            import fcntl, termios
-            return struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
-        # try stdin, stdout, stderr
-        for fd in (0, 1, 2):
-            try:
-                return ioctl_GWINSZ(fd)
-            except:
-                pass
-        # try os.ctermid()
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            try:
-                return ioctl_GWINSZ(fd)
-            finally:
-                os.close(fd)
-        except:
-            pass
-        # try `stty size`
-        try:
-            return tuple(int(x) for x in os.popen("stty size", "r").read().split())
-        except:
-            pass
-        # try environment variables
-        try:
-            return tuple(int(os.getenv(var)) for var in ("LINES", "COLUMNS"))
-        except:
-            pass
-        # Give up. return 0.
-        return (0, 0)            
-            
     # find number of columns in terminal
     def __getsize(self):
         try:
-#             rows, columns = os.popen('stty size', 'r').read().split()
-            rows, columns = self.getTerminalSize()
+            rows, columns = func.getTerminalSize()
         except ValueError:
             rows = columns = 0
         if int(columns) > self.max + 2 + 44 + (len(str(self.max))*2 + 2):
@@ -100,7 +64,7 @@ class StatusBar():
         self.busy_char = busy_chars[self.spin_pos]
         sys.stdout.write(self.color + busy_chars[self.spin_pos] + '\x1b[1D' + '\033[0m')
         sys.stdout.flush()
-        
+
     # increment number of completed items
     def increment(self):
         self.inc = 1
@@ -109,7 +73,6 @@ class StatusBar():
             self.comp = self.columns
             self.busy_char = ''
             self.__print()
-            sys.stdout.write('\n')
             return 0
         else:
             self.pos += self.inc
@@ -124,3 +87,12 @@ class StatusBar():
         self.started = 1
         self.__print()
 
+    def stop(self):
+        if self.started:
+            self.pos = self.max
+            self.comp = self.columns
+            self.busy_char = ''
+            self.__print()
+            sys.stdout.write('\n')
+            self.started = 0
+            return 0

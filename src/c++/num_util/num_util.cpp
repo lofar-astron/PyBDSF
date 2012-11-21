@@ -7,7 +7,7 @@
 #define NO_IMPORT_ARRAY
 #include "num_util.h"
 
-namespace { const char* rcsid = "$Id$"; }
+// namespace { const char* rcsid = "$Id$"; }
 
 using namespace boost::python;
 

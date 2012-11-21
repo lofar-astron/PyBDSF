@@ -1,8 +1,8 @@
 """Interface module.
 
 The interface module handles all functions typically needed by the user in an
-interactive environment such as IPython. Many are also used by the 
-custom IPython shell defined in pybdsm.py. 
+interactive environment such as IPython. Many are also used by the
+custom IPython shell defined in pybdsm.py.
 
 """
 
@@ -19,14 +19,12 @@ def process(img, **kwargs):
     """
     from . import default_chain, _run_op_list
     from image import Image
-    import mylogger 
+    import mylogger
 
-    pars = img.opts.to_dict()
-    img._prev_opts = pars
-    
     # First, reset img to initial state (in case img is being reprocessed)
     if hasattr(img, 'use_io'): del img.use_io
     if hasattr(img, 'sources'): del img.sources
+    if hasattr(img, 'dsources'): del img.dsources
     if hasattr(img, 'gaussians'): del img.gaussians
     if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
     if hasattr(img, 'islands'): del img.islands
@@ -44,6 +42,20 @@ def process(img, **kwargs):
     if hasattr(img, 'rms_mask'): del img.rms_mask
     if hasattr(img, 'completed_Ops'): del img.completed_Ops
 
+    try:
+        # set options if given
+        if len(kwargs) > 0:
+            set_pars(img, **kwargs)
+    except RuntimeError, err:
+        # Catch and log error
+        mylog.error(str(err))
+
+        # Re-throw error if the user is not in the interactive shell
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
+
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
     log = img.opts.filename + '.pybdsm.log'
@@ -52,59 +64,60 @@ def process(img, **kwargs):
                          debug=img.opts.debug)
     add_break_to_logfile(log)
     mylog = mylogger.logging.getLogger("PyBDSM.Process")
-    mylog.info("Running PyBDSM on "+img.opts.filename)
+    mylog.info("Processing "+img.opts.filename)
 
     # Run all the op's
     try:
-        # set options if given
-        if len(kwargs) > 0:
-            set_pars(img, **kwargs)
-            
         # Run op's in chain
         op_chain = get_op_chain(img)
-        _run_op_list(img, op_chain)   
+        _run_op_list(img, op_chain)
         return True
     except RuntimeError, err:
         # Catch and log error
         mylog.error(str(err))
-        return False
+
+        # Re-throw error if the user is not in the interactive shell
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
         return False
-        
+
 def get_op_chain(img):
     """Determines the optimal Op chain for an Image object.
-    
+
     This is useful when reprocessing an Image object. For example,
     if Gaussians were already fit, but the user now wants to use
-    shapelets, we do not need to re-run Op_gausfit, etc. At the 
+    shapelets, we do not need to re-run Op_gausfit, etc. At the
     moment, this just returns the default Op chain from __init__.py.
     """
     from . import default_chain
-    
+
     return default_chain
 #     prev_opts = img._prev_opts
 #     new_opts = img.opts.to_dict()
-#     
+#
 #     # Find whether new opts differ from previous opts
 #     for k, v in prev_opts.iteritems():
 #         if v != new_opts[k]:
 #             if k == 'rms_box':
-                
+
     # If filename, beam, trim_box differ, start from readimage
     # Elif shapelet_do, etc. differ, start from there
-    
-    
+
+
 def load_pars(filename):
     """Load parameters from a save file or dictionary.
 
     The file must be a pickled opts dictionary.
 
     filename - name of options file to load.
-    Returns None if no file can be loaded successfully.
+    Returns None (and original error) if no file can be loaded successfully.
     """
     from image import Image
-    import mylogger 
+    import mylogger
     try:
         import cPickle as pickle
     except ImportError:
@@ -113,7 +126,7 @@ def load_pars(filename):
     # First, check if input is a dictionary
     if isinstance(filename, dict):
         timg = Image(filename)
-        return timg
+        return timg, None
     else:
         try:
             pkl_file = open(filename, 'rb')
@@ -121,13 +134,13 @@ def load_pars(filename):
             pkl_file.close()
             timg = Image(pars)
             print "--> Loaded parameters from file '" + filename + "'."
-            return timg
-        except:
-            return None
-        
+            return timg, None
+        except Exception, err:
+            return None, err
+
 def save_pars(img, savefile=None, quiet=False):
     """Save parameters to a file.
-    
+
     The save file is a "pickled" opts dictionary.
     """
     try:
@@ -139,7 +152,7 @@ def save_pars(img, savefile=None, quiet=False):
 
     if savefile == None or savefile == '':
         savefile = img.opts.filename + '.pybdsm.sav'
-        
+
     # convert opts to dictionary
     pars = img.opts.to_dict()
     output = open(savefile, 'wb')
@@ -163,14 +176,14 @@ def list_pars(img, opts_list=None, banner=None, use_groups=True):
     # Get all options as a list sorted by name
     opts = img.opts.to_list()
 
-    # Filter list 
+    # Filter list
     if opts_list != None:
         opts_temp = []
         for o in opts:
             if o[0] in opts_list:
                 opts_temp.append(o)
         opts = opts_temp
-        
+
     # Move filename, infile, outfile to front of list
     for o in opts:
         if o[0] == 'filename' or o[0] == 'infile' or o[0] == 'outfile':
@@ -180,11 +193,11 @@ def list_pars(img, opts_list=None, banner=None, use_groups=True):
     # Now group options with the same "group" together.
     if use_groups:
         opts = group_opts(opts)
-    
+
     # Finally, print options, values, and doc strings to screen
     print_opts(opts, img, banner=banner)
 
-    
+
 def set_pars(img, **kwargs):
     """Set parameters using arguments instead of using a dictionary.
 
@@ -194,7 +207,7 @@ def set_pars(img, **kwargs):
     import re
     import sys
     from image import Image
-    
+
     # Enumerate all options
     opts = img.opts.get_names()
 
@@ -205,13 +218,13 @@ def set_pars(img, **kwargs):
         if chk_key == []:
             raise RuntimeError("Input parameter '" + key + "' not recognized.")
         if len(chk_key) > 1 and key not in opts:
-            raise RuntimeError("Input parameter '" + key + "' matches to more than one"\
+            raise RuntimeError("Input parameter '" + key + "' matches to more than one "\
                          "possible parameter:\n " + "\n ".join(chk_key))
         if key in opts:
             full_key.append(key)
         else:
-            full_key.append(chk_key[0])    
-    
+            full_key.append(chk_key[0])
+
     # Build options dictionary
     pars = {}
     for i, key in enumerate(kwargs):
@@ -225,7 +238,7 @@ def set_pars(img, **kwargs):
 
     # Finally, set the options
     img.opts.set_opts(pars)
-    
+
 
 def group_opts(opts):
     """Sorts options by group (as defined in opts.py).
@@ -260,19 +273,19 @@ def group_opts(opts):
                 break
     return opts
 
-                            
+
 def print_opts(grouped_opts_list, img, banner=None):
     """Print options to screen.
-    
+
     Options can be sorted by group (defined in opts.py) previously defined by
     group_opts. Output of grouped items is suppressed if parent option is
     False. The layout is as follows:
-    
+
       [20 spaces par name with ...] = [at least 49 spaces for value]
                                       [at least 49 spaces for doc]
-    
+
     When more than one line is required for the doc, the next line is:
-    
+
       [25 blank spaces][at least 47 spaces for doc]
 
     As in casapy, print non-defaults in blue, options with suboptions in
@@ -283,9 +296,11 @@ def print_opts(grouped_opts_list, img, banner=None):
     """
     from image import Image
     import os
+    import functions as func
 
-    termx, termy = getTerminalSize()
+    termy, termx = func.getTerminalSize() # note: returns row, col -> y, x
     minwidth = 28 # minimum width for parameter names and values
+
     # Define colors for output
     dc = '\033[1;34m' # Blue: non-default option text color
     ec = '\033[0;47m' # expandable option text color
@@ -338,7 +353,7 @@ def print_opts(grouped_opts_list, img, banner=None):
             # on here:
             desc_text = wrap(str(v.doc()).split('\n')[0], width_desc)
             fmt = '%' + str(minwidth) + 's' + infix + '%44s'
-                    
+
             # Now loop over lines of description
             if indx < len(grouped_opts_list)-1:
                 # Here we check if next entry in options list is a tuple or a
@@ -417,32 +432,6 @@ def print_opts(grouped_opts_list, img, banner=None):
                             print nc + spcstr + '   %44s' % dt.ljust(44)
 
 
-def getTerminalSize():
-    """Returns the x and y size of the terminal."""
-    def ioctl_GWINSZ(fd):
-        try:
-            import fcntl, termios, struct, os
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-        '1234'))
-        except:
-            return None
-        return cr
-    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-    if not cr:
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = ioctl_GWINSZ(fd)
-            os.close(fd)
-        except:
-            pass
-    if not cr:
-        try:
-            cr = (env['LINES'], env['COLUMNS'])
-        except:
-            cr = (25, 80)
-    return int(cr[1]), int(cr[0])
-
-
 def wrap(text, width=80):
     """Wraps text to given width and returns list of lines."""
     lines = []
@@ -483,7 +472,7 @@ def in_ipython():
     else:
         return True
 
-    
+
 def raw_input_no_history(prompt):
     """Removes user input from readline history."""
     import readline
@@ -531,14 +520,14 @@ def round_list_of_tuples(val):
             valstr_list.append(vstr)
         valstr = '(' + ','.join(valstr_list) + ')'
         valstr_list_tot.append(valstr)
-    valstr = '[' + ','.join(valstr_list_tot) + ']'  
-    return valstr 
+    valstr = '[' + ','.join(valstr_list_tot) + ']'
+    return valstr
 
-# The following functions give convenient access to the output functions in 
+# The following functions give convenient access to the output functions in
 # output.py
 def export_image(img, outfile=None, img_format='fits',
                  img_type='gaus_resid', clobber=False):
-    """Write an image to a file. Returns True if successful, False if not. 
+    """Write an image to a file. Returns True if successful, False if not.
 
     outfile - name of resulting file; if None, file is
     named automatically.
@@ -557,18 +546,23 @@ def export_image(img, outfile=None, img_format='fits',
         'gaus_model' - Gaussian model image
         'shap_resid' - Shapelet model residual image
         'shap_model' - Shapelet model image
-        'psf_major' - PSF major axis FWHM image
-        'psf_minor' - PSF minor axis FWHM image
-        'psf_pa' - PSF position angle image
+        'psf_major' - PSF major axis FWHM image (FWHM in arcsec)
+        'psf_minor' - PSF minor axis FWHM image (FWHM in arcsec)
+        'psf_pa' - PSF position angle image (degrees east of north)
+        'psf_ratio' - PSF peak-to-total flux ratio (in units of 1/beam)
+        'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)
     """
     import os
     import functions as func
     from const import fwsig
-    
+    import mylogger
+
+    mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"ExportImage")
+
     # First some checking:
     if not 'gausfit' in img.completed_Ops and 'gaus' in img_type:
         print '\033[91mERROR\033[0m: Gaussians have not been fit. Please run process_image first.'
-        return False    
+        return False
     elif not 'shapelets' in img.completed_Ops and 'shap' in img_type:
         print '\033[91mERROR\033[0m: Shapelets have not been fit. Please run process_image first.'
         return False
@@ -583,23 +577,23 @@ def export_image(img, outfile=None, img_format='fits',
         return False
     elif not 'rmsimage' in img.completed_Ops and ('rms' in img_type or 'mean' in img_type):
         print '\033[91mERROR\033[0m: Mean and rms maps have not been calculated. Please run process_image first.'
-        return False    
+        return False
     elif not 'make_residimage' in img.completed_Ops and ('resid' in img_type or 'model' in img_type):
         print '\033[91mERROR\033[0m: Residual and model maps have not been calculated. Please run process_image first.'
-        return False    
+        return False
     format = img_format.lower()
     if (format in ['fits', 'casa']) == False:
         print '\033[91mERROR\033[0m: img_format must be "fits" or "casa"'
-        return False 
+        return False
     if format == 'casa':
         print "\033[91mERROR\033[0m: Only img_format = 'fits' is supported at the moment"
-        return False 
+        return False
     filename = outfile
     if filename == None or filename == '':
         filename = img.imagename + '_' + img_type + '.' + format
     if os.path.exists(filename) and clobber == False:
         print '\033[91mERROR\033[0m: File exists and clobber = False.'
-        return False 
+        return False
     if format == 'fits':
         use_io = 'fits'
     if format == 'casa':
@@ -634,6 +628,14 @@ def export_image(img, outfile=None, img_format='fits',
             func.write_image_to_file(use_io, filename,
                                      img.psf_vary_pa, img, bdir,
                                      clobber=clobber)
+        elif img_type == 'psf_ratio':
+            func.write_image_to_file(use_io, filename,
+                                     img.psf_vary_ratio, img, bdir,
+                                     clobber=clobber)
+        elif img_type == 'psf_ratio_aper':
+            func.write_image_to_file(use_io, filename,
+                                     img.psf_vary_ratio_aper, img, bdir,
+                                     clobber=clobber)
         elif img_type == 'gaus_resid':
             im = img.resid_gaus
             func.write_image_to_file(use_io, filename,
@@ -655,16 +657,30 @@ def export_image(img, outfile=None, img_format='fits',
         else:
             print "\n\033[91mERROR\033[0m: img_type not recognized."
             return False
-        print '--> Wrote file ' + repr(filename)
+        if filename == 'SAMP':
+            print '--> Image sent to SMAP hub'
+        else:
+            print '--> Wrote file ' + repr(filename)
         return True
-    except:
-        print '\033[91mERROR\033[0m: File ' + filename + ' could not be written.'
-        raise
+    except RuntimeError, err:
+        # Catch and log error
+        mylog.error(str(err))
+
+        # Re-throw error if the user is not in the interactive shell
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
+    except KeyboardInterrupt:
+        mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
+        return False
+
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
-               bbs_patches=None, incl_chan=True, clobber=False):
-    """Write the Gaussian, source, or shapelet list to a file. Returns True if 
-    successful, False if not. 
+               bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False,
+               force_output=False):
+    """Write the Gaussian, source, or shapelet list to a file. Returns True if
+    successful, False if not.
 
     filename - name of resulting file; if None, file is
                named automatically.
@@ -679,6 +695,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "ds9"   - ds9 region file
         "star"  - AIPS STAR file (Gaussian list only)
         "kvis"  - kvis file (Gaussian list only)
+        "sagecal" - Sagecal file (Gaussian list only)
     srcroot - root for source and patch names (BBS/ds9 only);
               if None, the srcroot is chosen automatically
     bbs_patches - type of patches to use:
@@ -688,30 +705,32 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
                      patch
         "source"   - sources are grouped by source into patches
     incl_chan - Include fluxes for each channel?
+    incl_empty - Include islands without any valid Gaussians (source list only)?
     sort_by - Property to sort output list by:
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first
+    force_output - Force the creation of a catalog, even if it is empty
     clobber - Overwrite existing file?
     """
     import output
-    
+
     # First some checking:
     if not 'gausfit' in img.completed_Ops:
         print '\033[91mERROR\033[0m: Image has not been fit. Please run process_image first.'
-        return False      
+        return False
     if catalog_type == 'shap' and not 'shapelets' in img.completed_Ops:
             print '\033[91mERROR\033[0m: Image has not been decomposed into shapelets. Please run process_image first.'
-            return False      
+            return False
     if catalog_type == 'srl' and not 'gaul2srl' in img.completed_Ops:
             print '\033[91mERROR\033[0m: Gaussians have not been grouped into sources. Please run process_image first.'
-            return False      
+            return False
     format = format.lower()
     patch = bbs_patches
     filename = outfile
     if isinstance(patch, str):
         patch = patch.lower()
-    if (format in ['fits', 'ascii', 'bbs', 'ds9', 'star', 
-                   'kvis']) == False:
+    if (format in ['fits', 'ascii', 'bbs', 'ds9', 'star',
+                   'kvis', 'sagecal']) == False:
         print '\033[91mERROR\033[0m: format must be "fits", '\
             '"ascii", "ds9", "star", "kvis",  or "bbs"'
         return False
@@ -723,15 +742,38 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         print '\033[91mERROR\033[0m: catalog_type must be "gaul", '\
               '"srl", or "shap"'
         return False
-    if img.ngaus == 0:
-        print 'No Gaussians were fit to image. Output file not written.'
-        return False 
+    if (len(img.sources) == 0 and not incl_empty) or (len(img.sources) == 0 and len(img.dsources) == 0 and incl_empty):
+        if not force_output:
+            print 'No sources were found in the image. Output file not written.'
+            return False
     if filename == '': filename = None
-    
+
     # Now go format by format and call appropriate function
+    if filename == 'SAMP':
+        import tempfile
+        import functions as func
+        import os
+        if not hasattr(img,'samp_client'):
+            s, private_key = func.start_samp_proxy()
+            img.samp_client = s
+            img.samp_key = private_key
+
+        # Broadcast fits table to SAMP Hub
+        tfile = tempfile.NamedTemporaryFile(delete=False)
+        filename = output.write_fits_list(img, filename=tfile.name,
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
+                                             clobber=True, objtype=catalog_type)
+        table_name = 'PyBDSM '+ catalog_type + ' table'
+        if catalog_type == 'srl':
+            img.samp_srl_table_url = 'file://' + os.path.abspath(tfile.name)
+        if catalog_type == 'gaul':
+            img.samp_gaul_table_url = 'file://' + os.path.abspath(tfile.name)
+        func.send_fits_table(img.samp_client, img.samp_key, table_name, tfile.name)
+        print '--> Table sent to SMAP hub'
+        return True
     if format == 'fits':
         filename = output.write_fits_list(img, filename=filename,
-                                             incl_chan=incl_chan,
+                                             incl_chan=incl_chan, incl_empty=incl_empty,
                                              clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -741,7 +783,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return True
     if format == 'ascii':
         filename = output.write_ascii_list(img, filename=filename,
-                                              incl_chan=incl_chan,
+                                              incl_chan=incl_chan, incl_empty=incl_empty,
                                               sort_by='index',
                                               clobber=clobber, objtype=catalog_type)
         if filename == None:
@@ -764,6 +806,21 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return False
         else:
             print '--> Wrote BBS sky model ' + repr(filename)
+            return True
+    if format == 'sagecal':
+        if catalog_type != 'gaul':
+            print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with Sagecal files."
+            return False
+        filename = output.write_lsm_gaul(img, filename=filename,
+                                            srcroot=srcroot,
+                                            patch=patch,
+                                            sort_by='flux',
+                                            clobber=clobber)
+        if filename == None:
+            print '\033[91mERROR\033[0m: File exists and clobber = False.'
+            return False
+        else:
+            print '--> Wrote Sagecal lsm file ' + repr(filename)
             return True
     if format == 'ds9':
         filename = output.write_ds9_list(img, filename=filename,
@@ -807,7 +864,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     #         print '\033[91mERROR\033[0m: File exists and clobber=False.'
     #     else:
     #         print '--> Wrote CASA clean box file ' + filename
-    
+
 def add_break_to_logfile(logfile):
     f = open(logfile, 'a')
     f.write('\n' + '='*72 + '\n')

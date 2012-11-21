@@ -2,13 +2,14 @@
 
 This module initializes the interactive PyBDSM shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
-"pybdsm" shell script in apps/PyBDSM/ or as "python pybdsm.py".
+"pybdsm" shell script or as "python pybdsm.py".
 """
 import lofar.bdsm
 from lofar.bdsm.image import Image
 import pydoc
 import sys
 import inspect
+
 
 ###############################################################################
 # Functions needed only in the custom IPython shell are defined here. Other
@@ -21,7 +22,8 @@ import inspect
 # start-up banner. However, the parameter list will fill the entire available
 # terminal width to consume as few vertical lines as possible.
 global _img
-_img = Image({'filename':'', 'output_all':False})
+_img = Image({'filename':''})
+_img._is_interactive_shell = True
 T = True
 F = False
 true = True
@@ -39,10 +41,6 @@ def inp(cur_cmd=None):
     if not success:
         return
     if cur_cmd != None:
-        if cur_cmd == write_gaul:
-            print 'This task has been deprecated. Please use '\
-                  '"write_catalog" instead.'
-            return
         if not hasattr(cur_cmd, 'arg_list'):
             print '\033[31;1mERROR\033[0m: not a valid task'
             return
@@ -54,8 +52,8 @@ def inp(cur_cmd=None):
     lofar.bdsm.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
                              banner=_img._current_cmd_desc,
                              use_groups=_img._current_cmd_use_groups)
-    
-    
+
+
 def go(cur_cmd=None):
     """Executes the current task.
 
@@ -77,7 +75,7 @@ def go(cur_cmd=None):
         return
     cur_cmd()
 
-        
+
 def default(cur_cmd=None):
     """Resets all parameters for a task to their default values.
 
@@ -100,21 +98,21 @@ def default(cur_cmd=None):
     _img.opts.set_default(opts_list)
     _replace_vals_in_namespace(opt_names=opts_list)
 
-                
+
 def tget(filename=None):
     """Load processing parameters from a parameter save file.
 
     A file name may be given (e.g., "tget 'savefile.sav'"), in which case the
     parameters are loaded from the file specified. If no file name is given,
     the parameters are loaded from the file 'pybdsm.last' if it exists.
-    
+
     Normally, the save file is created by the tput command (try "help tput"
     for more info).
-    
+
     The save file is a "pickled" python dictionary which can be loaded into
     python and edited by hand. See the pickle module for more information.
     Below is an example of how to edit a save file by hand:
-    
+
       BDSM [1]: import pickle
       BDSM [2]: savefile = open('savefile.sav', 'w')
       BDSM [3]: pars = pickle.load(savefile)
@@ -127,8 +125,14 @@ def tget(filename=None):
     except ImportError:
         import pickle
     import os
-    
+
     global _img
+
+    # Check whether user has given a task name as input (as done in casapy).
+    # If so, reset filename to None.
+    if hasattr(filename, 'arg_list'):
+        filename = None
+
     if filename == None or filename == '':
         if os.path.isfile('pybdsm.last'):
             filename = 'pybdsm.last'
@@ -136,7 +140,7 @@ def tget(filename=None):
             print '\033[31;1mERROR\033[0m: No file name given and '\
                   '"pybdsm.last" not found.\nPlease specify a file to load.'
             return
-        
+
     if os.path.isfile(filename):
         try:
             pkl_file = open(filename, 'rb')
@@ -150,7 +154,7 @@ def tget(filename=None):
                   filename + "'."
     else:
         print "\033[31;1mERROR\033[0m: File '" + filename + "' not found."
-        
+
 
 def tput(filename=None, quiet=False):
     """Save processing parameters to a file.
@@ -159,11 +163,11 @@ def tput(filename=None, quiet=False):
     parameters are saved to the file specified. If no file name is given, the
     parameters are saved to the file 'pybdsm.last'. The saved parameters can
     be loaded using the tget command (try "help tget" for more info).
-    
+
     The save file is a "pickled" python dictionary which can be loaded into
     python and edited by hand. See the pickle module for more information.
     Below is an example of how to edit a save file by hand:
-    
+
       BDSM [1]: import pickle
       BDSM [2]: savefile = open('savefile.sav', 'w')
       BDSM [3]: pars = pickle.load(savefile)
@@ -182,7 +186,7 @@ def tput(filename=None, quiet=False):
         return
     if filename == None or filename == '':
         filename = 'pybdsm.last'
-        
+
     # convert opts to dictionary
     pars = _img.opts.to_dict()
     output = open(filename, 'wb')
@@ -191,7 +195,7 @@ def tput(filename=None, quiet=False):
     if not quiet:
         print "--> Saved parameters to file '" + filename + "'."
 
-        
+
 def _set_pars_from_prompt():
     """Gets parameters and value and stores them in _img.
 
@@ -204,7 +208,7 @@ def _set_pars_from_prompt():
     global _img
     f = sys._getframe(len(inspect.stack())-1)
     f_dict = f.f_locals
-    
+
     # Check through all possible options and
     # build options dictionary
     opts = _img.opts.to_dict()
@@ -225,16 +229,17 @@ def _set_pars_from_prompt():
         # If an opt fails to set, replace its value in the namespace
         # with its current value in _img. Then print error so user knows.
         err_msg = str(err)
-        indx1 = err_msg.find('"') + 1
-        indx2 = err_msg.find('"', indx1)
-        k = err_msg[indx1:indx2]
+        err_msg_trim = err_msg.split('(')[0]
+        indx1 = err_msg_trim.find('"') + 1
+        indx2 = err_msg_trim.find('"', indx1)
+        k = err_msg_trim[indx1:indx2]
         orig_opt_val = opts[k]
         f_dict[k] = orig_opt_val
-        print '\033[31;1mERROR\033[0m: ' + str(err) + \
-              ' Resetting to previous value.'
+        print '\033[31;1mERROR\033[0m: ' + err_msg_trim + \
+              '\nResetting to previous value.'
         return False
 
-    
+
 def _replace_vals_in_namespace(opt_names=None):
     """Replaces opt values in the namespace with the ones in _img.
 
@@ -256,14 +261,14 @@ def _set_current_cmd(cmd):
     """Sets information about current command in img.
 
     This function is used to emulate a casapy interface.
-    
+
     """
     global _img
     cmd_name = cmd.__name__
     doc = cmd.__doc__
     _img._current_cmd = cmd
     _img._current_cmd_name = cmd_name
-    _img._current_cmd_desc = cmd_name.upper() + ': ' + doc.split('\n')[0] 
+    _img._current_cmd_desc = cmd_name.upper() + ': ' + doc.split('\n')[0]
     _img._current_cmd_arg_list = cmd.arg_list
     _img._current_cmd_use_groups = cmd.use_groups
 
@@ -284,7 +289,7 @@ def process_image(**kwargs):
     There are many possible parameters and options for process_image. Use
     "inp process_image" to list them. To get more information about a
     parameter, use help. E.g.,
-    
+
     > help 'rms_box'
 
     When process_image is executed, PyBDSM performs the following steps in
@@ -340,7 +345,7 @@ def process_image(**kwargs):
     the gaussian catalog as an ascii and binary file. If shapelets are
     required, the program calculates optimal nmax, beta and the centre, and
     stores these and the shapelet coefficients in a file.
-    
+
     """
     global _img
     success = _set_pars_from_prompt()
@@ -349,7 +354,7 @@ def process_image(**kwargs):
     # Save current command, as it might be overwritten when process
     # is called by the user directly and is not the current command.
     cur_cmd = _img._current_cmd
-        
+
     # Run process. Note that process automatically picks up options
     # from the Image object, so we don't need to get_task_kwargs as
     # we do for the other tasks.
@@ -359,7 +364,7 @@ def process_image(**kwargs):
     if success:
         _set_current_cmd(cur_cmd)
         tput(quiet=True)
-        
+
 task_list = _img.opts.get_names()
 process_image.arg_list = task_list
 process_image.use_groups = True
@@ -379,20 +384,19 @@ def show_fit(**kwargs):
       Press "n" ........ : Show / hide island IDs
       Press "0" ........ : Reset scaling to default
       Press "c" ........ : Change source for SED plot
-      Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode, 
-                           toggled with the "zoom" button and indicated in 
+      Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode,
+                           toggled with the "zoom" button and indicated in
                            the lower right corner, must be off)
                            The SED plot will also show the chosen source.
-                           
+
     Parameters: ch0_image, rms_image, mean_image, ch0_islands,
                 gresid_image, sresid_image, gmodel_image,
-                smodel_image, pyramid_srcs, source_seds,
-                ch0_flagged, pi_image, psf_major, psf_minor,
-                psf_pa
+                smodel_image, source_seds, ch0_flagged, pi_image,
+                psf_major, psf_minor, psf_pa, broadcast
 
     For more information about a parameter, use help.  E.g.,
       > help 'ch0_image'
-      
+
     """
     global _img
     success = _set_pars_from_prompt()
@@ -409,15 +413,14 @@ def show_fit(**kwargs):
             tput(quiet=True)
     except KeyboardInterrupt:
         print "\n\033[31;1mAborted\033[0m"
-        
+
 show_fit.arg_list = ['ch0_image', 'rms_image', 'mean_image', 'ch0_islands',
                      'gresid_image', 'sresid_image', 'gmodel_image',
-                     'smodel_image', 'pyramid_srcs', 'source_seds',
-                     'ch0_flagged', 'pi_image', 'psf_major', 'psf_minor',
-                     'psf_pa']
+                     'smodel_image', 'source_seds', 'ch0_flagged', 'pi_image',
+                     'psf_major', 'psf_minor', 'psf_pa', 'broadcast']
 show_fit.use_groups = False
 
-    
+
 def write_catalog(**kwargs):
     """Write the Gaussian, source, or shapelet list to a file.
 
@@ -426,11 +429,11 @@ def write_catalog(**kwargs):
     "help 'format'" for more information.
 
     Parameters: outfile, format, srcroot, bbs_patches, incl_wavelet, clobber,
-                catalog_type
+                catalog_type, incl_empty
 
     For more information about a parameter, use help.  E.g.,
       > help 'bbs_patches'
-     
+
     """
     global _img
     success = _set_pars_from_prompt()
@@ -449,14 +452,8 @@ def write_catalog(**kwargs):
         print "\n\033[31;1mAborted\033[0m"
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
-                          'incl_chan', 'clobber', 'catalog_type']
+                          'incl_chan', 'clobber', 'catalog_type', 'incl_empty']
 write_catalog.use_groups = False
-
-
-def write_gaul():
-    """Deprecated version of write_catalog"""
-    print 'This task has been deprecated. Please use "write_catalog" instead.'
-    return
 
 
 def export_image(**kwargs):
@@ -483,7 +480,7 @@ def export_image(**kwargs):
             tput(quiet=True)
     except KeyboardInterrupt:
         print "\n\033[31;1mAborted\033[0m"
-        
+
 export_image.arg_list = ['outfile', 'img_type', 'img_format',
                          'clobber']
 export_image.use_groups = False
@@ -501,8 +498,8 @@ def _get_task_kwargs(task):
 
 ###############################################################################
 # Customize the help system for PyBDSM. The user can type "help task" to get
-# help on a task (it prints the doc string) or "help 'opt'" to get help on 
-# a option (it prints the doc string defined in opts.py).  
+# help on a task (it prints the doc string) or "help 'opt'" to get help on
+# a option (it prints the doc string defined in opts.py).
 class bdsmDocHelper(pydoc.Helper):
     def help(self, request):
         global _img
@@ -536,7 +533,7 @@ class bdsmDocHelper(pydoc.Helper):
                 print "Parameter '" + request + "' not recognized."
 pydoc.help = bdsmDocHelper(sys.stdin, sys.stdout)
 
-    
+
 ###############################################################################
 # Now run the IPython shell with this namespace and a customized autocompleter.
 # The custom autocompleter is below. It adds task, command, and option names and
@@ -636,8 +633,8 @@ def _opts_completer(self, event):
         else:
             # User has not started to enter a string:
             # Match to commands + tasks only
-            cmds = ['process_image', 'write_catalog', 'export_image', 
-                    'show_fit', 'go', 'inp', 'tget', 'tput', 'default', 
+            cmds = ['process_image', 'write_catalog', 'export_image',
+                    'show_fit', 'go', 'inp', 'tget', 'tput', 'default',
                     'changelog']
             return cmds
     else:
@@ -657,8 +654,44 @@ def _opts_completer(self, event):
         opts.append('export_image')
         return opts
 
-# Define the welcome banner to print on startup
+# Define the welcome banner to print on startup. Also check if there is a newer
+# version on the STRW ftp server. If there is, print a message to the user
+# asking them to update.
 from lofar.bdsm._version import __version__, __revision__, changelog
+
+# Query the STRW FTP server. Tar file must be named "PyBDSM-version#.tar.gz":
+#   e.g., "PyBDSM-1.3.1.tar.gz".
+# Check whether called from the LOFAR CEPI/II. If so, skip check.
+import os
+aps_local_val = os.environ.get('APS_LOCAL')
+if aps_local_val == None:
+    try:
+        import ftplib
+        from distutils.version import StrictVersion
+        f = ftplib.FTP()
+        f.connect("ftp.strw.leidenuniv.nl")
+        f.login()
+        file_list = []
+        file_list = f.nlst('pub/rafferty/PyBDSM')
+        f.close()
+        ftp_version = ''
+        for file in file_list:
+            if 'PyBDSM' in file and '.tar.gz' in file:
+                ver_start_indx = file.find('-') + 1
+                ver_end_indx = file.find('.tar.gz')
+                ftp_version = file[ver_start_indx:ver_end_indx]
+        if ftp_version == '':
+            # No matching files found, continue without message
+            pass
+        elif StrictVersion(__version__) < StrictVersion(ftp_version):
+            print '\n' + '*' * 72
+            print "There appears to be a newer version of PyBDSM available at:"
+            print "    ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM/"
+            print "Please consider updating your installation"
+            print '*' * 72
+    except:
+        pass
+
 divider1 = '=' * 72 + '\n'
 divider2 = '_' * 72 + '\n'
 banner = '\nPyBDSM version ' + __version__ + ' (LOFAR revision ' + \
@@ -684,12 +717,12 @@ banner = '\nPyBDSM version ' + __version__ + ' (LOFAR revision ' + \
 + divider2
 
 # Go ahead and set the current task to process_image, so that the user does not
-# need to enter "inp process_image" as the first step (the first task needed 
+# need to enter "inp process_image" as the first step (the first task needed
 # after startup will almost always be process_image).
 _set_current_cmd(process_image)
 
-# Now start the ipython shell. Due to (non-backward-compatible) changes in 
-# ipython with version 0.11, we must support both versions until 0.11 or 
+# Now start the ipython shell. Due to (non-backward-compatible) changes in
+# ipython with version 0.11, we must support both versions until 0.11 or
 # greater is in common use.
 try:
     # IPython >= 0.11
@@ -703,7 +736,7 @@ try:
     else:
         prompt_config.in_template = "BDSM [\#]: "
     cfg.InteractiveShellEmbed.autocall = 2
-    ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, 
+    ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
                                     user_ns=locals())
     ipshell.set_hook('complete_command', _opts_completer, re_key = '.*')
 except ImportError:
@@ -713,3 +746,5 @@ except ImportError:
     ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
     ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
 ipshell()
+
+

@@ -16,37 +16,40 @@ The task parameters are as follows:
 
     WRITE_CATALOG: Write the Gaussian, source, or shapelet list to a file.
     ================================================================================
-    :term:`outfile` ............... None : Output file name. None => file is named     
-                                   automatically                               
+    :term:`outfile` ............... None : Output file name. None => file is named
+                                   automatically; 'SAMP' => send to SAMP hub (e.g., to
+                                   TOPCAT, ds9, or Aladin)
     :term:`bbs_patches` ........... None : For BBS format, type of patch to use: None => no
                                    patches. 'single' => all Gaussians in one patch.
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
-                                   source are grouped into one patch           
-    :term:`catalog_type` ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian 
+                                   source are grouped into one patch
+    :term:`catalog_type` ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
                                    Gaussians), 'shap' - shapelet list (not yet
                                    supported)
-    :term:`clobber` .............. False : Overwrite existing file?                    
+    :term:`clobber` .............. False : Overwrite existing file?
     :term:`format` ................ 'bbs': Format of output Gaussian list: 'bbs', 'ds9',
                                    'fits', 'star', 'kvis', or 'ascii'
-    :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?  
+    :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?
+    :term:`incl_empty` ........... False : Include islands without any valid Gaussians
+                                   (source list only)?
     :term:`srcroot` ............... None : Root name for entries in the output catalog. None
                                    => use image file name
-                                   
+
 Each of the parameters is described in detail below.
 
 .. glossary::
 
     outfile
-        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically.
-    
+        This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically. If 'SAMP' the full catalog (i.e., ``format = 'fits'``) is sent to a running SAMP Hub (e.g., to TOPCAT or Aladin).
+
     bbs_patches
         This parameter is a string (default is ``None``) that sets the type of patch to use in BBS-formatted catalogs. When the Gaussian catalogue is written as a BBS-readable sky file, this
         determines whether all Gaussians are in a single patch (``'single'``), there are no
         patches (``None``), all Gaussians for a given source are in a separate patch (``'source'``), or
         each Gaussian gets its own patch (``'gaussian'``).
-        
+
         If you wish to have patches defined by island, then set
         ``group_by_isl = True`` before fitting to force all
         Gaussians in an island to be in a single source. Then set
@@ -55,39 +58,42 @@ Each of the parameters is described in detail below.
     catalog_type
         This parameter is a string (default is ``'gaul'``) that sets the type of catalog to write:  ``'gaul'`` - Gaussian list, ``'srl'`` - source list
         (formed by grouping Gaussians), ``'shap'`` - shapelet list (``'fits'`` format only)
-        
+
         .. note::
-        
+
             The choice of ``'srl'`` or ``'gaul'`` depends on whether you want all the source structure in your catalog or not. For example, if you are making a sky model for use as a model in calibration, you want to include all the source structure in your model, so you would use a Gaussian list (``'gaul'``), which writes each Gaussian. On the other hand, if you want to compare to other source catalogs, you want instead the total source flux densities, so use source lists (``'srl'``). For example, say you have a source that is unresolved in WENSS, but is resolved in your image into two nearby Gaussians that are grouped into a single source. In this case, you want to compare the sum of the Gaussians to the WENSS flux density, and hence should use a source list.
-        
+
     clobber
         This parameter is a Boolean (default is ``False``) that determines whether existing files are overwritten or not.
-        
+
     format
         This parameter is a string (default is ``'bbs'``) that sets the format of the output catalog. The following formats are supported:
 
         * ``'bbs'`` - BlackBoard Selfcal sky model format (Gaussian list only)
-        
+
         * ``'ds9'`` - ds9 region format
-        
+
         * ``'fits'`` - FITS catalog format, readable by many software packages, including IDL, TOPCAT, Python, fv, Aladin, etc.
-        
+
         * ``'star'`` - AIPS STAR format (Gaussian list only)
-        
+
         * ``'kvis'`` - kvis format (Gaussian list only)
-        
+
         * ``'ascii'`` - simple text file
-        
+
         Catalogues with the ``'fits'`` and ``'ascii'`` formats include all available
         information (see :ref:`output_cols` for column definitions). The
         other formats include only a subset of the full information.
 
     incl_chan
         This parameter is a Boolean (default is ``False``) that determines whether the total flux densities of each source measured in each channel by the spectral index module are included in the output.
-                 
+
+    incl_empty
+        This parameter is a Boolean (default is ``False``) that determines whether islands without any valid Gaussians are included in the output catalog. This option is only available for source lists. If True, islands for which Gaussian fitting failed will be included in the output catalog. In these cases, the source IDs are negative.
+
     srcroot
         This parameter is a string (default is ``None``) that sets the root for source names in the output catalog.
-        
+
 
 .. _output_cols:
 
@@ -106,13 +112,21 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **Wave_id:** the wavelet scale from which the source was extracted, starting from zero (for the ch0 image)
 
-* **RA:** the J2000 right ascension of the source, in degrees
+* **RA:** the right ascension of the source (for the equinox of the image), in degrees
 
 * **E_RA:** the error on the right ascension of the source, in degrees
 
-* **DEC:** the J2000 declination of the source, in degrees
+* **DEC:** the declination of the source (for the equinox of the image), in degrees
 
 * **E_DEC:** the 1-:math:`\sigma` error on the declination of the source, in degrees
+
+* **RA_max:** the right ascension of the maximum of the source (for the equinox of the image), in degrees (``'srl'`` catalogs only)
+
+* **E_RA_max:** the 1-:math:`\sigma` error on the right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
+
+* **DEC_max:** the declination of the maximum of the source (for the equinox of the image), in degrees (``'srl'`` catalogs only)
+
+* **E_DEC_max:** the 1-:math:`\sigma` error on the declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
 
 * **Total_flux:** the total, integrated Stokes I flux density of the source at the reference frequency, in Jy
 
@@ -122,13 +136,9 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_Peak_flux:** the 1-:math:`\sigma` error on the peak flux density per beam of the source, in Jy/beam
 
-* **RA_max:** the J2000 right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
+* **Aperture_flux:** the total Stokes I flux density of the source within the specified aperture, in Jy (``'srl'`` catalogs only)
 
-* **E_RA_max:** the 1-:math:`\sigma` error on the right ascension of the maximum of the source, in degrees (``'srl'`` catalogs only)
-
-* **DEC_max:** the J2000 declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
-
-* **E_DEC_max:** the 1-:math:`\sigma` error on the declination of the maximum of the source, in degrees (``'srl'`` catalogs only)
+* **E_Aperture_flux:** the 1-:math:`\sigma` error on the total flux density of the source within the specified aperture, in Jy (``'srl'`` catalogs only)
 
 * **Xposn:** the x image coordinate of the source, in pixels
 
@@ -170,6 +180,10 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_DC_PA:** the 1-:math:`\sigma` error on the position angle of the deconvolved major axis of the source, in degrees
 
+* **Isl_Total_flux:** the total, integrated Stokes I flux density of the island in which the source is located, in Jy. This value is calculated from the sum of all non-masked pixels in the island with values above ``thresh_isl``
+
+* **E_Isl_Total_flux:** the 1-:math:`\sigma` error on the total flux density of the island in which the source is located, in Jy
+
 * **Isl_rms:** the average background rms value of the island, in Jy/beam
 
 * **Isl_mean:** the averge background mean value of the island, in Jy/beam
@@ -178,10 +192,10 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **Resid_Isl_mean:** the averge residual background mean value of the island, in Jy/beam
 
-* **S_Code:** a code that defines the source structure. 
+* **S_Code:** a code that defines the source structure.
     * 'S' = a single-Gaussian source that is the only source in the island
     * 'C' = a single-Gaussian source in an island with other sources
-    * 'M' = a multi-Gaussian source 
+    * 'M' = a multi-Gaussian source
 
 * **Spec_Indx:** the spectral index of the source
 

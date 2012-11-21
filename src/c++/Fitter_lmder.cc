@@ -95,6 +95,8 @@ bool lmder_fit(MGFunction &fcn, bool final, int verbose)
 static void lmder_fcn(int &m, int &n, double *x, double *F, double *J, int &ldfjac, 
 		       int &iflag, void *userpar)
 {
+  (void)ldfjac;
+
   MGFunction *fcn = (MGFunction *)userpar;
 
   assert(m == fcn->data_size());
