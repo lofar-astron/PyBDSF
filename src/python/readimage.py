@@ -118,14 +118,23 @@ class Op_readimage(Op):
             opdir = img.opts.opdir_overwrite
             if opdir not in ['overwrite', 'append']:
                 img.opts.opdir_overwrite = 'append'
-                mylog.info('Appending output files in directory ' + basedir)
-            if img.opts.solnname != None: img.basedir += img.opts.solnname + '_'
+            if opdir == 'append':
+                mylog.info('Appending output files to directory ' + img.basedir)
+            else:
+                mylog.info('Overwriting output files (if any) in directory ' + img.basedir)
+                if os.path.isdir(img.basedir):
+                    os.system("rm -fr " + img.basedir + '/*')
+            if not os.path.isdir(img.basedir):
+                os.mkdir(img.basedir)
+
+            # Now add solname (if any) and time to basedir
+            if img.opts.solnname != None:
+                img.basedir += img.opts.solnname + '_'
             img.basedir += time.strftime("%d%b%Y_%H.%M.%S")
 
-            if os.path.isfile(basedir): os.system("rm -fr " + basedir)
-            if not os.path.isdir(basedir): os.mkdir(basedir)
-            if opdir == 'overwrite': os.system("rm -fr " + basedir + "/*")
-            os.mkdir(img.basedir)
+            # Make the final output directory
+            if not os.path.isdir(img.basedir):
+                os.mkdir(img.basedir)
 
         # Check for zeros and blank if img.opts.blank_zeros is True
         if img.opts.blank_zeros:
