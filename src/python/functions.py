@@ -1274,6 +1274,29 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     header.update('BMIN', beam[1])
     header.update('BPA', beam[2])
 
+
+    # Add STOKES info
+    header.update('CRVAL3', 1)
+    header.update('CDELT3', 1)
+    header.update('CRPIX3', 1)
+    header.update('CUNIT3', '')
+    header.update('CTYPE3', 'STOKES')
+
+    # Add or alter frequency info if needed
+    if wcsobj.wcs.spec != -1:
+        header.update('CRVAL' + str(wcsobj.wcs.spec + 1), freq)
+    else:
+        header.update('CRVAL4', freq)
+        header.update('CDELT4', 0.0)
+        header.update('CRPIX4', 1)
+        header.update('CUNIT4', 'Hz')
+        header.update('CTYPE4', 'FREQ')
+
+    # Add beam info
+    header.update('BMAJ', beam[0])
+    header.update('BMIN', beam[1])
+    header.update('BPA', beam[2])
+
     hdulist[0].header = header
     return hdulist
 
