@@ -89,7 +89,7 @@ Each of the parameters is described in detail below.
         This parameter is a Boolean (default is ``False``) that determines whether the total flux densities of each source measured in each channel by the spectral index module are included in the output.
 
     incl_empty
-        This parameter is a Boolean (default is ``False``) that determines whether islands without any valid Gaussians are included in the output catalog. This option is only available for source lists. If True, islands for which Gaussian fitting failed will be included in the output catalog. In these cases, the source IDs are negative.
+        This parameter is a Boolean (default is ``False``) that determines whether islands without any valid Gaussians are included in the output catalog. This option is only available for source lists. If True, islands for which Gaussian fitting failed will be included in the output catalog. In these cases, the source IDs are negative and only a subset of the standard columns will be populated (columns requiring information from Gaussian fits are left blank).
 
     srcroot
         This parameter is a string (default is ``None``) that sets the root for source names in the output catalog.
