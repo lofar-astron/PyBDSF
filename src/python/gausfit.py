@@ -19,11 +19,12 @@ import sys
 import time
 import statusbar
 import _cbdsm
-try:
-    import matplotlib.pyplot as pl
-    has_pl = True
-except ImportError:
-    has_pl = False
+from . import has_pl
+#try:
+#    import matplotlib.pyplot as pl
+#    has_pl = True
+#except ImportError:
+#    has_pl = False
 import scipy.ndimage as nd
 import multi_proc as mp
 
