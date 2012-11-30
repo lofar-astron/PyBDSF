@@ -20,11 +20,8 @@ import time
 import statusbar
 import _cbdsm
 from . import has_pl
-#try:
-#    import matplotlib.pyplot as pl
-#    has_pl = True
-#except ImportError:
-#    has_pl = False
+if has_pl:
+    import matplotlib.pyplot as pl
 import scipy.ndimage as nd
 import multi_proc as mp
 

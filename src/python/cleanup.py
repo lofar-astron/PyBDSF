@@ -7,12 +7,9 @@ import os
 from image import *
 import mylogger, os
 from . import has_pl
-#try:
-#    import matplotlib.pyplot as pl
-#    import matplotlib.cm as cm
-#    has_pl = True
-#except ImportError:
-#    has_pl = False
+if has_pl:
+    import matplotlib.pyplot as pl
+    import matplotlib.cm as cm
 import functions as func
 
 class Op_cleanup(Op):

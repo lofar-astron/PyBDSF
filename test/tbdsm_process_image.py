@@ -13,7 +13,6 @@ operations = [
 
 # Return exit status 0 if everything went fine, otherwise return 1.
 if img and all(oper in img.completed_Ops for oper in operations):
-    print 'here'
     sys.exit(0)
 else:
     sys.exit(1)

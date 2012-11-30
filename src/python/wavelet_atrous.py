@@ -9,11 +9,8 @@ from image import *
 import mylogger
 import os
 from . import has_pl
-#try:
-#    import matplotlib.pyplot as pl
-#    has_pl = True
-#except ImportError:
-#    has_pl = False
+if has_pl:
+    import matplotlib.pyplot as pl
 import _cbdsm
 from math import log, floor, sqrt
 import scipy.signal as S

@@ -4,11 +4,8 @@ from image import *
 import mylogger
 from copy import deepcopy as cp
 from . import has_pl
-#try:
-#    import matplotlib.pyplot as pl
-#    has_pl = True
-#except ImportError:
-#    has_pl = False
+if has_pl:
+    import matplotlib.pyplot as pl
 import scipy
 import scipy.signal as S
 import _cbdsm
