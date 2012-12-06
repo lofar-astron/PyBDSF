@@ -91,9 +91,9 @@ class Op_islands(Op):
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
                 if i == 0:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
+                    pyrank[isl.bbox] = N.invert(isl.mask_active)-1
                 else:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active) * i - isl.mask_active
+                    pyrank[isl.bbox] = N.invert(isl.mask_active)*i
 
             if opts.output_all: write_islands(img)
             if opts.savefits_rankim:

@@ -27,12 +27,6 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2012/12/02 - Changes to reduce memory usage, particularly in the
-        wavelet module.
-
-    2012/11/30 - Fix to bypass bug in matplotlib when display variable
-        is not set.
-
     2012/11/21 - Fixed bug that caused a crash when a detection image
         was used. Fixed a bug with incorrect save directory when
         "plot_allgaus" is True.
