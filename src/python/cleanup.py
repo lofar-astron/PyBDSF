@@ -6,12 +6,10 @@ import numpy as N
 import os
 from image import *
 import mylogger, os
-try:
+from . import has_pl
+if has_pl:
     import matplotlib.pyplot as pl
     import matplotlib.cm as cm
-    has_pl = True
-except ImportError:
-    has_pl = False
 import functions as func
 
 class Op_cleanup(Op):
