@@ -69,11 +69,13 @@ class Op_islands(Op):
             if det_shape != ch0_shape:
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
-            # Run through islands and correct the rms, mean and max values
+            # Run through islands and correct the image and rms, mean and max values
             img.island_labels = det_img.island_labels
             corr_islands = []
-            for isl in det_img.islands:
-                corr_islands.append(isl.copy(img))
+            for i, isl in enumerate(det_img.islands):
+                islcp = isl.copy(img.pixel_beamarea, image=img.ch0[isl.bbox], mean=img.mean[isl.bbox], rms=img.rms[isl.bbox])
+                islcp.island_id = i
+                corr_islands.append(islcp)
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
@@ -89,9 +91,9 @@ class Op_islands(Op):
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
                 if i == 0:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active)-1
+                    pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
                 else:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active)*i
+                    pyrank[isl.bbox] = N.invert(isl.mask_active) * i - isl.mask_active
 
             if opts.output_all: write_islands(img)
             if opts.savefits_rankim:
@@ -269,6 +271,9 @@ class Island(object):
             data = img
             bbox_rms_im = rms
             bbox_mean_im = mean
+            self.oldbbox = bbox
+            self.oldidx = idx
+
 
         ### finish initialization
         isl_size = N.sum(~isl_mask)
@@ -296,10 +301,13 @@ class Island(object):
         self.image = state['image']
         self.islmean = state['islmean']
         self.mask_active = state['mask_active']
+        self.mask_noisy = state['mask_noisy']
         self.size_active = state['size_active']
         self.shape = state['shape']
         self.origin = state['origin']
         self.island_id = state['island_id']
+        self.oldidx = state['oldidx']
+        self.bbox = state['bbox']
 
     def __getstate__(self):
         """Needed for multiprocessing"""
@@ -309,10 +317,13 @@ class Island(object):
         state['image'] = self.image
         state['islmean'] = self.islmean
         state['mask_active'] = self.mask_active
+        state['mask_noisy'] = self.mask_noisy
         state['size_active'] = self.size_active
         state['shape'] = self.shape
         state['origin'] = self.origin
         state['island_id'] = self.island_id
+        state['oldidx'] = self.oldidx
+        state['bbox'] = self.bbox
         return state
 
     ### do map etc in case of ndim image
@@ -322,17 +333,16 @@ class Island(object):
             return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
         return map(__expand, bbox, shape)
 
-#     def copy(self, img):
-#         mask, mean, rms = img.mask, img.mean, img.rms
-#         image = img.ch0; labels = img.island_labels; bbox = self.oldbbox; idx = self.oldidx
-#         return Island(image, mask, mean, rms, labels, bbox, idx, img.pixel_beamarea)
-
-    def copy(self, pixel_beamarea):
+    def copy(self, pixel_beamarea, image=None, mean=None, rms=None):
         mask = self.mask_active
         noise_mask = self.mask_noisy
-        mean = N.zeros(mask.shape) + self.mean
-        rms =  N.zeros(mask.shape) + self.rms
-        image = self.image
+        if image == None:
+            image = self.image
+        if mean == None:
+            mean = N.zeros(mask.shape) + self.mean
+        if rms == None:
+            rms =  N.zeros(mask.shape) + self.rms
+
         bbox = self.bbox
         idx = self.oldidx
         origin = self.origin

@@ -3,14 +3,13 @@
 """
 
 import numpy as N
+import os
 from image import *
 import mylogger, os
-try:
+from . import has_pl
+if has_pl:
     import matplotlib.pyplot as pl
     import matplotlib.cm as cm
-    has_pl = True
-except ImportError:
-    has_pl = False
 import functions as func
 
 class Op_cleanup(Op):
@@ -21,11 +20,11 @@ class Op_cleanup(Op):
 
         ### plotresults for all gaussians together
         if img.opts.plot_allgaus and has_pl:
-            pl.figure() 
+            pl.figure()
             pl.title('All gaussians including wavelet images')
             allgaus = img.gaussians
-            if hasattr(img, 'atrous_gaussians'): 
-              for gg in img.atrous_gaussians: 
+            if hasattr(img, 'atrous_gaussians'):
+              for gg in img.atrous_gaussians:
                 allgaus += gg
 
             for g in allgaus:
@@ -34,12 +33,13 @@ class Op_cleanup(Op):
 
             from math import log10
             bdir = img.basedir + '/misc/'
-            im_mean = img.clipped_mean 
-            im_rms = img.clipped_rms 
+            if not os.path.isdir(bdir): os.mkdir(bdir)
+            im_mean = img.clipped_mean
+            im_rms = img.clipped_rms
             low = 1.1*abs(img.min_value)
             low1 = 1.1*abs(N.min(im_mean-im_rms*5.0))
             if low1 > low: low = low1
-            vmin = log10(im_mean-im_rms*5.0 + low) 
+            vmin = log10(im_mean-im_rms*5.0 + low)
             vmax = log10(im_mean+im_rms*15.0 + low)
             im = N.log10(img.ch0 + low)
 
@@ -51,4 +51,4 @@ class Op_cleanup(Op):
         img.completed_Ops.append('cleanup')
 
 
-    
+

@@ -11,7 +11,7 @@ Downloading and installing
 
 Downloading the code
 --------------------
-The latest version of the code may be obtained as a gzipped tar file from the STRW FTP server at ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM (e.g., ``PyBDSM-1.2.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
+The latest version of the code may be obtained as a gzipped tar file from the STRW FTP server at ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM (e.g., ``PyBDSM-1.5.0.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
 
 Preparing to compile the code
 -----------------------------
@@ -19,6 +19,7 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
 
 * Python 2.6 or newer (including NumPy, SciPy, Matplotlib, and IPython). The easiest way to install Python and all of the required modules is to use the 64-bit EPD Python distribution, available at http://enthought.com/products/epd.php. For academic users, a free version is available at http://www.enthought.com/products/edudownload.php.
 * gfortran. Binaries are available from http://gcc.gnu.org/wiki/GFortranBinaries.
+* PyFITS. You can get PyFITS from www.stsci.edu/institute/software_hardware/pyfits (if you use the EPD Python distribution described above, PyFITS is already included in that).
 * PyWCS. You can get PyWCS from https://trac6.assembla.com/astrolib.
 * Boost. Get the latest version from http://www.boost.org. Only the Python libraries need to be compiled. For example, on a Mac, do the following (which assumes the latest version is ``boost_1_49_0.tar.gz``)::
 
