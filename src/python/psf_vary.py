@@ -3,9 +3,11 @@ import numpy as N
 from image import *
 import mylogger
 from copy import deepcopy as cp
-from . import has_pl
-if has_pl:
+try:
     import matplotlib.pyplot as pl
+    has_pl = True
+except ImportError:
+    has_pl = False
 import scipy
 import scipy.signal as S
 import _cbdsm

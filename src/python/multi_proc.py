@@ -18,8 +18,7 @@ try:
     _multi=True
 
     # May raise NotImplementedError
-    _ncpus = min(multiprocessing.cpu_count(), 8)
-
+    _ncpus = multiprocessing.cpu_count()
 except:
     pass
 

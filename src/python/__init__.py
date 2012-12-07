@@ -9,10 +9,20 @@ required by 'execute').
 """
 try:
     import matplotlib.pyplot as pl
-    has_pl = True
-except (RuntimeError, ImportError):
-    has_pl = False
-    print "\033[33;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
+except RuntimeError:
+    # Set use of AGG backend to avoid problems when there
+    # is no DISPLAY variable set
+    import sys
+    modules = []
+    for module in sys.modules:
+        if module.startswith('matplotlib'):
+            modules.append(module)
+    for module in modules:
+        sys.modules.pop(module)
+    import matplotlib as mpl
+    mpl.use('Agg')
+except ImportError:
+    print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
 
 from readimage import Op_readimage
 from collapse import Op_collapse

@@ -4,12 +4,6 @@
 What's New
 **********
 
-Version 1.5.0 (2012/10/29):
-
-    * Improved WCS handling. PyBDSM can now read images with a much greater variety of WCS systems (e.g., the ``VOPT`` spectral system).
-
-    * Fixed a bug related to the use of a detection image when a subimage is specified (with ``trim_box``).
-
 Version 1.4.5 (2012/10/12):
 
     * Added option (``incl_empty``) to include empty islands (that have no un-flagged Gaussians) in output catalogs. Any such empty islands are given negative source IDs and have positions given by the location of the peak of the island.
