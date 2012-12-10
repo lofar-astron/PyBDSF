@@ -3,7 +3,8 @@
 This module is used to display fits results.
 """
 from image import *
-try:
+from . import has_pl
+if has_pl:
     import matplotlib.pyplot as pl
     import matplotlib.cm as cm
     import matplotlib.patches as mpatches
@@ -11,9 +12,6 @@ try:
     from matplotlib.patches import Ellipse
     from matplotlib.lines import Line2D
     from matplotlib import collections
-    has_pl = True
-except ImportError:
-    has_pl = False
 from math import log10
 import functions as func
 from const import fwsig
