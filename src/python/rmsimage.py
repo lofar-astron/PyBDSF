@@ -327,7 +327,10 @@ class Op_rmsimage(Op):
               else:
                   resdir = img.basedir + '/background/'
               if not os.path.exists(resdir): os.mkdir(resdir)
-              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (img.ch0-mean)/rms, img, resdir)
+              zero_pixels = N.where(rms <= 0.0)
+              rms_nonzero = rms.copy()
+              rms_nonzero[zero_pixels] = N.NaN
+              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (img.ch0-mean)/rms_nonzero, img, resdir)              
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
           else:
             img.mean_QUV.append(mean); img.rms_QUV.append(rms)

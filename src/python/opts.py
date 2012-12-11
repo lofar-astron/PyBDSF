@@ -707,16 +707,19 @@ class Opts(object):
                              group = 'multichan_opts')
     collapse_ch0 = Int(0,
                              doc = "Number of the channel for source extraction, "\
-                                 "if collapse_mode = 'single'",
+                                 "if collapse_mode = 'single', starting from 0",
                              group = 'multichan_opts')
     collapse_av = List(None,
-                             doc = "List of channels to average if collapse_mode "\
-                                 "= 'average'; None => all\n"\
+                              doc = "List of channels to average if collapse_mode "\
+                                 "= 'average', starting from 0. E.g., collapse_av "\
+                                 "= [0, 1, 5]. [] => all\n"\
                                  "This parameter is a list of channels to be averaged "\
                                  "to produce the continuum image for performing source "\
                                  "extraction, if collapse_mode is 'average'. If the "\
-                                 "value is None, then all channels are used. Else, the "\
-                                 "value is a Python list of channel numbers.",
+                                 "value is an empty list ([]), then all channels are used. Else, the "\
+                                 "value is a Python list of channel numbers, starting "\
+                                 "from 0 (i.e., the first channel has number 0, the "\
+                                 "second has number 1, etc.).",
                              group = 'multichan_opts')
     collapse_wt = Enum('unity', 'rms',
                              doc = "Weighting: 'unity' or 'rms'. "\
