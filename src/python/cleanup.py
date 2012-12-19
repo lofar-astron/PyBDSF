@@ -33,7 +33,7 @@ class Op_cleanup(Op):
 
             from math import log10
             bdir = img.basedir + '/misc/'
-            if not os.path.isdir(bdir): os.mkdir(bdir)
+            if not os.path.isdir(bdir): os.makedirs(bdir)
             im_mean = img.clipped_mean
             im_rms = img.clipped_rms
             low = 1.1*abs(img.min_value)

@@ -57,9 +57,9 @@ class Op_wavelet_atrous(Op):
           mylog.info("Decomposing gaussian residual image into a-trous wavelets")
           bdir = img.basedir + '/wavelet/'
           if img.opts.output_all:
-              os.mkdir(bdir)
-              os.mkdir(bdir + '/residual/')
-              os.mkdir(bdir + '/model/')
+              os.makedirs(bdir)
+              os.makedirs(bdir + '/residual/')
+              os.makedirs(bdir + '/model/')
           dobdsm = img.opts.atrous_bdsm_do
           filter = {'tr':{'size':3, 'vec':[1. / 4, 1. / 2, 1. / 4], 'name':'Triangle'},
                     'b3':{'size':5, 'vec':[1. / 16, 1. / 4, 3. / 8, 1. / 4, 1. / 16], 'name':'B3 spline'}}
@@ -121,17 +121,18 @@ class Op_wavelet_atrous(Op):
             if dobdsm:
               wopts['filename'] = filename
               wopts['basedir'] = bdir
-              if img.opts.rms_box == None: box = 0
-              else: box = img.opts.rms_box[0]
-              y1 = (l + (l - 1) * (2 ** (j - 1) - 1)); bs = max(5 * y1, box)  # changed from 10 to 5
+              if img.opts.rms_box == None:
+                box = 0
+              else:
+                box = img.opts.rms_box[0]
+              y1 = (l + (l - 1) * (2 ** (j - 1) - 1))
+              bs = max(5 * y1, box)  # changed from 10 to 5
               if bs > min(n, m) / 2:
                 wopts['rms_map'] = False
-                wopts['mean_mao'] = 'const'
+                wopts['mean_map'] = 'const'
                 wopts['rms_box'] = None
               else:
                 wopts['rms_box'] = (bs, bs / 3)
-              if not img.opts.rms_map: wopts['rms_map'] = False
-              if not wopts['rms_map']: wopts['mean_map'] = 'zero'
               if j <= 3:
                 wopts['ini_gausfit'] = 'default'
               else:
@@ -201,20 +202,19 @@ class Op_wavelet_atrous(Op):
                     gaus_id = -1
                   else:
                       gaus_id = img.gaussians[-1].gaus_num
-#                   for isl in img.islands:
                       wvgaul = []
                       for g in gaul:
                           if not hasattr(g, 'valid'):
                               g.valid = False
                           if not g.valid:
-                              isl_id = img.pyrank[int(g.centre_pix[0] + 1), int(g.centre_pix[1] + 1)]
+                              try:
+                                  isl_id = img.pyrank[int(g.centre_pix[0] + 1), int(g.centre_pix[1] + 1)]
+                              except IndexError:
+                                  isl_id = -1
                               if isl_id >= 0:
                                   isl = img.islands[isl_id]
                                   gcenter = (g.centre_pix[0] - isl.origin[0],
                                              g.centre_pix[1] - isl.origin[1])
-#                               if gcenter[0] >= 0 and gcenter[0] < isl.shape[0] and gcenter[1] >= 0 and gcenter[1] < isl.shape[1]:
-#                                   if not isl.mask_active[gcenter]:
-#                                       gaus_id += 1
                                   if not isl.mask_active[gcenter]:
                                       g.gaus_num = gaus_id
                                       g.wisland_id = g.island_id
@@ -226,21 +226,12 @@ class Op_wavelet_atrous(Op):
                                       img.gaussians.append(g)
                                       nwvgaus += 1
                                       tot_flux += g.total_flux
-
-#                                  wvgaul.append(g)
                                   else:
                                       g.valid = False
                                       g.jlevel = 0
                               else:
                                   g.valid = False
                                   g.jlevel = 0
-#                       isl.gaul += wvgaul
-#                       img.gaussians += wvgaul
-#                       nwvgaus += len(wvgaul)
-#                       isl.ngaus += nwvgaus
-#                       for g in wvgaul:
-#                           tot_flux += g.total_flux
-
                   vg = []
                   for g in wimg.gaussians:
                       if g.valid:
@@ -346,7 +337,7 @@ class Op_wavelet_atrous(Op):
         opts['filename'] = ''
         opts['output_all'] = img.opts.output_all
         opts['verbose_fitting'] = img.opts.verbose_fitting
-        opts['split_isl'] = True
+        opts['split_isl'] = False
         opts['peak_fit'] = True
         opts['peak_maxsize'] = 30.0
         opts['detection_image'] = ''

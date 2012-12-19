@@ -213,10 +213,10 @@ class Op_rmsimage(Op):
               pol_txt = ''
 
           ## calculate rms/mean maps if needed
-          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(img.ch0.shape)/4.0:
+          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(img.ch0.shape)/2.0:
             # rms box is too large - just use constant rms and mean
             self.output_rmsbox_size(img)
-            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
+            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/2 of image size')
             mylogger.userinfo(mylog, 'Using constant background rms and mean')
             img.use_rms_map = False
             img.mean_map_type = 'const'
@@ -310,7 +310,7 @@ class Op_rmsimage(Op):
                   resdir = img.basedir + '/wavelet/background/'
               else:
                   resdir = img.basedir + '/background/'
-              if not os.path.exists(resdir): os.mkdir(resdir)
+              if not os.path.exists(resdir): os.makedirs(resdir)
               func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', rms, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.rmsd_I.fits'))
             if opts.savefits_meanim or opts.output_all:
@@ -318,7 +318,7 @@ class Op_rmsimage(Op):
                   resdir = img.basedir + '/wavelet/background/'
               else:
                   resdir = img.basedir + '/background/'
-              if not os.path.exists(resdir): os.mkdir(resdir)
+              if not os.path.exists(resdir): os.makedirs(resdir)
               func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', mean, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.mean_I.fits'))
             if opts.savefits_normim or opts.output_all:
@@ -326,11 +326,11 @@ class Op_rmsimage(Op):
                   resdir = img.basedir + '/wavelet/background/'
               else:
                   resdir = img.basedir + '/background/'
-              if not os.path.exists(resdir): os.mkdir(resdir)
+              if not os.path.exists(resdir): os.makedirs(resdir)
               zero_pixels = N.where(rms <= 0.0)
               rms_nonzero = rms.copy()
               rms_nonzero[zero_pixels] = N.NaN
-              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (img.ch0-mean)/rms_nonzero, img, resdir)              
+              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (img.ch0-mean)/rms_nonzero, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
           else:
             img.mean_QUV.append(mean); img.rms_QUV.append(rms)

@@ -75,8 +75,8 @@ class Op_make_residimage(Op):
             else:
                 resdir = img.basedir + '/residual/'
                 moddir = img.basedir + '/model/'
-            if not os.path.exists(resdir): os.mkdir(resdir)
-            if not os.path.exists(moddir): os.mkdir(moddir)
+            if not os.path.exists(resdir): os.makedirs(resdir)
+            if not os.path.exists(moddir): os.makedirs(moddir)
             func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', img.resid_gaus, img, resdir)
             mylog.info('%s %s' % ('Writing', resdir+img.imagename+'.resid_gaus.fits'))
             func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0 - img.resid_gaus), img, moddir)

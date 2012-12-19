@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.5.0'
+__version__ = '1.5.1'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,16 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2012/12/19 - Version 1.5.1
+
+    2012/12/19 - Fix to bug in wavelet module that occurred when the
+        center of the wavelet Gaussian lies outside of the image. Fix
+        to re-enable srl output catalogs in ds9 region format. Fix to
+        bug that resulted in the output directory not always being
+        created. Added an option (aperture_posn), used when aperture
+        fluxes are desired, to specify whether to center the aperture
+        on the source centroid or the source peak.
 
     2012/12/02 - Changes to reduce memory usage, particularly in the
         wavelet module.

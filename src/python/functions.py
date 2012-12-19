@@ -1223,7 +1223,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         if outdir == None:
             outdir = img.indir
         if not os.path.exists(outdir) and outdir != '':
-            os.mkdir(outdir)
+            os.makedirs(outdir)
         if os.path.exists(outdir + filename):
             if clobber:
                 os.remove(outdir + filename)

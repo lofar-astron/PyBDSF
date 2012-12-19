@@ -293,7 +293,7 @@ class Opts(object):
 
 
     #--------------------------------ADVANCED OPTIONS--------------------------------
-    split_isl = Bool(True,
+    split_isl = Bool(False,
                              doc = "Split island if it is too large, has a large "\
                                  "convex deficiency and it opens well.\n"\
                                  "If it doesn't open well, then isl.mean = "\
@@ -410,11 +410,21 @@ class Opts(object):
     aperture = Option(None, Float(),
                              doc = "Radius of aperture in pixels inside which aperture fluxes are measured "\
                                  "for each source. None => no aperture fluxes measured\n" \
-                                 "This is a float and sets the radius (in pixels) inside "
-                                 "which the aperture flux is measured for each source. "
-                                 "The aperture is centered "
-                                 "on the centroid of the source. Errors are calculated "
+                                 "This is a float and sets the radius (in pixels) inside "\
+                                 "which the aperture flux is measured for each source. "\
+                                 "Depending on the value of aperture_posn, the aperture is centered either "\
+                                 "on the centroid or the peak of the source. Errors are calculated "\
                                  "from the mean of the rms map inside the aperture.",
+                             group = "advanced_opts")
+    aperture_posn = Enum('centroid', 'peak',
+                             doc = "Position the aperture (if aperture is not None) on: "\
+                                 "'centroid' or 'peak' of the source.\n"\
+                                 "This parameter determines how the aperture is "\
+                                 "positioned relative to the source. If 'centroid', "\
+                                 "the aperture is centered on the source centroid. If "\
+                                 "'peak', the aperture is centered on the source peak. "\
+                                 "If aperture=None (i.e., no aperture radius is specified), "\
+                                 "this parameter is ignored.",
                              group = "advanced_opts")
     ini_gausfit = Enum('default', 'simple', 'nobeam',
                              doc = "Initial guess for Gaussian "\
@@ -710,7 +720,7 @@ class Opts(object):
                                  "if collapse_mode = 'single', starting from 0",
                              group = 'multichan_opts')
     collapse_av = List(None,
-                              doc = "List of channels to average if collapse_mode "\
+                             doc = "List of channels to average if collapse_mode "\
                                  "= 'average', starting from 0. E.g., collapse_av "\
                                  "= [0, 1, 5]. [] => all\n"\
                                  "This parameter is a list of channels to be averaged "\

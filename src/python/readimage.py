@@ -1,16 +1,15 @@
 """Module readimage.
 
-Defines operation Op_readimage which loads image from FITS file or uses Pyrap
+Defines operation Op_readimage which initializes image and WCS
 
 The current implementation tries to reduce input file to 2D if
 possible, as this makes more sence atm. One more important thing
-to note -- in it's default configuration pyfits will read data
+to note -- in its default configuration pyfits will read data
 in non-native format, so we have to convert it before usage. See
 the read_image_from_file in functions.py for details.
 
-Lastly, wcs and spectal information are stored in img.wcs_obj and
-img.freq_pars to remove any FITS-specific calls to the header,
-etc. in other modules.
+Lastly, wcs and spectal information are stored in the PyWCS
+object img.wcs_obj.
 """
 
 import numpy as N
@@ -20,7 +19,7 @@ import mylogger
 import sys
 
 Image.imagename = String(doc="Identifier name for output files")
-Image.filename = String(doc="Name of input file without FITS extension")
+Image.filename = String(doc="Name of input file without extension")
 Image.bbspatchnum = Int(doc="To keep track of patch number for bbs file "\
                             "for seperate patches per source")
 Image.frequency = Float(doc="Frequency in the header")
@@ -35,8 +34,7 @@ Image.equinox = Float(2000.0, doc='Equinox of input image from header')
 class Op_readimage(Op):
     """Image file loader
 
-    Loads fits file 'opts.fits_name' and configures
-    wcslib machinery for it.
+    Loads image and configures wcslib machinery for it.
     """
     def __call__(self, img):
         import time, os
@@ -45,10 +43,10 @@ class Op_readimage(Op):
         if img.opts.filename == '':
             raise RuntimeError('Image file name not specified.')
 
-        # Check for trailing "/" in filename (since CASA images are directories).
+        # Check for trailing "/" in file name (since CASA images are directories).
         # Although the general rule is to not alter the values in opts (only the
         # user should be able to alter these), in this case there is no harm in
-        # replacing the filename in opts with the '/' trimmed off.
+        # replacing the file name in opts with the '/' trimmed off.
         if img.opts.filename[-1] == '/':
             img.opts.filename = img.opts.filename[:-1]
 
@@ -125,7 +123,7 @@ class Op_readimage(Op):
                 if os.path.isdir(img.basedir):
                     os.system("rm -fr " + img.basedir + '/*')
             if not os.path.isdir(img.basedir):
-                os.mkdir(img.basedir)
+                os.makedirs(img.basedir)
 
             # Now add solname (if any) and time to basedir
             if img.opts.solnname != None:
@@ -134,7 +132,7 @@ class Op_readimage(Op):
 
             # Make the final output directory
             if not os.path.isdir(img.basedir):
-                os.mkdir(img.basedir)
+                os.makedirs(img.basedir)
 
         # Check for zeros and blank if img.opts.blank_zeros is True
         if img.opts.blank_zeros:
@@ -146,11 +144,7 @@ class Op_readimage(Op):
         return img
 
     def init_wcs(self, img):
-        """Initialize wcs pixel <=> sky conversion routines, and
-        store them as img.pix2sky & img.sky2pix.
-
-        Thanks to transpose operation done to image earlier we can use
-        p2s & s2p transforms directly.
+        """Initialize wcs pixel <=> sky conversion routines.
         """
         from math import pi
         from pywcs import WCS

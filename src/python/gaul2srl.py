@@ -473,8 +473,11 @@ class Op_gaul2srl(Op):
         deconv_size_skyE = size_skyE # set deconvolved errors to non-deconvolved ones
 
         # Find aperture flux
-        aper_flux, aper_fluxE = func.ch0_aperture_flux(img, [mompara[1]+delc[0],
-                                    mompara[2]+delc[1]], img.aperture)
+        if img.opts.aperture_posn == 'centroid':
+            aper_pos = [mompara[1]+delc[0], mompara[2]+delc[1]]
+        else:
+            aper_pos = posn
+        aper_flux, aper_fluxE = func.ch0_aperture_flux(img, aper_pos, img.aperture)
 
         isl_id = isl.island_id
         source_prop = list(['M', [tot, totE], [s_peak, isl.rms], [maxpeak, isl.rms],

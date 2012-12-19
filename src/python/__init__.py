@@ -11,9 +11,8 @@ try:
     import matplotlib.pyplot as pl
     has_pl = True
 except (RuntimeError, ImportError):
+    print "\033[31;1mWARNING\033[0m: Matplotlib pyplot could not be imported. Plotting is disabled."
     has_pl = False
-    print "\033[33;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
-
 from readimage import Op_readimage
 from collapse import Op_collapse
 from preprocess import Op_preprocess
