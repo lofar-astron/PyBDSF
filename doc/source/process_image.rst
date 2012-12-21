@@ -316,6 +316,8 @@ The advanced options are:
       :term:`aperture` ............ None : Radius of aperture in pixels inside which aperture
                                    fluxes are measured for each source. None => no aperture
                                    fluxes measured
+      :term:`aperture_posn` .. 'centroid': Position the aperture (if aperture is not None) on: 'centroid' or
+                                   'peak' of the source.
       :term:`blank_zeros` ........ False : Blank zeros in the image
       :term:`bmpersrc_th` ......... None : Theoretical estimate of number of beams per
                                    source. None => calculate inside program
@@ -371,6 +373,13 @@ The advanced options are:
         pixels) inside which the aperture flux is measured for each source.
         The aperture is centered on the centroid of the source. Errors are
         calculated from the mean of the rms map inside the aperture.
+
+    aperture_posn
+        This parameter is a string (default is ``'centroid'``) that sets the
+        how the aperture is positioned relative to the source. If 'centroid',
+        the aperture is centered on the source centroid.
+        If 'peak', the aperture is centered on the source peak. If aperture=None
+        (i.e., no aperture radius is specified), this parameter is ignored.
 
     blank_zeros
         This parameter is a Boolean (default is ``False``). If ``True``, all

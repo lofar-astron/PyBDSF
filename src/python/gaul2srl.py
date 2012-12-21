@@ -100,6 +100,8 @@ class Op_gaul2srl(Op):
                 message += 'should be fit, try adjusting the flagging options (use\n'\
                            'show_fit with "ch0_flagged=True" to see the flagged Gaussians)\n'\
                            'or enabling the wavelet module (with "atrous_do=True").'
+            message += 'To include these islands in output source catalogs, set\n'\
+                        'incl_empty=True in the write_catalog task.'
             mylog.warning(message)
 
         img.completed_Ops.append('gaul2srl')
