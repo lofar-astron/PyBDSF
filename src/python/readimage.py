@@ -366,7 +366,7 @@ class Op_readimage(Op):
                 code = 0
         else:
             if 'EPOCH' in hdr: # Check EPOCH if EQUINOX not found
-                year = hdr['EPOCH']
+                year = float(hdr['EPOCH'])
                 code = 1
             else:
                 if 'RADECSYS' in hdr:
