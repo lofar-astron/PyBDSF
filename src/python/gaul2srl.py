@@ -365,17 +365,23 @@ class Op_gaul2srl(Op):
         if N.isnan(mompara[1]):
             mompara[1] = posn[0] - delc[0]
         x1 = N.int(N.floor(mompara[1]))
+        if x1 < 0:
+            x1 = 0
         if N.isnan(mompara[2]):
             mompara[2] = posn[1] - delc[1]
         y1 = N.int(N.floor(mompara[2]))
+        if y1 < 0:
+            y1 = 0
         xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
         if img.opts.flag_smallsrc and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Island = '+str(isl.island_id))
             mylog.debug('Mask = '+repr(mask[xind, yind])+'xind, yind, x1, y1 = '+repr(xind)+' '+repr(yind)+' '+repr(x1)+' '+repr(y1))
         t=(mompara[1]-x1)/(x1+1-x1)  # in case u change it later
         u=(mompara[2]-y1)/(y1+1-y1)
-        s_peak=(1.0-t)*(1.0-u)*subim_src[x1,y1]+t*(1.0-u)*subim_src[x1+1,y1]+ \
-               t*u*subim_src[x1+1,y1+1]+(1.0-t)*u*subim_src[x1,y1+1]
+        xmax = N.min([x1+1, subim_src.shape[0] - 1])
+        ymax = N.min([y1+1, subim_src.shape[1] - 1])
+        s_peak=(1.0-t)*(1.0-u)*subim_src[x1,y1]+t*(1.0-u)*subim_src[xmax,y1]+ \
+               t*u*subim_src[xmax,ymax]+(1.0-t)*u*subim_src[x1,ymax]
         if (not img.opts.flag_smallsrc) and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Speak '+repr(s_peak)+'Mompara = '+repr(mompara))
             mylog.debug('x1, y1 : '+repr(x1)+', '+repr(y1))

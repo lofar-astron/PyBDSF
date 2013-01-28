@@ -266,8 +266,8 @@ class Op_gausfit(Op):
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
 
-        thr1 = isl.mean + opts.thresh_isl*isl.rms
-        thr2 = isl.mean + img.thresh_pix*isl.rms
+        thr1 = opts.thresh_isl*isl.rms #isl.mean + opts.thresh_isl*isl.rms
+        thr2 = img.thresh_pix*isl.rms #isl.mean + img.thresh_pix*isl.rms
         thr0 = thr1
         verbose = opts.verbose_fitting
         peak = fcn.find_peak()[0]
@@ -411,7 +411,7 @@ class Op_gausfit(Op):
         thresh_isl = opts.thresh_isl
         thresh_pix = opts.thresh_pix
         thresh = opts.fittedimage_clip
-        thr = isl.mean + thresh_isl * isl.rms
+        thr = thresh_isl * isl.rms #isl.mean + thresh_isl * isl.rms
         rms = isl.rms
 
         if opts.verbose_fitting:
