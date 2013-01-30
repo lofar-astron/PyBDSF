@@ -27,6 +27,14 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/01/30 - Fix to bug that resulted in incorrect numbering of 
+       wavelet Gaussians.
+
+    2013/01/28 - Fix to bug in source grouping algorithm. Improved fitting
+       when background mean is nonzero. Fix to allow images with GLAT and
+       GLON WCS coordinates. Fix to bug when equinox is taken from the
+       epoch keyword.
+
     2012/12/19 - Version 1.5.1
 
     2012/12/19 - Fix to bug in wavelet module that occurred when the

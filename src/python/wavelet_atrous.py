@@ -204,7 +204,8 @@ class Op_wavelet_atrous(Op):
                       gaus_id = img.gaussians[-1].gaus_num
                       wvgaul = []
                       for g in gaul:
-                          if not hasattr(g, 'valid'):
+		          gaus_id += 1
+			  if not hasattr(g, 'valid'):
                               g.valid = False
                           if not g.valid:
                               try:
