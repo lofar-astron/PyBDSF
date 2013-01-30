@@ -31,7 +31,8 @@ class Op_outlist(Op):
                 self.write_srl(img, dir)
                 self.write_aips(img, dir)
                 self.write_kvis(img, dir)
-                self.write_ds9(img, dir)
+                self.write_ds9(img, dir, objtype='gaul')
+                self.write_ds9(img, dir, objtype='srl')
                 self.write_gaul_FITS(img, dir)
                 self.write_srl_FITS(img, dir)
             if not os.path.exists(img.basedir + '/misc/'):
@@ -81,11 +82,11 @@ class Op_outlist(Op):
         write_kvis_ann(img, filename=fname, sort_by='indx',
                        clobber=True)
 
-    def write_ds9(self, img, dir):
+    def write_ds9(self, img, dir, objtype='gaul'):
         """ Writes the gaussian list as a ds9 region file"""
-        fname = dir + img.imagename + '.ds9.reg'
+        fname = dir + img.imagename + '.' + objtype + '.ds9.reg'
         write_ds9_list(img, filename=fname, srcroot=img.opts.srcroot,
-                       clobber=True, deconvolve=False)
+                       clobber=True, deconvolve=False, objtype=objtype)
 
     def write_gaul_FITS(self, img, dir):
         """ Writes the gaussian list as FITS binary table"""

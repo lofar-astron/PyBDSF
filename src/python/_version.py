@@ -28,7 +28,8 @@ def changelog():
     -----------------------------------------------------------------------
 
     2013/01/30 - Fix to bug that resulted in incorrect numbering of 
-       wavelet Gaussians.
+       wavelet Gaussians. Added 'srl' output in ds9 format when using
+       output_all = True.
 
     2013/01/28 - Fix to bug in source grouping algorithm. Improved fitting
        when background mean is nonzero. Fix to allow images with GLAT and
