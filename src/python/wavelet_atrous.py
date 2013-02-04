@@ -199,40 +199,40 @@ class Op_wavelet_atrous(Op):
                   tot_flux = 0.0
                   nwvgaus = 0
                   if img.ngaus == 0:
-                    gaus_id = -1
+                      gaus_id = -1
                   else:
                       gaus_id = img.gaussians[-1].gaus_num
-                      wvgaul = []
-                      for g in gaul:
-		          gaus_id += 1
-			  if not hasattr(g, 'valid'):
-                              g.valid = False
-                          if not g.valid:
-                              try:
-                                  isl_id = img.pyrank[int(g.centre_pix[0] + 1), int(g.centre_pix[1] + 1)]
-                              except IndexError:
-                                  isl_id = -1
-                              if isl_id >= 0:
-                                  isl = img.islands[isl_id]
-                                  gcenter = (g.centre_pix[0] - isl.origin[0],
-                                             g.centre_pix[1] - isl.origin[1])
-                                  if not isl.mask_active[gcenter]:
-                                      g.gaus_num = gaus_id
-                                      g.wisland_id = g.island_id
-                                      g.island_id = isl.island_id
-                                      g.jlevel = j
-                                      g.valid = True
-                                      isl.gaul.append(g)
-                                      isl.ngaus += 1
-                                      img.gaussians.append(g)
-                                      nwvgaus += 1
-                                      tot_flux += g.total_flux
-                                  else:
-                                      g.valid = False
-                                      g.jlevel = 0
+                  wvgaul = []
+                  for g in gaul:
+		      gaus_id += 1
+		      if not hasattr(g, 'valid'):
+                          g.valid = False
+                      if not g.valid:
+                          try:
+                              isl_id = img.pyrank[int(g.centre_pix[0] + 1), int(g.centre_pix[1] + 1)]
+                          except IndexError:
+                              isl_id = -1
+                          if isl_id >= 0:
+                              isl = img.islands[isl_id]
+                              gcenter = (g.centre_pix[0] - isl.origin[0],
+                                         g.centre_pix[1] - isl.origin[1])
+                              if not isl.mask_active[gcenter]:
+                                  g.gaus_num = gaus_id
+                                  g.wisland_id = g.island_id
+                                  g.island_id = isl.island_id
+                                  g.jlevel = j
+                                  g.valid = True
+                                  isl.gaul.append(g)
+                                  isl.ngaus += 1
+                                  img.gaussians.append(g)
+                                  nwvgaus += 1
+                                  tot_flux += g.total_flux
                               else:
                                   g.valid = False
                                   g.jlevel = 0
+                          else:
+                              g.valid = False
+                              g.jlevel = 0
                   vg = []
                   for g in wimg.gaussians:
                       if g.valid:

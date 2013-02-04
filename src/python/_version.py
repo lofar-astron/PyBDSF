@@ -27,6 +27,9 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/02/04 - Fix to bug in wavelet module that caused crash when
+       no Gaussians were fit to the main image.
+
     2013/01/30 - Fix to bug that resulted in incorrect numbering of 
        wavelet Gaussians. Added 'srl' output in ds9 format when using
        output_all = True.
