@@ -1124,7 +1124,12 @@ def read_image_from_file(filename, img, indir, quiet=False):
     ctype_in.reverse() # Need to reverse order, as pyfits does this
 
     if 'RA' not in ctype_in or 'DEC' not in ctype_in:
-        raise RuntimeError("Image data not found")
+        if 'GLON' not in ctype_in or 'GLAT' not in ctype_in:
+            raise RuntimeError("Image data not found")
+        else:
+            lat_lon = True
+    else:
+        lat_lon = False
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         from pywcs import WCS
         t = WCS(hdr)
@@ -1135,7 +1140,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
             ctype_in[spec_indx] = 'FREQ'
             ctype_in.reverse()
 
-    ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
+    if lat_lon:
+        ctype_out = ['STOKES', 'FREQ', 'GLON', 'GLAT']
+    else:
+        ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
     indx_out = [-1, -1, -1, -1]
     indx_in = range(len(data.shape))
     for i in indx_in:
