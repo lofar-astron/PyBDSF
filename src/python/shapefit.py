@@ -11,6 +11,7 @@ import statusbar
 import multi_proc as mp
 import itertools
 import functions as func
+from gausfit import find_bbox
 
 
 Island.shapelet_basis=String(doc="Coordinate system for shapelet decomposition (cartesian/polar)", colname='Basis', units=None)
@@ -41,6 +42,7 @@ class Op_shapelets(Op):
             img_simple.thresh_pix = img.thresh_pix
             img_simple.minpix_isl = img.minpix_isl
             img_simple.clipped_mean = img.clipped_mean
+            img_simple.shape = img.ch0.shape
 
             # Now call the parallel mapping function. Returns a list of
             # [beta, centre, nmax, basis, cf] for each island
@@ -53,7 +55,7 @@ class Op_shapelets(Op):
             for id, isl in enumerate(img.islands):
                 beta, centre, nmax, basis, cf = shap_list[id]
                 isl.shapelet_beta=beta
-                isl.shapelet_centre=tuple(N.array(centre) + N.array(isl.origin))
+                isl.shapelet_centre=centre
                 isl.shapelet_nmax=nmax
                 isl.shapelet_basis=basis
                 isl.shapelet_cf=cf
@@ -68,13 +70,29 @@ class Op_shapelets(Op):
         """
         if opts == None:
             opts = img.opts
-        arr = isl.image
-        mask = isl.mask_active + isl.mask_noisy
+        if opts.shapelet_gresid:
+            shape = img.shape
+            thresh= opts.fittedimage_clip
+            model_gaus = N.zeros(shape, dtype=float)
+            for g in isl.gaul:
+                C1, C2 = g.centre_pix
+                b = find_bbox(thresh*isl.rms, g)
+                bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
+                            max(0, int(C2-b)):min(shape[1], int(C2+b+1))]
+                x_ax, y_ax = N.mgrid[bbox]
+                ffimg = func.gaussian_fcn(g, x_ax, y_ax)
+                model_gaus[bbox] = model_gaus[bbox] + ffimg
+            arr = isl.image - isl.islmean - model_gaus[isl.bbox]
+            if N.std(arr) < thresh * isl.rms:
+                return [beta, tuple(N.array(centre) + N.array(isl.origin)), nmax, basis, cf]
+        else:
+            arr = isl.image - isl.islmean
+        mask = isl.mask_active
         basis = opts.shapelet_basis
-        beam_pix = img.pixel_beam
+        beam_pix = img.pixel_beam(location=isl.origin)
         mode = opts.shapelet_fitmode
-        if mode != 'fit': mode = ''
-
+        if mode != 'fit':
+            mode = ''
         fixed = (0,0,0)
         (beta, centre, nmax) = self.get_shapelet_params(arr, mask, basis, beam_pix, fixed, N.array(isl.origin), mode)
 
@@ -118,9 +136,6 @@ class Op_shapelets(Op):
                nmax=min(nmax, nmax_max)
 
          betarange=[0.5,sqrt(beta*max(n,m))]  # min, max
-         #print betarange
-
-         #print 'Initial Beta = ',beta, image.shape
 
 	 if fixed[1]==0:
              cen=shape_findcen(image, mask, basis, beta, nmax, beam_pix) # + check_cen_shapelet

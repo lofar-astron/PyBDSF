@@ -797,7 +797,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with BBS files."
             return False
         filename = output.write_bbs_gaul(img, filename=filename,
-                                            srcroot=srcroot,
+                                            srcroot=srcroot, incl_empty=incl_empty,
                                             patch=patch,
                                             sort_by='flux',
                                             clobber=clobber)
@@ -812,7 +812,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with Sagecal files."
             return False
         filename = output.write_lsm_gaul(img, filename=filename,
-                                            srcroot=srcroot,
+                                            srcroot=srcroot, incl_empty=incl_empty,
                                             patch=patch,
                                             sort_by='flux',
                                             clobber=clobber)
@@ -824,7 +824,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return True
     if format == 'ds9':
         filename = output.write_ds9_list(img, filename=filename,
-                                            srcroot=srcroot,
+                                            srcroot=srcroot, incl_empty=incl_empty,
                                             clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
