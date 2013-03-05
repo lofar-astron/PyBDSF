@@ -109,8 +109,15 @@ class Op_gausfit(Op):
                 # These dummy Gaussians all have an ID of -1. They do not
                 # appear in any of the source or island Gaussian lists except
                 # the island dgaul list.
-                posn = N.unravel_index(N.argmax(isl.image*~isl.mask_active), isl.shape) + N.array(isl.origin)
-                par = [isl.max_value, posn[0], posn[1], 0.0, 0.0, 0.0]
+                if opts.src_ra_dec != None:
+                    # Center the dummy Gaussian on the user-specified source position
+                    posn_isl = (isl.shape[0]/2.0, isl.shape[1]/2.0)
+                    posn_img = (isl.shape[0]/2.0 + isl.origin[0], isl.shape[1]/2.0 + isl.origin[1])
+                    par = [isl.image[posn_isl], posn_img[0], posn_img[1], 0.0, 0.0, 0.0]
+                else:
+                    # Center the dummy Gaussian on the maximum pixel
+                    posn = N.unravel_index(N.argmax(isl.image*~isl.mask_active), isl.shape) + N.array(isl.origin)
+                    par = [isl.max_value, posn[0], posn[1], 0.0, 0.0, 0.0]
                 dgaul = [Gaussian(img, par, idx, -1)]
                 gidx = 0
             fgaul= [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
@@ -194,7 +201,7 @@ class Op_gausfit(Op):
             peak_size = min_peak_size
             opts.peak_maxsize = min_peak_size
 
-        size = isl.size_active/img.pixel_beamarea*2.0   # 2.0 roughly corrects for thresh_isl
+        size = isl.size_active/img.pixel_beamarea()*2.0   # 2.0 roughly corrects for thresh_isl
         if opts.verbose_fitting:
             print "Fitting isl #", isl.island_id, '; # pix = ',N.sum(~isl.mask_active),'; size = ',size
 
@@ -206,10 +213,10 @@ class Op_gausfit(Op):
                 if opts.verbose_fitting:
                     print 'SPLITTING ISLAND INTO ',n_subisl,' PARTS FOR ISLAND ',isl.island_id
                 for i_sub in range(n_subisl):
-                    islcp = isl.copy(img.pixel_beamarea)
+                    islcp = isl.copy(img.pixel_beamarea(location=isl.origin))
                     islcp.mask_active = N.where(sub_labels == i_sub+1, False, True)
                     islcp.mask_noisy = N.where(sub_labels == i_sub+1, False, True)
-                    size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea*2.0
+                    size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea(location=isl.origin)*2.0
                     if opts.peak_fit and size_subisl > peak_size:
                         sgaul, sfgaul = self.fit_island_iteratively(img, islcp, iter_ngmax=iter_ngmax, opts=opts)
                     else:
@@ -261,20 +268,20 @@ class Op_gausfit(Op):
         else:
             fit_image = isl.image-isl.islmean-ffimg
         fcn = MGFunction(fit_image, isl.mask_active, 1)
-        beam = img.pixel_beam
+        beam = img.pixel_beam(location=isl.origin)
 
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
 
-        thr1 = opts.thresh_isl*isl.rms #isl.mean + opts.thresh_isl*isl.rms
-        thr2 = img.thresh_pix*isl.rms #isl.mean + img.thresh_pix*isl.rms
+        thr1 = isl.mean + opts.thresh_isl*isl.rms
+        thr2 = isl.mean + img.thresh_pix*isl.rms
         thr0 = thr1
         verbose = opts.verbose_fitting
         peak = fcn.find_peak()[0]
         dof = isl.size_active
         shape = isl.shape
         isl_image = isl.image - isl.islmean
-        size = isl.size_active/img.pixel_beamarea*2.0
+        size = isl.size_active/img.pixel_beamarea(location=isl.origin)*2.0
         gaul = []
         iter = 0
         ng1 = 0
@@ -366,7 +373,8 @@ class Op_gausfit(Op):
             mask_id = N.zeros(isl.image.shape, dtype=int) - 1
             mask_id[inisl] = isl.island_id
             try:
-                mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, img.pixel_beamarea, True)
+                pixel_beamarea = img.pixel_beamarea(location=isl.origin)
+                mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, pixel_beamarea, True)
                 mompara[5] += 90.0
                 if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
                     x1 = N.int(N.floor(mompara[1]))
@@ -401,17 +409,18 @@ class Op_gausfit(Op):
 
         For large islands, which can require many Gaussians to fit well,
         it is much faster to fit a small number of Gaussians simultaneously
-        and iterate."""
+        and iterate. However, this does usually result in larger residuals.
+        """
         import functions as func
         sgaul = []; sfgaul = []
         gaul = []; fgaul = []
-        beam = img.pixel_beam
+        beam = img.pixel_beam(location=isl.origin)
         if opts == None:
             opts = img.opts
         thresh_isl = opts.thresh_isl
         thresh_pix = opts.thresh_pix
         thresh = opts.fittedimage_clip
-        thr = thresh_isl * isl.rms #isl.mean + thresh_isl * isl.rms
+        thr = isl.mean + thresh_isl * isl.rms
         rms = isl.rms
 
         if opts.verbose_fitting:
@@ -458,8 +467,16 @@ class Op_gausfit(Op):
         from const import fwsig
         import functions as func
 
-        im = isl.image-isl.islmean; mask = isl.mask_active; av = img.clipped_mean
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr, isl.shape, beam)
+        im = isl.image-isl.islmean
+        if img.opts.ini_method == 'curvature':
+            im_pos = -1.0 * func.make_curvature_map(isl.image-isl.islmean)
+            thr_pos = 0.0
+        else:
+            im_pos = im
+            thr_pos = thr
+        mask = isl.mask_active
+        av = img.clipped_mean
+        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
           av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
           inipeak = [maxv]; iniposn = [maxp]
@@ -511,8 +528,16 @@ class Op_gausfit(Op):
         import scipy.ndimage as nd
         import functions as func
 
-        im = isl.image-isl.islmean; mask = isl.mask_active; av = img.clipped_mean; thr1= -1e9
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr1, isl.shape, beam)
+        im = isl.image-isl.islmean
+        if img.opts.ini_method == 'curvature':
+            im_pos = -1.0 * func.make_curvature_map(isl.image-isl.islmean)
+            thr_pos = 0.0
+        else:
+            im_pos = im
+            thr_pos = -1e9
+        mask = isl.mask_active
+        av = img.clipped_mean
+        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         npeak = len(iniposn)
         gaul = []
 
@@ -746,7 +771,7 @@ class Op_gausfit(Op):
         if not opts.flag_smallsrc:
                 if s1*s2 == 0.: flag += 128
 
-        if size_bms > 30.0:
+        if ss1/ss2 > 3.0: #size_bms > 30.0:
             # Only check if island is big enough, as this flagging step
             # is unreliable for small islands. size_bms is size of island
             # in number of beam areas
@@ -895,6 +920,7 @@ class Gaussian(object):
         from const import fwsig
         import numpy as N
 
+        use_wcs = True
         self.gaussian_idx = g_idx
         self.gaus_num = 0 # stored later
         self.island_id = isl_idx
@@ -906,25 +932,24 @@ class Gaussian(object):
         self.peak_flux = p[0]
         self.centre_pix = p[1:3]
         size = p[3:6]
-        if func.approx_equal(size[0], img.pixel_beam[0]*1.1) and \
-                func.approx_equal(size[1], img.pixel_beam[1]) and \
-                func.approx_equal(size[2], img.pixel_beam[2]):
+        if func.approx_equal(size[0], img.pixel_beam(self.centre_pix)[0]*1.1) and \
+                func.approx_equal(size[1], img.pixel_beam(self.centre_pix)[1]) and \
+                func.approx_equal(size[2], img.pixel_beam(self.centre_pix)[2]):
             # Check whether fitted Gaussian is just the distorted pixel beam
             # given as an initial guess. If so, reset the size to the
             # undistorted beam.
-            size = img.pixel_beam
+            size = img.beam2pix(img.beam, self.centre_pix, use_wcs=use_wcs)
         size = func.corrected_size(size)  # gives fwhm and P.A.
         self.size_pix = size # FWHM in pixels and P.A. CCW from +y axis
-        self.size_sky = img.pix2beam(size, self.centre_pix) # FWHM in degrees and P.A. CCW from North
+        self.size_sky = img.pix2beam(size, self.centre_pix, use_wcs=use_wcs) # FWHM in degrees and P.A. east from north
 
-        # Check if this is a wavelet image. If so, use orig_pixel_beam
-        # for flux calculation, as pixel_beam has been altered to match
+        # Check if this is a wavelet image. If so, use img.orig_beam
+        # for flux calculation, as img.beam has been altered to match
         # the wavelet scale.
         if img.waveletimage:
-            pixel_beam = img.orig_pixel_beam
+            bm_pix = N.array(img.beam2pix(img.orig_beam, self.centre_pix, use_wcs=use_wcs))
         else:
-            pixel_beam = img.pixel_beam
-        bm_pix = N.array([pixel_beam[0]*fwsig, pixel_beam[1]*fwsig, pixel_beam[2]])
+            bm_pix = N.array(img.beam2pix(img.beam, self.centre_pix, use_wcs=use_wcs))
         tot = p[0]*size[0]*size[1]/(bm_pix[0]*bm_pix[1])
 
         if flag == 0:
@@ -939,9 +964,9 @@ class Gaussian(object):
         self.peak_fluxE = errors[0]
         self.total_fluxE = errors[6]
         self.centre_pixE = errors[1:3]
-        self.centre_skyE = img.pix2coord(errors[1:3])
+        self.centre_skyE = img.pix2coord(errors[1:3], self.centre_pix, use_wcs=use_wcs)
         self.size_pixE = errors[3:6]
-        self.size_skyE = img.pix2beam(errors[3:6], self.centre_pix)
+        self.size_skyE = img.pix2beam(errors[3:6], self.centre_pix, use_wcs=use_wcs)
         self.rms = img.islands[isl_idx].rms
         self.mean = img.islands[isl_idx].mean
         self.total_flux_isl = img.islands[isl_idx].total_flux
@@ -955,8 +980,8 @@ class Gaussian(object):
         # are just set to those of the undeconvolved ones.
         if flag == 0:
             gaus_dc, err = func.deconv2(bm_pix, size)
-            self.deconv_size_sky = img.pix2beam(gaus_dc, self.centre_pix)
-            self.deconv_size_skyE  = img.pix2beam(errors[3:6], self.centre_pix)
+            self.deconv_size_sky = img.pix2beam(gaus_dc, self.centre_pix, use_wcs=use_wcs)
+            self.deconv_size_skyE  = img.pix2beam(errors[3:6], self.centre_pix, use_wcs=use_wcs)
         else:
             self.deconv_size_sky = [0., 0., 0.]
             self.deconv_size_skyE  = [0., 0., 0.]

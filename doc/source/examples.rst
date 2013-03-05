@@ -145,20 +145,18 @@ Lastly, the plot window is closed, and the source catalog is written out to an A
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
                                    source are grouped into one patch
-    catalog_type ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
+    catalog_type .......... 'srl': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
                                    Gaussians), 'shap' - shapelet list
     clobber .............. False : Overwrite existing file?
-    format ................ 'bbs': Format of output catalog: 'bbs', 'ds9', 'fits',
+    format ............... 'fits': Format of output catalog: 'bbs', 'ds9', 'fits',
                                    'star', 'kvis', or 'ascii'
     srcroot ............... None : Root name for entries in the output catalog. None
                                    => use image file name
 
-    BDSM [7]: catalog_type='srl'
+    BDSM [7]: format='ascii'
 
-    BDSM [8]: format='ascii'
-
-    BDSM [9]: go
+    BDSM [8]: go
     ---------> go()
     --> Wrote ASCII file 'VLSS.fits.pybdsm.srl'
 
@@ -298,20 +296,18 @@ At this point, make sure that TOPCAT is started and its SAMP hub is running (act
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
                                    source are grouped into one patch
-    catalog_type ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
+    catalog_type .......... 'srl': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
                                    Gaussians), 'shap' - shapelet list
     clobber .............. False : Overwrite existing file?
-    format ................ 'bbs': Format of output catalog: 'bbs', 'ds9', 'fits',
+    format ............... 'fits': Format of output catalog: 'bbs', 'ds9', 'fits',
                                    'star', 'kvis', or 'ascii'
     srcroot ............... None : Root name for entries in the output catalog. None
                                    => use image file name
 
     BDSM [3]: outfile='SAMP'
 
-    BDSM [4]: catalog_type='srl'
-
-    BDSM [5]: go
+    BDSM [4]: go
     ---------> go()
     --> Table sent to SAMP hub.
 

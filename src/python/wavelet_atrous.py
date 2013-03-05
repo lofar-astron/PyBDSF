@@ -71,6 +71,7 @@ class Op_wavelet_atrous(Op):
           # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
           Op_make_residimage()(img)
           resid = img.resid_gaus
+
           lpf = img.opts.atrous_lpf
           if lpf not in ['b3', 'tr']: lpf = 'b3'
           jmax = img.opts.atrous_jmax
@@ -104,7 +105,8 @@ class Op_wavelet_atrous(Op):
           ntot_wvgaus = 0
           stop_wav = False
           pix_masked = N.where(N.isnan(resid) == True)
-          for j in range(1, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
+          jmin = 1
+          for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
             mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
             mean, rms, cmean, std, cnt = _cbdsm.bstat(im_old, N.isnan(im_old), img.opts.kappa_clip) # why do i have this here ?
             if cnt > 198: cmean = mean; crms = rms
@@ -137,17 +139,17 @@ class Op_wavelet_atrous(Op):
                 wopts['ini_gausfit'] = 'default'
               else:
                 wopts['ini_gausfit'] = 'nobeam'
-              wid = (l + (l - 1) * (2 ** (j - 1) - 1)) / 3.0
-              b1, b2 = img.pixel_beam[0:2]
+              wid = (l + (l - 1) * (2 ** (j - 1) - 1))# / 3.0
+              b1, b2 = img.pixel_beam()[0:2]
               b1 = b1 * fwsig
               b2 = b2 * fwsig
               cdelt = img.wcs_obj.acdelt[:2]
-              wopts['beam'] = (sqrt(wid * wid + b1 * b1) * cdelt[0], sqrt(wid * wid + b2 * b2) * cdelt[1], 0.0)
 
               wimg = Image(wopts)
-              wimg.pixel_beam = (wopts['beam'][0] / fwsig / cdelt[0], wopts['beam'][1] / fwsig / cdelt[1], wopts['beam'][2])
-              wimg.pixel_beamarea = 1.1331 * wimg.pixel_beam[0] * wimg.pixel_beam[1] * fwsig * fwsig
-              wimg.orig_pixel_beam = img.pixel_beam
+              wimg.beam = (sqrt(wid * wid + b1 * b1) * cdelt[0] * 2.0, sqrt(wid * wid + b2 * b2) * cdelt[1] * 2.0, 0.0)
+              wimg.orig_beam = img.beam
+              wimg.pixel_beam = img.pixel_beam
+              wimg.pixel_beamarea = img.pixel_beamarea
               wimg.log = 'Wavelet.'
               wimg.basedir = img.basedir
               wimg.extraparams['bbsprefix'] = suffix
@@ -204,8 +206,8 @@ class Op_wavelet_atrous(Op):
                       gaus_id = img.gaussians[-1].gaus_num
                   wvgaul = []
                   for g in gaul:
-		      gaus_id += 1
-		      if not hasattr(g, 'valid'):
+                      gaus_id += 1
+                      if not hasattr(g, 'valid'):
                           g.valid = False
                       if not g.valid:
                           try:
@@ -331,7 +333,7 @@ class Op_wavelet_atrous(Op):
         opts['flag_maxsnr'] = 1.2
         opts['flag_maxsize_isl'] = 2.5
         opts['flag_bordersize'] = 0
-        opts['flag_maxsize_bm'] = 25.0
+        opts['flag_maxsize_bm'] = 100.0
         opts['flag_minsize_bm'] = 0.2
         opts['flag_maxsize_fwhm'] = 2.0
         opts['bbs_patches'] = img.opts.bbs_patches

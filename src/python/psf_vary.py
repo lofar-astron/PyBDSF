@@ -197,7 +197,7 @@ class Op_psf_vary(Op):
                 return
             else:
                 # Fit stacked PSFs with Gaussians and measure aperture fluxes
-                bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
+                bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
                 psf_maj = N.zeros(npsf)
                 psf_min = N.zeros(npsf)
                 psf_pa = N.zeros(npsf)
