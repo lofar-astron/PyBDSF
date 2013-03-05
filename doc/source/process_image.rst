@@ -334,10 +334,14 @@ The advanced options are:
                                    image
       :term:`group_by_isl` ....... False : Group all Gaussians in each island into a single
                                    source
+      :term:`group_method` .. 'intensity': Group Gaussians into sources using 'intensity' map or
+                                   'curvature' map
       :term:`group_tol` ............ 1.0 : Tolerance for grouping of Gaussians into sources:
                                    larger values will result in larger sources
       :term:`ini_gausfit` ..... 'default': Initial guess for Gaussian parameters: 'default',
                                    'fbdsm', or 'nobeam'
+      :term:`ini_method` .... 'intensity': Method by which inital guess for fitting of Gaussians is chosen:
+                                   'intensity' or 'curvature'
       :term:`kappa_clip` ........... 3.0 : Kappa for clipped mean and rms
       :term:`minpix_isl` .......... None : Minimal number of pixels with emission per island.
                                    None -> calculate inside program
@@ -359,6 +363,10 @@ The advanced options are:
                                    always done for wavelet images
       :term:`splitisl_maxsize` .... 50.0 : If island size in beam area is more than this,
                                    consider splitting island. Min value is 50
+      :term:`src_ra_dec` .......... None : List of source positions at which fitting is done.  E.g.,
+                                   src_ra_dec = [(197.1932, 47.9188), (196.5573, 42.4852)].
+      :term:`src_radius_pix` ...... None : Radius of the island (if src_ra_dec is not None) in pixels. None
+                                   => radius is set to the FWHM of the beam major axis.
       :term:`stop_at` ............. None : Stops after: 'isl' = island finding step or 'read'
                                    = image reading step
       :term:`trim_box` ............ None : Do source detection on only a part of the image.
@@ -455,85 +463,138 @@ The advanced options are:
         Gaussians in the island belong to a single source. If False, grouping is
         controlled by the group_tol parameter.
 
+    group_method
+        This parameter is a string (default is ``'intensity'``). Gaussians are
+        deemed to be a part of the same source if: 1. no pixel on the line
+        joining the centers of any pair of Gaussians has a
+        (Gaussian-reconstructed) value less than the island threshold, and 2.
+        the centers are separated by a distance less than half the sum of their
+        FWHMs along the line joining them. If ``'curvature'``, the above
+        comparisons are done on the curature map (see Hopkins et al. 2012). If
+        ``'intensity'``, the comparisons are done on the intensity map.
+
     group_tol
-        This parameter is a float (default is 1.0) that sets the tolerance for grouping of Gaussians into sources: larger values will
-        result in larger sources. Sources are created by grouping nearby Gaussians as follows: (1) If the
-        minimum value between two Gaussians in an island is more than ``group_tol * thresh_isl * rms_clip``\, and (2) if the centres are seperated by a
-        distance less than 0.5*``group_tol`` of the sum of their FWHMs along the PA
-        of the line joining them, they belong to the same island.
+        This parameter is a float (default is 1.0) that sets the tolerance for
+        grouping of Gaussians into sources: larger values will result in larger
+        sources. Sources are created by grouping nearby Gaussians as follows:
+        (1) If the minimum value between two Gaussians in an island is more than
+        ``group_tol * thresh_isl * rms_clip``\, and (2) if the centres are
+        seperated by a distance less than 0.5*``group_tol`` of the sum of their
+        FWHMs along the PA of the line joining them, they belong to the same
+        island.
 
     ini_gausfit
-        This parameter is a string (default is ``'default'``). These are three different ways of estimating the initial guess for
-        fitting of Gaussians to an island of emission. If ``'default'``, the maximum
-        number of Gaussians is estimated from the number of peaks in the island.
-        An initial guess is made for the parameters of these Gaussians before
-        final fitting is done. This method should produce the best results when
-        there are no large sources present. If ``'simple'``, the maximum number of
+        This parameter is a string (default is ``'default'``). These are three
+        different ways of estimating the initial guess for fitting of Gaussians
+        to an island of emission. If ``'default'``, the maximum number of
+        Gaussians is estimated from the number of peaks in the island. An
+        initial guess is made for the parameters of these Gaussians before final
+        fitting is done. This method should produce the best results when there
+        are no large sources present. If ``'simple'``, the maximum number of
         Gaussians per island is set to 25, and no initial guess for the Gaussian
         parameters is made. Lastly, the ``'nobeam'`` method is similar to the
-        ``'default'`` method, but no information about the beam is used. This method
-        is best used when source sizes are expected to be very different from
-        the beam and is generally slower than the other methods. For wavelet
-        images, the value used for the original image is used for wavelet order
-        j <= 3 and ``'nobeam'`` for higher orders.
+        ``'default'`` method, but no information about the beam is used. This
+        method is best used when source sizes are expected to be very different
+        from the beam and is generally slower than the other methods. For
+        wavelet images, the value used for the original image is used for
+        wavelet order j <= 3 and ``'nobeam'`` for higher orders.
+
+    ini_method
+        This parameter is a string (default is ``'intensity'``). If
+        ``'intensity'``, the inital guess described in the help for the
+        ``ini_gausfit`` parameter is calculated using the intensity (ch0) image.
+        If ``'curvature'``, it is done using the curvature map (see Hopkins et
+        al. 2012).
 
     kappa_clip
-        This parameter is a float (default is 3.0) that is the factor used for Kappa-alpha clipping, as in
-        AIPS. For an image with few source pixels added on to (Gaussian) noise
-        pixels, the dispersion of the underlying noise will need to be
-        determined. This is done iteratively, whereby the actual dispersion is
-        first computed. Then, all pixels whose value exceeds kappa clip times
-        this rms are excluded and the rms is computed again. This process is
-        repeated until no more pixels are excluded. For well behaved noise
-        statistics, this process will converge to the true noise rms with a
-        value for this parameter ~3-5. A large fraction of source pixels, less
-        number of pixels in total, or significant non-Gaussianity of the
-        underlying noise will all lead to non-convergence.
+        This parameter is a float (default is 3.0) that is the factor used for
+        Kappa-alpha clipping, as in AIPS. For an image with few source pixels
+        added on to (Gaussian) noise pixels, the dispersion of the underlying
+        noise will need to be determined. This is done iteratively, whereby the
+        actual dispersion is first computed. Then, all pixels whose value
+        exceeds kappa clip times this rms are excluded and the rms is computed
+        again. This process is repeated until no more pixels are excluded. For
+        well behaved noise statistics, this process will converge to the true
+        noise rms with a value for this parameter ~3-5. A large fraction of
+        source pixels, less number of pixels in total, or significant
+        non-Gaussianity of the underlying noise will all lead to non-convergence.
 
     minpix_isl
-        This parameter is an integer (default is ``None``) that sets the minimum number of pixels in an island
-        for the island to be included. If ``None``, the number of pixels is set to 1/3 of the area of an unresolved source
-        using the beam and pixel size information in the image header. It is set
-        to 6 pixels for all wavelet images.
+        This parameter is an integer (default is ``None``) that sets the minimum
+        number of pixels in an island for the island to be included. If
+        ``None``, the number of pixels is set to 1/3 of the area of an
+        unresolved source using the beam and pixel size information in the image
+        header. It is set to 6 pixels for all wavelet images.
 
     ncores
-        This parameter is an integer (default is ``None``) that sets the number of cores to use during fitting. If ``None``, all available cores are used (one core is reserved for plotting).
+        This parameter is an integer (default is ``None``) that sets the number
+        of cores to use during fitting. If ``None``, all available cores are
+        used (one core is reserved for plotting).
 
     peak_fit
-        This parameter is a Boolean (default is ``True``). When True, PyBDSM will identify and fit peaks of emission in large islands iteratively (the size of islands for which peak fitting is done is controlled with the peak_maxsize option), using a maximum of 10 Gaussians per iteration. Enabling this option will generally speed up fitting (by factors of many for large islands), but may result in somewhat higher residuals.
+        This parameter is a Boolean (default is ``True``). When True, PyBDSM
+        will identify and fit peaks of emission in large islands iteratively
+        (the size of islands for which peak fitting is done is controlled with
+        the peak_maxsize option), using a maximum of 10 Gaussians per iteration.
+        Enabling this option will generally speed up fitting (by factors of many
+        for large islands), but may result in somewhat higher residuals.
 
     peak_maxsize
-        This parameter is a float (default is 30.0). If island size in beam area is more than this value, attempt to fit peaks
-        iteratively (if ``peak_fit = True``). The minimum value is 30.
+        This parameter is a float (default is 30.0). If island size in beam area
+        is more than this value, attempt to fit peaks iteratively (if ``peak_fit
+        = True``). The minimum value is 30.
 
     rms_value
-        This parameter is a float (default is ``None``) that sets the value of constant rms in Jy/beam to use if ``rms_map = False``. If ``None``, the value is
-        calculated inside the program.
+        This parameter is a float (default is ``None``) that sets the value of
+        constant rms in Jy/beam to use if ``rms_map = False``. If ``None``, the
+        value is calculated inside the program.
 
     spline_rank
-        This parameter is an integer (default is 3) that sets the order of the interpolating spline function
-        to interpolate the background rms and mean maps over the entire image.
+        This parameter is an integer (default is 3) that sets the order of the
+        interpolating spline function to interpolate the background rms and mean
+        maps over the entire image.
 
         .. note::
 
-            Bicubic interpolation (the default) can cause ringing artifacts to appear in the rms and mean maps in regions where sharp changes occur. These artifacts can result in regions with negative values. If you find such artifacts, try changing the :term:`spline_rank` parameter.
+            Bicubic interpolation (the default) can cause ringing artifacts to
+            appear in the rms and mean maps in regions where sharp changes
+            occur. These artifacts can result in regions with negative values.
+            If you find such artifacts, try changing the :term:`spline_rank`
+            parameter.
 
     split_isl
-        This parameter is a Boolean (default is ``True``). If ``True``, an island is split if it is too large, has a large convex deficiency and it
-        opens well. If it doesn't open well, then ``isl.mean = isl.clipped_mean``,
-        and is taken for fitting. Splitting, if needed, is always done for
-        wavelet images
+        This parameter is a Boolean (default is ``True``). If ``True``, an
+        island is split if it is too large, has a large convex deficiency and it
+        opens well. If it doesn't open well, then ``isl.mean =
+        isl.clipped_mean``, and is taken for fitting. Splitting, if needed, is
+        always done for wavelet images
 
     splitisl_maxsize
-        This parameter is a float (default is 50.0). If island size in beam area is more than this, consider splitting
-        island. The minimum value is 50.
+        This parameter is a float (default is 50.0). If island size in beam area
+        is more than this, consider splitting island. The minimum value is 50.
+
+    src_ra_dec
+        This parameter is a list of tuples (default is ``None``) that defines
+        the center positions at which fitting will be done. The size of the
+        resion used for the fit is given by the ``src_radius_pix`` parameter.
+        Positions should be given as a list of RA and Dec, in degrees, one set
+        per source. These positions will override the normal island finding
+        module.
+
+    src_radius_pix
+        This parameter is a float (default is ``None``) that determines the size
+        of the region used to fit the source positions specified by the
+        ``src_ra_dec`` parameter.
 
     stop_at
-        This parameter is a string (default is ``None``) that stops an analysis after: 'isl' = island finding step or 'read' = image reading step.
+        This parameter is a string (default is ``None``) that stops an analysis
+        after: 'isl' = island finding step or 'read' = image reading step.
 
     trim_box
-        This parameter is a tuple (default is ``None``) that defines a subregion of the image on which to do source detection. It is specified as (xmin, xmax,
-        ymin, ymax) in pixels. E.g., ``trim_box = (120, 840, 15, 895)``\. If ``None``, the entire image is used.
+        This parameter is a tuple (default is ``None``) that defines a subregion
+        of the image on which to do source detection. It is specified as (xmin,
+        xmax, ymin, ymax) in pixels. E.g., ``trim_box = (120, 840, 15, 895)``\.
+        If ``None``, the entire image is used.
 
 
 .. _flagging_opts:

@@ -24,12 +24,12 @@ The task parameters are as follows:
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
                                    source are grouped into one patch
-    :term:`catalog_type` ......... 'gaul': Type of catalog to write:  'gaul' - Gaussian
+    :term:`catalog_type` .......... 'srl': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
                                    Gaussians), 'shap' - shapelet list (not yet
                                    supported)
     :term:`clobber` .............. False : Overwrite existing file?
-    :term:`format` ................ 'bbs': Format of output Gaussian list: 'bbs', 'ds9',
+    :term:`format` ............... 'fits': Format of output Gaussian list: 'bbs', 'ds9',
                                    'fits', 'star', 'kvis', or 'ascii'
     :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?
     :term:`incl_empty` ........... False : Include islands without any valid Gaussians
@@ -56,7 +56,7 @@ Each of the parameters is described in detail below.
         ``bbs_patches = 'source'`` when writing the catalog.
 
     catalog_type
-        This parameter is a string (default is ``'gaul'``) that sets the type of catalog to write:  ``'gaul'`` - Gaussian list, ``'srl'`` - source list
+        This parameter is a string (default is ``'srl'``) that sets the type of catalog to write:  ``'gaul'`` - Gaussian list, ``'srl'`` - source list
         (formed by grouping Gaussians), ``'shap'`` - shapelet list (``'fits'`` format only)
 
         .. note::
@@ -67,7 +67,7 @@ Each of the parameters is described in detail below.
         This parameter is a Boolean (default is ``False``) that determines whether existing files are overwritten or not.
 
     format
-        This parameter is a string (default is ``'bbs'``) that sets the format of the output catalog. The following formats are supported:
+        This parameter is a string (default is ``'fits'``) that sets the format of the output catalog. The following formats are supported:
 
         * ``'bbs'`` - BlackBoard Selfcal sky model format (Gaussian list only)
 

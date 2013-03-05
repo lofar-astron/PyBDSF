@@ -430,7 +430,7 @@ class Opts(object):
                             doc = "List of source positions at which fitting is done.  "\
                                  "E.g., src_ra_dec = [(197.1932, 47.9188), (196.5573, 42.4852)].\n"\
                                  "This parameter defines the center positions at which "\
-                                 "fitting will be done. The size of the resion used for, "\
+                                 "fitting will be done. The size of the resion used for "\
                                  "the fit is given by the src_radius_pix parameter. "\
                                  "Positions should be given as a list of RA and Dec, "\
                                  "in degrees, one set per source. These positions will "\
@@ -465,11 +465,12 @@ class Opts(object):
                                  "higher orders.",
                              group = "advanced_opts")
     ini_method = Enum('intensity', 'curvature',
-                             doc = "Group Gaussians into sources using intensity map "\
-                                 "or curvature map\n"\
-                                 "If True, all Gaussians in the island belong to a "\
-                                 "single source. If False, grouping is controlled "\
-                                 "by the group_tol parameter.",
+                             doc = "Method by which inital guess for fitting of Gaussians "\
+                                 "is chosen: 'intensity' or 'curvature'\n"\
+                                 "If 'intensity', the inital guess described in the help for "\
+                                 "the ini_gausfit parameter is calculated using the intensity "\
+                                 "(ch0) image. If 'curvature', it is done using the curvature "\
+                                 "map (see Hopkins et al. 2012).",
                              group = "advanced_opts")
     fittedimage_clip = Float(0.1,
                              doc = "Sigma for clipping Gaussians " \
@@ -510,11 +511,17 @@ class Opts(object):
                                  "by the group_tol parameter.",
                              group = "advanced_opts")
     group_method = Enum('intensity', 'curvature',
-                             doc = "Group Gaussians into sources using intensity map "\
-                                 "or curvature map\n"\
-                                 "If True, all Gaussians in the island belong to a "\
-                                 "single source. If False, grouping is controlled "\
-                                 "by the group_tol parameter.",
+                             doc = "Group Gaussians into sources using 'intensity' map "\
+                                 "or 'curvature' map\n"\
+                                 "Gaussians are deemed to be a part of "\
+                                 "the same source if: 1. no pixel on the line joining "\
+                                 "the centers of any pair of Gaussians has a (Gaussian-"\
+                                 "reconstructed) value less than the island threshold, and "\
+                                 "2. the centers are separated by a distance less than "\
+                                 "half the sum of their FWHMs along the line joining them.\n"\
+                                 "If 'curvature', the above comparisons are done on the "\
+                                 "curature map (see Hopkins et al. 2012). If 'intensity', "\
+                                 "the comparisons are done on the intensity map.",
                              group = "advanced_opts")
     group_tol = Float(1.0,
                              doc = "Tolerance for grouping of Gaussians into sources: "\

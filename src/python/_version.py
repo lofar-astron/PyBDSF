@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.6'
+__version__ = '1.6.0'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -27,7 +27,7 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2013/02/25 - Version 1.6
+    2013/02/25 - Version 1.6.0
 
     2013/02/25 - Improved speed and accuracy of aperture flux
         calculation.
@@ -41,7 +41,7 @@ def changelog():
         with multiple Gaussians to be skipped. Minor adjustments to the
         wavelet module to improve performance.
 
-    2013/02/08 - Implemented position dependent WCS transformations.
+    2013/02/08 - Implemented-position dependent WCS transformations.
 
     2013/02/08 - Added option to fit to any arbitrary location in the
         image within a given radius (src_ra_dec and src_radius_pix).

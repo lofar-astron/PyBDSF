@@ -664,7 +664,7 @@ from lofar.bdsm._version import __version__, __revision__, changelog
 # Check whether called from the LOFAR CEPI/II. If so, skip check.
 import os
 aps_local_val = os.environ.get('APS_LOCAL')
-check_for_newer = False
+check_for_newer = True
 if aps_local_val == None and check_for_newer:
     try:
         import ftplib

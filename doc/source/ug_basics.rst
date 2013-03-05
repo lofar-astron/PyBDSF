@@ -11,7 +11,7 @@ After installing (see :ref:`installing`) you can start PyBDSM by simply opening 
 
     $ pybdsm
 
-at the terminal prompt. 
+at the terminal prompt.
 
 .. note::
 
@@ -68,40 +68,40 @@ As in CASA, PyBDSM uses a number of commands to list input parameters for tasks,
 .. glossary::
     inp
         This command sets the current task (e.g., ``inp process_image``) and lists the relevant parameters for that task. If entered without a task name, the parameters of the previously set task will be listed.
-        
+
         .. note::
-        
+
             At startup, the current task is set to the ``process image`` task.
-        
+
     go
         This command executes the current task.
-        
+
     default
         This command resets all parameters for a task to their default values.
 
         If a task name is given (e.g.,``default show_fit``), the
         parameters for that task are reset. If no task name is
         given, the parameters of the current task are reset.
-        
+
     tput
         This command saves the processing parameters to a file.
 
         .. note::
-            
+
             After the successful completion of a task, the current parameters are saved to the file 'pybdsm.last'.
-        
+
         A file name may be given (e.g., ``tput 'savefile.sav'``), in which case the
         parameters are saved to the file specified. If no file name is given, the
         parameters are saved to the file 'pybdsm.last'. The saved parameters can be
         loaded using the :term:`tget` command.
-        
+
     tget
         This command loads the processing parameters from a parameter save file.
 
         A file name may be given (e.g., ``tget 'savefile.sav'``), in which case the
         parameters are loaded from the file specified. If no file name is given,
         the parameters are loaded from the file 'pybdsm.last' if it exists.
-        
+
         Normally, the save file is created by the :term:`tput` command.
 
 Tasks
@@ -118,13 +118,13 @@ The following tasks are available in PyBDSM:
 .. glossary::
     process_image
         This task processes an image to find and measure sources. See :ref:`process_image` for details.
-        
+
     show_fit
         This task shows the result of a fit. See :ref:`showfit` for details.
-        
+
     write_catalog
         This task writes the source catalog. See :ref:`write_catalog` for details.
-        
+
     export_image
         This task exports an internally derived image. See :ref:`export_image` for details.
 
@@ -170,52 +170,52 @@ Below is an example of using PyBDSM to find and measure sources in an image::
       help 'par' .......... : Get help on a parameter (e.g., help 'rms_box')
       help changelog ...... : See list of recent changes
     ________________________________________________________________________
-     
+
     BDSM [1]: inp process_image
     --------> inp(process_image)
     PROCESS_IMAGE: Find and measure sources in an image.
     =================================================================================
-    filename ................. '': Input image file name                       
+    filename ................. '': Input image file name
     advanced_opts ........ False : Show advanced options
-    adaptive_rms_box ..... False : Use adaptive rms_box when determining rms and 
-                                   mean maps                   
+    adaptive_rms_box ..... False : Use adaptive rms_box when determining rms and
+                                   mean maps
     atrous_do ............ False : Decompose Gaussian residual image into multiple
-                                   scales                                      
+                                   scales
     beam .................. None : FWHM of restoring beam. Specify as (maj, min, pos
                                    ang E of N) in degrees. E.g., beam = (0.06, 0.02,
-                                   13.3). None => get from header              
-    flagging_opts ........ False : Show options for Gaussian flagging          
+                                   13.3). None => get from header
+    flagging_opts ........ False : Show options for Gaussian flagging
     frequency ............. None : Frequency in Hz of input image. E.g., frequency =
-                                   74e6. None => get from header.              
-    interactive .......... False : Use interactive mode                        
+                                   74e6. None => get from header.
+    interactive .......... False : Use interactive mode
     mean_map .......... 'default': Background mean map: 'default' => calc whether to
                                    use or not, 'zero' => 0, 'const' => clipped mean,
-                                   'map' => use 2-D map                        
-    multichan_opts ....... False : Show options for multi-channel images       
-    output_opts .......... False : Show output options                         
-    polarisation_do ...... False : Find polarisation properties                
-    psf_vary_do .......... False : Calculate PSF variation across image        
+                                   'map' => use 2-D map
+    multichan_opts ....... False : Show options for multi-channel images
+    output_opts .......... False : Show output options
+    polarisation_do ...... False : Find polarisation properties
+    psf_vary_do .......... False : Calculate PSF variation across image
     rms_box ............... None : Box size, step size for rms/mean map calculation.
                                    Specify as (box, step) in pixels. E.g., rms_box =
-                                   (40, 10) => box of 40x40 pixels, step of 10 
-                                   pixels. None => calculate inside program    
+                                   (40, 10) => box of 40x40 pixels, step of 10
+                                   pixels. None => calculate inside program
     rms_map ............... None : Background rms map: True => use 2-D rms map; False
                                    => use constant rms; None => calculate inside
-                                   program                                     
-    shapelet_do .......... False : Decompose islands into shapelets            
+                                   program
+    shapelet_do .......... False : Decompose islands into shapelets
     spectralindex_do ..... False : Calculate spectral indices (for multi-channel
-                                   image)                                      
+                                   image)
     thresh ................ None : Type of thresholding: None => calculate inside
-                                   program, 'fdr' => use false detection rate  
-                                   algorithm, 'hard' => use sigma clipping     
+                                   program, 'fdr' => use false detection rate
+                                   algorithm, 'hard' => use sigma clipping
     thresh_isl ............. 3.0 : Threshold for the island boundary in number of
                                    sigma above the mean. Determines extent of island
-                                   used for fitting                            
+                                   used for fitting
     thresh_pix ............. 5.0 : Source detection threshold: threshold for the
                                    island peak in number of sigma above the mean. If
                                    false detection rate thresholding is used, this
                                    value is ignored and thresh_pix is calculated
-                                   inside the program                          
+                                   inside the program
 
     BDSM [2]: filename = 'sb48.fits'
     BDSM [3]: go
@@ -245,13 +245,13 @@ Below is an example of using PyBDSM to find and measure sources in an image::
     BDSM [4]: show_fit
     --------> show_fit()
 
-The figure made by ``show_fit`` is shown in the figure below. In the plot window, one can zoom in, save the plot to a file, etc. The list of best-fit Gaussians found by PyBDSM may be written to a file for use in other programs, such as BBS (the default), as follows::
+The figure made by ``show_fit`` is shown in the figure below. In the plot window, one can zoom in, save the plot to a file, etc. The list of best-fit Gaussians found by PyBDSM may be written to a file for use in other programs as follows::
 
     BDSM [5]: write_catalog
     --------> write_catalog()
-    --> Wrote BBS sky model 'sb48.pybdsm.sky_in'
+    --> Wrote FITS file 'sb48.pybdsm.srl.fits'
 
-The output Gaussian or source list contains source positions, fluxes, etc. 
+The output Gaussian or source list contains source positions, fluxes, etc.
 
 .. figure:: quick_example.png
    :scale: 50 %
@@ -259,7 +259,7 @@ The output Gaussian or source list contains source positions, fluxes, etc.
    :align: center
    :alt: show_fit example output
 
-   Output of ``show_fit``, showing the original image with and without sources, the model image, and the residual (original minus model) image. Boundaries of the islands of emission found by PyBDSM are shown in light blue. The fitted Gaussians are shown for each island as ellipses (the sizes of which correspond to the FWHMs of the Gaussians). Gaussians that have been grouped together into a source are shown with the same color. For example, the two red Gaussians of island #1 have been grouped together into one source, and the nine Gaussians of island #0 have been grouped into 4 separate sources. 
+   Output of ``show_fit``, showing the original image with and without sources, the model image, and the residual (original minus model) image. Boundaries of the islands of emission found by PyBDSM are shown in light blue. The fitted Gaussians are shown for each island as ellipses (the sizes of which correspond to the FWHMs of the Gaussians). Gaussians that have been grouped together into a source are shown with the same color. For example, the two red Gaussians of island #1 have been grouped together into one source, and the nine Gaussians of island #0 have been grouped into 4 separate sources.
 
 .. rubric:: Footnotes
 .. [#f1] http://casa.nrao.edu
