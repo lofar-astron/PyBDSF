@@ -129,7 +129,7 @@ class Op_preprocess(Op):
             # wrong (e.g., not corrected for the primary beam).
             img.ch0_sum_jy = 0
         else:
-            im_flux = N.nansum(img.ch0)/img.pixel_beamarea # Jy
+            im_flux = N.nansum(img.ch0)/img.pixel_beamarea() # Jy
             img.ch0_sum_jy = im_flux
             mylogger.userinfo(mylog, 'Flux from sum of (non-blank) pixels',
                               '%.3f Jy' % (im_flux,))

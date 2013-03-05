@@ -204,19 +204,6 @@ class Op_gaul2srl(Op):
         """ Whether two gaussians belong to the same source or not. """
         import functions as func
 
-        def same_island_aegean(pair, g_list, subim, delc, tol=0.5):
-            """Groups Gaussians using the Aegean curvature algorithm
-            (Hancock et al. 2012)
-
-            The Aegean algorithm uses a curvature map to identify regions of negative
-            curvature. These regions then define distinct sources.
-            """
-            import scipy.signal as sg
-
-            # Make average curavature map:
-            curv_kernal = N.array([[1, 1, 1],[1, -8, 1],[1, 1, 1]])
-            curv_map = sg.convolve2d(subim, curv_kernal)
-
         def same_island_min(pair, g_list, subim, delc, tol=0.5):
             """ If the minimum of the reconstructed fluxes along the line joining the peak positions
                 is greater than thresh_isl times the rms_clip, they belong to different islands. """
@@ -301,6 +288,8 @@ class Op_gaul2srl(Op):
             same_isl1_cont = True
             same_isl2 = True
         else:
+            if img.opts.group_method == 'curvature':
+                subim = -1.0 * func.make_curvature_map(subim)
             tol = img.opts.group_tol
             same_isl1_min, same_isl1_cont = same_island_min(pair, g_list, subim, delc, tol)
             same_isl2 = same_island_dist(pair, g_list, tol/2.0)
@@ -334,7 +323,7 @@ class Op_gaul2srl(Op):
                                         # fit gaussian around this posn
         blc = N.zeros(2); trc = N.zeros(2)
         n, m = subim_src.shape[0:2]
-        bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
+        bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
         ssubimsize = max(N.int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
         blc[0] = max(0, maxx-(ssubimsize-1)/2); blc[1] = max(0, maxy-(ssubimsize-1)/2)
         trc[0] = min(n, maxx+(ssubimsize-1)/2); trc[1] = min(m, maxy+(ssubimsize-1)/2)
@@ -365,23 +354,17 @@ class Op_gaul2srl(Op):
         if N.isnan(mompara[1]):
             mompara[1] = posn[0] - delc[0]
         x1 = N.int(N.floor(mompara[1]))
-        if x1 < 0:
-            x1 = 0
         if N.isnan(mompara[2]):
             mompara[2] = posn[1] - delc[1]
         y1 = N.int(N.floor(mompara[2]))
-        if y1 < 0:
-            y1 = 0
         xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
         if img.opts.flag_smallsrc and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Island = '+str(isl.island_id))
             mylog.debug('Mask = '+repr(mask[xind, yind])+'xind, yind, x1, y1 = '+repr(xind)+' '+repr(yind)+' '+repr(x1)+' '+repr(y1))
         t=(mompara[1]-x1)/(x1+1-x1)  # in case u change it later
         u=(mompara[2]-y1)/(y1+1-y1)
-        xmax = N.min([x1+1, subim_src.shape[0] - 1])
-        ymax = N.min([y1+1, subim_src.shape[1] - 1])
-        s_peak=(1.0-t)*(1.0-u)*subim_src[x1,y1]+t*(1.0-u)*subim_src[xmax,y1]+ \
-               t*u*subim_src[xmax,ymax]+(1.0-t)*u*subim_src[x1,ymax]
+        s_peak=(1.0-t)*(1.0-u)*subim_src[x1,y1]+t*(1.0-u)*subim_src[x1+1,y1]+ \
+               t*u*subim_src[x1+1,y1+1]+(1.0-t)*u*subim_src[x1,y1+1]
         if (not img.opts.flag_smallsrc) and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Speak '+repr(s_peak)+'Mompara = '+repr(mompara))
             mylog.debug('x1, y1 : '+repr(x1)+', '+repr(y1))

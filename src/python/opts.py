@@ -293,7 +293,7 @@ class Opts(object):
 
 
     #--------------------------------ADVANCED OPTIONS--------------------------------
-    split_isl = Bool(False,
+    split_isl = Bool(True,
                              doc = "Split island if it is too large, has a large "\
                                  "convex deficiency and it opens well.\n"\
                                  "If it doesn't open well, then isl.mean = "\
@@ -426,6 +426,23 @@ class Opts(object):
                                  "If aperture=None (i.e., no aperture radius is specified), "\
                                  "this parameter is ignored.",
                              group = "advanced_opts")
+    src_ra_dec = Option(None, List(Tuple(Float(), Float())),
+                            doc = "List of source positions at which fitting is done.  "\
+                                 "E.g., src_ra_dec = [(197.1932, 47.9188), (196.5573, 42.4852)].\n"\
+                                 "This parameter defines the center positions at which "\
+                                 "fitting will be done. The size of the resion used for, "\
+                                 "the fit is given by the src_radius_pix parameter. "\
+                                 "Positions should be given as a list of RA and Dec, "\
+                                 "in degrees, one set per source. These positions will "\
+                                 "override the normal island finding module.",
+                             group = "advanced_opts")
+    src_radius_pix = Option(None, Float(),
+                             doc = "Radius of the island (if src_ra_dec is not None) in pixels. "\
+                                 "None => radius is set to the FWHM of the beam major axis.\n"\
+                                 "This parameter determines the size of the region used "\
+                                 "to fit the source positions specified by the src_ra_dec "\
+                                 "parameter.",
+                             group = "advanced_opts")
     ini_gausfit = Enum('default', 'simple', 'nobeam',
                              doc = "Initial guess for Gaussian "\
                                  "parameters: 'default', 'simple', or 'nobeam'\n"\
@@ -446,6 +463,13 @@ class Opts(object):
                                  "For wavelet images, the value used for the original "\
                                  "image is used for wavelet order j <= 3 and 'nobeam' for "\
                                  "higher orders.",
+                             group = "advanced_opts")
+    ini_method = Enum('intensity', 'curvature',
+                             doc = "Group Gaussians into sources using intensity map "\
+                                 "or curvature map\n"\
+                                 "If True, all Gaussians in the island belong to a "\
+                                 "single source. If False, grouping is controlled "\
+                                 "by the group_tol parameter.",
                              group = "advanced_opts")
     fittedimage_clip = Float(0.1,
                              doc = "Sigma for clipping Gaussians " \
@@ -481,6 +505,13 @@ class Opts(object):
     group_by_isl = Bool(False,
                              doc = "Group all Gaussians in each island into a single "\
                                  "source\n"\
+                                 "If True, all Gaussians in the island belong to a "\
+                                 "single source. If False, grouping is controlled "\
+                                 "by the group_tol parameter.",
+                             group = "advanced_opts")
+    group_method = Enum('intensity', 'curvature',
+                             doc = "Group Gaussians into sources using intensity map "\
+                                 "or curvature map\n"\
                                  "If True, all Gaussians in the island belong to a "\
                                  "single source. If False, grouping is controlled "\
                                  "by the group_tol parameter.",
@@ -1008,7 +1039,13 @@ class Opts(object):
                                  "found by least-squares fitting of the shapelet basis "\
                                  "functions to the image.",
                              group = "shapelet_do")
-
+    shapelet_gresid = Bool(False,
+                             doc = "Use Gaussian residual image for shapelet "\
+                                 "decomposition?\n"\
+                                 "If True, then the shapelet decomposition is done "\
+                                 "on the Gaussian residual image rather that the "\
+                                 "ch0 image.",
+                             group = "shapelet_do")
 
     #-------------------------SPECTRAL INDEX OPTIONS--------------------------------
     flagchan_rms = Bool(True,
@@ -1071,7 +1108,7 @@ class Opts(object):
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
                              group = 'hidden')
-    format = Enum('bbs', 'ds9', 'fits', 'ascii', 'star', 'kvis',
+    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis',
                              doc = "Format of output catalog: 'bbs', "\
                                  "'ds9', 'fits', 'star', 'kvis', or 'ascii'\n"\
                                  "The following formats are supported:\n"\
@@ -1113,7 +1150,7 @@ class Opts(object):
                                  "even if there are no sources. In this case, "\
                                  "the catalog will have a header but no entries.",
                              group = 'hidden')
-    catalog_type = Enum('gaul', 'shap', 'srl',
+    catalog_type = Enum('srl', 'gaul', 'shap',
                              doc = "Type of catalog to write:  'gaul' - Gaussian "\
                                  "list, 'srl' - source list (formed "\
                                  "by grouping Gaussians), 'shap' - shapelet "\

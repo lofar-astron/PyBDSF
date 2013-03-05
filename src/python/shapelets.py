@@ -1,6 +1,6 @@
 """Module shapelets.
 
-nmax => J = 0..nmax; hence nmax+1 orders calculated. 
+nmax => J = 0..nmax; hence nmax+1 orders calculated.
 ordermax = nmax+1; range(ordermax) has all the values of n
 Order n => J=n, where J=0 is the gaussian.
 
@@ -12,11 +12,11 @@ from scipy.optimize import leastsq
 
 def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     """ Decomposes image (with mask) and beta, centre (2-tuple) , nmax into basis
-        shapelets and returns the coefficient matrix cf. 
+        shapelets and returns the coefficient matrix cf.
 	Mode is 'fit' or 'integrate' for method finding coeffs. If fit then integrated
 	values are taken as initial guess.
-	Centre is by python convention, for retards who count from zero. 
-	"""	
+	Centre is by python convention, for retards who count from zero.
+	"""
     bad = False
     if (beta < 0 or beta/max(image.shape) > 5 or \
        (max(N.abs(list(centre)))-max(image.shape)/2) > 10*max(image.shape)): bad = True
@@ -59,7 +59,7 @@ def fit_shapeletbasis(image, mask, cf0, Bset):
 
     cfshape = cf0.shape
     res=lambda p, image, Bset, cfshape, mask_flat : (image.flatten()-func.shapeletfit(p, Bset, cfshape))[ma]
-        
+
     if len(ma) <= 5:
         # Not enough degrees of freedom
         cf = cf0
@@ -82,7 +82,7 @@ def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
         rimage += B*cf[coord]
 
     return rimage
- 
+
 def shapelet_image(basis, beta, centre, hc, nx, ny, size):
     """ Takes basis, beta, centre (2-tuple), hc matrix, x, y, size and returns the image of the shapelet of
     order nx,ny on an image of size size. Does what getcartim.f does in fBDSM. nx,ny -> 0-nmax
@@ -104,7 +104,7 @@ def shapelet_image(basis, beta, centre, hc, nx, ny, size):
 
     dumr3 = N.zeros(size[0])
     for i in range(size[0]):
-        for j in range(ind[0]+1):   
+        for j in range(ind[0]+1):
             dumr3[i] += hcx[j]*(x[i]**j)
     B_nx = N.exp(-0.50*x*x)*dumr3/dumr1[0]/sqrt(beta)
 
@@ -119,10 +119,10 @@ def shapelet_image(basis, beta, centre, hc, nx, ny, size):
 
 def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shapelet
     """ Finds the optimal centre for shapelet decomposition. Minimising various
-    combinations of c12 and c21, as in literature doesnt work for all cases. 
-    Hence, for the c1 image, we find the zero crossing for every vertical line 
-    and for the c2 image, the zero crossing for every horizontal line, and then 
-    we find intersection point of these two. This seems to work even for highly 
+    combinations of c12 and c21, as in literature doesnt work for all cases.
+    Hence, for the c1 image, we find the zero crossing for every vertical line
+    and for the c2 image, the zero crossing for every horizontal line, and then
+    we find intersection point of these two. This seems to work even for highly
     non-gaussian cases. """
     import functions as func
     import sys
@@ -150,7 +150,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
 	    cf12[coord] = None
 	    cf21[coord] = None
 
-    (xmax,ymax) = N.unravel_index(image.argmax(),image.shape)  #  FIX  with mask 
+    (xmax,ymax) = N.unravel_index(image.argmax(),image.shape)  #  FIX  with mask
     if xmax in [1,n] or ymax in [1,m]:
         (m1, m2, m3) = func.moment(mask)
 	xmax,ymax = N.round(m2)
@@ -161,13 +161,13 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     try:
         (x1,y1) = getzeroes_matrix(mask, cf12, ymax, xmax)         # y1 is array of zero crossings
         (y2,x2) = getzeroes_matrix(tr_mask, tr_cf21, xmax, ymax)    # x2 is array of zero crossings
-    
+
         # find nominal intersection pt as integers
         xind=N.where(x1==xmax)
         yind=N.where(y2==ymax)
         xind=xind[0][0]
         yind=yind[0][0]
-    
+
         # now take 2 before and 2 after, fit straight lines, get proper intersection
         ninter=5
         if xind<3 or yind<3 or xind>n-2 or yind>m-2:
@@ -190,7 +190,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
             cen[1]=c1+m1*cen[0]
         else:
           cen[0] = cen[1] = 0.0
-    
+
         # check if estimated centre makes sense
         error=shapelet_check_centre(image, mask, cen, beam_pix)
     except:
@@ -199,12 +199,12 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
         #print 'Error '+str(error)+' in finding centre, will take 1st moment instead.'
         (m1, m2, m3) = func.moment(image, mask)
 	cen = m2
-    
+
     return cen
 
 def getzeroes_matrix(mask, cf, cen, cenx):
     """ For a matrix cf, and a mask, this returns two vectors; x is the x-coordinate
-    and y is the interpolated y-coordinate where the matrix cf croses zero. If there 
+    and y is the interpolated y-coordinate where the matrix cf croses zero. If there
     is no zero-crossing, y is zero for that column x.  """
 
     x = N.arange(cf.shape[0], dtype = float)
@@ -219,7 +219,7 @@ def getzeroes_matrix(mask, cf, cen, cenx):
     for i in range(cf.shape[0]):
         l = [mask[i,j] for j in range(cf.shape[1])]
         npts = len(l)-sum(l)
-     
+
         #print 'npts = ',npts
 	if npts > 3 and not N.isnan(cf[i,cen]):
  	  mrow=mask[i,:]
@@ -254,7 +254,7 @@ def getzeroes_matrix(mask, cf, cen, cenx):
     return x,y
 
 def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
-    """ This finds the root for finding the shapelet centre. If there are multiple roots, takes 
+    """ This finds the root for finding the shapelet centre. If there are multiple roots, takes
     that which closest to the 'centre', taken as the intensity barycentre. This is the python
     version of getroot.f of anaamika."""
     import functions as func
@@ -283,7 +283,7 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
                 else:
 		    minint=minintold
             minintold=minint
-       
+
     if minint < 1 or minint > npoint: error=1
     if error != 1:
       low=minint-min(2,minint)#-1)
@@ -309,7 +309,7 @@ def shapelet_check_centre(image, mask, cen, beam_pix):
     n, m = image.shape
     x, y = round(cen[0]), round(cen[1])
     if x <= 0 or x >= n or y <= 0 or y >= m: error = 1
-    if error == 0: 
+    if error == 0:
         if not mask[int(round(x)),int(round(y))]: error == 2
 
     if error > 0:
@@ -323,12 +323,6 @@ def shape_varybeta(image, mask, basis, betainit, cen, nmax, betarange, plot):
     and looks at the residual rms vs beta to estimate the optimal value of beta. """
     import _cbdsm
 
-    #betamin, betamax = betarange
-    #nbin=30; delta = (betamax-betamin)/(nbin-1.)
-    #beta_arr = N.arange(betamin, betamax+delta, delta)
-    #nbin=len(beta_arr)
-
-    # same as fortran
     nbin = 30
     delta = (2.0*betainit-betainit/2.0)/nbin
     beta_arr = betainit/4.0+N.arange(nbin)*delta
@@ -339,28 +333,29 @@ def shape_varybeta(image, mask, basis, betainit, cen, nmax, betarange, plot):
     res_rms=N.zeros(nbin)
     for i in range(len(beta_arr)):
         cf = decompose_shapelets(image, mask, basis, beta_arr[i], cen, nmax, mode='')
-	im_r=reconstruct_shapelets(image.shape, mask, basis, beta_arr[i], cen, nmax, cf)
-	im_res = image - im_r
+        im_r = reconstruct_shapelets(image.shape, mask, basis, beta_arr[i], cen, nmax, cf)
+        im_res = image - im_r
         ind = N.where(~mask)
         res_rms[i] = N.std(im_res[ind])
+
     minind = N.argmin(res_rms)
     if minind > 1 and minind < nbin:
         beta = beta_arr[minind]
-	error = 0
+        error = 0
     else:
-	beta = betainit
-	error = 1
+        beta = betainit
+        error = 1
 
 #     if plot:
 #       pl.figure()
 #       pl.plot(beta_arr,res_rms,'*-')
 #       pl.xlabel('Beta')
 #       pl.ylabel('Residual rms')
- 
+
     return beta, error
 
 def shapelet_coeff(nmax=20,basis='cartesian'):
-    """ Computes shapelet coefficient matrix for cartesian and polar 
+    """ Computes shapelet coefficient matrix for cartesian and polar
       hc=shapelet_coeff(nmax=10, basis='cartesian') or
       hc=shapelet_coeff(10) or hc=shapelet_coeff().
       hc(nmax) will be a nmax+1 X nmax+1 matrix."""

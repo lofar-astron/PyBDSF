@@ -485,6 +485,35 @@ def dist_2pt(p1, p2):
 
     return dist
 
+def angsep(ra1deg, dec1deg, ra2deg, dec2deg):
+    """Returns angular separation between two coordinates (all in degrees)"""
+    import math
+
+    ra1rad=ra1deg*math.pi/180.0
+    dec1rad=dec1deg*math.pi/180.0
+    ra2rad=ra2deg*math.pi/180.0
+    dec2rad=dec2deg*math.pi/180.0
+
+    # calculate scalar product for determination
+    # of angular separation
+    x=math.cos(ra1rad)*math.cos(dec1rad)*math.cos(ra2rad)*math.cos(dec2rad)
+    y=math.sin(ra1rad)*math.cos(dec1rad)*math.sin(ra2rad)*math.cos(dec2rad)
+    z=math.sin(dec1rad)*math.sin(dec2rad)
+
+    if x + y + z > 1.0:
+        rad = 0.0
+    else:
+        rad=math.acos(x+y+z)
+
+    # use Pythargoras approximation if rad < 1 arcsec
+    if rad<0.000004848:
+        rad=math.sqrt((math.cos(dec1rad)*(ra1rad-ra2rad))**2+(dec1rad-dec2rad)**2)
+
+    # Angular separation
+    deg=rad*180/math.pi
+    return deg
+
+
 def std(y):
     """ Returns unbiased standard deviation. """
     from math import sqrt
@@ -721,7 +750,18 @@ def deconv2(gaus_bm, gaus_c):
 
 
 def get_errors(img, p, stdav, bm_pix=None):
+    """ Returns errors from Condon 1997
 
+    Returned list includes errors on:
+        peak flux [Jy/beam]
+        x_0 [pix]
+        y_0 [pix]
+        e_maj [pix]
+        e_min [pix]
+        e_pa [deg]
+        e_tot [Jy]
+
+    """
     from const import fwsig
     from math import sqrt, log, pow, pi
     import mylogger
@@ -743,23 +783,23 @@ def get_errors(img, p, stdav, bm_pix=None):
       else:
         sq2 = sqrt(2.0)
         if bm_pix == None:
-            bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
-        dumr = sqrt(abs(size[0]*size[1]/(4.0*bm_pix[0]*bm_pix[1])))
-        dumrr1 = 1.0+bm_pix[0]*bm_pix[1]/(size[0]*size[0])
-        dumrr2 = 1.0+bm_pix[0]*bm_pix[1]/(size[1]*size[1])
-        dumrr3 = dumr*pp[0]/stdav
-        d1 = sqrt(8.0*log(2.0))
-        d2 = (size[0]*size[0]-size[1]*size[1])/(size[0]*size[0])
+            bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
+        dumr = sqrt(abs(size[0] * size[1] / (4.0 * bm_pix[0] * bm_pix[1])))
+        dumrr1 = 1.0 + bm_pix[0] * bm_pix[1] / (size[0] * size[0])
+        dumrr2 = 1.0 + bm_pix[0] * bm_pix[1] / (size[1] * size[1])
+        dumrr3 = dumr * pp[0] / stdav
+        d1 = sqrt(8.0 * log(2.0))
+        d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[0])
         try:
-            e_peak = pp[0]*sq2/(dumrr3*pow(dumrr1,0.75)*pow(dumrr2,0.75))
-            e_maj=size[0]*sq2/(dumrr3*pow(dumrr1,1.25)*pow(dumrr2,0.25))
-            e_min=size[1]*sq2/(dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))  # in fw
-            pa_rad = size[2]*pi/180.0
-            e_x0 = sqrt( (e_maj*N.sin(pa_rad))**2 + (e_min*N.cos(pa_rad))**2 ) / d1
-            e_y0 = sqrt( (e_maj*N.cos(pa_rad))**2 + (e_min*N.sin(pa_rad))**2 ) / d1
-            e_pa=2.0/(d2*dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))
-            e_pa=e_pa*180.0/pi
-            e_tot=pp[0]*sqrt(e_peak*e_peak/(pp[0]*pp[0])+(0.25/dumr/dumr)*(e_maj*e_maj/(size[0]*size[0])+e_min*e_min/(size[1]*size[1])))
+            e_peak = pp[0] * sq2 / (dumrr3 * pow(dumrr1, 0.75) * pow(dumrr2, 0.75))
+            e_maj = size[0] * sq2 / (dumrr3 * pow(dumrr1, 1.25) * pow(dumrr2, 0.25))
+            e_min = size[1] * sq2 / (dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))  # in fw
+            pa_rad = size[2] * pi / 180.0
+            e_x0 = sqrt( (e_maj * N.sin(pa_rad))**2 + (e_min * N.cos(pa_rad))**2 ) / d1
+            e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
+            e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
+            e_pa = e_pa * 180.0/pi
+            e_tot = pp[0] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) * (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
         except:
             e_peak = 0.0
             e_x0 = 0.0
@@ -963,21 +1003,26 @@ def arrstatmask(im, mask):
 
     return (av, std, maxv, (xmax, ymax), minv, (xmin, ymin))
 
-def get_maxima(im, mask, thr, shape, beam):
+def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     """ Gets the peaks in an image """
     from copy import deepcopy as cp
     import numpy as N
 
+    if im_pos == None:
+        im_pos = im
     im1 = cp(im)
     ind = N.array(N.where(~mask)).transpose()
-    ind = [tuple(coord) for coord in ind if im[tuple(coord)] > thr]
-    n, m = shape; iniposn = []; inipeak = []
+    ind = [tuple(coord) for coord in ind if im_pos[tuple(coord)] > thr]
+    n, m = shape
+    iniposn = []
+    inipeak = []
     for c in ind:
-      goodlist = [im[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
+      goodlist = [im_pos[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
                    if i>=0 and i<n and j>=0 and j<m and (i,j) != c]
-      peak = N.sum(im[c] > goodlist) == len(goodlist)
+      peak = N.sum(im_pos[c] > goodlist) == len(goodlist)
       if peak:
-        iniposn.append(c); inipeak.append(im[c])
+        iniposn.append(c)
+        inipeak.append(im[c])
         im1 = mclean(im1, c, beam)
 
     return inipeak, iniposn, im1
@@ -1622,18 +1667,19 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     if yhi > img.ch0.shape[1]:
         yhi = img.ch0.shape[1]
 
-    aper_im = img.ch0[xlo:xhi, ylo:yhi]
+    aper_im = img.ch0[xlo:xhi, ylo:yhi] - img.mean[xlo:xhi, ylo:yhi]
     aper_rms = img.rms[xlo:xhi, ylo:yhi]
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
-    aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, img.pixel_beamarea)
+    pixel_beamarea = img.pixel_beamarea(location=posn_pix)
+    aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
     return aper_flux
 
 def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     """Returns aperture flux and error"""
     import numpy as N
 
-    dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[1], posn_pix[0], aperture_pix)
-    aper_mask = N.where(dist_mask)
+    dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[0], posn_pix[1], aperture_pix)
+    aper_mask = N.where(dist_mask.astype(bool))
     if N.size(aper_mask) == 0:
         return [0.0, 0.0]
     aper_flux = N.nansum(aper_im[aper_mask])/beamarea # Jy
@@ -1641,12 +1687,30 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
     return [aper_flux, aper_fluxE]
 
-def generate_aperture(ysize, xsize, ycenter, xcenter, radius):
-    """Makes a mask for a circular aperture"""
+def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
+    """Makes a mask (1 = inside aperture) for a circular aperture"""
     import numpy
 
-    x, y = numpy.mgrid[0:ysize,0:xsize]
-    return ((x - ycenter)**2 + (y - xcenter)**2 <= radius**2) * 1
+    mask = numpy.zeros((xsize, ysize))
+    scale_max = numpy.ceil(radius*2.0)
+    if int(numpy.mod(scale_max, 2)) == 0:
+        scale_max += 1
+    cen = int(scale_max / 2)
+    xmin = max(0, cen - xcenter)
+    ymin = max(0, cen - ycenter)
+    xmax = min(scale_max, scale_max - (xcenter + cen - xsize) - 1)
+    ymax = min(scale_max, scale_max - (ycenter + cen - ysize) - 1)
+    x, y = numpy.mgrid[xmin:xmax, ymin:ymax]
+    xoffset = xcenter - numpy.floor(xcenter)
+    yoffset = ycenter - numpy.floor(ycenter)
+    subim = ((x - xoffset - cen)**2 + (y - yoffset - cen)**2 <= radius**2) * 1
+    xmin = max(0, xcenter-cen)
+    ymin = max(0, ycenter-cen)
+    xmax = min(xsize, xcenter+cen)
+    ymax = min(ysize, ycenter+cen)
+    mask_slice = [slice(xmin, xmax+1), slice(ymin, ymax+1)]
+    mask[mask_slice] = subim
+    return mask
 
 def getTerminalSize():
     """
@@ -1788,3 +1852,24 @@ def send_coords(s, private_key, coords):
         raise RuntimeError("A running SAMP hub was not found.")
     else:
         s.samp.hub.notifyAll(private_key, message)
+
+def make_curvature_map(subim):
+    """Makes a curvature map with the Aegean curvature algorithm
+    (Hancock et al. 2012)
+
+    The Aegean algorithm uses a curvature map to identify regions of negative
+    curvature. These regions then define distinct sources.
+    """
+    import scipy.signal as sg
+    import numpy as N
+    import sys
+
+    # Make average curavature map:
+    curv_kernal = N.array([[1, 1, 1],[1, -8, 1],[1, 1, 1]])
+    # The next step prints meaningless warnings, so suppress them
+    original_stdout = sys.stdout  # keep a reference to STDOUT
+    sys.stdout = NullDevice()  # redirect the real STDOUT
+    curv_map = sg.convolve2d(subim, curv_kernal)
+    sys.stdout = original_stdout  # turn STDOUT back on
+
+    return curv_map

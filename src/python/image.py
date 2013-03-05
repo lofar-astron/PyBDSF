@@ -52,8 +52,8 @@ class Image(object):
 
     def __setstate__(self, state):
         """Needed for multiprocessing"""
-        self.pixel_beamarea = state['pixel_beamarea']
-        self.pixel_beam = state['pixel_beam']
+#         self.pixel_beamarea = state['pixel_beamarea']
+#         self.pixel_beam = state['pixel_beam']
         self.thresh_pix = state['thresh_pix']
         self.minpix_isl = state['minpix_isl']
         self.clipped_mean = state['clipped_mean']
@@ -61,8 +61,8 @@ class Image(object):
     def __getstate__(self):
         """Needed for multiprocessing"""
         state = {}
-        state['pixel_beamarea'] = self.pixel_beamarea
-        state['pixel_beam'] = self.pixel_beam
+#         state['pixel_beamarea'] = self.pixel_beamarea
+#         state['pixel_beam'] = self.pixel_beam
         state['thresh_pix'] = self.thresh_pix
         state['minpix_isl'] = self.minpix_isl
         state['clipped_mean'] = self.clipped_mean
@@ -127,7 +127,8 @@ class Image(object):
         """Export an internal image to a file."""
         import interface
         try:
-            interface.export_image(self, **kwargs)
+            result = interface.export_image(self, **kwargs)
+            return result
         except RuntimeError, err:
             if self._is_interactive_shell:
                 print "\n\033[31;1mERROR\033[0m: " + str(err)
@@ -138,7 +139,8 @@ class Image(object):
         """Write the Gaussian, source, or shapelet list to a file"""
         import interface
         try:
-            interface.write_catalog(self, **kwargs)
+            result = interface.write_catalog(self, **kwargs)
+            return result
         except RuntimeError, err:
             if self._is_interactive_shell:
                 print "\n\033[31;1mERROR\033[0m: " + str(err)
