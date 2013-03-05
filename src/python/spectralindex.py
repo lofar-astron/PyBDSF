@@ -199,10 +199,13 @@ class Op_spectralindex(Op):
                                 print 'Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id,
                                       len(src_total_flux), nchan)
                             else:
-                                 print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id,
+                                print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id,
                                        len(src_total_flux))
-                        npos = len(N.where(src_total_flux > 0.0))
-                        if (img.opts.flagchan_snr and n_good_chan < 2) or npos < 2:
+                        npos = len(N.where(src_total_flux > 0.0)[0])
+
+                        if isinstance(n_good_chan, int):
+                            n_good_chan = [n_good_chan]
+                        if (img.opts.flagchan_snr and n_good_chan[0] < 2) or npos < 2:
                             src.spec_indx = N.NaN
                             src.e_spec_indx = N.NaN
                             src.spec_norm = N.NaN
@@ -218,6 +221,7 @@ class Op_spectralindex(Op):
                             fluxes_to_fit = src_total_flux[good_fluxes_ind]
                             e_fluxes_to_fit = src_e_total_flux[good_fluxes_ind]
                             freqs_to_fit = freq_av[good_fluxes_ind]
+
 #                             if len(freqs_to_fit.shape) == 2:
 #                                 freqs_to_fit = freqs_to_fit.reshape((freqs_to_fit.shape[0],))
 #                             if len(fluxes_to_fit.shape) == 2:

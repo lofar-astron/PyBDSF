@@ -114,7 +114,7 @@ class Op_rmsimage(Op):
                 slices = nd.find_objects(labels)
                 for idx, s in enumerate(slices):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
-                    size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea*2.0
+                    size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     isl_area_highthresh.append(size_area)
                     isl_maxposn.append(tuple(N.array(N.unravel_index(N.argmax(image[s]), image[s].shape))+\
                           N.array((s[0].start, s[1].start))))
@@ -139,7 +139,7 @@ class Op_rmsimage(Op):
         isl_snr = []
         thratio = threshold/bright_threshold
         for idx, s in enumerate(slices):
-            isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea*2.0
+            isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
             isl_maxposn_lowthresh = tuple(N.array(N.unravel_index(N.argmax(image[s]), image[s].shape))+
                                           N.array((s[0].start, s[1].start)))
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
@@ -167,7 +167,7 @@ class Op_rmsimage(Op):
         if len(isl_pos) == 0:
             # No bright sources found
             do_adapt = False
-        min_size_allowed = int(img.pixel_beam[0]*9.0)
+        min_size_allowed = int(img.pixel_beam()[0]*9.0)
 
         if opts.rms_box is None or (opts.rms_box_bright is None and do_adapt):
             if do_adapt:
@@ -213,10 +213,10 @@ class Op_rmsimage(Op):
               pol_txt = ''
 
           ## calculate rms/mean maps if needed
-          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(img.ch0.shape)/2.0:
+          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(img.ch0.shape)/4.0:
             # rms box is too large - just use constant rms and mean
             self.output_rmsbox_size(img)
-            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/2 of image size')
+            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
             mylogger.userinfo(mylog, 'Using constant background rms and mean')
             img.use_rms_map = False
             img.mean_map_type = 'const'

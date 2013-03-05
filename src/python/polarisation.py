@@ -186,6 +186,13 @@ class Op_polarisation(Op):
                           pi_src._pi = True
                           pi_src.island_id = isl_id
                           pi_src.source_id = src_id
+                          pi_src.spec_indx = N.NaN
+                          pi_src.e_spec_indx = N.NaN
+                          pi_src.spec_norm = N.NaN
+                          pi_src.specin_flux = [N.NaN]
+                          pi_src.specin_fluxE = [N.NaN]
+                          pi_src.specin_freq = [N.NaN]
+                          pi_src.specin_freq0 = N.NaN
                           new_sources.append(pi_src)
                           new_src.append(pi_src)
                           n_new_src += 1
@@ -202,8 +209,6 @@ class Op_polarisation(Op):
               n_new = len(new_isl)
               mylogger.userinfo(mylog, "New sources found in PI image", '%i (%i total)' %
                                 (n_new, img.nsrc+n_new))
-
-          bm_pix = N.array([img.pixel_beam[0], img.pixel_beam[1], img.pixel_beam[2]])
 
           if n_new > 0:
               img.islands += new_isl
@@ -241,6 +246,8 @@ class Op_polarisation(Op):
                     if (sind==0 and hasattr(src, '_pi')) or sind > 0: # Fit I only for PI sources
                         p, ep = func.fit_mulgaus2d(image, gg, x, y, srcmask, fitfix)
                         for ig in range(len(fitfix)):
+                            center_pix = (p[ig*6 + 1], p[ig*6 + 2])
+                            bm_pix = N.array([img.pixel_beam(location=center_pix)[0], img.pixel_beam(location=center_pix)[1], img.pixel_beam(location=center_pix)[2]])
                             total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
                         p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
                         if sind > 0:

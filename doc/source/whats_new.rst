@@ -4,6 +4,25 @@
 What's New
 **********
 
+Version 1.6.0 (2013/03/05):
+
+    * Improved speed and accuracy of aperture flux calculation.
+
+    * Added option to use the curvature map method of Hopkins et al. (2012) for the initial estimation of Gaussian parameters (``ini_method = 'curvature'``) and for grouping of Gaussians into sources (``group_method = 'curvature'``).
+
+    * Fix to bug in spectral index module that caused sources with multiple Gaussians to be skipped. Minor adjustments to the wavelet module to improve performance.
+
+    * Implemented position-dependent WCS transformations.
+
+    * Added option to fit to any arbitrary location in the image within a given radius (``src_ra_dec`` and ``src_radius_pix``).
+
+    * Fix to bug in wavelet module that caused crash when no Gaussians were fit to the main image.
+
+    * Fix to bug that resulted in incorrect numbering of wavelet Gaussians. Added ``'srl'`` output in ds9 format when using ``output_all = True``.
+
+    * Fix to bug in source grouping algorithm. Improved fitting when background mean is nonzero. Fix to allow images with GLAT and GLON WCS coordinates. Fix to bug when equinox is taken from the epoch keyword.
+
+
 Version 1.5.1 (2012/12/19):
 
     * Fix to bug in wavelet module that occurred when the center of the wavelet Gaussian lies outside of the image.
