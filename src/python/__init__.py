@@ -59,11 +59,11 @@ def execute(chain, opts):
     from image import Image
     import mylogger
 
-    if opts.has_key('quiet'):
+    if 'quiet' in opts:
         quiet = opts['quiet']
     else:
         quiet = False
-    if opts.has_key('debug'):
+    if 'debug' in opts:
         debug = opts['debug']
     else:
         debug = False
