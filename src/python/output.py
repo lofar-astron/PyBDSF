@@ -44,9 +44,9 @@ class Op_outlist(Op):
     def write_bbs(self, img, dir):
         """ Writes the gaussian list as a bbs-readable file"""
         prefix = ''
-        if img.extraparams.has_key('bbsprefix'):
+        if 'bbsprefix' in img.extraparams:
             prefix = img.extraparams['bbsprefix']+'_'
-        if img.extraparams.has_key('bbsname'):
+        if 'bbsname' in img.extraparams:
             name = img.extraparams['bbsname']
         else:
             name = img.imagename
@@ -418,9 +418,9 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     freq = "%.5e" % img.frequency
     tbhdu.header.add_comment('Reference frequency of the detection ("ch0") image: %s Hz' % freq)
     tbhdu.header.add_comment('Equinox : %s' % img.equinox)
-    tbhdu.header.update('INIMAGE', img.filename, 'Filename of image')
-    tbhdu.header.update('FREQ0', float(freq), 'Reference frequency')
-    tbhdu.header.update('EQUINOX', img.equinox, 'Equinox')
+    tbhdu.header['INIMAGE'] = (img.filename, 'Filename of image')
+    tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
+    tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
     if filename == None:
         filename = img.imagename + '.' + objtype + '.fits'
     if os.path.exists(filename) and clobber == False:

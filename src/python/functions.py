@@ -1051,9 +1051,8 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
       return opw, markers
 
 def get_kwargs(kwargs, key, typ, default):
-
     obj = True
-    if kwargs.has_key(key):
+    if key in kwargs:
       obj = kwargs[key]
     if not isinstance(obj, typ):
       obj = default
@@ -1176,9 +1175,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
     else:
         lat_lon = False
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
-        from pywcs import WCS
-        t = WCS(hdr)
-        t.wcs.fix()
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",category=DeprecationWarning)
+            from pywcs import WCS
+
+            t = WCS(hdr)
+            t.wcs.fix()
         spec_indx = t.wcs.spec
         if spec_indx != -1:
             ctype_in.reverse()
@@ -1287,68 +1290,126 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 
 def make_fits_image(imagedata, wcsobj, beam, freq):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
+    from distutils.version import StrictVersion
     import pyfits
+    # Due to changes in the way pyfits handles headers from version 3.1 on,
+    # we need to check for older versions and change the setting of header
+    # keywords accordingly.
+    if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+        use_header_update = True
+    else:
+        use_header_update = False
     shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
     hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
     header = hdulist[0].header
 
     # Add WCS info
-#     wcs_header = wcsobj.to_header()
-#     for key in wcs_header.keys():
-#         header.update(key, wcs_header[key])
-    header.update('CRVAL1', wcsobj.wcs.crval[0])
-    header.update('CDELT1', wcsobj.wcs.cdelt[0])
-    header.update('CRPIX1', wcsobj.wcs.crpix[0])
-    header.update('CUNIT1', wcsobj.wcs.cunit[0])
-    header.update('CTYPE1', wcsobj.wcs.ctype[0])
-    header.update('CRVAL2', wcsobj.wcs.crval[1])
-    header.update('CDELT2', wcsobj.wcs.cdelt[1])
-    header.update('CRPIX2', wcsobj.wcs.crpix[1])
-    header.update('CUNIT2', wcsobj.wcs.cunit[1])
-    header.update('CTYPE2', wcsobj.wcs.ctype[1])
-
-    # Add STOKES info
-    header.update('CRVAL3', 1)
-    header.update('CDELT3', 1)
-    header.update('CRPIX3', 1)
-    header.update('CUNIT3', '')
-    header.update('CTYPE3', 'STOKES')
-
-    # Add or alter frequency info if needed
-    header.update('CRVAL4', freq)
-    header.update('CDELT4', 0.0)
-    header.update('CRPIX4', 1)
-    header.update('CUNIT4', 'Hz')
-    header.update('CTYPE4', 'FREQ')
-
-    # Add beam info
-    header.update('BMAJ', beam[0])
-    header.update('BMIN', beam[1])
-    header.update('BPA', beam[2])
-
-
-    # Add STOKES info
-    header.update('CRVAL3', 1)
-    header.update('CDELT3', 1)
-    header.update('CRPIX3', 1)
-    header.update('CUNIT3', '')
-    header.update('CTYPE3', 'STOKES')
-
-    # Add or alter frequency info if needed
-    if wcsobj.wcs.spec != -1:
-        header.update('CRVAL' + str(wcsobj.wcs.spec + 1), freq)
+    if use_header_update:
+        header.update('CRVAL1', wcsobj.wcs.crval[0])
+        header.update('CDELT1', wcsobj.wcs.cdelt[0])
+        header.update('CRPIX1', wcsobj.wcs.crpix[0])
+        header.update('CUNIT1', wcsobj.wcs.cunit[0])
+        header.update('CTYPE1', wcsobj.wcs.ctype[0])
+        header.update('CRVAL2', wcsobj.wcs.crval[1])
+        header.update('CDELT2', wcsobj.wcs.cdelt[1])
+        header.update('CRPIX2', wcsobj.wcs.crpix[1])
+        header.update('CUNIT2', wcsobj.wcs.cunit[1])
+        header.update('CTYPE2', wcsobj.wcs.ctype[1])
     else:
+        header['CRVAL1'] = wcsobj.wcs.crval[0]
+        header['CDELT1'] = wcsobj.wcs.cdelt[0]
+        header['CRPIX1'] = wcsobj.wcs.crpix[0]
+        header['CUNIT1'] = wcsobj.wcs.cunit[0]
+        header['CTYPE1'] = wcsobj.wcs.ctype[0]
+        header['CRVAL2'] = wcsobj.wcs.crval[1]
+        header['CDELT2'] = wcsobj.wcs.cdelt[1]
+        header['CRPIX2'] = wcsobj.wcs.crpix[1]
+        header['CUNIT2'] = wcsobj.wcs.cunit[1]
+        header['CTYPE2'] = wcsobj.wcs.ctype[1]
+
+    # Add STOKES info
+    if use_header_update:
+        header.update('CRVAL3', 1)
+        header.update('CDELT3', 1)
+        header.update('CRPIX3', 1)
+        header.update('CUNIT3', '')
+        header.update('CTYPE3', 'STOKES')
+    else:
+        header['CRVAL3'] = 1
+        header['CDELT3'] = 1
+        header['CRPIX3'] = 1
+        header['CUNIT3'] = ''
+        header['CTYPE3'] = 'STOKES'
+
+    # Add or alter frequency info if needed
+    if use_header_update:
         header.update('CRVAL4', freq)
         header.update('CDELT4', 0.0)
         header.update('CRPIX4', 1)
         header.update('CUNIT4', 'Hz')
         header.update('CTYPE4', 'FREQ')
+    else:
+        header['CRVAL4'] = freq
+        header['CDELT4'] = 0.0
+        header['CRPIX4'] = 1
+        header['CUNIT4'] = 'Hz'
+        header['CTYPE4'] = 'FREQ'
 
     # Add beam info
-    header.update('BMAJ', beam[0])
-    header.update('BMIN', beam[1])
-    header.update('BPA', beam[2])
+    if use_header_update:
+        header.update('BMAJ', beam[0])
+        header.update('BMIN', beam[1])
+        header.update('BPA', beam[2])
+    else:
+        header['BMAJ'] = beam[0]
+        header['BMIN'] = beam[1]
+        header['BPA'] = beam[2]
+
+
+    # Add STOKES info
+    if use_header_update:
+        header.update('CRVAL3', 1)
+        header.update('CDELT3', 1)
+        header.update('CRPIX3', 1)
+        header.update('CUNIT3', '')
+        header.update('CTYPE3', 'STOKES')
+    else:
+        header['CRVAL3'] = 1
+        header['CDELT3'] = 1
+        header['CRPIX3'] = 1
+        header['CUNIT3'] = ''
+        header['CTYPE3'] = 'STOKES'
+
+    # Add or alter frequency info if needed
+    if wcsobj.wcs.spec != -1:
+        if use_header_update:
+            header.update('CRVAL' + str(wcsobj.wcs.spec + 1), freq)
+        else:
+            header['CRVAL' + str(wcsobj.wcs.spec + 1)] =  freq
+    else:
+        if use_header_update:
+            header.update('CRVAL4', freq)
+            header.update('CDELT4', 0.0)
+            header.update('CRPIX4', 1)
+            header.update('CUNIT4', 'Hz')
+            header.update('CTYPE4', 'FREQ')
+        else:
+            header['CRVAL4'] = freq
+            header['CDELT4'] = 0.0
+            header['CRPIX4'] = 1
+            header['CUNIT4'] = 'Hz'
+            header['CTYPE4'] = 'FREQ'
+
+    # Add beam info
+    if use_header_update:
+        header.update('BMAJ', beam[0])
+        header.update('BMIN', beam[1])
+        header.update('BPA', beam[2])
+    else:
+        header['BMAJ'] = beam[0]
+        header['BMIN'] = beam[1]
+        header['BPA'] = beam[2]
 
     hdulist[0].header = header
     return hdulist
