@@ -148,15 +148,11 @@ class Op_readimage(Op):
         """Initialize wcs pixel <=> sky conversion routines.
         """
         from math import pi
-        import warnings
+        from pywcs import WCS
 
         hdr = img.header
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            from pywcs import WCS
-            t = WCS(hdr)
-            t.wcs.fix()
+        t = WCS(hdr)
+        t.wcs.fix()
 
         acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
 
@@ -368,10 +364,7 @@ class Op_readimage(Op):
         If the input frequency info (in the WCS) is not in Hz, it is
         converted.
         """
-        import warnings
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            from pywcs import WCS
+        from pywcs import WCS, UnitConverter
 
         mylog = mylogger.logging.getLogger("PyBDSM.InitFreq")
         if img.opts.frequency_sp != None and img.image.shape[1] > 1:

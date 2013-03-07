@@ -2,14 +2,14 @@
  *                                                                                               *
  * natgridmodule.c:  a C extension which exports the following functions to Python:              *
  *                                                                                               *
- *                   Single precision procedures:                                                *
+ *                   Single precision procedures:                                                *    
  *                                                                                               *
  *                       natgrids     - primary function for gridding.                           *
  *                       seti         - set int parameter values.                                *
  *                       geti         - retrieve values for int parameters.                      *
  *                       setr         - set float parameter values.                              *
  *                       getr         - retrieve values for float parameters                     *
- *                       setc         - set char parameter values.                               *
+ *                       setc         - set char parameter values.                               * 
  *                       getc         - retrieve values for char parameters.                     *
  *                       getaspects   - get aspect values, if calculated.                        *
  *                       getslopes    - get slope values, if calculated.                         *
@@ -18,7 +18,7 @@
  *                       pntend       _ terminate single point mode.                             *
  *                                                                                               *
  *                                                                                               *
- *                   Double precision procedures:                                                *
+ *                   Double precision procedures:                                                *    
  *                                                                                               *
  *                       natgridd     - primary function for gridding.                           *
  *                       setrd        - set float parameter values.                              *
@@ -34,7 +34,7 @@
  *************************************************************************************************/
 
 #include "Python.h"
-#include "numpy/arrayobject.h"
+#include "numpy/arrayobject.h" 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -165,7 +165,7 @@ static char nat_c_natgrids__doc__[] = "                                         
            of yo must be increasing, but need not be equally spaced.                               \n\
                                                                                                    \n\
                                                                                                   ";
-static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
+static PyObject *nat_c_natgrids(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -192,12 +192,12 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
     /* fields required to construct the return of result to python */
 
     PyArrayObject *object_out;       /* array object to accept the data and return it to Python */
-    npy_intp dims[2];                /* used in creating object_out */
+    int dims[2];                     /* used in creating object_out */
 
     /* declarations for writes to a file */
 
-    FILE *fp;                                                              /* File used in ascii write */
-    char *title[6] = { "x", "y ", "z", "xo", "yo", "result" };             /* Titles for print to file */
+    FILE *fp;                                                              /* File used in ascii write */ 
+    char *title[6] = { "x", "y ", "z", "xo", "yo", "result" };             /* Titles for print to file */ 
 
     /* ----------------------- Start Execution ------------------------------------*/
 
@@ -209,13 +209,13 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
     }
 
     out = (float *)c_natgrids(npnts, (float *)object_x->data, (float *)object_y->data, (float *)object_z->data,
-                                              numxout, numyout, (float *)object_xo->data, (float *)object_yo->data, &ier);
+                                              numxout, numyout, (float *)object_xo->data, (float *)object_yo->data, &ier); 
 
     /* -------- create a NumPy array housing the C language data out ----------- */
     dims[0] = numxout;
-    dims[1] = numyout;
+    dims[1] = numyout; 
 
-    object_out = (PyArrayObject *)PyArray_SimpleNewFromData(2, dims, PyArray_DOUBLE, (char *)out);
+    object_out = (PyArrayObject *)PyArray_FromDimsAndData(2, dims, PyArray_FLOAT, (char *)out);
 
     if (PRINTNATGRIDS == 1) {
         /* -------- print data to the screen ---------- */
@@ -251,7 +251,7 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
     }
 
     return Py_BuildValue(("Oi"), object_out, ier);
-}
+} 
 
 static char nat_c_nnseti__doc__[] =
 "                                                                                                   \n\
@@ -275,8 +275,8 @@ static char nat_c_nnseti__doc__[] =
                                                                                                    \n\
     ival -- the value to be assigned to the control parameter whose name is pointed to by pnam.      \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnseti(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnseti(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -286,7 +286,7 @@ static PyObject *nat_c_nnseti(PyObject *self, PyObject *args)
     int ival;                 /* value to be assigned to the control parameter whose name is pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "si", &pnam, &ival))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnseti is wrong.\n");
@@ -297,7 +297,7 @@ static PyObject *nat_c_nnseti(PyObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
 static char nat_c_nngeti__doc__[] =
 "                                                                                                    \n\
@@ -320,8 +320,8 @@ static char nat_c_nngeti__doc__[] =
                                                                                                     \n\
    ival -- the value currently assigned to the control parameter whose name is pointed to by pnam.      \n\
                                                                                                     \n\
-                                                                                                     ";
-static PyObject *nat_c_nngeti(PyObject *self, PyObject *args)
+                                                                                                     "; 
+static PyObject *nat_c_nngeti(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -335,7 +335,7 @@ static PyObject *nat_c_nngeti(PyObject *self, PyObject *args)
                                  pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "s", &pnam))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngeti is wrong.\n");
@@ -345,7 +345,7 @@ static PyObject *nat_c_nngeti(PyObject *self, PyObject *args)
     c_nngeti(pnam, &ival);
 
     return Py_BuildValue("i", ival);
-}
+} 
 
 static char nat_c_nnsetr__doc__[] =
 "                                                                                                   \n\
@@ -369,8 +369,8 @@ static char nat_c_nnsetr__doc__[] =
                                                                                                    \n\
     fval -- the value to be assigned to the control parameter whose name is pointed to by pnam.       \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnsetr(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnsetr(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -380,7 +380,7 @@ static PyObject *nat_c_nnsetr(PyObject *self, PyObject *args)
     float fval;               /* value to be assigned to the control parameter whose name is pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "sf", &pnam, &fval))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnsetr is wrong.\n");
@@ -391,7 +391,7 @@ static PyObject *nat_c_nnsetr(PyObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
 static char nat_c_nngetr__doc__[] =
 "                                                                                                     \n\
@@ -414,8 +414,8 @@ static char nat_c_nngetr__doc__[] =
                                                                                                      \n\
     fval -- the value currently assigned to the control parameter whose name is pointed to by pnam.      \n\
                                                                                                      \n\
-                                                                                                    ";
-static PyObject *nat_c_nngetr(PyObject *self, PyObject *args)
+                                                                                                    "; 
+static PyObject *nat_c_nngetr(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -429,7 +429,7 @@ static PyObject *nat_c_nngetr(PyObject *self, PyObject *args)
                                  pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "s", &pnam))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngetr is wrong.\n");
@@ -439,7 +439,7 @@ static PyObject *nat_c_nngetr(PyObject *self, PyObject *args)
     c_nngetr(pnam, &fval);
 
     return Py_BuildValue("f", fval);
-}
+} 
 
 static char nat_c_nnsetc__doc__[] =
 "                                                                                                  \n\
@@ -463,8 +463,8 @@ static char nat_c_nnsetc__doc__[] =
                                                                                                    \n\
     cval -- the value to be assigned to the control parameter whose name is pointed to by pnam.        \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnsetc(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnsetc(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -474,7 +474,7 @@ static PyObject *nat_c_nnsetc(PyObject *self, PyObject *args)
     char *cval;               /* value to be assigned to the control parameter whose name is pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "ss", &pnam, &cval))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnsetc is wrong.\n");
@@ -485,7 +485,7 @@ static PyObject *nat_c_nnsetc(PyObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
 static char nat_c_nngetc__doc__[] =
 "                                                                                                     \n\
@@ -508,8 +508,8 @@ static char nat_c_nngetc__doc__[] =
                                                                                                      \n\
     cval -- the value currently assigned to the control parameter whose name is pointed to by pnam.      \n\
                                                                                                      \n\
-                                                                                                     ";
-static PyObject *nat_c_nngetc(PyObject *self, PyObject *args)
+                                                                                                     "; 
+static PyObject *nat_c_nngetc(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -523,7 +523,7 @@ static PyObject *nat_c_nngetc(PyObject *self, PyObject *args)
                                   pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "s", &pnam))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngetc is wrong.\n");
@@ -533,7 +533,7 @@ static PyObject *nat_c_nngetc(PyObject *self, PyObject *args)
     c_nngetc(pnam, cval);
 
     return Py_BuildValue("s", cval);
-}
+} 
 
 static char nat_c_nngetaspects__doc__[] =
 "                                                                                                   \n\
@@ -565,8 +565,8 @@ static char nat_c_nngetaspects__doc__[] =
     ier -- an error return value. If ier is returned as 0, then no errors were detected.  If ier   \n\
            is non-zero, then refer to the list in the error table for details.                      \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nngetaspects(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nngetaspects(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -586,7 +586,7 @@ static PyObject *nat_c_nngetaspects(PyObject *self, PyObject *args)
                                         If *ier is non-zero, then refer to the list in the error table for details. */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "ii", &row, &column))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngetaspects is wrong.\n");
@@ -596,7 +596,7 @@ static PyObject *nat_c_nngetaspects(PyObject *self, PyObject *args)
     c_nngetaspects(row, column, &aspect, &ier);
 
     return Py_BuildValue("fi", aspect, ier);
-}
+} 
 
 static char nat_c_nngetslopes__doc__[] =
 "                                                                                                   \n\
@@ -628,8 +628,8 @@ static char nat_c_nngetslopes__doc__[] =
     ier -- an error return value. If ier is returned as 0, then no errors were detected.  If ier   \n\
            is non-zero, then refer to the list in the error table for details.                      \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nngetslopes(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nngetslopes(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -649,7 +649,7 @@ static PyObject *nat_c_nngetslopes(PyObject *self, PyObject *args)
                                         If *ier is non-zero, then refer to the list in the error table for details. */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "ii", &row, &column))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngetslopes is wrong.\n");
@@ -659,7 +659,7 @@ static PyObject *nat_c_nngetslopes(PyObject *self, PyObject *args)
     c_nngetslopes(row, column, &slope, &ier);
 
     return Py_BuildValue("fi", slope, ier);
-}
+} 
 
 static char nat_c_nnpntinits__doc__[] =
 "                                                                                                   \n\
@@ -688,8 +688,8 @@ static char nat_c_nnpntinits__doc__[] =
      z -- array of size npnts containing the functional values of the input data points. That is,   \n\
           z[j] is the value of the input function at coordinate (x[j], y[j]), for 0 <= j < npnts.   \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnpntinits(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnpntinits(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -703,11 +703,11 @@ static PyObject *nat_c_nnpntinits(PyObject *self, PyObject *args)
 
     /* declarations for writes to a file */
 
-    FILE *fp;                                      /* File used in ascii write */
-    char *title[3] = {"x", "y ", "z"};             /* Titles for print to file */
+    FILE *fp;                                      /* File used in ascii write */ 
+    char *title[3] = {"x", "y ", "z"};             /* Titles for print to file */ 
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "iOOO", &npnts, &object_x, &object_y, &object_z))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnpntinits is wrong.\n");
@@ -743,7 +743,7 @@ static PyObject *nat_c_nnpntinits(PyObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
 static char nat_c_nnpnts__doc__[] =
 "                                                                                                   \n\
@@ -769,8 +769,8 @@ static char nat_c_nnpnts__doc__[] =
                                                                                                    \n\
     z --  the interpolated functional value at (x,y).                                              \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnpnts(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnpnts(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -784,17 +784,17 @@ static PyObject *nat_c_nnpnts(PyObject *self, PyObject *args)
     float z;                        /* the interpolated functional value at (x,y) */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "ff", &x, &y))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnpnts is wrong.\n");
         return NULL;
     }
 
-    c_nnpnts(x, y, &z);
+    c_nnpnts(x, y, &z); 
 
     return Py_BuildValue("f", z);
-}
+} 
 
 static char nat_c_nnpntend__doc__[] =
 "                                                                                                   \n\
@@ -812,23 +812,23 @@ static char nat_c_nnpntend__doc__[] =
                                                                                                    \n\
       pntend()                                                                                     \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnpntend(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnpntend(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Start Execution ------------------------------------*/
 
-
+ 
     if(!PyArg_ParseTuple(args, ""))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnpntend is wrong.\n");
         return NULL;
     }
 
-    c_nnpntend();
+    c_nnpntend(); 
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
 static char nat_c_natgridd__doc__[] =
 "                                                                                                   \n\
@@ -878,8 +878,8 @@ static char nat_c_natgridd__doc__[] =
      yo -- array of size numyout containing the y coordinates of the output data grid. The values  \n\
            of yo must be increasing, but need not be equally spaced.                               \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_natgridd(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -906,16 +906,16 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
     /* fields required to construct the return of result to python */
 
     PyArrayObject *object_out;       /* array object to accept the data and return it to Python */
-    npy_intp dims[2];                /* used in creating object_out */
+    int dims[2];                     /* used in creating object_out */
 
     /* declarations for writes to a file */
 
-    FILE *fp;                                                        /* File used in ascii write */
-    char *title[6] = {"x", "y ", "z", "xo", "yo", "result"};         /* Titles for print to file */
+    FILE *fp;                                                        /* File used in ascii write */ 
+    char *title[6] = {"x", "y ", "z", "xo", "yo", "result"};         /* Titles for print to file */ 
 
     /* ----------------------- Start Execution ------------------------------------*/
 
-    if(!PyArg_ParseTuple(args, "iOOOiiOO", &npnts, &object_x, &object_y, &object_z,
+    if(!PyArg_ParseTuple(args, "iOOOiiOO", &npnts, &object_x, &object_y, &object_z, 
                                             &numxout, &numyout, &object_xo, &object_yo))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to natgridd is wrong.\n");
@@ -923,13 +923,14 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
     }
 
     out = (double *)c_natgridd(npnts, (double *)object_x->data, (double *)object_y->data, (double *)object_z->data,
-                                            numxout, numyout, (double *)object_xo->data, (double *)object_yo->data, &ier);
+                                            numxout, numyout, (double *)object_xo->data, (double *)object_yo->data, &ier); 
 
     /* -------- create a NumPy array housing the c language data out ----------- */
     dims[0] = numxout;
-    dims[1] = numyout;
+    dims[1] = numyout; 
 
-    object_out = (PyArrayObject *)PyArray_SimpleNewFromData(2, dims, PyArray_DOUBLE, (char *)out);
+    object_out = (PyArrayObject *)PyArray_FromDimsAndData(2, dims, PyArray_DOUBLE, (char *)out);
+
 
     if (PRINTNATGRIDS == 1) {
         /* -------- print data to the screen ---------- */
@@ -965,7 +966,7 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
     }
 
     return Py_BuildValue(("Oi"), object_out, ier);
-}
+} 
 
 static char nat_c_nnsetrd__doc__[] =
 "                                                                                                   \n\
@@ -990,8 +991,8 @@ static char nat_c_nnsetrd__doc__[] =
                                                                                                    \n\
     dval -- the value to be assigned to the control parameter whose name is pointed to by pnam.        \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnsetrd(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnsetrd(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -1001,7 +1002,7 @@ static PyObject *nat_c_nnsetrd(PyObject *self, PyObject *args)
     double dval;               /* value to be assigned to the control parameter whose name is pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "sd", &pnam, &dval))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnsetrd is wrong.\n");
@@ -1012,7 +1013,7 @@ static PyObject *nat_c_nnsetrd(PyObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
 static char nat_c_nngetrd__doc__[] =
 "                                                                                                     \n\
@@ -1035,8 +1036,8 @@ static char nat_c_nngetrd__doc__[] =
                                                                                                      \n\
     dval -- the value currently assigned to the control parameter whose name is pointed to by pnam.      \n\
                                                                                                      \n\
-                                                                                                     ";
-static PyObject *nat_c_nngetrd(PyObject *self, PyObject *args)
+                                                                                                     "; 
+static PyObject *nat_c_nngetrd(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -1050,7 +1051,7 @@ static PyObject *nat_c_nngetrd(PyObject *self, PyObject *args)
                                   pointed to by pnam */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "s", &pnam))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngetrd is wrong.\n");
@@ -1060,7 +1061,7 @@ static PyObject *nat_c_nngetrd(PyObject *self, PyObject *args)
     c_nngetrd(pnam, &dval);
 
     return Py_BuildValue("d", dval);
-}
+} 
 
 static char nat_c_nngetaspectd__doc__[] =
 "                                                                                                   \n\
@@ -1092,8 +1093,8 @@ static char nat_c_nngetaspectd__doc__[] =
     ier -- an error return value. If ier is returned as 0, then no errors were detected.  If ier   \n\
            is non-zero, then refer to the list in the error table for details.                      \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nngetaspectd(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nngetaspectd(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -1113,7 +1114,7 @@ static PyObject *nat_c_nngetaspectd(PyObject *self, PyObject *args)
                                         If *ier is non-zero, then refer to the list in the error table for details. */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "ii", &row, &column))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngetaspectd is wrong.\n");
@@ -1123,7 +1124,7 @@ static PyObject *nat_c_nngetaspectd(PyObject *self, PyObject *args)
     c_nngetaspectd(row, column, &aspect, &ier);
 
     return Py_BuildValue("di", aspect, ier);
-}
+} 
 
 static char nat_c_nngetsloped__doc__[] =
 "                                                                                                 \n\
@@ -1155,8 +1156,8 @@ static char nat_c_nngetsloped__doc__[] =
    ier -- an error return value. If ier is returned as 0, then no errors were detected.  If ier   \n\
           is non-zero, then refer to the list in the error table for details.                      \n\
                                                                                                   \n\
-                                                                                                   ";
-static PyObject *nat_c_nngetsloped(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nngetsloped(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -1176,7 +1177,7 @@ static PyObject *nat_c_nngetsloped(PyObject *self, PyObject *args)
                                         If *ier is non-zero, then refer to the list in the error table for details. */
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "ii", &row, &column))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nngetsloped is wrong.\n");
@@ -1186,7 +1187,7 @@ static PyObject *nat_c_nngetsloped(PyObject *self, PyObject *args)
     c_nngetsloped(row, column, &slope, &ier);
 
     return Py_BuildValue("di", slope, ier);
-}
+} 
 
 static char nat_c_nnpntinitd__doc__[] =
 "                                                                                                   \n\
@@ -1215,8 +1216,8 @@ static char nat_c_nnpntinitd__doc__[] =
      z -- array of size npnts containing the functional values of the input data points. That is,   \n\
           z[j] is the value of the input function at coordinate (x[j], y[j]), for 0 <= j < npnts.   \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnpntinitd(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnpntinitd(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -1230,11 +1231,11 @@ static PyObject *nat_c_nnpntinitd(PyObject *self, PyObject *args)
 
     /* declarations for writes to a file */
 
-    FILE *fp;                                    /* File used in ascii write */
-    char *title[3] = { "x", "y ", "z" };         /* Titles for print to file */
+    FILE *fp;                                    /* File used in ascii write */ 
+    char *title[3] = { "x", "y ", "z" };         /* Titles for print to file */ 
 
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, "iOOO", &npnts, &object_x, &object_y, &object_z))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnpntinitd is wrong.\n");
@@ -1269,7 +1270,7 @@ static PyObject *nat_c_nnpntinitd(PyObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
 static char nat_c_nnpntd__doc__[] =
 "                                                                                                   \n\
@@ -1295,8 +1296,8 @@ static char nat_c_nnpntd__doc__[] =
                                                                                                    \n\
     z --  the interpolated functional value at (x,y).                                              \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnpntd(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnpntd(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Declarations ------------------------------------*/
 
@@ -1317,10 +1318,10 @@ static PyObject *nat_c_nnpntd(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    c_nnpntd(x, y, &z);
+    c_nnpntd(x, y, &z); 
 
     return Py_BuildValue("d", z);
-}
+} 
 
 static char nat_c_nnpntendd__doc__[] =
 "                                                                                                   \n\
@@ -1338,27 +1339,27 @@ static char nat_c_nnpntendd__doc__[] =
                                                                                                    \n\
       pntendd()                                                                                    \n\
                                                                                                    \n\
-                                                                                                   ";
-static PyObject *nat_c_nnpntendd(PyObject *self, PyObject *args)
+                                                                                                   "; 
+static PyObject *nat_c_nnpntendd(PyObject *self, PyObject *args) 
 {
     /* ----------------------- Start Execution ------------------------------------*/
-
+ 
     if(!PyArg_ParseTuple(args, ""))
     {
         PyErr_SetString(PyExc_TypeError, "Pass to nnpntendd is wrong.\n");
         return NULL;
     }
 
-    c_nnpntendd();
+    c_nnpntendd(); 
 
     Py_INCREF(Py_None);
     return Py_None;
-}
+} 
 
  /*************************************************************************
  *                                                                        *
  * METHOD REGISTRATION TABLE: NAME-STRING -> FUNCTION-POINTER
- *
+ * 
  *                                                                        *
 \**************************************************************************/
 static struct PyMethodDef nat_methods[] = {
@@ -1389,22 +1390,22 @@ static struct PyMethodDef nat_methods[] = {
 
  /*************************************************************************
  *                                                                        *
- * INITIALIZATION FUNCTION
- *
+ * INITIALIZATION FUNCTION        
+ * 
  *                                                                        *
 \**************************************************************************/
 void initnatgridmodule()
 {
   PyObject *m, *d;
-
+  
   /* create this module and add the functions */
   m = Py_InitModule("natgridmodule", nat_methods);
   import_array();
 
   /* add symbolic constants to the module */
   d = PyModule_GetDict(m);
-  ErrorObject = Py_BuildValue("s", "natgridmodule.error");
-  PyDict_SetItemString(d, "error", ErrorObject);
+  ErrorObject = Py_BuildValue("s", "natgridmodule.error"); 
+  PyDict_SetItemString(d, "error", ErrorObject);  
 
   /* check for errors */
   if(PyErr_Occurred())
@@ -1413,7 +1414,7 @@ void initnatgridmodule()
 
  /*************************************************************************
  *                                                                        *
- * C FUNCTIONS USED IN THE C-EXTENSIONS
+ * C FUNCTIONS USED IN THE C-EXTENSIONS                       
  *                                                                        *
 \**************************************************************************/
 
