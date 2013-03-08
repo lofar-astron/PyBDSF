@@ -430,7 +430,7 @@ class Opts(object):
                             doc = "List of source positions at which fitting is done.  "\
                                  "E.g., src_ra_dec = [(197.1932, 47.9188), (196.5573, 42.4852)].\n"\
                                  "This parameter defines the center positions at which "\
-                                 "fitting will be done. The size of the resion used for "\
+                                 "fitting will be done. The size of the region used for "\
                                  "the fit is given by the src_radius_pix parameter. "\
                                  "Positions should be given as a list of RA and Dec, "\
                                  "in degrees, one set per source. These positions will "\
