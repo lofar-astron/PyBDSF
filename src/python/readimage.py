@@ -525,8 +525,11 @@ class Op_readimage(Op):
 
         angdist12 = func.angsep(ra0, dec0, ra2, dec2) # degrees
         pixdist12 = N.sqrt( (x0 - x2)**2 + (y0 - y2)**2 ) # pixels
-        result = angdist * pixdist12 / angdist12
-        if N.isnan(result) or result <= 0.0:
+        if angdist12 > 0.0:
+            result = angdist * pixdist12 / angdist12
+            if N.isnan(result) or result <= 0.0:
+                result = N.mean(img.wcs_obj.acdelt[0:2])
+        else:
             result = N.mean(img.wcs_obj.acdelt[0:2])
         return result
 

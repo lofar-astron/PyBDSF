@@ -119,7 +119,7 @@ def _run_op_list(img, chain):
         k, v = user_opt
         val = img.opts.__getattribute__(k)
         if val != v._default and v.group() != 'hidden':
-            par_msg += '    %-20s : %s\n' % (k, repr(val))
+            par_msg += '    %-20s = %s\n' % (k, repr(val))
     mylog.info(par_msg[:-1]) # -1 is to trim final newline
 
     # Run all op's

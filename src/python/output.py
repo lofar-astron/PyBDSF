@@ -364,7 +364,12 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     import pyfits
     import os
     import numpy as N
+    from distutils.version import StrictVersion
     from _version import __version__, __revision__
+    if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+        use_header_update = True
+    else:
+        use_header_update = False
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
     if objtype == 'gaul':
@@ -418,9 +423,14 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     freq = "%.5e" % img.frequency
     tbhdu.header.add_comment('Reference frequency of the detection ("ch0") image: %s Hz' % freq)
     tbhdu.header.add_comment('Equinox : %s' % img.equinox)
-    tbhdu.header['INIMAGE'] = (img.filename, 'Filename of image')
-    tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
-    tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
+    if use_header_update:
+        tbhdu.header.update('INIMAGE', img.filename, 'Filename of image')
+        tbhdu.header.update('FREQ0', float(freq), 'Reference frequency')
+        tbhdu.header.update('EQUINOX', img.equinox, 'Equinox')
+    else:
+        tbhdu.header['INIMAGE'] = (img.filename, 'Filename of image')
+        tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
+        tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
     if filename == None:
         filename = img.imagename + '.' + objtype + '.fits'
     if os.path.exists(filename) and clobber == False:
