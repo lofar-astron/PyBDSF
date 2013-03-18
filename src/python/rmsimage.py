@@ -544,8 +544,6 @@ class Op_rmsimage(Op):
             mean_map = mean_map1
 
         # Interpolate to image coords
-        # Check whether default (cubic) or user-specified order causes problems.
-        # If so, use order=1.
         mylog = mylogger.logging.getLogger(logname+"Rmsimage")
         nd.map_coordinates(rms_map,  ax[-1::-1], order=interp, output=out_rms)
         nd.map_coordinates(mean_map, ax[-1::-1], order=interp, output=out_mean)

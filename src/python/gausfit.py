@@ -941,7 +941,6 @@ class Gaussian(object):
             size = img.beam2pix(img.beam, self.centre_pix, use_wcs=use_wcs)
         size = func.corrected_size(size)  # gives fwhm and P.A.
         self.size_pix = size # FWHM in pixels and P.A. CCW from +y axis
-        self.size_sky = img.pix2beam(size, self.centre_pix, use_wcs=use_wcs) # FWHM in degrees and P.A. east from north
 
         # Check if this is a wavelet image. If so, use img.orig_beam
         # for flux calculation, as img.beam has been altered to match
@@ -950,41 +949,38 @@ class Gaussian(object):
             bm_pix = N.array(img.beam2pix(img.orig_beam, self.centre_pix, use_wcs=use_wcs))
         else:
             bm_pix = N.array(img.beam2pix(img.beam, self.centre_pix, use_wcs=use_wcs))
+
+        # Calculate fluxes, sky sizes, etc.
         tot = p[0]*size[0]*size[1]/(bm_pix[0]*bm_pix[1])
-
         if flag == 0:
-          errors = func.get_errors(img, p+[tot], img.islands[isl_idx].rms)
-          self.centre_sky = img.pix2sky(p[1:3])
-        else:
-          errors = [0]*7
-          self.centre_sky = [0., 0.]
-        self.total_flux = tot
-        self.total_fluxE = errors[6]
-
-        self.peak_fluxE = errors[0]
-        self.total_fluxE = errors[6]
-        self.centre_pixE = errors[1:3]
-        self.centre_skyE = img.pix2coord(errors[1:3], self.centre_pix, use_wcs=use_wcs)
-        self.size_pixE = errors[3:6]
-        self.size_skyE = img.pix2beam(errors[3:6], self.centre_pix, use_wcs=use_wcs)
-        self.rms = img.islands[isl_idx].rms
-        self.mean = img.islands[isl_idx].mean
-        self.total_flux_isl = img.islands[isl_idx].total_flux
-        self.total_flux_islE = img.islands[isl_idx].total_fluxE
-
-        # func.deconv, based on AIPS DECONV.FOR, gives a lot of
-        # 1-D Gaussians. The Miriad algorithm in func.deconv2 does
-        # a much better job in this regard, so use it instead. Note
-        # that for resolved sources, the two algorithms give the
-        # same answer. For now, errors on the deconvolved parameters
-        # are just set to those of the undeconvolved ones.
-        if flag == 0:
+            # These are good Gaussians
+            errors = func.get_errors(img, p+[tot], img.islands[isl_idx].rms)
+            self.centre_sky = img.pix2sky(p[1:3])
+            self.centre_skyE = img.pix2coord(errors[1:3], self.centre_pix, use_wcs=use_wcs)
+            self.size_sky = img.pix2beam(size, self.centre_pix, use_wcs=use_wcs) # FWHM in degrees and P.A. east from north
+            self.size_skyE = img.pix2beam(errors[3:6], self.centre_pix, use_wcs=use_wcs)
             gaus_dc, err = func.deconv2(bm_pix, size)
             self.deconv_size_sky = img.pix2beam(gaus_dc, self.centre_pix, use_wcs=use_wcs)
             self.deconv_size_skyE  = img.pix2beam(errors[3:6], self.centre_pix, use_wcs=use_wcs)
         else:
+            # These are flagged Gaussians, so don't calculate sky values or errors
+            errors = [0]*7
+            self.centre_sky = [0., 0.]
+            self.centre_skyE = [0., 0.]
+            self.size_sky = [0., 0., 0.]
+            self.size_skyE = [0., 0.]
             self.deconv_size_sky = [0., 0., 0.]
             self.deconv_size_skyE  = [0., 0., 0.]
+        self.total_flux = tot
+        self.total_fluxE = errors[6]
+        self.peak_fluxE = errors[0]
+        self.total_fluxE = errors[6]
+        self.centre_pixE = errors[1:3]
+        self.size_pixE = errors[3:6]
+        self.rms = img.islands[isl_idx].rms
+        self.mean = img.islands[isl_idx].mean
+        self.total_flux_isl = img.islands[isl_idx].total_flux
+        self.total_flux_islE = img.islands[isl_idx].total_fluxE
 
 
 ### Insert attributes into Island class

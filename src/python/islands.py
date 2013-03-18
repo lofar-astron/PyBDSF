@@ -89,6 +89,7 @@ class Op_islands(Op):
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
             img.minpix_isl = det_img.minpix_isl
+            mylogger.userinfo(mylog, "\nContinuing processing using primary image")
         else:
             if opts.src_ra_dec != None:
                 mylogger.userinfo(mylog, "Constructing islands at user-supplied source locations")
@@ -206,8 +207,8 @@ class Op_islands(Op):
             mask = img.mask
             rms = img.rms
             mean = img.mean
-            labels = func.generate_aperture(image.shape[0], image.shape[1],
-                        isl_posn_pix[0], isl_posn_pix[1], isl_radius_pix)
+            labels = func.make_src_mask(image.shape,
+                        isl_posn_pix, isl_radius_pix)
             if img.masked:
                 aper_mask = N.where(labels.astype(bool) & ~img.mask)
             else:

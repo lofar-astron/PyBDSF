@@ -319,12 +319,12 @@ class Op_wavelet_atrous(Op):
         opts['mean_map'] = img.opts.mean_map
         opts['thresh_isl'] = 3.0
         opts['minpix_isl'] = 6
-#        opts['takemeanclip'] = False
         opts['savefits_rmsim'] = False
         opts['savefits_meanim'] = False
         opts['savefits_rankim'] = False
         opts['savefits_normim'] = False
         opts['polarisation_do'] = False
+        opts['aperture'] = None
         opts['group_by_isl'] = img.opts.group_by_isl
         opts['quiet'] = img.opts.quiet
 
