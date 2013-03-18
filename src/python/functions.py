@@ -485,33 +485,31 @@ def dist_2pt(p1, p2):
 
     return dist
 
-def angsep(ra1deg, dec1deg, ra2deg, dec2deg):
+
+def angsep(ra1, dec1, ra2, dec2):
     """Returns angular separation between two coordinates (all in degrees)"""
     import math
 
-    ra1rad=ra1deg*math.pi/180.0
-    dec1rad=dec1deg*math.pi/180.0
-    ra2rad=ra2deg*math.pi/180.0
-    dec2rad=dec2deg*math.pi/180.0
+    const = math.pi/180.
+    ra1 = ra1*const
+    rb1 = dec1*const
+    ra2 = ra2*const
+    rb2 = dec2*const
 
-    # calculate scalar product for determination
-    # of angular separation
-    x=math.cos(ra1rad)*math.cos(dec1rad)*math.cos(ra2rad)*math.cos(dec2rad)
-    y=math.sin(ra1rad)*math.cos(dec1rad)*math.sin(ra2rad)*math.cos(dec2rad)
-    z=math.sin(dec1rad)*math.sin(dec2rad)
+    v1_1 = math.cos(ra1)*math.cos(rb1)
+    v1_2 = math.sin(ra1)*math.cos(rb1)
+    v1_3 = math.sin(rb1)
 
-    if x + y + z > 1.0:
-        rad = 0.0
-    else:
-        rad=math.acos(x+y+z)
+    v2_1 = math.cos(ra2)*math.cos(rb2)
+    v2_2 = math.sin(ra2)*math.cos(rb2)
+    v2_3 = math.sin(rb2)
 
-    # use Pythargoras approximation if rad < 1 arcsec
-    if rad<0.000004848:
-        rad=math.sqrt((math.cos(dec1rad)*(ra1rad-ra2rad))**2+(dec1rad-dec2rad)**2)
+    w = ( (v1_1-v2_1)**2 + (v1_2-v2_2)**2 + (v1_3-v2_3)**2 )/4.0
 
-    # Angular separation
-    deg=rad*180/math.pi
-    return deg
+    x = math.sqrt(w)
+    y = math.sqrt(max(0.0, 1.0-w))
+    angle = 2.0*math.atan2(x, y)/const
+    return angle
 
 
 def std(y):
@@ -1752,25 +1750,40 @@ def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
     """Makes a mask (1 = inside aperture) for a circular aperture"""
     import numpy
 
-    mask = numpy.zeros((xsize, ysize))
-    scale_max = numpy.ceil(radius*2.0)
-    if int(numpy.mod(scale_max, 2)) == 0:
-        scale_max += 1
-    cen = int(scale_max / 2)
-    xmin = max(0, cen - xcenter)
-    ymin = max(0, cen - ycenter)
-    xmax = min(scale_max, scale_max - (xcenter + cen - xsize) - 1)
-    ymax = min(scale_max, scale_max - (ycenter + cen - ysize) - 1)
-    x, y = numpy.mgrid[xmin:xmax, ymin:ymax]
-    xoffset = xcenter - numpy.floor(xcenter)
-    yoffset = ycenter - numpy.floor(ycenter)
-    subim = ((x - xoffset - cen)**2 + (y - yoffset - cen)**2 <= radius**2) * 1
-    xmin = max(0, xcenter-cen)
-    ymin = max(0, ycenter-cen)
-    xmax = min(xsize, xcenter+cen)
-    ymax = min(ysize, ycenter+cen)
-    mask_slice = [slice(xmin, xmax+1), slice(ymin, ymax+1)]
-    mask[mask_slice] = subim
+    x, y = numpy.mgrid[0.5:xsize, 0.5:ysize]
+    mask = ((x - xcenter)**2 + (y - ycenter)**2 <= radius**2) * 1
+    return mask
+
+def make_src_mask(mask_size, posn_pix, aperture_pix):
+    """Makes an island mask (1 = inside aperture)f or a given source position.
+    """
+    import numpy as N
+
+    xsize, ysize = mask_size
+    if aperture_pix == None:
+        return N.zeros((xsize, ysize), dtype=int)
+
+    # Make subimages
+    xlo = posn_pix[0]-int(aperture_pix)-1
+    if xlo < 0:
+        xlo = 0
+    xhi = posn_pix[0]+int(aperture_pix)+1
+    if xhi > xsize:
+        xhi = xsize
+    ylo = posn_pix[1]-int(aperture_pix)-1
+    if ylo < 0:
+        ylo = 0
+    yhi = posn_pix[1]+int(aperture_pix)+1
+    if yhi > ysize:
+        yhi = ysize
+
+    mask = N.zeros((xsize, ysize))
+    posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
+    submask_xsize = xhi - xlo
+    submask_ysize = yhi - ylo
+    submask = generate_aperture(submask_xsize, submask_ysize, posn_pix_new[0], posn_pix_new[1], aperture_pix)
+    submask_slice = [slice(xlo, xhi), slice(ylo, yhi)]
+    mask[submask_slice] = submask
     return mask
 
 def getTerminalSize():

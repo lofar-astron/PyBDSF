@@ -27,6 +27,10 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/03/14 - Removed sky transformations for flagged Gaussians, as
+        these could sometimes give math domain errors. Disabled aperture
+        flux measurement on wavelet images as it is not used/needed.
+
     2013/02/25 - Version 1.6.0
 
     2013/02/25 - Improved speed and accuracy of aperture flux
