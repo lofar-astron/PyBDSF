@@ -363,8 +363,14 @@ class Op_wavelet_atrous(Op):
         wimg.parentname = img.filename
         wimg.filename = img.filename + name
         wimg.imagename = img.imagename + name + '.pybdsm'
-        wimg.pix2sky = img.pix2sky; wimg.sky2pix = img.sky2pix; wimg.pix2beam = img.pix2beam
-        wimg.beam2pix = img.beam2pix; wimg.pix2coord = img.pix2coord; wimg.beam = img.beam
+        wimg.pix2sky = img.pix2sky
+        wimg.sky2pix = img.sky2pix
+        wimg.pix2beam = img.pix2beam
+        wimg.beam2pix = img.beam2pix
+        wimg.pix2gaus = img.pix2gaus
+        wimg.gaus2pix = img.gaus2pix
+        wimg.pix2coord = img.pix2coord
+        wimg.beam = img.beam
         mask = img.mask
         wimg.masked = img.masked
         wimg.mask = mask
