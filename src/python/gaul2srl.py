@@ -118,7 +118,9 @@ class Op_gaul2srl(Op):
         peak_flux_centroid = peak_flux_max = [g.peak_flux, g.peak_fluxE]
         posn_sky_centroid = posn_sky_max = [g.centre_sky, g.centre_skyE]
         size_sky = [g.size_sky, g.size_skyE]
+        size_sky_uncorr = [g.size_sky_uncorr, g.size_skyE]
         deconv_size_sky = [g.deconv_size_sky, g.deconv_size_skyE]
+        deconv_size_sky_uncorr = [g.deconv_size_sky_uncorr, g.deconv_size_skyE]
         bbox = img.islands[g.island_id].bbox
         ngaus = 1
         island_id = g.island_id
@@ -129,7 +131,7 @@ class Op_gaul2srl(Op):
         aper_flux = func.ch0_aperture_flux(img, g.centre_pix, img.aperture)
 
         source_prop = list([code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid, \
-             posn_sky_max, size_sky, deconv_size_sky, bbox, ngaus, island_id, gaussians])
+             posn_sky_max, size_sky, size_sky_uncorr, deconv_size_sky, deconv_size_sky_uncorr, bbox, ngaus, island_id, gaussians])
         source = Source(img, source_prop)
 
         if g.gaussian_idx == -1:
@@ -379,13 +381,15 @@ class Op_gaul2srl(Op):
             # Invalid pixel wcs coordinate
             sra, sdec = 0.0, 0.0
             mra, mdec = 0.0, 0.0
-                                        # "deconvolve" the sizes
+
+        # "deconvolve" the sizes
         gaus_c = [mompara[3], mompara[4], mompara[5]]
         gaus_bm = [bm_pix[0], bm_pix[1], bm_pix[2]]
         gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
         deconv_size_sky = img.pix2gaus(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]])
+        deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]], use_wcs=False)
 
-                                        # update all objects etc
+        # update all objects etc
         tot = 0.0
         totE_sq = 0.0
         for g in g_sublist:
@@ -394,6 +398,7 @@ class Op_gaul2srl(Op):
         totE = sqrt(totE_sq)
         size_pix = [mompara[3], mompara[4], mompara[5]]
         size_sky = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
+        size_sky_uncorr = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]], use_wcs=False)
 
         # Estimate uncertainties in source size and position due to
         # errors in the constituent Gaussians using a Monte Carlo technique.
@@ -473,8 +478,8 @@ class Op_gaul2srl(Op):
         isl_id = isl.island_id
         source_prop = list(['M', [tot, totE], [s_peak, isl.rms], [maxpeak, isl.rms],
                       [aper_flux, aper_fluxE], [[sra, sdec],
-                      [sraE, sdecE]], [[mra, mdec], [sraE, sdecE]], [size_sky, size_skyE],
-                      [deconv_size_sky, deconv_size_skyE], isl.bbox, len(g_sublist),
+                      [sraE, sdecE]], [[mra, mdec], [sraE, sdecE]], [size_sky, size_skyE], [size_sky_uncorr, size_skyE],
+                      [deconv_size_sky, deconv_size_skyE], [deconv_size_sky_uncorr, deconv_size_skyE], isl.bbox, len(g_sublist),
                       isl_id, g_sublist])
         source = Source(img, source_prop)
 
@@ -615,7 +620,8 @@ class Source(object):
     def __init__(self, img, sourceprop):
 
         code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid, \
-                     posn_sky_max, size_sky, deconv_size_sky, bbox, ngaus, island_id, gaussians = sourceprop
+                     posn_sky_max, size_sky, size_sky_uncorr, deconv_size_sky, \
+                     deconv_size_sky_uncorr, bbox, ngaus, island_id, gaussians = sourceprop
         self.code = code
         self.total_flux, self.total_fluxE = total_flux
         self.peak_flux_centroid, self.peak_flux_centroidE = peak_flux_centroid
@@ -623,7 +629,9 @@ class Source(object):
         self.posn_sky_centroid, self.posn_sky_centroidE = posn_sky_centroid
         self.posn_sky_max, self.posn_sky_maxE = posn_sky_max
         self.size_sky, self.size_skyE = size_sky
+        self.size_sky_uncorr, self.size_skyE_uncorr = size_sky_uncorr
         self.deconv_size_sky, self.deconv_size_skyE = deconv_size_sky
+        self.deconv_size_sky_uncorr, self.deconv_size_skyE_uncorr = deconv_size_sky_uncorr
         self.bbox = bbox
         self.ngaus = ngaus
         self.island_id = island_id
