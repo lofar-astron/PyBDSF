@@ -1729,7 +1729,7 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     aper_im = img.ch0[xlo:xhi, ylo:yhi] - img.mean[xlo:xhi, ylo:yhi]
     aper_rms = img.rms[xlo:xhi, ylo:yhi]
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
-    pixel_beamarea = img.pixel_beamarea(location=posn_pix)
+    pixel_beamarea = img.pixel_beamarea()
     aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
     return aper_flux
 

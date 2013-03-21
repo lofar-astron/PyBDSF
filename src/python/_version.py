@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,14 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2013/03/22 - Version 1.6.1
+
+    2013/03/21 - Fix to bug in ds9 and kvis catalog files that resulted in
+        incorrect position angles. Fix to bug in position-dependent WCS
+        transformations that caused incorrect source parameters in output
+        catalogs. Added option to output uncorrected source parameters
+        to a BBS sky model file (correct_proj).
 
     2013/03/14 - Removed sky transformations for flagged Gaussians, as
         these could sometimes give math domain errors. Disabled aperture
@@ -45,7 +53,7 @@ def changelog():
         with multiple Gaussians to be skipped. Minor adjustments to the
         wavelet module to improve performance.
 
-    2013/02/08 - Implemented-position dependent WCS transformations.
+    2013/02/08 - Implemented position-dependent WCS transformations.
 
     2013/02/08 - Added option to fit to any arbitrary location in the
         image within a given radius (src_ra_dec and src_radius_pix).

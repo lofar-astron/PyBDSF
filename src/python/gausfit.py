@@ -213,10 +213,10 @@ class Op_gausfit(Op):
                 if opts.verbose_fitting:
                     print 'SPLITTING ISLAND INTO ',n_subisl,' PARTS FOR ISLAND ',isl.island_id
                 for i_sub in range(n_subisl):
-                    islcp = isl.copy(img.pixel_beamarea(location=isl.origin))
+                    islcp = isl.copy(img.pixel_beamarea())
                     islcp.mask_active = N.where(sub_labels == i_sub+1, False, True)
                     islcp.mask_noisy = N.where(sub_labels == i_sub+1, False, True)
-                    size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea(location=isl.origin)*2.0
+                    size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea()*2.0
                     if opts.peak_fit and size_subisl > peak_size:
                         sgaul, sfgaul = self.fit_island_iteratively(img, islcp, iter_ngmax=iter_ngmax, opts=opts)
                     else:
@@ -268,7 +268,7 @@ class Op_gausfit(Op):
         else:
             fit_image = isl.image-isl.islmean-ffimg
         fcn = MGFunction(fit_image, isl.mask_active, 1)
-        beam = img.pixel_beam(location=isl.origin)
+        beam = img.pixel_beam()
 
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
@@ -281,7 +281,7 @@ class Op_gausfit(Op):
         dof = isl.size_active
         shape = isl.shape
         isl_image = isl.image - isl.islmean
-        size = isl.size_active/img.pixel_beamarea(location=isl.origin)*2.0
+        size = isl.size_active/img.pixel_beamarea()*2.0
         gaul = []
         iter = 0
         ng1 = 0
@@ -373,7 +373,7 @@ class Op_gausfit(Op):
             mask_id = N.zeros(isl.image.shape, dtype=int) - 1
             mask_id[inisl] = isl.island_id
             try:
-                pixel_beamarea = img.pixel_beamarea(location=isl.origin)
+                pixel_beamarea = img.pixel_beamarea()
                 mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, pixel_beamarea, True)
                 mompara[5] += 90.0
                 if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
@@ -414,7 +414,7 @@ class Op_gausfit(Op):
         import functions as func
         sgaul = []; sfgaul = []
         gaul = []; fgaul = []
-        beam = img.pixel_beam(location=isl.origin)
+        beam = img.pixel_beam()
         if opts == None:
             opts = img.opts
         thresh_isl = opts.thresh_isl
@@ -932,23 +932,22 @@ class Gaussian(object):
         self.peak_flux = p[0]
         self.centre_pix = p[1:3]
         size = p[3:6]
-        if func.approx_equal(size[0], img.pixel_beam(self.centre_pix)[0]*1.1) and \
-                func.approx_equal(size[1], img.pixel_beam(self.centre_pix)[1]) and \
-                func.approx_equal(size[2], img.pixel_beam(self.centre_pix)[2]):
+        if func.approx_equal(size[0], img.pixel_beam()[0]*1.1) and \
+                func.approx_equal(size[1], img.pixel_beam()[1]) and \
+                func.approx_equal(size[2], img.pixel_beam()[2]):
             # Check whether fitted Gaussian is just the distorted pixel beam
             # given as an initial guess. If so, reset the size to the
             # undistorted beam.
-            size = img.beam2pix(img.beam, self.centre_pix, use_wcs=use_wcs)
+            size = img.beam2pix(img.beam)
         size = func.corrected_size(size)  # gives fwhm and P.A.
         self.size_pix = size # FWHM in pixels and P.A. CCW from +y axis
 
-        # Check if this is a wavelet image. If so, use img.orig_beam
-        # for flux calculation, as img.beam has been altered to match
-        # the wavelet scale.
+        # Use img.orig_beam for flux calculation and deconvolution on wavelet
+        # images, as img.beam has been altered to match the wavelet scale.
         if img.waveletimage:
-            bm_pix = N.array(img.beam2pix(img.orig_beam, self.centre_pix, use_wcs=use_wcs))
+            bm_pix = N.array(img.beam2pix(img.orig_beam))
         else:
-            bm_pix = N.array(img.beam2pix(img.beam, self.centre_pix, use_wcs=use_wcs))
+            bm_pix = N.array(img.beam2pix(img.beam))
 
         # Calculate fluxes, sky sizes, etc.
         tot = p[0]*size[0]*size[1]/(bm_pix[0]*bm_pix[1])
@@ -957,19 +956,23 @@ class Gaussian(object):
             errors = func.get_errors(img, p+[tot], img.islands[isl_idx].rms)
             self.centre_sky = img.pix2sky(p[1:3])
             self.centre_skyE = img.pix2coord(errors[1:3], self.centre_pix, use_wcs=use_wcs)
-            self.size_sky = img.pix2beam(size, self.centre_pix, use_wcs=use_wcs) # FWHM in degrees and P.A. east from north
-            self.size_skyE = img.pix2beam(errors[3:6], self.centre_pix, use_wcs=use_wcs)
+            self.size_sky = img.pix2gaus(size, self.centre_pix, use_wcs=use_wcs) # FWHM in degrees and P.A. east from north
+            self.size_sky_uncorr = img.pix2gaus(size, self.centre_pix, use_wcs=False) # FWHM in degrees and P.A. east from north
+            self.size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs)
             gaus_dc, err = func.deconv2(bm_pix, size)
-            self.deconv_size_sky = img.pix2beam(gaus_dc, self.centre_pix, use_wcs=use_wcs)
-            self.deconv_size_skyE  = img.pix2beam(errors[3:6], self.centre_pix, use_wcs=use_wcs)
+            self.deconv_size_sky = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=use_wcs)
+            self.deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=False)
+            self.deconv_size_skyE  = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs)
         else:
             # These are flagged Gaussians, so don't calculate sky values or errors
             errors = [0]*7
             self.centre_sky = [0., 0.]
             self.centre_skyE = [0., 0.]
             self.size_sky = [0., 0., 0.]
+            self.size_sky_uncorr = [0., 0., 0.]
             self.size_skyE = [0., 0.]
             self.deconv_size_sky = [0., 0., 0.]
+            self.deconv_size_sky_uncorr = [0., 0., 0.]
             self.deconv_size_skyE  = [0., 0., 0.]
         self.total_flux = tot
         self.total_fluxE = errors[6]

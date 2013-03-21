@@ -183,7 +183,7 @@ class Op_readimage(Op):
         # minor axis, pos. angle) from the image plane to the celestial sphere.
         # These transforms are valid only at the Gaussian's center and ignore
         # any change across the extent of the Gaussian.
-        def gaus2pix(x, location=None):
+        def gaus2pix(x, location=None, use_wcs=True):
             """ Converts Gaussian parameters in deg to pixels.
 
             x - (maj [deg], min [deg], pa [deg])
@@ -192,16 +192,22 @@ class Op_readimage(Op):
             Input beam angle should be degrees CCW from North.
             The output beam angle is degrees CCW from the +y axis of the image.
             """
-            bmaj, bmin, bpa = x
-            brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
+            if use_wcs:
+                bmaj, bmin, bpa = x
+                brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
 
-            th_rad = bpa / 180.0 * N.pi
-            s1 = self.angdist2pixdist(img, bmaj, bpa, location=location)
-            s2 = self.angdist2pixdist(img, bmin, bpa + 90.0, location=location)
-            th = bpa + brot
-            return (s1, s2, th)
+                s1 = self.angdist2pixdist(img, bmaj, bpa, location=location)
+                s2 = self.angdist2pixdist(img, bmin, bpa + 90.0, location=location)
+                th = bpa + brot
+                if s1 < s2:
+                    s1, s2 = s2, s1
+                    th += 90.0
+                th = divmod(th, 180)[1] ### th lies between 0 and 180
+                return (s1, s2, th)
+            else:
+                return img.beam2pix(x)
 
-        def pix2gaus(x, location=None):
+        def pix2gaus(x, location=None, use_wcs=True):
             """ Converts Gaussian parameters in pixels to deg.
 
             x - (maj [pix], min [pix], pa [deg])
@@ -210,62 +216,28 @@ class Op_readimage(Op):
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North.
             """
-            s1, s2, th = x
-            brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
-
-            th_rad = th / 180.0 * N.pi
-            bmaj = self.pixdist2angdist(img, s1, th, location=location)
-            bmin = self.pixdist2angdist(img, s2, th + 90.0, location=location)
-            bpa = th - brot
-            if bmaj < bmin:
-                bmaj, bmin = bmin, bmaj
-                bpa += 90
-            bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
-            return (bmaj, bmin, bpa)
-
-
-        instancemethod = type(t.wcs_pix2sky)
-        t.p2s = instancemethod(p2s, t, WCS)
-        instancemethod = type(t.wcs_sky2pix)
-        t.s2p = instancemethod(s2p, t, WCS)
-
-        img.wcs_obj = t
-        img.wcs_obj.acdelt = acdelt
-        img.pix2sky = t.p2s
-        img.sky2pix = t.s2p
-        img.gaus2pix = gaus2pix
-        img.pix2gaus = pix2gaus
-
-
-    def init_beam(self, img):
-        """Initialize beam parameters, and conversion routines
-        to convert beam to/from pixel coordinates"""
-        from const import fwsig
-        mylog = mylogger.logging.getLogger("PyBDSM.InitBeam")
-
-        hdr = img.header
-        cdelt1, cdelt2 = img.wcs_obj.acdelt[0:2]
-
-        ### define beam conversion routines:
-        def beam2pix(x, location=None, use_wcs=True):
-            """ Converts beam in deg to pixels.
-
-            location specifies the location in pixels (x, y) for which beam is desired
-            Input beam angle should be degrees CCW from North.
-            The output beam angle is degrees CCW from the +y axis of the image.
-            """
             if use_wcs:
-                # Account for projection effects
-                return img.gaus2pix(x, location)
+                s1, s2, th = x
+                brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
+
+                th_rad = th / 180.0 * N.pi
+                bmaj = self.pixdist2angdist(img, s1, th, location=location)
+                bmin = self.pixdist2angdist(img, s2, th + 90.0, location=location)
+                bpa = th - brot
+                if bmaj < bmin:
+                    bmaj, bmin = bmin, bmaj
+                    bpa += 90.0
+                bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
+                return (bmaj, bmin, bpa)
             else:
-                bmaj, bmin, bpa = x
-                s1 = abs(bmaj / cdelt1)
-                s2 = abs(bmin / cdelt2)
-                th = bpa
-                return (s1, s2, th)
+                return img.pix2beam(x)
 
         def pix2coord(pix, location=None, use_wcs=True):
-            """Converts size along x and y (in pixels) to size in RA and Dec (in degrees)"""
+            """Converts size along x and y (in pixels) to size in RA and Dec (in degrees)
+
+            Currently, this function is only used to convert errors on x, y position
+            to errors in RA and Dec.
+            """
             if use_wcs:
                 # Account for projection effects
                 x, y = pix
@@ -280,35 +252,68 @@ class Op_readimage(Op):
                 s2 = abs(y * cdelt2)
             return (s1, s2)
 
-        def pix2beam(x, location=None, use_wcs=True):
-            """ Converts beam in pixels to deg.
+        instancemethod = type(t.wcs_pix2sky)
+        t.p2s = instancemethod(p2s, t, WCS)
+        instancemethod = type(t.wcs_sky2pix)
+        t.s2p = instancemethod(s2p, t, WCS)
 
-            location specifies the location in pixels (x, y) for which beam is desired
-            Input beam angle should be degrees CCW from the +y axis of the image.
-            The output beam angle is degrees CCW from North.
+        img.wcs_obj = t
+        img.wcs_obj.acdelt = acdelt
+        img.pix2sky = t.p2s
+        img.sky2pix = t.s2p
+        img.gaus2pix = gaus2pix
+        img.pix2gaus = pix2gaus
+        img.pix2coord = pix2coord
+
+
+    def init_beam(self, img):
+        """Initialize beam parameters, and conversion routines
+        to convert beam to/from pixel coordinates"""
+        from const import fwsig
+        mylog = mylogger.logging.getLogger("PyBDSM.InitBeam")
+
+        hdr = img.header
+        cdelt1, cdelt2 = img.wcs_obj.acdelt[0:2]
+
+        ### define beam conversion routines:
+        def beam2pix(x):
+            """ Converts beam in deg to pixels. Use when no dependence on
+            position is appropriate.
+
+            Input beam angle should be degrees CCW from North at image center.
+            The output beam angle is degrees CCW from the +y axis of the image.
             """
-            if use_wcs:
-                # Account for projection effects
-                return img.pix2gaus(x, location)
-            else:
-                s1, s2, th = x
-                bmaj = abs(s1 * cdelt1)
-                bmin = abs(s2 * cdelt2)
-                bpa = th
-                if bmaj < bmin:
-                    bmaj, bmin = bmin, bmaj
-                    bpa += 90
-                bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
-                return (bmaj, bmin, bpa)
+            bmaj, bmin, bpa = x
+            s1 = abs(bmaj / cdelt1)
+            s2 = abs(bmin / cdelt2)
+            th = bpa
+            return (s1, s2, th)
 
-        def pixel_beam(location=None, use_wcs=True):
+        def pix2beam(x):
+            """ Converts beam in pixels to deg. Use when no dependence on
+            position is appropriate.
+
+            Input beam angle should be degrees CCW from the +y axis of the image.
+            The output beam angle is degrees CCW from North at image center.
+            """
+            s1, s2, th = x
+            bmaj = abs(s1 * cdelt1)
+            bmin = abs(s2 * cdelt2)
+            bpa = th
+            if bmaj < bmin:
+                bmaj, bmin = bmin, bmaj
+                bpa += 90.0
+            bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
+            return [bmaj, bmin, bpa]
+
+        def pixel_beam():
             """Returns the beam in sigma units in pixels"""
-            pbeam = beam2pix(img.beam, location=location, use_wcs=use_wcs)
+            pbeam = beam2pix(img.beam)
             return (pbeam[0] / fwsig, pbeam[1] / fwsig, pbeam[2])
 
-        def pixel_beamarea(location=None, use_wcs=True):
+        def pixel_beamarea():
             """Returns the beam area in pixels"""
-            pbeam = beam2pix(img.beam, location=location, use_wcs=use_wcs)
+            pbeam = beam2pix(img.beam)
             return 1.1331 * pbeam[0] * pbeam[1]
 
         ### Get the beam information from the header
@@ -347,7 +352,6 @@ class Op_readimage(Op):
         ### and store it
         img.pix2beam = pix2beam
         img.beam2pix = beam2pix
-        img.pix2coord = pix2coord
         img.beam = beam   # FWHM size in degrees
         img.pixel_beam = pixel_beam   # IN SIGMA UNITS in pixels
         img.pixel_beamarea = pixel_beamarea
@@ -463,43 +467,26 @@ class Op_readimage(Op):
     def get_rot(self, img, location=None):
         """Returns CCW rotation angle (in degrees) between N and +y axis of image
 
-        location specifies the location in pixels (x, y) for which beam is desired
+        location specifies the location in pixels (x, y) for which angle is desired
         """
         if location == None:
-            x1 = int(img.image.shape[2] / 2.0)
-            y1 = int(img.image.shape[3] / 2.0)
+            x1 = img.image.shape[2] / 2.0
+            y1 = img.image.shape[3] / 2.0
         else:
             x1, y1 = location
-        delta_x = 0
-        delta_y = 10
+        ra, dec = img.pix2sky([x1, y1])
+        delta_dec = self.pixdist2angdist(img, 1.0, 0.0, location=[x1, y1])  # approx. size in degrees of 1 pixel
+        if dec + delta_dec > 90.0:
+            # shift towards south instead
+            delta_dec *= -1.0
+        x2, y2 = img.sky2pix([ra, dec + delta_dec])
         try:
-            w1 = img.pix2sky((x1, y1))
-            w2 = img.pix2sky((x1 + delta_x, y1 + delta_y))
-            rot_ang_rad = N.arctan2((w2[0] - w1[0]) , (w2[1] - w1[1]))
+            rot_ang_rad = N.arctan2(y2-y1, x2-x1) - N.pi / 2.0
+            if delta_dec < 0.0:
+                rot_ang_rad -= N.pi
         except:
             rot_ang_rad = 0.0
         return rot_ang_rad * 180.0 / N.pi
-
-    def get_pixsize(self, img, location=None):
-        """Returns pixel size (projection) along ra and dec (rasize, decsize) in degrees
-
-        location specifies the location in pixels (x, y) for which size is desired
-        """
-        if location == None:
-            x1 = int(img.image.shape[2] / 2.0)
-            y1 = int(img.image.shape[3] / 2.0)
-        else:
-            x1, y1 = location
-
-        # Find ra and dec sizes
-        delta_x = 1.0
-        delta_y = 1.0
-        w1 = img.pix2sky((x1, y1))
-        w2 = img.pix2sky((x1 + delta_x, y1 + delta_y))
-        rasize = abs(w2[0] - w1[0]) * N.cos(w1[1] * N.pi / 180.0)
-        decsize = abs(w2[1] - w1[1])
-
-        return (rasize, decsize)
 
     def angdist2pixdist(self, img, angdist, pa, location=None):
         """Returns the distance in pixels for a given angular distance in degrees

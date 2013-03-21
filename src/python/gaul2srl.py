@@ -383,7 +383,7 @@ class Op_gaul2srl(Op):
         gaus_c = [mompara[3], mompara[4], mompara[5]]
         gaus_bm = [bm_pix[0], bm_pix[1], bm_pix[2]]
         gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
-        deconv_size_sky = img.pix2beam(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]])
+        deconv_size_sky = img.pix2gaus(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]])
 
                                         # update all objects etc
         tot = 0.0
@@ -393,7 +393,7 @@ class Op_gaul2srl(Op):
             totE_sq += g.total_fluxE**2
         totE = sqrt(totE_sq)
         size_pix = [mompara[3], mompara[4], mompara[5]]
-        size_sky = img.pix2beam(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
+        size_sky = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
 
         # Estimate uncertainties in source size and position due to
         # errors in the constituent Gaussians using a Monte Carlo technique.

@@ -1163,6 +1163,19 @@ class Opts(object):
                                  "by grouping Gaussians), 'shap' - shapelet "\
                                  "list (FITS format only)",
                              group = 'hidden')
+    correct_proj = Bool(True,
+                             doc = "Correct source parameters for image projection (BBS format only)?\n"\
+                                 "If True, the source parameters in the output catalog will be "\
+                                 "corrected for first-order projection effects. If False, "\
+                                 "no correction is done. In this case, the position angle "\
+                                 "is relative to the +y axis, NOT true north, and source sizes "\
+                                 "are calculated assuming a constant pixel scale (equal to the "
+                                 "scale at the image center).\n "\
+                                 "If True, the position angle and source size "\
+                                 "are corrected using the average pixel size and "
+                                 "angle offset (between the +y axis and north) at "\
+                                 "the location of the source center.",
+                             group = 'hidden')
     img_format = Enum('fits', 'casa',
                              doc = "Format of output image: 'fits' or "\
                                  "'casa' (at the moment only 'fits' is "\
