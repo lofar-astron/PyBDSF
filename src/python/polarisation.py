@@ -152,6 +152,8 @@ class Op_polarisation(Op):
               pimg.log = 'PI.'
               pimg.pix2beam = img.pix2beam
               pimg.beam2pix = img.beam2pix
+              pimg.pix2gaus = img.pix2gaus
+              pimg.gaus2pix = img.gaus2pix
               pimg.pix2sky = img.pix2sky
               pimg.sky2pix = img.sky2pix
               pimg.pix2coord = img.pix2coord
