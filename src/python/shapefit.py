@@ -89,7 +89,7 @@ class Op_shapelets(Op):
             arr = isl.image - isl.islmean
         mask = isl.mask_active
         basis = opts.shapelet_basis
-        beam_pix = img.pixel_beam(location=isl.origin)
+        beam_pix = img.pixel_beam()
         mode = opts.shapelet_fitmode
         if mode != 'fit':
             mode = ''

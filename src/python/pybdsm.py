@@ -429,7 +429,7 @@ def write_catalog(**kwargs):
     "help 'format'" for more information.
 
     Parameters: outfile, format, srcroot, bbs_patches, incl_wavelet, clobber,
-                catalog_type, incl_empty
+                catalog_type, incl_empty, correct_proj
 
     For more information about a parameter, use help.  E.g.,
       > help 'bbs_patches'
@@ -452,7 +452,8 @@ def write_catalog(**kwargs):
         print "\n\033[31;1mAborted\033[0m"
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
-                          'incl_chan', 'clobber', 'catalog_type', 'incl_empty']
+                          'incl_chan', 'clobber', 'catalog_type', 'incl_empty',
+                          'correct_proj']
 write_catalog.use_groups = False
 
 

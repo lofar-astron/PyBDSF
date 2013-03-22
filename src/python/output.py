@@ -202,7 +202,7 @@ def B1950toJ2000(Bcoord):
 
 def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
                    incl_primary=True, sort_by='flux',
-                   clobber=False, incl_empty=False):
+                   clobber=False, incl_empty=False, correct_proj=True):
     """Writes Gaussian list to a BBS sky model"""
     import numpy as N
     from const import fwsig
@@ -219,7 +219,8 @@ def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
 
     outl, outn, patl = list_and_sort_gaussians(img, patch=patch,
                                                root=srcroot, sort_by=sort_by)
-    outstr_list = make_bbs_str(img, outl, outn, patl, incl_empty=incl_empty)
+    outstr_list = make_bbs_str(img, outl, outn, patl, incl_empty=incl_empty,
+                               correct_proj=correct_proj)
 
     if filename == None:
         filename = img.imagename + '.sky_in'
@@ -458,8 +459,10 @@ def write_kvis_ann(img, filename=None, sort_by='indx',
     outl, outn, patl = list_and_sort_gaussians(img, patch=None, sort_by=sort_by)
     for g in outl[0]:
         iidx = g.island_id
+        # kvis does not correct for postion-dependent angle or pixel scale
+        # for region files, so we must use the uncorrected values
         ra, dec = g.centre_sky
-        shape = g.size_sky
+        shape = g.size_sky_uncorr
 
         str = 'text   %10.5f %10.5f   %d\n' % \
             (ra, dec, iidx)
@@ -490,7 +493,7 @@ def write_star(img, filename=None, sort_by='indx',
     for g in outl[0]:
         A = g.peak_flux
         ra, dec = g.centre_sky
-        shape = g.size_sky
+        shape = g.size_sky_uncorr
         ### convert to canonical representation
         ra = ra2hhmmss(ra)
         dec= dec2ddmmss(dec)
@@ -510,7 +513,8 @@ def write_star(img, filename=None, sort_by='indx',
     return filename
 
 
-def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul', incl_empty=False):
+def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
+                 incl_empty=False, correct_proj=True):
     """Makes a list of string entries for a BBS sky model."""
     from output import ra2hhmmss
     from output import dec2ddmmss
@@ -574,7 +578,10 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul', incl_empty=Fals
                   decsign = ('-' if dec[3] < 0 else '+')
                   sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.3f" % (dec[2])).zfill(6)
                   total = str("%.3e" % (g.total_flux))
-                  deconv = g.deconv_size_sky
+                  if correct_proj:
+                      deconv = g.deconv_size_sky
+                  else:
+                      deconv = g.deconv_size_sky_uncorr
                   if deconv[0] == 0.0  and deconv[1] == 0.0:
                       stype = 'POINT'
                       deconv[2] = 0.0
@@ -744,10 +751,13 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
                 ra, dec = g.centre_sky
             else:
                 ra, dec = g.posn_sky_centroid
+
+            # ds9 does not correct for postion-dependent angle or pixel scale
+            # for region files, so we must use the uncorrected values
             if deconvolve:
-                deconv = g.deconv_size_sky
+                deconv = g.deconv_size_sky_uncorr
             else:
-                deconv = g.size_sky
+                deconv = g.size_sky_uncorr
             if deconv[0] == 0.0 and deconv[1] == 0.0:
                 stype = 'POINT'
                 deconv[2] = 0.0

@@ -152,6 +152,8 @@ class Op_polarisation(Op):
               pimg.log = 'PI.'
               pimg.pix2beam = img.pix2beam
               pimg.beam2pix = img.beam2pix
+              pimg.pix2gaus = img.pix2gaus
+              pimg.gaus2pix = img.gaus2pix
               pimg.pix2sky = img.pix2sky
               pimg.sky2pix = img.sky2pix
               pimg.pix2coord = img.pix2coord
@@ -247,7 +249,7 @@ class Op_polarisation(Op):
                         p, ep = func.fit_mulgaus2d(image, gg, x, y, srcmask, fitfix)
                         for ig in range(len(fitfix)):
                             center_pix = (p[ig*6 + 1], p[ig*6 + 2])
-                            bm_pix = N.array([img.pixel_beam(location=center_pix)[0], img.pixel_beam(location=center_pix)[1], img.pixel_beam(location=center_pix)[2]])
+                            bm_pix = N.array([img.pixel_beam()[0], img.pixel_beam()[1], img.pixel_beam()[2]])
                             total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
                         p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
                         if sind > 0:
