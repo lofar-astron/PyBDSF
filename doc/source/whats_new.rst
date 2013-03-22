@@ -4,6 +4,18 @@
 What's New
 **********
 
+Version 1.6.1 (2013/03/22):
+
+    * Fix to bug in ds9 and kvis catalog files that resulted in incorrect position angles.
+
+    * Fix to bug in position-dependent WCS transformations that caused incorrect source parameters in output catalogs.
+
+    * Added option to output uncorrected source parameters to a BBS sky model file (``correct_proj``).
+
+    * Removed sky transformations for flagged Gaussians, as these could sometimes give math domain errors.
+
+    * Disabled aperture flux measurement on wavelet images as it is not used/needed.
+
 Version 1.6.0 (2013/03/05):
 
     * Improved speed and accuracy of aperture flux calculation.

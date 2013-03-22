@@ -576,7 +576,7 @@ The advanced options are:
     src_ra_dec
         This parameter is a list of tuples (default is ``None``) that defines
         the center positions at which fitting will be done. The size of the
-        resion used for the fit is given by the ``src_radius_pix`` parameter.
+        region used for the fit is given by the ``src_radius_pix`` parameter.
         Positions should be given as a list of RA and Dec, in degrees, one set
         per source. These positions will override the normal island finding
         module.
@@ -614,7 +614,7 @@ The options for flagging of Gaussians are:
     flagging_opts ......... True : Show options for Gaussian flagging
       :term:`flag_bordersize` ........ 0 : Flag Gaussian if centre is outside border -
                                    flag_bordersize pixels
-      :term:`flag_maxsize_bm` ..... 50.0 : Flag Gaussian if area greater than flag_maxsize_bm
+      :term:`flag_maxsize_bm` ..... 25.0 : Flag Gaussian if area greater than flag_maxsize_bm
                                    times beam area
       :term:`flag_maxsize_isl` ..... 1.0 : Flag Gaussian if x, y bounding box around
                                    sigma-contour is factor times island bbox
@@ -697,8 +697,6 @@ The output options are:
                                    delete existing files or append a new directory
       :term:`output_all` ......... False : Write out all files automatically to directory
                                    'filename_pybdsm'
-      :term:`output_fbdsm` ....... False : write out fBDSM format output files for use in
-                                   Anaamika
       :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end
       :term:`plot_islands` ....... False : Make separate plots of each island during fitting
                                    (for large images, this may take a long time and a
@@ -736,9 +734,6 @@ The output options are:
 
     output_all
         This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'filename_pybdsm'``.
-
-    output_fbdsm
-        This parameter is a Boolean (default is ``False``). If ``True``\, write out fBDSM format output files for use in Anaamika.
 
     plot_allgaus
         This parameter is a Boolean (default is ``False``). If ``True``\, make a plot of all Gaussians at the end.

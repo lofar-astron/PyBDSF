@@ -29,6 +29,8 @@ The task parameters are as follows:
                                    Gaussians), 'shap' - shapelet list (not yet
                                    supported)
     :term:`clobber` .............. False : Overwrite existing file?
+    :term:`correct_proj` .......... True : Correct source parameters for image projection
+                                   (BBS format only)?
     :term:`format` ............... 'fits': Format of output Gaussian list: 'bbs', 'ds9',
                                    'fits', 'star', 'kvis', or 'ascii'
     :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?
@@ -65,6 +67,18 @@ Each of the parameters is described in detail below.
 
     clobber
         This parameter is a Boolean (default is ``False``) that determines whether existing files are overwritten or not.
+
+    correct_proj
+        This parameter is a Boolean (default is ``True``) that determines
+        whether the source parameters in the output catalog will be corrected
+        for first-order projection effects. If ``False``, no correction is done. In
+        this case, the position angle is relative to the +y axis, NOT true
+        north, and source sizes are calculated assuming a constant pixel scale
+        (equal to the scale at the image center).
+
+        If ``True``, the position angle and source size are corrected using the
+        average pixel size and angle offset (between the +y axis and north) at
+        the location of the source center.
 
     format
         This parameter is a string (default is ``'fits'``) that sets the format of the output catalog. The following formats are supported:
