@@ -958,10 +958,12 @@ class Gaussian(object):
         size = p[3:6]
         if func.approx_equal(size[0], img.pixel_beam()[0]*1.1) and \
                 func.approx_equal(size[1], img.pixel_beam()[1]) and \
-                func.approx_equal(size[2], img.pixel_beam()[2]+90.0):
+                func.approx_equal(size[2], img.pixel_beam()[2]+90.0) or \
+                img.opts.fix_to_beam:
             # Check whether fitted Gaussian is just the distorted pixel beam
-            # given as an initial guess. If so, reset the size to the
-            # undistorted beam. Note: these are sigma sizes, not FWHM sizes.
+            # given as an initial guess or if size was fixed to the beam. If so,
+            # reset the size to the undistorted beam.
+            # Note: these are sigma sizes, not FWHM sizes.
             size = img.pixel_beam()
             size = (size[0], size[1], size[2]+90.0) # adjust angle so that corrected_size() works correctly
         size = func.corrected_size(size)  # gives fwhm and P.A.
