@@ -156,12 +156,12 @@ class Op_gausfit(Op):
 
         mylogger.userinfo(mylog, "Total number of Gaussians fit to image",
                           str(n))
-        if not hasattr(img, '_pi') and not img.waveletimage:
+        if not img._pi and not img.waveletimage:
             mylogger.userinfo(mylog, "Total flux density in model", '%.3f Jy' %
                           tot_flux)
 
         # Check if model flux is very different from sum of flux in image
-        if img.ch0_sum_jy > 0 and not hasattr(img, '_pi'):
+        if img.ch0_sum_jy > 0 and not img._pi:
             if img.total_flux_gaus/img.ch0_sum_jy < 0.5 or \
                     img.total_flux_gaus/img.ch0_sum_jy > 2.0:
                 mylog.warn('Total flux density in model is %0.2f times sum of pixels '\
@@ -269,6 +269,7 @@ class Op_gausfit(Op):
             fit_image = isl.image-isl.islmean-ffimg
         fcn = MGFunction(fit_image, isl.mask_active, 1)
         beam = img.pixel_beam()
+        beam = (1.1*beam[0], beam[1], beam[2]+90.0) # change angle from +y-axis to +x-axis
 
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
@@ -277,6 +278,7 @@ class Op_gausfit(Op):
         thr2 = isl.mean + img.thresh_pix*isl.rms
         thr0 = thr1
         verbose = opts.verbose_fitting
+        g3_only = opts.fix_to_beam
         peak = fcn.find_peak()[0]
         dof = isl.size_active
         shape = isl.shape
@@ -292,14 +294,14 @@ class Op_gausfit(Op):
             ini_gausfit = 'default'
         if ini_gausfit == 'simple' and ngmax == None:
           ngmax = 25
-        if ini_gausfit == 'default':
+        if ini_gausfit == 'default' or opts.fix_to_beam:
           gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr0, beam, img)
-        if ini_gausfit == 'nobeam':
+        if ini_gausfit == 'nobeam' and not opts.fix_to_beam:
           gaul = self.inigaus_nobeam(isl, thr0, beam, img)
           ng1 = len(gaul); ngmax = ng1+2
         while iter < 5:
             iter += 1
-            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, ini_gausfit, ngmax, verbose)
+            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, ini_gausfit, ngmax, verbose, g3_only)
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                               beam, thr0, peak, shape, isl.mask_active,
                                               isl.image, size)
@@ -315,7 +317,7 @@ class Op_gausfit(Op):
             ngmax = 25
             while iter < 5:
                iter += 1
-               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                  beam, thr0, peak, shape, isl.mask_active,
                                                  isl.image, size)
@@ -327,7 +329,7 @@ class Op_gausfit(Op):
             ngmax = 6
             while not fitok and ngmax > 1:
                 ngmax -= 1
-                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose)
+                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                           beam, thr0, peak, shape, isl.mask_active,
                                           isl.image, size)
@@ -342,7 +344,7 @@ class Op_gausfit(Op):
             ngmax = 25
             while iter < 5:
                iter += 1
-               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                  beam, thr0, peak, shape, isl.mask_active,
                                                  isl.image, size)
@@ -359,7 +361,7 @@ class Op_gausfit(Op):
             ngmax = 25
             while iter < 5:
                iter += 1
-               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose)
+               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                  beam, thr0, peak, shape, isl.mask_active,
                                                  isl.image, size)
@@ -370,7 +372,7 @@ class Op_gausfit(Op):
         if not fitok:
             # If all else fails, try to use moment analysis
             inisl = N.where(~isl.mask_active)
-            mask_id = N.zeros(isl.image.shape, dtype=int) - 1
+            mask_id = N.zeros(isl.image.shape, dtype=N.int32) - 1
             mask_id[inisl] = isl.island_id
             try:
                 pixel_beamarea = img.pixel_beamarea()
@@ -426,7 +428,7 @@ class Op_gausfit(Op):
         if opts.verbose_fitting:
             print 'Iteratively fitting island ', isl.island_id
         gaul = []; fgaul = []
-        ffimg_tot = N.zeros(isl.shape)
+        ffimg_tot = N.zeros(isl.shape, dtype=N.float32)
         peak_val = N.max(isl.image - isl.islmean)
         while peak_val >= thr:
             sgaul, sfgaul = self.fit_island(isl, opts, img, ffimg=ffimg_tot, ngmax=iter_ngmax, ini_gausfit='simple')
@@ -450,7 +452,10 @@ class Op_gausfit(Op):
                     x_ax, y_ax = N.mgrid[bbox]
                     ffimg = func.gaussian_fcn(gcopy, x_ax, y_ax)
                     ffimg_tot[bbox] += ffimg
+                peak_val_prev = peak_val
                 peak_val = N.max(isl.image - isl.islmean - ffimg_tot)
+                if func.approx_equal(peak_val, peak_val_prev):
+                    break
             else:
                 break
 
@@ -578,7 +583,7 @@ class Op_gausfit(Op):
                newmask[max(0,xm[i+1]-avsize/2):min(im.shape[0],xm[i+1]+avsize/2), \
                        max(0,ym[i+1]-avsize/2):min(im.shape[1],ym[i+1]+avsize/2)] = True
                invmask[i] = invmask[i]*newmask
-          resid = N.zeros(im.shape)                    # approx fit all compact ones
+          resid = N.zeros(im.shape, dtype=N.float32)                    # approx fit all compact ones
           for i in range(nshed):
             mask1 = ~invmask[i]
             size = sqrt(N.sum(invmask))/fwsig
@@ -594,7 +599,7 @@ class Op_gausfit(Op):
             x, y = N.where(~isl.mask_active); xcen = N.mean(x); ycen = N.mean(y)
             invm = ~isl.mask_active
             #bound = invm - nd.grey_erosion(invm, footprint = N.ones((3,3), int)) # better to use bound for ellipse fitting
-            mom = func.momanalmask_gaus(invm, N.zeros(invm.shape, int), 0, 1.0, True)
+            mom = func.momanalmask_gaus(invm, N.zeros(invm.shape, dtype=N.int16), 0, 1.0, True)
             g = (maxv, xcen, ycen, mom[3]/fwsig, mom[4]/fwsig, mom[5]-90.)
             gaul.append(g)
             coords.append([xcen, ycen])
@@ -602,7 +607,7 @@ class Op_gausfit(Op):
         return gaul
 
 
-    def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax, verbose=1):
+    def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax, verbose=1, g3_only=False):
         """One round of fitting
 
         Parameters:
@@ -623,7 +628,7 @@ class Op_gausfit(Op):
         fcn.reset()
         for ig in range(ng1):
           g = gaul[ig]
-          self.add_gaussian(fcn, g, dof)
+          self.add_gaussian(fcn, g, dof, g3_only)
 
         ### do a round of fitting if any initials were provided
         fitok = True
@@ -644,7 +649,7 @@ class Op_gausfit(Op):
               g = [peak, coords[0], coords[1]] + beam
             else:
               break
-          fitok &= self.add_gaussian(fcn, g, dof)
+          fitok &= self.add_gaussian(fcn, g, dof, g3_only)
 
           fitok &= fit(fcn, final=0, verbose=verbose)
 
@@ -654,10 +659,14 @@ class Op_gausfit(Op):
         fitok &= fit(fcn, final=1, verbose=verbose)
         return fitok
 
-    def add_gaussian(self, fcn, parameters, dof):
+    def add_gaussian(self, fcn, parameters, dof, g3_only=False):
         """Try adding one more gaussian to fcn object.
         It's trying to reduce number of fitted parameters if
         there is not enough DoF left.
+
+        Note: g1 fits amplitude only
+              g3 fits amplitude and position
+              g6 fits all parameters
 
         Parameters:
         fcn: MGFunction object
@@ -666,8 +675,11 @@ class Op_gausfit(Op):
         """
         from _cbdsm import Gtype
 
-        gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
-        gtype = (Gtype.g6 if fcn.fitted_parameters() + 6 <= dof else gtype)
+        if g3_only:
+            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
+        else:
+            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (Gtype.g6 if fcn.fitted_parameters() + 6 <= dof else gtype)
 
         if gtype:
             fcn.add_gaussian(gtype, parameters)
@@ -894,6 +906,18 @@ class Gaussian(object):
     deconv_size_skyE = List(Float(), doc="Error on deconvolved shape of the gaussian FWHM, PA, deg",
                       colname=['E_DC_Maj', 'E_DC_Min', 'E_DC_PA'], units=['deg', 'deg',
                       'deg'])
+    size_sky_uncorr   = List(Float(), doc="Shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['Maj_img_plane', 'Min_img_plane', 'PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
+    size_skyE_uncorr  = List(Float(), doc="Error on shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['E_Maj_img_plane', 'E_Min_img_plane', 'E_PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
+    deconv_size_sky_uncorr = List(Float(), doc="Deconvolved shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['DC_Maj_img_plane', 'DC_Min_img_plane', 'DC_PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
+    deconv_size_skyE_uncorr = List(Float(), doc="Error on deconvolved shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['E_DC_Maj_img_plane', 'E_DC_Min_img_plane', 'E_DC_PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
     size_pix   = List(Float(), doc="Shape of the gaussian FWHM, pixel units")
     size_pixE  = List(Float(), doc="Error on shape of the gaussian FWHM, pixel units")
     rms        = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
@@ -934,22 +958,24 @@ class Gaussian(object):
         size = p[3:6]
         if func.approx_equal(size[0], img.pixel_beam()[0]*1.1) and \
                 func.approx_equal(size[1], img.pixel_beam()[1]) and \
-                func.approx_equal(size[2], img.pixel_beam()[2]):
+                func.approx_equal(size[2], img.pixel_beam()[2]+90.0):
             # Check whether fitted Gaussian is just the distorted pixel beam
             # given as an initial guess. If so, reset the size to the
-            # undistorted beam.
-            size = img.beam2pix(img.beam)
+            # undistorted beam. Note: these are sigma sizes, not FWHM sizes.
+            size = img.pixel_beam()
+            size = (size[0], size[1], size[2]+90.0) # adjust angle so that corrected_size() works correctly
         size = func.corrected_size(size)  # gives fwhm and P.A.
         self.size_pix = size # FWHM in pixels and P.A. CCW from +y axis
 
         # Use img.orig_beam for flux calculation and deconvolution on wavelet
         # images, as img.beam has been altered to match the wavelet scale.
+        # Note: these are all FWHM sizes.
         if img.waveletimage:
             bm_pix = N.array(img.beam2pix(img.orig_beam))
         else:
             bm_pix = N.array(img.beam2pix(img.beam))
 
-        # Calculate fluxes, sky sizes, etc.
+        # Calculate fluxes, sky sizes, etc. All sizes are FWHM.
         tot = p[0]*size[0]*size[1]/(bm_pix[0]*bm_pix[1])
         if flag == 0:
             # These are good Gaussians
@@ -957,12 +983,14 @@ class Gaussian(object):
             self.centre_sky = img.pix2sky(p[1:3])
             self.centre_skyE = img.pix2coord(errors[1:3], self.centre_pix, use_wcs=use_wcs)
             self.size_sky = img.pix2gaus(size, self.centre_pix, use_wcs=use_wcs) # FWHM in degrees and P.A. east from north
-            self.size_sky_uncorr = img.pix2gaus(size, self.centre_pix, use_wcs=False) # FWHM in degrees and P.A. east from north
+            self.size_sky_uncorr = img.pix2gaus(size, self.centre_pix, use_wcs=False) # FWHM in degrees and P.A. east from +y axis
             self.size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs)
+            self.size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False)
             gaus_dc, err = func.deconv2(bm_pix, size)
             self.deconv_size_sky = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=use_wcs)
             self.deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=False)
             self.deconv_size_skyE  = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs)
+            self.deconv_size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False)
         else:
             # These are flagged Gaussians, so don't calculate sky values or errors
             errors = [0]*7
@@ -971,9 +999,11 @@ class Gaussian(object):
             self.size_sky = [0., 0., 0.]
             self.size_sky_uncorr = [0., 0., 0.]
             self.size_skyE = [0., 0.]
+            self.size_skyE_uncorr = [0., 0., 0.]
             self.deconv_size_sky = [0., 0., 0.]
             self.deconv_size_sky_uncorr = [0., 0., 0.]
             self.deconv_size_skyE  = [0., 0., 0.]
+            self.deconv_size_skyE_uncorr = [0., 0., 0.]
         self.total_flux = tot
         self.total_fluxE = errors[6]
         self.peak_fluxE = errors[0]
