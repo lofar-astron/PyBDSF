@@ -11,7 +11,7 @@ PyBDSM (the **Py**\thon **B**\lob **D**\etection and **S**\ource **M**\easuremen
 
 .. .. image:: overview_image.png
 ..    :align: center
-    
+
 
 Introduction
 ============
@@ -37,7 +37,7 @@ User's Guide
 ============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    ug_basics
    process_image
@@ -46,7 +46,7 @@ User's Guide
    write_catalog
    scripting
    parameters
-   
+
 
 Analysis Examples
 =================
@@ -64,6 +64,6 @@ Details of the Algorithms
    :maxdepth: 2
 
    algorithms
-   
+
 .. rubric:: Footnotes
 .. [#f1] http://casa.nrao.edu

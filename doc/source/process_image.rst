@@ -332,6 +332,7 @@ The advanced options are:
                                    fdr_ratio, thresh = 'hard' else thresh = 'fdr'
       :term:`fittedimage_clip` ..... 0.1 : Sigma for clipping Gaussians while creating fitted
                                    image
+      :term:`fix_to_beam` ........ False : Fix major and minor axes and PA of Gaussians to beam?
       :term:`group_by_isl` ....... False : Group all Gaussians in each island into a single
                                    source
       :term:`group_method` .. 'intensity': Group Gaussians into sources using 'intensity' map or
@@ -379,8 +380,9 @@ The advanced options are:
     aperture
         This parameter is a float (default is ``None``) that sets the radius (in
         pixels) inside which the aperture flux is measured for each source.
-        The aperture is centered on the centroid of the source. Errors are
-        calculated from the mean of the rms map inside the aperture.
+        The aperture is centered on the either the centroid or the peak of the
+        source (depending on the value of the ``aperture_posn`` option). Errors
+        are calculated from the mean of the rms map inside the aperture.
 
     aperture_posn
         This parameter is a string (default is ``'centroid'``) that sets the
@@ -457,6 +459,12 @@ The advanced options are:
         fitted Gaussian are constructed up to a size 2b, such that the amplitude
         of the Gaussian falls to a value of ``fitted_image_clip`` times the
         local rms, b pixels from the peak.
+
+    fix_to_beam
+        This parameter is a Boolean (default is ``False``). If True, then during
+        fitting the major and minor axes and PA of the Gaussians are fixed to
+        the beam. Only the amplitude and position are fit. If False, all
+        parameters are fit.
 
     group_by_isl
         This parameter is a Boolean (default is ``False``). If True, all
@@ -816,7 +824,7 @@ The options concerning multichannel images are:
         constant value of the beam is taken instead.
 
     beam_spectrum
-        his parameter is a list of tuples (default is ``None``) that sets the FWHM of synthesized beam per channel. Specify as [(bmaj_ch1, bmin_ch1,
+        This parameter is a list of tuples (default is ``None``) that sets the FWHM of synthesized beam per channel. Specify as [(bmaj_ch1, bmin_ch1,
         bpa_ch1), (bmaj_ch2, bmin_ch2, bpa_ch2), etc.] in degrees. E.g.,
         ``beam_spectrum = [(0.01, 0.01, 45.0), (0.02, 0.01, 34.0)]`` for two
         channels.
@@ -1000,7 +1008,7 @@ If ``spectralindex_do = True`` (and the input image has more than one frequency)
 
 * The rms maps for the remaining channels are determined.
 
-* Neighboring channels are averages to attempt to obtain the target SNR per channel for a given source, set by the ``specind_snr`` parameter.
+* Neighboring channels are averaged to attempt to obtain the target SNR per channel for a given source, set by the ``specind_snr`` parameter.
 
     .. note::
 
