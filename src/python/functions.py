@@ -1044,7 +1044,7 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
       im1 = cp(image)
       if im1.min() < 0.: im1 = im1-im1.min()
       im1 = 255 - im1/im1.max()*255
-      opw = nd.watershed_ift(N.array(im1, N.uint8), markers)
+      opw = nd.watershed_ift(N.array(im1, N.uint16), markers)
 
       return opw, markers
 
@@ -1177,6 +1177,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore",category=DeprecationWarning)
             from pywcs import WCS
+
+            # Check if one of the axes has units of "M/S", as this is not
+            # recognized by PyWCS as velocity ("S" is actually Siemens, not
+            # seconds). If "M/S", change to "m/s".
+            for i in range(len(data.shape)):
+                if 'CUNIT' + str(i+1) in hdr:
+                    key_val_raw = hdr['CUNIT' + str(i+1)]
+                    if 'M/S' in key_val_raw:
+                        hdr['CUNIT' + str(i+1)] = 'm/s'
 
             t = WCS(hdr)
             t.wcs.fix()
@@ -1412,9 +1421,41 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     hdulist[0].header = header
     return hdulist
 
+def retrieve_map(img, map_name):
+    """Returns a map cached on disk."""
+    import numpy as N
+
+    filename = get_name(img, map_name)
+    infile = file(filename, 'rb')
+    data = N.load(infile)
+    infile.close()
+    return data
+
+def store_map(img, map_name, map_data):
+    """Caches a map to disk."""
+    import numpy as N
+
+    filename = get_name(img, map_name)
+    outfile = file(filename, 'wb')
+    N.save(outfile, map_data)
+    outfile.close()
+
+def get_name(img, map_name):
+    """Returns name of cache file."""
+    import os
+
+    if img._pi:
+        pi_text = 'pi'
+    else:
+        pi_text = 'I'
+    suffix = '/w%i_%s/' % (img.j, pi_text)
+    dir = img.tempdir + suffix
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    return dir + map_name + '.bin'
+
 def connect(mask):
     """ Find if a mask is singly or multiply connected """
-
     import scipy.ndimage as nd
 
     connectivity = nd.generate_binary_structure(2,2)
@@ -1713,21 +1754,25 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
         return [0.0, 0.0]
 
     # Make ch0 and rms subimages
+    ch0 = img.ch0
+    shape = ch0.shape
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
         xlo = 0
     xhi = posn_pix[0]+int(aperture_pix)+1
-    if xhi > img.ch0.shape[0]:
-        xhi = img.ch0.shape[0]
+    if xhi > shape[0]:
+        xhi = shape[0]
     ylo = posn_pix[1]-int(aperture_pix)-1
     if ylo < 0:
         ylo = 0
     yhi = posn_pix[1]+int(aperture_pix)+1
-    if yhi > img.ch0.shape[1]:
-        yhi = img.ch0.shape[1]
+    if yhi > shape[1]:
+        yhi = shape[1]
 
-    aper_im = img.ch0[xlo:xhi, ylo:yhi] - img.mean[xlo:xhi, ylo:yhi]
-    aper_rms = img.rms[xlo:xhi, ylo:yhi]
+    mean = img.mean
+    rms = img.rms
+    aper_im = ch0[xlo:xhi, ylo:yhi] - mean[xlo:xhi, ylo:yhi]
+    aper_rms = rms[xlo:xhi, ylo:yhi]
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
     pixel_beamarea = img.pixel_beamarea()
     aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
@@ -1761,7 +1806,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
 
     xsize, ysize = mask_size
     if aperture_pix == None:
-        return N.zeros((xsize, ysize), dtype=int)
+        return N.zeros((xsize, ysize), dtype=N.int)
 
     # Make subimages
     xlo = posn_pix[0]-int(aperture_pix)-1
@@ -1777,7 +1822,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     if yhi > ysize:
         yhi = ysize
 
-    mask = N.zeros((xsize, ysize))
+    mask = N.zeros((xsize, ysize), dtype=N.int)
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
     submask_xsize = xhi - xlo
     submask_ysize = yhi - ylo

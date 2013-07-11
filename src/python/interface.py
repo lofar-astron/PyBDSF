@@ -21,27 +21,6 @@ def process(img, **kwargs):
     from image import Image
     import mylogger
 
-    # First, reset img to initial state (in case img is being reprocessed)
-    if hasattr(img, 'use_io'): del img.use_io
-    if hasattr(img, 'sources'): del img.sources
-    if hasattr(img, 'dsources'): del img.dsources
-    if hasattr(img, 'gaussians'): del img.gaussians
-    if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
-    if hasattr(img, 'islands'): del img.islands
-    if hasattr(img, 'ch0'): del img.ch0
-    if hasattr(img, 'image'): del img.image
-    if hasattr(img, 'rms'): del img.rms
-    if hasattr(img, 'mean'): del img.mean
-    if hasattr(img, 'rms_QUV'): del img.rms_QUV
-    if hasattr(img, 'mean_QUV'): del img.mean_QUV
-    if hasattr(img, 'resid_gaus'): del img.resid_gaus
-    if hasattr(img, 'model_gaus'): del img.model_gaus
-    if hasattr(img, 'resid_shap'): del img.resid_shap
-    if hasattr(img, 'model_shap'): del img.model_shap
-    if hasattr(img, 'mask'): del img.mask
-    if hasattr(img, 'rms_mask'): del img.rms_mask
-    if hasattr(img, 'completed_Ops'): del img.completed_Ops
-
     try:
         # set options if given
         if len(kwargs) > 0:
@@ -69,8 +48,9 @@ def process(img, **kwargs):
     # Run all the op's
     try:
         # Run op's in chain
-        op_chain = get_op_chain(img)
+        img, op_chain = get_op_chain(img)
         _run_op_list(img, op_chain)
+        img._prev_opts = img.opts.to_dict()
         return True
     except RuntimeError, err:
         # Catch and log error
@@ -90,23 +70,222 @@ def get_op_chain(img):
 
     This is useful when reprocessing an Image object. For example,
     if Gaussians were already fit, but the user now wants to use
-    shapelets, we do not need to re-run Op_gausfit, etc. At the
-    moment, this just returns the default Op chain from __init__.py.
+    shapelets, we do not need to re-run Op_gausfit, etc.
+
+    Note that any new options added to opts.py should also be
+    added here. If not, a full reprocessing will be done if the
+    new option is changed.
     """
     from . import default_chain
+    Op_chain = default_chain[:]
+    Op_names = ['readimage',
+                'collapse',
+                'preprocess',
+                'rmsimage',
+                'threshold',
+                'islands',
+                'gausfit',
+                'wavelet_atrous',
+                'shapelets',
+                'gaul2srl',
+                'spectralindex',
+                'polarisation',
+                'make_residimage',
+                'psf_vary',
+                'outlist',
+                'cleanup']
+    prev_opts = img._prev_opts
+    if prev_opts == None:
+        return img, default_chain
+    new_opts = img.opts.to_dict()
 
-    return default_chain
-#     prev_opts = img._prev_opts
-#     new_opts = img.opts.to_dict()
-#
-#     # Find whether new opts differ from previous opts
-#     for k, v in prev_opts.iteritems():
-#         if v != new_opts[k]:
-#             if k == 'rms_box':
+    # Define lists of options for each Op. Some of these can be defined
+    # using the "group" parameter of each option.
+    #
+    # Op_readimage()
+    readimage_opts = ['filename', 'beam', 'trim_box', 'frequency',
+                      'beam_spectrum', 'frequency_sp']
 
-    # If filename, beam, trim_box differ, start from readimage
-    # Elif shapelet_do, etc. differ, start from there
+    # Op_collapse()
+    collapse_opts = img.opts.to_list(group='multichan_opts')
+    collapse_opts.append('polarisation_do')
+    collapse_opts += readimage_opts
 
+    # Op_preprocess()
+    preprocess_opts = ['kappa_clip', 'polarisation_do']
+    preprocess_opts += collapse_opts
+
+    # Op_rmsimage()
+    rmsimage_opts = ['rms_box', 'rms_box_bright', 'adaptive_rms_box',
+                     'mean_map', 'rms_map', 'adaptive_thresh', 'rms_box_bright']
+    rmsimage_opts += preprocess_opts
+
+    # Op_threshold()
+    threshold_opts = ['thresh', 'thresh_pix', 'thresh_isl']
+    threshold_opts += rmsimage_opts
+
+    # Op_islands()
+    islands_opts = threshold_opts + ['minpix_isl']
+
+    # Op_gausfit()
+    gausfit_opts = islands_opts
+
+    # Op_wavelet_atrous()
+    wavelet_atrous_opts = img.opts.to_list(group='atrous_do')
+    wavelet_atrous_opts.append('atrous_do')
+    wavelet_atrous_opts += gausfit_opts
+
+    # Op_shapelets()
+    shapelets_opts = img.opts.to_list(group='shapelet_do')
+    shapelets_opts.append('shapelet_do')
+    shapelets_opts += islands_opts
+
+    # Op_gaul2srl()
+    gaul2srl_opts = gausfit_opts + wavelet_atrous_opts + ['group_tol', 'group_by_isl', 'group_method']
+
+    # Op_spectralindex()
+    spectralindex_opts = img.opts.to_list(group='spectralindex_do')
+    spectralindex_opts.append('spectralindex_do')
+    spectralindex_opts += gaul2srl_opts
+
+    # Op_polarisation()
+    polarisation_opts = img.opts.to_list(group='polarisation_do')
+    polarisation_opts.append('polarisation_do')
+    polarisation_opts += gaul2srl_opts
+
+    # Op_make_residimage()
+    make_residimage_opts = gausfit_opts + shapelets_opts + ['fittedimage_clip']
+
+    # Op_psf_vary()
+    psf_vary_opts = img.opts.to_list(group='psf_vary_do')
+    psf_vary_opts.append('psf_vary_do')
+    psf_vary_opts += gaul2srl_opts
+
+    # Op_outlist() and Op_cleanup() are always done.
+
+    # Find whether new opts differ from previous opts. If so, reset relevant
+    # image parameters and add relevant Op to Op_chain.
+    found = None
+    for k, v in prev_opts.iteritems():
+        if v != new_opts[k]:
+            found = False
+            if k in readimage_opts:
+                if hasattr(img, 'use_io'): del img.use_io
+                if hasattr(img, 'image'): del img.image
+                while 'readimage' in img.completed_Ops:
+                    img.completed_Ops.remove('readimage')
+                found = True
+            if k in collapse_opts:
+                if hasattr(img, 'mask'): del img.mask
+                if hasattr(img, 'ch0'): del img.ch0
+                while 'collapse' in img.completed_Ops:
+                    img.completed_Ops.remove('collapse')
+                found = True
+            if k in preprocess_opts:
+                while 'preprocess' in img.completed_Ops:
+                    img.completed_Ops.remove('preprocess')
+                found = True
+            if k in rmsimage_opts:
+                if hasattr(img, 'rms'): del img.rms
+                if hasattr(img, 'mean'): del img.mean
+                if hasattr(img, 'rms_QUV'): del img.rms_QUV
+                if hasattr(img, 'mean_QUV'): del img.mean_QUV
+                if hasattr(img, 'rms_mask'): del img.rms_mask
+                while 'rmsimage' in img.completed_Ops:
+                    img.completed_Ops.remove('rmsimage')
+                found = True
+            if k in threshold_opts:
+                while 'threshold' in img.completed_Ops:
+                    img.completed_Ops.remove('threshold')
+                found = True
+            if k in islands_opts:
+                if hasattr(img, 'islands'): del img.islands
+                while 'islands' in img.completed_Ops:
+                    img.completed_Ops.remove('islands')
+                found = True
+            if k in gausfit_opts:
+                if hasattr(img, 'sources'): del img.sources
+                if hasattr(img, 'dsources'): del img.dsources
+                if hasattr(img, 'gaussians'): del img.gaussians
+                while 'gausfit' in img.completed_Ops:
+                    img.completed_Ops.remove('gausfit')
+                found = True
+            if k in wavelet_atrous_opts:
+                if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
+                g_filt = []
+                if hasattr(img, 'gaussians'):
+                    for g in img.gaussians:
+                        if g.jlevel == 0:
+                            g_filt.append(g)
+                    img.gaussians = g_filt
+                while 'wavelet_atrous' in img.completed_Ops:
+                    img.completed_Ops.remove('wavelet_atrous')
+                found = True
+            if k in shapelets_opts:
+                while 'shapelets' in img.completed_Ops:
+                    img.completed_Ops.remove('shapelets')
+                found = True
+            if k in gaul2srl_opts:
+                while 'gaul2srl' in img.completed_Ops:
+                    img.completed_Ops.remove('gaul2srl')
+                found = True
+            if k in spectralindex_opts:
+                while 'spectralindex' in img.completed_Ops:
+                    img.completed_Ops.remove('spectralindex')
+                found = True
+            if k in polarisation_opts:
+                while 'polarisation' in img.completed_Ops:
+                    img.completed_Ops.remove('polarisation')
+                found = True
+            if k in make_residimage_opts:
+                if hasattr(img, 'resid_gaus'): del img.resid_gaus
+                if hasattr(img, 'model_gaus'): del img.model_gaus
+                if hasattr(img, 'resid_shap'): del img.resid_shap
+                if hasattr(img, 'model_shap'): del img.model_shap
+                while 'make_residimage' in img.completed_Ops:
+                    img.completed_Ops.remove('make_residimage')
+                found = True
+            if k in psf_vary_opts:
+                while 'psf_vary' in img.completed_Ops:
+                    img.completed_Ops.remove('psf_vary')
+                found = True
+            if not found:
+                break
+
+    # If no options have changed, don't re-run
+    if found == None:
+        return img, []
+
+    # If a changed option is not in any of the above lists,
+    # re-run all Ops.
+    if not found:
+        del img.completed_Ops
+        if hasattr(img, 'rms'): del img.rms
+        if hasattr(img, 'mean'): del img.mean
+        if hasattr(img, 'rms_QUV'): del img.rms_QUV
+        if hasattr(img, 'mean_QUV'): del img.mean_QUV
+        if hasattr(img, 'rms_mask'): del img.rms_mask
+        if hasattr(img, 'sources'): del img.sources
+        if hasattr(img, 'dsources'): del img.dsources
+        if hasattr(img, 'gaussians'): del img.gaussians
+        if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
+        if hasattr(img, 'resid_gaus'): del img.resid_gaus
+        if hasattr(img, 'model_gaus'): del img.model_gaus
+        if hasattr(img, 'resid_shap'): del img.resid_shap
+        if hasattr(img, 'model_shap'): del img.model_shap
+        return img, Op_chain
+
+    while 'outlist' in img.completed_Ops:
+        img.completed_Ops.remove('outlist')
+    while 'cleanup' in img.completed_Ops:
+        img.completed_Ops.remove('cleanup')
+    for completed_Op in img.completed_Ops:
+        if completed_Op in Op_names:
+            Op_indx = Op_names.index(completed_Op)
+            Op_names.pop(Op_indx)
+            Op_chain.pop(Op_indx)
+
+    return img, Op_chain
 
 def load_pars(filename):
     """Load parameters from a save file or dictionary.

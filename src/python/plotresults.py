@@ -70,7 +70,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         if img_shap_mod == None:
             img_shap_resid = None
         else:
-            img_shap_resid = img.ch0 - img.model_shap
+            img_shap_resid = img_ch0 - img_shap_mod
     else:
         img_shap_mod = None
         img_shap_resid = None

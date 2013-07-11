@@ -40,8 +40,8 @@ class Op_make_residimage(Op):
         shape = img.ch0.shape
         thresh= img.opts.fittedimage_clip
 
-        img.resid_gaus = cp(img.ch0)
-        img.model_gaus = N.zeros(shape, dtype=float)
+        resid_gaus = cp(img.ch0)
+        model_gaus = N.zeros(shape, dtype=N.float32)
         for g in img.gaussians:
             C1, C2 = g.centre_pix
             if hasattr(g, 'wisland_id') and img.waveletimage:
@@ -55,8 +55,8 @@ class Op_make_residimage(Op):
 
             x_ax, y_ax = N.mgrid[bbox]
             ffimg = func.gaussian_fcn(g, x_ax, y_ax)
-            img.resid_gaus[bbox] = img.resid_gaus[bbox] - ffimg
-            img.model_gaus[bbox] = img.model_gaus[bbox] + ffimg
+            resid_gaus[bbox] = resid_gaus[bbox] - ffimg
+            model_gaus[bbox] = model_gaus[bbox] + ffimg
 
         # Apply mask to model and resid images
         if hasattr(img, 'rms_mask'):
@@ -65,8 +65,11 @@ class Op_make_residimage(Op):
             mask = img.mask
         if isinstance(img.mask, N.ndarray):
             pix_masked = N.where(img.mask == True)
-            img.model_gaus[pix_masked] = N.nan
-            img.resid_gaus[pix_masked] = N.nan
+            model_gaus[pix_masked] = N.nan
+            resid_gaus[pix_masked] = N.nan
+
+        img.put_map('model_gaus', model_gaus)
+        img.put_map('resid_gaus', resid_gaus)
 
         if img.opts.output_all:
             if img.waveletimage:
@@ -77,22 +80,22 @@ class Op_make_residimage(Op):
                 moddir = img.basedir + '/model/'
             if not os.path.exists(resdir): os.makedirs(resdir)
             if not os.path.exists(moddir): os.makedirs(moddir)
-            func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', img.resid_gaus, img, resdir)
+            func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', resid_gaus, img, resdir)
             mylog.info('%s %s' % ('Writing', resdir+img.imagename+'.resid_gaus.fits'))
-            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0 - img.resid_gaus), img, moddir)
+            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0 - resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 
         ### residual rms and mean per island
         for isl in img.islands:
-            resid = img.resid_gaus[isl.bbox]
+            resid = resid_gaus[isl.bbox]
             self.calc_resid_mean_rms(isl, resid, type='gaus')
 
         # Calculate some statistics for the Gaussian residual image
         non_masked = N.where(~N.isnan(img.ch0))
-        mean = N.mean(img.resid_gaus[non_masked], axis=None)
-        std_dev = N.std(img.resid_gaus[non_masked], axis=None)
-        skew = stats.skew(img.resid_gaus[non_masked], axis=None)
-        kurt = stats.kurtosis(img.resid_gaus[non_masked], axis=None)
+        mean = N.mean(resid_gaus[non_masked], axis=None)
+        std_dev = N.std(resid_gaus[non_masked], axis=None)
+        skew = stats.skew(resid_gaus[non_masked], axis=None)
+        kurt = stats.kurtosis(resid_gaus[non_masked], axis=None)
         stat_msg = "Statistics of the Gaussian residual image:\n"
         stat_msg += "        mean: %.3e (Jy/beam)\n" % mean
         stat_msg += "    std. dev: %.3e (Jy/beam)\n" % std_dev
@@ -104,7 +107,7 @@ class Op_make_residimage(Op):
         if img.opts.shapelet_do:
             mylog.info("Calculating residual image after subtracting reconstructed shapelets")
             shape = img.ch0.shape
-            fimg = N.zeros(shape, dtype=float)
+            fimg = N.zeros(shape, dtype=N.float32)
 
             for isl in img.islands:
               if isl.shapelet_beta > 0: # make sure shapelet has nonzero scale for this island
@@ -115,8 +118,9 @@ class Op_make_residimage(Op):
                 image_recons=reconstruct_shapelets(isl.shape, mask, basis, beta, cen, nmax, cf)
                 fimg[isl.bbox] += image_recons
 
-            img.model_shap = fimg
-            img.resid_shap = img.ch0 - fimg
+            model_shap = fimg
+            resid_shap = img.ch0 - fimg
+
             # Apply mask to model and resid images
             if hasattr(img, 'rms_mask'):
                 mask = img.rms_mask
@@ -124,24 +128,27 @@ class Op_make_residimage(Op):
                 mask = img.mask
             if isinstance(mask, N.ndarray):
                 pix_masked = N.where(mask == True)
-                img.model_shap[pix_masked] = N.nan
-                img.resid_shap[pix_masked] = N.nan
+                model_shap[pix_masked] = N.nan
+                resid_shap[pix_masked] = N.nan
+
+            img.put_map('model_shap', model_shap)
+            img.put_map('resid_shap', resid_shap)
 
             if img.opts.output_all:
-                func.write_image_to_file(img.use_io, img.imagename + '.resid_shap.fits', img.resid_shap, img, resdir)
+                func.write_image_to_file(img.use_io, img.imagename + '.resid_shap.fits', resid_shap, img, resdir)
                 mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.resid_shap.fits'))
 
             ### shapelet residual rms and mean per island
             for isl in img.islands:
-                resid = img.resid_shap[isl.bbox]
+                resid = resid_shap[isl.bbox]
                 self.calc_resid_mean_rms(isl, resid, type='shap')
 
             # Calculate some statistics for the Shapelet residual image
             non_masked = N.where(~N.isnan(img.ch0))
-            mean = N.mean(img.resid_gaus[non_masked], axis=None)
-            std_dev = N.std(img.resid_gaus[non_masked], axis=None)
-            skew = stats.skew(img.resid_gaus[non_masked], axis=None)
-            kurt = stats.kurtosis(img.resid_gaus[non_masked], axis=None)
+            mean = N.mean(resid_shap[non_masked], axis=None)
+            std_dev = N.std(resid_shap[non_masked], axis=None)
+            skew = stats.skew(resid_shap[non_masked], axis=None)
+            kurt = stats.kurtosis(resid_shap[non_masked], axis=None)
             mylog.info("Statistics of the Shapelet residual image:")
             mylog.info("        mean: %.3e (Jy/beam)" % mean)
             mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
@@ -178,7 +185,7 @@ class Op_make_residimage(Op):
         type - specifies 'gaus' or 'shap'
         """
         if len(isl.gaul) == 0:
-            resid = N.zeros(isl.shape)
+            resid = N.zeros(isl.shape, dtype=N.float32)
 
         ind = N.where(~isl.mask_active)
         resid = resid[ind]

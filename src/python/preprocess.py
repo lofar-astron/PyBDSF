@@ -41,6 +41,7 @@ class Op_preprocess(Op):
         if img.opts.polarisation_do:
           pols = ['I', 'Q', 'U', 'V']
           ch0images = [img.ch0, img.ch0_Q, img.ch0_U, img.ch0_V]
+#           ch0images = ['ch0', 'ch0_Q', 'ch0_U', 'ch0_V']
           img.clipped_mean_QUV = []
           img.clipped_rms_QUV = []
         else:
@@ -54,6 +55,7 @@ class Op_preprocess(Op):
         opts = img.opts
         kappa = opts.kappa_clip
         for ipol, pol in enumerate(pols):
+#           image = img.get_map(ch0images[ipol])
           image = ch0images[ipol]
 
           ### basic stats
@@ -79,26 +81,26 @@ class Op_preprocess(Op):
                        'mJy and ',kappa,'sigma clipped rms = ',crms*1000.0, 'mJy'))
 
         image = img.ch0
-        # blank pixels; check if pixels are outside the universe
+        # Check if pixels are outside the universe
         if opts.check_outsideuniv:
-          mylogger.userinfo(mylog, "Determining the pixels outside the universe")
-          noutside_univ = self.outside_univ(img)
-          img.noutside_univ = noutside_univ
-
-          # If any are found, (re)mask the image
-          if noutside_univ > 0:
-              mask = N.isnan(img.ch0)
-              masked = mask.any()
-              img.masked = masked
-              if masked:
-                  img.mask = mask
-              img.blankpix = N.sum(mask)
-              frac_blank = round(float(noutside_univ)/float(image.shape[0]*image.shape[1]),3)
-          mylogger.userinfo(mylog, "Number of additional pixels blanked", str(noutside_univ)
-                            +' ('+str(frac_blank*100.0)+'%)')
-
+            mylogger.userinfo(mylog, "Checking for pixels outside the universe")
+            noutside_univ = self.outside_univ(img)
+            img.noutside_univ = noutside_univ
+            frac_blank = round(float(noutside_univ)/float(image.shape[0]*image.shape[1]),3)
+            mylogger.userinfo(mylog, "Number of additional pixels blanked", str(noutside_univ)
+                              +' ('+str(frac_blank*100.0)+'%)')
         else:
-          mylog.info("Not checking to see if there are pixels outside the universe")
+            noutside_univ = 0
+
+        # If needed, (re)mask the image
+        if noutside_univ > 0:
+            mask = N.isnan(img.ch0)
+            masked = mask.any()
+            img.masked = masked
+            if masked:
+                img.mask = mask
+            img.blankpix = N.sum(mask)
+
 
         ### max/min pixel value & coordinates
         shape = image.shape[0:2]
@@ -121,7 +123,7 @@ class Op_preprocess(Op):
         img.omega = N.product(shape)*abs(N.product(cdelt))/(180.*180./pi/pi)
 
         ### Total flux in ch0 image
-        if 'atrous' in img.filename or hasattr(img, '_pi') or img.log == 'Detection image':
+        if 'atrous' in img.filename or img._pi or img.log == 'Detection image':
             # Don't do this estimate for atrous wavelet images
             # or polarized intensity image,
             # as it doesn't give the correct flux. Also, ignore
@@ -129,7 +131,7 @@ class Op_preprocess(Op):
             # wrong (e.g., not corrected for the primary beam).
             img.ch0_sum_jy = 0
         else:
-            im_flux = N.nansum(img.ch0)/img.pixel_beamarea() # Jy
+            im_flux = N.nansum(image)/img.pixel_beamarea() # Jy
             img.ch0_sum_jy = im_flux
             mylogger.userinfo(mylog, 'Flux from sum of (non-blank) pixels',
                               '%.3f Jy' % (im_flux,))

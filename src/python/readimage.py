@@ -17,6 +17,8 @@ from image import *
 from functions import read_image_from_file
 import mylogger
 import sys
+import shutil
+import tempfile
 
 Image.imagename = String(doc="Identifier name for output files")
 Image.filename = String(doc="Name of input file without extension")
@@ -65,6 +67,21 @@ class Op_readimage(Op):
         else:
             data, hdr = result
 
+        # Check whether caching is to be used.
+        if img.opts.cache_limit == None:
+            img.cache_limit = 16.0 # Mpix
+        else:
+            img.cache_limit = img.opts.cache_limit
+        if data.shape[2]*data.shape[3] /  1024.0**2 > img.cache_limit:
+            img.do_cache = True
+        else:
+            img.do_cache = False
+        if img.do_cache:
+            mylog.info('Using disk caching.')
+            img.tempdir = TempDir(tempfile.mkdtemp())
+        else:
+            img.tempdir = None
+
         # Store data and header in img. If polarisation_do = False, only store pol == 'I'
         img.nchan = data.shape[1]
         img.nstokes = data.shape[0]
@@ -78,9 +95,9 @@ class Op_readimage(Op):
             img.opts.polarisation_do = False
             mylog.warning('Image has Stokes I only. Polarisation module disabled.')
         if img.opts.polarisation_do or data.shape[0] == 1:
-            img.image = data
+            img.put_map('image', data)
         else:
-            img.image = data[0, :].reshape(1, data.shape[1], data.shape[2], data.shape[3])
+            img.put_map('image', data[0, :].reshape(1, data.shape[1], data.shape[2], data.shape[3]))
         img.header = hdr
         img.j = 0
 
@@ -135,7 +152,7 @@ class Op_readimage(Op):
             if not os.path.isdir(img.basedir):
                 os.makedirs(img.basedir)
 
-        # Check for zeros and blank if img.opts.blank_zeros is True
+        # Check for zeros and blank if blank_zeros = True
         if img.opts.blank_zeros:
             zero_pixels = N.where(img.image[0] == 0.0)
             mylog.info('Blanking %i zeros in image' % len(zero_pixels[1]))
@@ -547,4 +564,10 @@ class Op_readimage(Op):
         return angdist12
 
 
+class TempDir(str):
+    """Container for temporary directory for image caching.
+
+    Directory is deleted when garbage collected/zero references """
+    def __del__(self):
+        shutil.rmtree(self.__str__())
 

@@ -30,6 +30,7 @@ from wavelet_atrous import Op_wavelet_atrous
 from psf_vary import Op_psf_vary
 from cleanup import Op_cleanup
 from _version import __version__, __revision__
+import gc
 
 default_chain = [Op_readimage(),
                  Op_collapse(),
@@ -97,6 +98,7 @@ def _run_op_list(img, chain):
     from interface import raw_input_no_history
     from gausfit import Op_gausfit
     import mylogger
+    import gc
 
     ops = []
     stopat = img.opts.stop_at
@@ -146,8 +148,9 @@ def _run_op_list(img, chain):
         op.__start_time = time()
         op(img)
         op.__stop_time = time()
+        gc.collect()
 
-    if img.opts.interactive and not hasattr(img, '_pi'):
+    if img.opts.interactive and not img._pi:
         print dc + 'Fitting complete. Displaying results...' + nc
         if img.opts.shapelet_do:
             show_smod = True

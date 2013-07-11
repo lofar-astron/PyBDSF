@@ -38,12 +38,10 @@ class Op_collapse(Op):
             chan0 = c_list[0]
             img.collapse_ch0 = chan0
         ch0sh = img.image.shape[2:]
-        img.ch0 = N.zeros(ch0sh)
         if img.opts.polarisation_do:
-          img.ch0_Q = N.zeros(ch0sh); img.ch0_U = N.zeros(ch0sh); img.ch0_V = N.zeros(ch0sh)
-          ch0images = [img.ch0, img.ch0_Q, img.ch0_U, img.ch0_V]
+          ch0images = ['ch0', 'ch0_Q', 'ch0_U', 'ch0_V']
         else:
-          ch0images = [img.ch0]
+          ch0images = ['ch0']
 
         # assume all Stokes images have the same blank pixels as I:
         blank = N.isnan(img.image[0])
@@ -57,12 +55,14 @@ class Op_collapse(Op):
         for ipol, pol in enumerate(pols):
           if c_mode == 'single':
             if pol == 'I':
-              img.ch0 = ch0 = img.image[0, chan0]
+              ch0 = img.image[0, chan0]
+              img.put_map('ch0', ch0)
               mylogger.userinfo(mylog, 'Source extraction will be ' \
                                     'done on channel', '%i (%.3f MHz)' % \
                                     (chan0, img.frequency/1e6))
             else:
-              ch0images[ipol][:] = ch0[:] = img.image[ipol, chan0][:]
+              ch0[:] = img.image[ipol, chan0][:]
+              img.put_map(ch0images[ipol][:], ch0)
 
           if c_mode == 'average':
             if not hasblanks:
@@ -77,7 +77,7 @@ class Op_collapse(Op):
               else:
                 # use wtarr from the I image, which is always collapsed first
                 ch0, wtarr = avspc_blanks(c_list, img.image[ipol], img.channel_clippedrms, c_wts, wtarr=wtarr)
-            ch0images[ipol][:] = ch0[:]
+            img.put_map(ch0images[ipol][:], ch0) #ch0images[ipol][:] = ch0[:]
 
             if pol == 'I':
               img.avspc_wtarr = wtarr
@@ -103,19 +103,22 @@ class Op_collapse(Op):
               mylog.debug('%s %s ' % ('Writing file ', img.imagename+'.ch0_'+pol+'.fits'))
 
       else:
-        # Only one channel in image
-        img.ch0 = img.image[0, 0]
-        mylogger.userinfo(mylog, 'Frequency of image',
-                          '%.3f MHz' % (img.frequency/1e6,))
-        if img.opts.polarisation_do:
-          for pol in pols[1:]:
-              if pol == 'Q': img.ch0_Q = img.image[1, 0][:]
-              if pol == 'U': img.ch0_U = img.image[2, 0][:]
-              if pol == 'V': img.ch0_V = img.image[3, 0][:]
+          # Only one channel in image
+          img.put_map('ch0', img.image[0, 0])
+          mylogger.userinfo(mylog, 'Frequency of image',
+                            '%.3f MHz' % (img.frequency/1e6,))
+          if img.opts.polarisation_do:
+            for pol in pols[1:]:
+                if pol == 'Q':
+                    img.put_map('ch0_Q', img.image[1, 0][:])
+                if pol == 'U':
+                    img.put_map('ch0_U', img.image[2, 0][:])
+                if pol == 'V':
+                    img.put_map('ch0_V', img.image[3, 0][:])
 
-      # Lastly, remove Q, U, and V images from img.image, as they are no longer needed
-      if img.opts.polarisation_do:
-          img.image = img.image[0,:].reshape(1, img.image.shape[1], img.image.shape[2], img.image.shape[3])
+      # Remove img.image unless the spectra_index module is to be run
+      if not img.opts.spectralindex_do or img.image.shape[1] == 1:
+          del img.image
 
       # create mask if needed (assume all pols have the same mask as I)
       mask = N.isnan(img.ch0)
@@ -171,7 +174,7 @@ def chan_stats(img, kappa):
 def avspc_direct(c_list, image, rmsarr, c_wts, wtarr=None):
 
     shape2 = image.shape[1:]
-    ch0 = N.zeros(shape2)
+    ch0 = N.zeros(shape2, dtype=N.float32)
     sumwts = 0.0
     if wtarr == None:
       wtarr = N.zeros(len(c_list))
@@ -201,8 +204,8 @@ def avspc_direct(c_list, image, rmsarr, c_wts, wtarr=None):
 def avspc_blanks(c_list, image, rmsarr, c_wts, wtarr=None):
 
     shape2 = image.shape[1:]
-    ch0 = N.zeros(shape2)
-    sumwtim = N.zeros(shape2)
+    ch0 = N.zeros(shape2, dtype=N.float32)
+    sumwtim = N.zeros(shape2, dtype=N.float32)
     if wtarr == None:
       wtarr = N.zeros(len(c_list))
       for i, ch in enumerate(c_list):
@@ -214,7 +217,7 @@ def avspc_blanks(c_list, image, rmsarr, c_wts, wtarr=None):
           wt = 1.0/(wt*wt)
         else:
           wt = 0
-        wtim = N.ones(shape2)*wt*(~N.isnan(im))
+        wtim = N.ones(shape2, dtype=N.float32)*wt*(~N.isnan(im))
         sumwtim += wtim
         ch0 += N.nan_to_num(im)*wtim
         wtarr[i] = wt

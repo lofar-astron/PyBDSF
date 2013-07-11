@@ -546,9 +546,18 @@ class Opts(object):
                              doc = "Blank zeros in the image\n"\
                                 "If True, all pixels with a value of 0 are blanked."\
                                 "If False, any such pixels are left unblanked (and "\
-                                "hence will affect the rms and mean maps, etc.) "\
+                                "hence will affect the rms and mean maps, etc.). "\
                                 "Pixels with a value of NaN are always blanked.",
                              group = "advanced_opts")
+#     blank_lowrms = Bool(False,
+#                              doc = "Blank pixels where local rms falls below "\
+#                                 "0.001 * clipped_rms\n"\
+#                                 "If True, all pixels with a local value of the rms "\
+#                                 "of 0.001 times the clipped rms value of the image "\
+#                                 "are blanked."\
+#                                 "If False, any such pixels are left unblanked. "\
+#                                 "Pixels with a value of NaN are always blanked.",
+#                              group = "advanced_opts")
     detection_image = String(doc = "Detection image file name used only for detecting "\
                                  "islands of emission. Source measurement is still done "\
                                  "on the main image\n"\
@@ -577,6 +586,13 @@ class Opts(object):
                              doc = "Number of cores to use during fitting, None => "\
                                 "use all\n"\
                                 "Sets the number of cores to use during fitting.",
+                             group = "advanced_opts")
+    cache_limit = Option(None, Float(),
+                             doc = "Limit for image size in Mpix above which " \
+                                 "disk caching is used. None => 16 Mpix\n"\
+                                 "This option controls whether internally "\
+                                 "derived images are stored in memory or are "\
+                                 "cached to disk.",
                              group = "advanced_opts")
 
     #--------------------------------ADAPTIVE RMS_BOX OPTIONS--------------------------------

@@ -28,7 +28,7 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
       print ' Bad input params'
     ordermax=nmax+1
 
-    Bset=N.zeros((ordermax, ordermax, image.shape[0], image.shape[1]))
+    Bset=N.zeros((ordermax, ordermax, image.shape[0], image.shape[1]), dtype=N.float32)
     cf = N.zeros((ordermax,ordermax)) # coefficient matrix, will fill up only lower triangular part.
     index = [(i,j) for i in range(ordermax) for j in range(ordermax-i)]  # i=0->nmax, j=0-nmax-i
     for coord in index:
@@ -72,7 +72,7 @@ def fit_shapeletbasis(image, mask, cf0, Bset):
 def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
     """ Reconstructs a shapelet image of size, for pixels which are unmasked, for a given
     beta, centre, nmax, basis and the shapelet coefficient matrix cf. """
-    rimage = N.zeros(size)
+    rimage = N.zeros(size, dtype=N.float32)
     hc = []
     hc = shapelet_coeff(nmax, basis)
 
@@ -134,8 +134,8 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     for i, v in N.ndenumerate(mask): msk[i] = not v
 
     n,m = image.shape
-    cf12 = N.zeros(image.shape)
-    cf21 = N.zeros(image.shape)
+    cf12 = N.zeros(image.shape, dtype=N.float32)
+    cf21 = N.zeros(image.shape, dtype=N.float32)
     index = [(i,j) for i in range(n) for j in range(m)]
     for coord in index:
         if msk[coord]:
@@ -207,8 +207,8 @@ def getzeroes_matrix(mask, cf, cen, cenx):
     and y is the interpolated y-coordinate where the matrix cf croses zero. If there
     is no zero-crossing, y is zero for that column x.  """
 
-    x = N.arange(cf.shape[0], dtype = float)
-    y = N.zeros(cf.shape[0], dtype = float)
+    x = N.arange(cf.shape[0], dtype=N.float32)
+    y = N.zeros(cf.shape[0], dtype=N.float32)
 
     # import pylab as pl
     # pl.clf()

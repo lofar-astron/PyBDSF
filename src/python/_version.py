@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.6.1'
+__version__ = '1.7.0'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,24 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2013/07/12 - Version 1.7.0
+
+    2013/07/11 - Fix to avoid excessive memory usage in the wavelet module
+        (replaced scipy.signal.fftconvolve with a custom function).
+
+    2013/07/11 - Implemented disk caching for internally derived images.
+    	This caching reduces memory usage and is therefore useful when
+    	processing large images. By default, caching is turned on for
+    	images above 16 Mpix (e.g., 4096x4096 pixels), but this limit
+    	can be set manually with the cache_limit option.
+
+    2013/07/11 - Implemented a variable operation chain for process_image
+        (and img.process()) that allows unneeded steps to be skipped if
+        the image is being reprocessed.
+
+    2013/07/11 - Fixed a bug that could cause Gaussian fitting to hang
+        during iterative fitting of large islands.
 
     2013/06/24 - Added option (fix_to_beam) to fix the size and position
     	angle of Gaussians to the restoring beam during fitting. Fix to

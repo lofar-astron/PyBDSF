@@ -73,16 +73,20 @@ class Op_islands(Op):
                 return
 
             # Check that the ch0 images are the same size
-            det_shape = det_img.ch0.shape
-            ch0_shape = img.ch0.shape
+            ch0_map = img.ch0
+            det_ch0_map = det_img.ch0
+            det_shape = det_ch0_map.shape
+            ch0_shape = ch0_map.shape
             if det_shape != ch0_shape:
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
             # Run through islands and correct the image and rms, mean and max values
             img.island_labels = det_img.island_labels
             corr_islands = []
+            mean_map = img.mean
+            rms_map = img.rms
             for i, isl in enumerate(det_img.islands):
-                islcp = isl.copy(img.pixel_beamarea(), image=img.ch0[isl.bbox], mean=img.mean[isl.bbox], rms=img.rms[isl.bbox])
+                islcp = isl.copy(img.pixel_beamarea(), image=ch0_map[isl.bbox], mean=mean_map[isl.bbox], rms=rms_map[isl.bbox])
                 islcp.island_id = i
                 corr_islands.append(islcp)
             img.islands = corr_islands
@@ -101,7 +105,9 @@ class Op_islands(Op):
             mylogger.userinfo(mylog, "Number of islands found", '%i' %
                               len(img.islands))
 
-            pyrank = N.zeros(img.ch0.shape, dtype=int) - 1
+            ch0_map = img.ch0
+            ch0_shape = ch0_map.shape
+            pyrank = N.zeros(ch0_shape, dtype=N.int32) - 1
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
                 if i == 0:
@@ -169,7 +175,7 @@ class Op_islands(Op):
         img.island_labels = labels
 
         ### apply cuts on island size and peak value
-        pyrank = N.zeros(image.shape)
+        pyrank = N.zeros(image.shape, dtype=N.int32)
         res = []
         islid = 0
         for idx, s in enumerate(slices):
@@ -386,9 +392,9 @@ class Island(object):
         if image == None:
             image = self.image
         if mean == None:
-            mean = N.zeros(mask.shape) + self.mean
+            mean = N.zeros(mask.shape, dtype=N.float32) + self.mean
         if rms == None:
-            rms =  N.zeros(mask.shape) + self.rms
+            rms =  N.zeros(mask.shape, dtype=N.float32) + self.rms
 
         bbox = self.bbox
         idx = self.oldidx

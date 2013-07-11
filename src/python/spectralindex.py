@@ -336,9 +336,9 @@ class Op_spectralindex(Op):
         map_opts = (img.opts.kappa_clip, img.rms_box, img.opts.spline_rank)
 
         if rms_map:
-            rms_spec = N.zeros(image.shape)
-            mean = N.zeros(image.shape[1:])
-            rms = N.zeros(image.shape[1:])
+            rms_spec = N.zeros(image.shape, dtype=N.float32)
+            mean = N.zeros(image.shape[1:], dtype=N.float32)
+            rms = N.zeros(image.shape[1:], dtype=N.float32)
             median_rms = N.zeros(nchan)
             for ichan in range(nchan):
                 if bar1.started:
@@ -348,7 +348,7 @@ class Op_spectralindex(Op):
                 rms_spec[ichan,:,:] = rms
                 median_rms[ichan] = N.median(rms)
         else:
-            rms_spec = N.zeros(image.shape)
+            rms_spec = N.zeros(image.shape, dtype=N.float32)
             for ichan in range(nchan):
               if bar1.started:
                   bar1.increment()
@@ -436,7 +436,7 @@ class Op_spectralindex(Op):
         beamlist = []
         crms_av = N.zeros(n_new)
         freq_av = N.zeros(n_new)
-        imageout = N.zeros((n_new, imagein.shape[1], imagein.shape[2]))
+        imageout = N.zeros((n_new, imagein.shape[1], imagein.shape[2]), dtype=N.float32)
         blank = N.isnan(imagein[0])
         hasblanks = blank.any()
         for ichan, avg_list in enumerate(chan_list):

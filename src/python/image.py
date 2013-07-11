@@ -23,6 +23,15 @@ class Image(object):
     are defined for the most basic image attributes, such
     as image data, mask, header, user options.
 
+    To allow transparent caching of large image data to disk,
+    the image data attributes must be set using the put_map()
+    method, e.g.:
+        img.put_map('ch0', ch0_image)
+    The stored image data can then be accessed in the usual way:
+        ch0_image = img.ch0
+    However, any updates to the image data must use the put_map()
+    method again.
+
     There is little sense in declaring all possible attributes
     right here as it will introduce unneeded dependencies
     between modules, thus most other attributes (like island lists,
@@ -43,17 +52,15 @@ class Image(object):
     _is_interactive_shell = Bool(False, doc="PyBDSM is being used in the interactive shell")
     waveletimage = Bool(False, doc="Image is a wavelet transform image")
     _pi = Bool(False, doc="Image is a polarized intensity image")
-
-
+    do_cache = Bool(False, doc="Cache images to disk")
 
     def __init__(self, opts):
         self.opts = Opts(opts)
+        self._prev_opts = None
         self.extraparams = {}
 
     def __setstate__(self, state):
         """Needed for multiprocessing"""
-#         self.pixel_beamarea = state['pixel_beamarea']
-#         self.pixel_beam = state['pixel_beam']
         self.thresh_pix = state['thresh_pix']
         self.minpix_isl = state['minpix_isl']
         self.clipped_mean = state['clipped_mean']
@@ -61,12 +68,28 @@ class Image(object):
     def __getstate__(self):
         """Needed for multiprocessing"""
         state = {}
-#         state['pixel_beamarea'] = self.pixel_beamarea
-#         state['pixel_beam'] = self.pixel_beam
         state['thresh_pix'] = self.thresh_pix
         state['minpix_isl'] = self.minpix_isl
         state['clipped_mean'] = self.clipped_mean
         return state
+
+    def get_map(self, map_name):
+        """Returns requested map."""
+        import functions as func
+        if self.do_cache:
+            map_data = func.retrieve_map(self, map_name)
+        else:
+            map_data = getattr(self, map_name)
+        return map_data
+
+    def put_map(self, map_name, map_data):
+        """Stores requested map as an attribute."""
+        import functions as func
+        if self.do_cache:
+            func.store_map(self, map_name, map_data)
+            setattr(self, map_name, self.get_map(map_name))
+        else:
+            setattr(self, map_name, map_data)
 
     def list_pars(self):
         """List parameter values."""

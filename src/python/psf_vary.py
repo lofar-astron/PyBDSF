@@ -64,7 +64,7 @@ class Op_psf_vary(Op):
         ### now put all relevant gaussian parameters into a list
         ngaus = img.ngaus
         nsrc = img.nsrc
-        num = N.zeros(nsrc, int)
+        num = N.zeros(nsrc, dtype=N.int32)
         peak = N.zeros(nsrc)
         xc = N.zeros(nsrc)
         yc = N.zeros(nsrc)
@@ -274,9 +274,9 @@ class Op_psf_vary(Op):
                 psf_pa_int = N.array(psf_pa_int)
                 psf_ratio_int = N.array(psf_ratio_int)
                 if img.aperture == None:
-                    psf_ratio_aper_int = N.zeros(psf_maj_int.shape)
+                    psf_ratio_aper_int = N.zeros(psf_maj_int.shape, dtype=N.float32)
                 else:
-                    psf_ratio_aper_int = N.array(psf_ratio_aper_int)
+                    psf_ratio_aper_int = N.array(psf_ratio_aper_int, dtype=N.float32)
 
                 # Store interpolated images. The major and minor axis images are
                 # the sigma in units of arcsec, the PA image in units of degrees east of
@@ -772,7 +772,7 @@ class Op_psf_vary(Op):
         peak = g_gauls[1]
 
         psfimsize = int(round(max(beam[0], beam[1])/max(cdelt[0], cdelt[1]) * factor))    # fac X fwhm; fac ~ 2
-        psfimage = N.zeros((psfimsize, psfimsize))
+        psfimage = N.zeros((psfimsize, psfimsize), dtype=N.float32)
         cs2=cutoutsize2 = int(round(psfimsize*(1. + 2./factor)/2.))  # size/2. factor => to avoid edge effects etc
         cc = cutoutcen_ind=[cs2, cs2]
         cpsf=cen_psf_ind = N.array([int(round(psfimsize))/2]*2)
