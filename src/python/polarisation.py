@@ -254,7 +254,7 @@ class Op_polarisation(Op):
                             total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
                         p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
                         if sind > 0:
-                            rms_img = img.get_map('rms_'+pol[sind])
+                            rms_img = img.get_map('rms_'+pols[sind])
                         else:
                             rms_img = img.rms
                         if len(rms_img.shape) > 1:
