@@ -472,6 +472,13 @@ class Opts(object):
                                  "(ch0) image. If 'curvature', it is done using the curvature "\
                                  "map (see Hopkins et al. 2012).",
                              group = "advanced_opts")
+    fix_to_beam = Bool(False,
+                             doc = "Fix major and minor axes and PA of Gaussians to beam?\n"\
+                                 "If True, then during fitting the major and minor axes "\
+                                 "and PA of the Gaussians are fixed to the beam. Only the "\
+                                 "amplitude and position are fit. If False, all parameters "\
+                                 "are fit.",
+                             group = "advanced_opts")
     fittedimage_clip = Float(0.1,
                              doc = "Sigma for clipping Gaussians " \
                                  "while creating fitted image\n"\
@@ -1349,13 +1356,21 @@ class Opts(object):
 
         return res
 
-    def to_list(self):
-        """Returns a sorted list of (name, TC object) tuples for all opts."""
+    def to_list(self, group=None):
+        """Returns a sorted list of (name, TC object) tuples for all opts.
+
+        If the group name is specified, only opts that belong to that group
+        are returned.
+        """
         import tc
         opts_list = []
         for k, v in self.__class__.__dict__.iteritems():
             if isinstance(v, tc.TC):
-                opts_list.append((k, v))
+                if group != None:
+                    if v.group() == group:
+                        opts_list.append((k, v))
+                else:
+                    opts_list.append((k, v))
         opts_list = sorted(opts_list)
         return opts_list
 
