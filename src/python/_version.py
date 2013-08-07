@@ -27,6 +27,11 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/06/24 - Added option (fix_to_beam) to fix the size and position
+    	angle of Gaussians to the restoring beam during fitting. Fix to
+    	bug that caused the position angle used to initialize fitting to
+    	be incorrect.
+
     2013/03/22 - Version 1.6.1
 
     2013/03/21 - Fix to bug in ds9 and kvis catalog files that resulted in
