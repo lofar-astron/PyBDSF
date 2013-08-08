@@ -218,6 +218,8 @@ class Op_readimage(Op):
             """
             if use_wcs:
                 s1, s2, th = x
+                if s1 == 0.0 and s2 == 0.0:
+                    return (0.0, 0.0, 0.0)
                 brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
 
                 th_rad = th / 180.0 * N.pi
