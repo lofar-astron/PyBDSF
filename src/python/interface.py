@@ -230,7 +230,7 @@ def set_pars(img, **kwargs):
     for i, key in enumerate(kwargs):
         if kwargs[key] == '':
             temp_img = Image({'filename':''})
-            opt_names = temp_img.opts.get_names
+            opt_names = temp_img.opts.get_names()
             for k in opt_names:
                 if key == k:
                     kwargs[key] = temp_img.opts.__getattribute__(k)
