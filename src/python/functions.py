@@ -1069,6 +1069,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import mylogger
     import os
     import numpy as N
+    from distutils.version import StrictVersion
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir == None or indir == './':
@@ -1087,7 +1088,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if img.use_io == 'fits':
             import pyfits
             try:
-                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+                if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
+                    fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+                else:
+                    fits = pyfits.open(image_file, mode="readonly")
             except IOError, err:
                 img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
@@ -1103,12 +1107,11 @@ def read_image_from_file(filename, img, indir, quiet=False):
         # We need pyfits version 2.2 or greater to use the
         # "ignore_missing_end" argument to pyfits.open().
         try:
-            from distutils.version import StrictVersion
             import pyfits
-            if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
-                has_pyfits = True
-            else:
-                raise RuntimeError("PyFITS (version 2.2 or greater) is required.")
+#             if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
+            has_pyfits = True
+#             else:
+#                 raise RuntimeError("PyFITS (version 2.2 or greater) is required.")
         except ImportError, err:
             raise RuntimeError("PyFITS is required.")
         try:
@@ -1123,7 +1126,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
         failed_read = False
         reason = 0
         try:
-            fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+            if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
+                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+            else:
+                fits = pyfits.open(image_file, mode="readonly")
             img.use_io = 'fits'
         except IOError, err:
             e_pyfits = str(err)
