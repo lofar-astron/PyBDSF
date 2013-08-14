@@ -68,7 +68,7 @@ def changelog():
         calculation.
 
     2013/02/20 - Added option to use the curvature map method of
-        Hopkins et al. (2012) for the initial estimation of Gaussian
+        Hancock et al. (2012) for the initial estimation of Gaussian
         parameters (ini_method = 'curvature') and for grouping of
         Gaussians into sources (group_method = 'curvature').
 

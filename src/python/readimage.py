@@ -67,18 +67,38 @@ class Op_readimage(Op):
         else:
             data, hdr = result
 
-        # Check whether caching is to be used.
+        # Try to trim common extensions from filename
+        root, ext = os.path.splitext(img.opts.filename)
+        if ext in ['.fits', '.FITS', '.image']:
+            fname = root
+        elif ext in ['.gz', '.GZ']:
+            root2, ext2 = os.path.splitext(root)
+            if ext2 in ['.fits', '.FITS', '.image']:
+                fname = root2
+            else:
+                fname = root
+        else:
+            fname = img.opts.filename
+        img.filename = img.opts.filename
+        img.parentname = fname
+        img.imagename = fname + '.pybdsm'
+        img.basedir = './' + fname + '_pybdsm/'
+
+        # Check whether caching is to be used. If it is, set up a
+        # temporary directory. The temporary directory should be
+        # removed automatically upon exit.
         if img.opts.cache_limit == None:
             img.cache_limit = 16.0 # Mpix
         else:
             img.cache_limit = img.opts.cache_limit
-        if data.shape[2]*data.shape[3] /  1024.0**2 > img.cache_limit:
+        if data.shape[2]*data.shape[3] / 1024.0**2 > img.cache_limit:
             img.do_cache = True
         else:
             img.do_cache = False
         if img.do_cache:
             mylog.info('Using disk caching.')
-            img.tempdir = TempDir(tempfile.mkdtemp())
+            img.tempdir = TempDir(img.parentname+'_tmp')
+#             img.tempdir = TempDir(tempfile.mkdtemp())
         else:
             img.tempdir = None
 
@@ -113,22 +133,6 @@ class Op_readimage(Op):
             mylog.info('Equinox of image is %f.' % year)
             img.equinox = year
 
-        # Try to trim common extensions from filename
-        root, ext = os.path.splitext(img.opts.filename)
-        if ext in ['.fits', '.FITS', '.image']:
-            fname = root
-        elif ext in ['.gz', '.GZ']:
-            root2, ext2 = os.path.splitext(root)
-            if ext2 in ['.fits', '.FITS', '.image']:
-                fname = root2
-            else:
-                fname = root
-        else:
-            fname = img.opts.filename
-        img.filename = img.opts.filename
-        img.parentname = fname
-        img.imagename = fname + '.pybdsm'
-        img.basedir = './' + fname + '_pybdsm/'
         if img.opts.output_all:
             # Set up directory to write output to
             opdir = img.opts.opdir_overwrite
