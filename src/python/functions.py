@@ -1176,14 +1176,16 @@ def read_image_from_file(filename, img, indir, quiet=False):
     else:
         lat_lon = False
 
-    # Check if one of the axes has units of "M/S", as this is not
+    # Check for incorrect spectral units. For example, "M/S" is not
     # recognized by PyWCS as velocity ("S" is actually Siemens, not
-    # seconds). If "M/S", change to "m/s".
+    # seconds).
     for i in range(len(data.shape)):
         key_val_raw = hdr.get('CUNIT' + str(i+1))
         if key_val_raw != None:
             if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:
                 hdr['CUNIT' + str(i+1)] = 'm/s'
+            if 'HZ' in key_val_raw or 'hZ' in key_val_raw or 'hz' in key_val_raw:
+                hdr['CUNIT' + str(i+1)] = 'Hz'
 
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         import warnings
