@@ -1345,12 +1345,12 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
         header['CRVAL1'] = wcsobj.wcs.crval[0]
         header['CDELT1'] = wcsobj.wcs.cdelt[0]
         header['CRPIX1'] = wcsobj.wcs.crpix[0]
-        header['CUNIT1'] = wcsobj.wcs.cunit[0]
+        header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).upper() # needed due to bug in astropy
         header['CTYPE1'] = wcsobj.wcs.ctype[0]
         header['CRVAL2'] = wcsobj.wcs.crval[1]
         header['CDELT2'] = wcsobj.wcs.cdelt[1]
         header['CRPIX2'] = wcsobj.wcs.crpix[1]
-        header['CUNIT2'] = wcsobj.wcs.cunit[1]
+        header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).upper() # needed due to bug in astropy
         header['CTYPE2'] = wcsobj.wcs.ctype[1]
 
     # Add STOKES info

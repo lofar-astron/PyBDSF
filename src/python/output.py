@@ -364,16 +364,17 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     import mylogger
     try:
         from astropy.io import fits as pyfits
+        use_header_update = False
     except ImportError, err:
         import pyfits
+        if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+            use_header_update = True
+        else:
+            use_header_update = False
     import os
     import numpy as N
     from distutils.version import StrictVersion
     from _version import __version__, __revision__
-    if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
-        use_header_update = True
-    else:
-        use_header_update = False
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
     if objtype == 'gaul':
