@@ -177,13 +177,15 @@ class Op_readimage(Op):
 
         try:
             from astropy.wcs import WCS
+            t = WCS(hdr)
+            t.wcs.fix()
         except ImportError, err:
             import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore",category=DeprecationWarning)
                 from pywcs import WCS
-        t = WCS(hdr)
-        t.wcs.fix()
+                t = WCS(hdr)
+                t.wcs.fix()
 
         acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
 

@@ -1191,13 +1191,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         try:
             from astropy.wcs import WCS
+            t = WCS(hdr)
+            t.wcs.fix()
         except ImportError, err:
             import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore",category=DeprecationWarning)
                 from pywcs import WCS
-        t = WCS(hdr)
-        t.wcs.fix()
+                t = WCS(hdr)
+                t.wcs.fix()
         spec_indx = t.wcs.spec
         if spec_indx != -1:
             ctype_in.reverse()
@@ -1260,7 +1262,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
 def convert_pyrap_header(pyrap_image):
     """Converts a pyrap header to a PyFITS header."""
     import tempfile
-    import pyfits
+    try:
+        from astropy.io import fits as pyfits
+    except ImportError, err:
+        import pyfits
 
     tfile = tempfile.NamedTemporaryFile(delete=False)
     pyrap_image.tofits(tfile.name)
@@ -1291,7 +1296,6 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
     else:
         # Write image to FITS file
-        import pyfits
         if outdir == None:
             outdir = img.indir
         if not os.path.exists(outdir) and outdir != '':
@@ -1307,14 +1311,19 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 def make_fits_image(imagedata, wcsobj, beam, freq):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
     from distutils.version import StrictVersion
-    import pyfits
-    # Due to changes in the way pyfits handles headers from version 3.1 on,
-    # we need to check for older versions and change the setting of header
-    # keywords accordingly.
-    if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
-        use_header_update = True
-    else:
+    try:
+        from astropy.io import fits as pyfits
         use_header_update = False
+    except ImportError, err:
+        import pyfits
+
+        # Due to changes in the way pyfits handles headers from version 3.1 on,
+        # we need to check for older versions and change the setting of header
+        # keywords accordingly.
+        if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+            use_header_update = True
+        else:
+            use_header_update = False
     shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
     hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
@@ -1381,7 +1390,6 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
         header['BMAJ'] = beam[0]
         header['BMIN'] = beam[1]
         header['BPA'] = beam[2]
-
 
     # Add STOKES info
     if use_header_update:
