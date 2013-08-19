@@ -21,6 +21,16 @@ def process(img, **kwargs):
     from image import Image
     import mylogger
 
+    # Start up logger. We need to initialize it each time process() is
+    # called, in case the quiet or debug options have changed
+    log = img.opts.filename + '.pybdsm.log'
+    img.log = ''
+    mylogger.init_logger(log, quiet=img.opts.quiet,
+                         debug=img.opts.debug)
+    add_break_to_logfile(log)
+    mylog = mylogger.logging.getLogger("PyBDSM.Process")
+    mylog.info("Processing "+img.opts.filename)
+
     try:
         # set options if given
         if len(kwargs) > 0:
@@ -34,16 +44,6 @@ def process(img, **kwargs):
             return False
         else:
             raise
-
-    # Start up logger. We need to initialize it each time process() is
-    # called, in case the quiet or debug options have changed
-    log = img.opts.filename + '.pybdsm.log'
-    img.log = ''
-    mylogger.init_logger(log, quiet=img.opts.quiet,
-                         debug=img.opts.debug)
-    add_break_to_logfile(log)
-    mylog = mylogger.logging.getLogger("PyBDSM.Process")
-    mylog.info("Processing "+img.opts.filename)
 
     # Run all the op's
     try:

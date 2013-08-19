@@ -93,8 +93,11 @@ class Op_readimage(Op):
             img.do_cache = False
         if img.do_cache:
             mylog.info('Using disk caching.')
-            img.tempdir = TempDir(img.parentname+'_tmp')
-#             img.tempdir = TempDir(tempfile.mkdtemp())
+            tmpdir = img.parentname+'_tmp'
+            if not os.path.exists(tmpdir):
+                os.makedirs(tmpdir)
+            img._tempdir_parent = TempDir(tmpdir)
+            img.tempdir = tempfile.mkdtemp(dir=tmpdir)
         else:
             img.tempdir = None
 
