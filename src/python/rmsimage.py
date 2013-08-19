@@ -36,17 +36,20 @@ class Op_rmsimage(Op):
         mylogger.userinfo(mylog, "Calculating background rms and mean images")
         if img.opts.polarisation_do:
             pols = ['I', 'Q', 'U', 'V']
+            ch0_images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
+            cmeans = [img.clipped_mean] + img.clipped_mean_QUV
+            crmss = [img.clipped_rms] + img.clipped_rms_QUV
         else:
             pols = ['I'] # assume I is always present
+            ch0_images = [img.ch0_arr]
+            cmeans = [img.clipped_mean]
+            crmss = [img.clipped_rms]
 
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
         else:
             mask = img.mask_arr
         opts = img.opts
-        ch0_images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
-        cmeans = [img.clipped_mean] + img.clipped_mean_QUV
-        crmss = [img.clipped_rms] + img.clipped_rms_QUV
         cdelt = N.array(img.wcs_obj.acdelt[:2])
 
         # Determine box size for rms/mean map calculations.

@@ -134,14 +134,14 @@ class Op_polarisation(Op):
           # undetected in I
           fit_PI = img.opts.pi_fit
           n_new = 0
-          ch0_pi = N.sqrt(img.ch0_Q**2 + img.ch0_U**2)
+          ch0_pi = N.sqrt(img.ch0_Q_arr**2 + img.ch0_U_arr**2)
           img.ch0_pi_arr = ch0_pi
 
           if fit_PI:
               from . import _run_op_list
               mylogger.userinfo(mylog, "\nChecking PI image for new sources")
 
-              mask = img.mask
+              mask = img.mask_arr
               minsize = img.opts.minpix_isl
 
               # Set up image object for PI image.
@@ -254,9 +254,9 @@ class Op_polarisation(Op):
                             total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
                         p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
                         if sind > 0:
-                            rms_img = img.__getattribute__('rms_'+pols[sind])
+                            rms_img = img.__getattribute__('rms_'+pols[sind]+'_arr')
                         else:
-                            rms_img = img.rms
+                            rms_img = img.rms_arr
                         if len(rms_img.shape) > 1:
                             rms_isl = rms_img[isl.bbox].mean()
                         else:

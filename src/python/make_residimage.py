@@ -125,7 +125,7 @@ class Op_make_residimage(Op):
             if hasattr(img, 'rms_mask'):
                 mask = img.rms_mask
             else:
-                mask = img.mask
+                mask = img.mask_arr
             if isinstance(mask, N.ndarray):
                 pix_masked = N.where(mask == True)
                 model_shap[pix_masked] = N.nan

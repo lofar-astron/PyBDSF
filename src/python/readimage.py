@@ -3,7 +3,7 @@
 Defines operation Op_readimage which initializes image and WCS
 
 The current implementation tries to reduce input file to 2D if
-possible, as this makes more sence atm. One more important thing
+possible, as this makes more sense atm. One more important thing
 to note -- in its default configuration pyfits will read data
 in non-native format, so we have to convert it before usage. See
 the read_image_from_file in functions.py for details.
@@ -85,7 +85,7 @@ class Op_readimage(Op):
         img.basedir = './' + fname + '_pybdsm/'
 
         # Check whether caching is to be used. If it is, set up a
-        # temporary directory. The temporary directory should be
+        # temporary directory. The temporary directory will be
         # removed automatically upon exit.
         if img.opts.do_cache:
             img.do_cache = True
