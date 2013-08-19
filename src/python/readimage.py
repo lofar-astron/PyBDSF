@@ -87,11 +87,7 @@ class Op_readimage(Op):
         # Check whether caching is to be used. If it is, set up a
         # temporary directory. The temporary directory should be
         # removed automatically upon exit.
-        if img.opts.cache_limit == None:
-            img.cache_limit = 16.0 # Mpix
-        else:
-            img.cache_limit = img.opts.cache_limit
-        if data.shape[2]*data.shape[3] / 1024.0**2 > img.cache_limit:
+        if img.opts.do_cache:
             img.do_cache = True
         else:
             img.do_cache = False
@@ -101,6 +97,12 @@ class Op_readimage(Op):
 #             img.tempdir = TempDir(tempfile.mkdtemp())
         else:
             img.tempdir = None
+
+        # Check for zeros and blank if blank_zeros = True
+        if img.opts.blank_zeros:
+            zero_pixels = N.where(data[0] == 0.0)
+            mylog.info('Blanking %i zeros in image' % len(zero_pixels[1]))
+            data[0][zero_pixels] = N.nan
 
         # Store data and header in img. If polarisation_do = False, only store pol == 'I'
         img.nchan = data.shape[1]
@@ -114,11 +116,13 @@ class Op_readimage(Op):
         if img.opts.polarisation_do and data.shape[0] == 1:
             img.opts.polarisation_do = False
             mylog.warning('Image has Stokes I only. Polarisation module disabled.')
+
         if img.opts.polarisation_do or data.shape[0] == 1:
-            img.put_map('image', data)
+            img.image_arr = data
         else:
-            img.put_map('image', data[0, :].reshape(1, data.shape[1], data.shape[2], data.shape[3]))
+            img.image_arr = data[0, :].reshape(1, data.shape[1], data.shape[2], data.shape[3])
         img.header = hdr
+        img.shape = data.shape
         img.j = 0
 
         ### initialize wcs conversion routines
@@ -156,12 +160,7 @@ class Op_readimage(Op):
             if not os.path.isdir(img.basedir):
                 os.makedirs(img.basedir)
 
-        # Check for zeros and blank if blank_zeros = True
-        if img.opts.blank_zeros:
-            zero_pixels = N.where(img.image[0] == 0.0)
-            mylog.info('Blanking %i zeros in image' % len(zero_pixels[1]))
-            img.image[0][zero_pixels] = N.nan
-
+        del data
         img.completed_Ops.append('readimage')
         return img
 
@@ -173,11 +172,15 @@ class Op_readimage(Op):
 
         hdr = img.header
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            from pywcs import WCS
-            t = WCS(hdr)
-            t.wcs.fix()
+        try:
+            from astropy.wcs import WCS
+        except ImportError, err:
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                from pywcs import WCS
+        t = WCS(hdr)
+        t.wcs.fix()
 
         acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
 
@@ -395,19 +398,22 @@ class Op_readimage(Op):
         If the input frequency info (in the WCS) is not in Hz, it is
         converted.
         """
-        import warnings
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            from pywcs import WCS
+        try:
+            from astropy.wcs import WCS
+        except ImportError, err:
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                from pywcs import WCS
 
         mylog = mylogger.logging.getLogger("PyBDSM.InitFreq")
-        if img.opts.frequency_sp != None and img.image.shape[1] > 1:
+        if img.opts.frequency_sp != None and img.image_arr.shape[1] > 1:
             # If user specifies multiple frequencies, then let
             # collapse.py do the initialization
             img.frequency = img.opts.frequency_sp[0]
             img.freq_pars = (0.0, 0.0, 0.0)
             mylog.info('Using user-specified frequencies.')
-        elif img.opts.frequency != None and img.image.shape[1] == 1:
+        elif img.opts.frequency != None and img.image_arr.shape[1] == 1:
             img.frequency = img.opts.frequency
             img.freq_pars = (img.frequency, 0.0, 0.0)
             mylog.info('Using user-specified frequency.')
@@ -493,8 +499,8 @@ class Op_readimage(Op):
         location specifies the location in pixels (x, y) for which angle is desired
         """
         if location == None:
-            x1 = img.image.shape[2] / 2.0
-            y1 = img.image.shape[3] / 2.0
+            x1 = img.image_arr.shape[2] / 2.0
+            y1 = img.image_arr.shape[3] / 2.0
         else:
             x1, y1 = location
         ra, dec = img.pix2sky([x1, y1])
@@ -520,8 +526,8 @@ class Op_readimage(Op):
         import functions as func
 
         if location == None:
-            x1 = int(img.image.shape[2] / 2.0)
-            y1 = int(img.image.shape[3] / 2.0)
+            x1 = int(img.image_arr.shape[2] / 2.0)
+            y1 = int(img.image_arr.shape[3] / 2.0)
         else:
             x1, y1 = location
 
@@ -552,8 +558,8 @@ class Op_readimage(Op):
         import functions as func
 
         if location == None:
-            x1 = int(img.image.shape[2] / 2.0)
-            y1 = int(img.image.shape[3] / 2.0)
+            x1 = int(img.image_arr.shape[2] / 2.0)
+            y1 = int(img.image_arr.shape[3] / 2.0)
         else:
             x1, y1 = location
 

@@ -40,22 +40,20 @@ class Op_preprocess(Op):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Preprocess")
         if img.opts.polarisation_do:
           pols = ['I', 'Q', 'U', 'V']
-          ch0images = [img.ch0, img.ch0_Q, img.ch0_U, img.ch0_V]
-#           ch0images = ['ch0', 'ch0_Q', 'ch0_U', 'ch0_V']
+          ch0images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
           img.clipped_mean_QUV = []
           img.clipped_rms_QUV = []
         else:
           pols = ['I'] # assume I is always present
-          ch0images = [img.ch0]
+          ch0images = [img.ch0_arr]
 
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
         else:
-            mask = img.mask
+            mask = img.mask_arr
         opts = img.opts
         kappa = opts.kappa_clip
         for ipol, pol in enumerate(pols):
-#           image = img.get_map(ch0images[ipol])
           image = ch0images[ipol]
 
           ### basic stats
@@ -80,7 +78,7 @@ class Op_preprocess(Op):
             mylog.info('%d %s %s %s %.4f %s %d %s %.4f %s ' % (kappa,"sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
                        'mJy and ',kappa,'sigma clipped rms = ',crms*1000.0, 'mJy'))
 
-        image = img.ch0
+        image = img.ch0_arr
         # Check if pixels are outside the universe
         if opts.check_outsideuniv:
             mylogger.userinfo(mylog, "Checking for pixels outside the universe")
@@ -94,11 +92,11 @@ class Op_preprocess(Op):
 
         # If needed, (re)mask the image
         if noutside_univ > 0:
-            mask = N.isnan(img.ch0)
+            mask = N.isnan(img.ch0_arr)
             masked = mask.any()
             img.masked = masked
             if masked:
-                img.mask = mask
+                img.mask_arr = mask
             img.blankpix = N.sum(mask)
 
 
@@ -165,7 +163,7 @@ class Op_preprocess(Op):
         and blanks it. (fits files written by CASA dont do this).  """
 
         noutside = 0
-        n, m = img.ch0.shape
+        n, m = img.ch0_arr.shape
         for i in range(n):
           for j in range(m):
             out = False
@@ -179,7 +177,9 @@ class Op_preprocess(Op):
               pass
             if out or ("8" in str(err)):
               noutside += 1
-              img.ch0[pix1] = float("NaN")
+              ch0 = img.ch0_arr
+              ch0[pix1] = float("NaN")
+              img.ch0_arr = ch0
         return noutside
 
 

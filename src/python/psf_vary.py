@@ -32,7 +32,7 @@ class Op_psf_vary(Op):
         opts = img.opts
         dir = img.basedir + '/misc/'
         plot = False # debug figures
-        image = img.ch0
+        image = img.ch0_arr
 
         over = 2
         generators = opts.psf_generators; nsig = opts.psf_nsig; kappa2 = opts.psf_kappa2
@@ -278,31 +278,31 @@ class Op_psf_vary(Op):
                 else:
                     psf_ratio_aper_int = N.array(psf_ratio_aper_int, dtype=N.float32)
 
+                # Blank with NaNs if needed
+                mask = img.mask_arr
+                if isinstance(mask, N.ndarray):
+                    pix_masked = N.where(mask == True)
+                    psf_maj_int[pix_masked] = N.nan
+                    psf_min_int[pix_masked] = N.nan
+                    psf_pa_int[pix_masked] = N.nan
+                    psf_ratio_int[pix_masked] = N.nan
+                    psf_ratio_aper_int[pix_masked] = N.nan
+
                 # Store interpolated images. The major and minor axis images are
                 # the sigma in units of arcsec, the PA image in units of degrees east of
                 # north, the ratio images in units of 1/beam.
-                img.psf_vary_maj = psf_maj_int * img.pix2beam([1.0, 1.0, 0.0])[0] * 3600.0 # sigma in arcsec
-                img.psf_vary_min = psf_min_int * img.pix2beam([1.0, 1.0, 0.0])[0] * 3600.0 # sigma in arcsec
-                img.psf_vary_pa = psf_pa_int
-                img.psf_vary_ratio = psf_ratio_int # in 1/beam
-                img.psf_vary_ratio_aper = psf_ratio_aper_int # in 1/beam
-
-                # Blank with NaNs if needed
-                mask = img.mask
-                if isinstance(mask, N.ndarray):
-                    pix_masked = N.where(mask == True)
-                    img.psf_vary_maj[pix_masked] = N.nan
-                    img.psf_vary_min[pix_masked] = N.nan
-                    img.psf_vary_pa[pix_masked] = N.nan
-                    img.psf_vary_ratio[pix_masked] = N.nan
-                    img.psf_vary_ratio_aper[pix_masked] = N.nan
+                img.psf_vary_maj_arr = psf_maj_int * img.pix2beam([1.0, 1.0, 0.0])[0] * 3600.0 # sigma in arcsec
+                img.psf_vary_min_arr = psf_min_int * img.pix2beam([1.0, 1.0, 0.0])[0] * 3600.0 # sigma in arcsec
+                img.psf_vary_pa_arr = psf_pa_int
+                img.psf_vary_ratio_arr = psf_ratio_int # in 1/beam
+                img.psf_vary_ratio_aper_arr = psf_ratio_aper_int # in 1/beam
 
                 if opts.output_all:
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', img.psf_vary_maj*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', img.psf_vary_min*fwsig, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', img.psf_vary_pa, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', img.psf_vary_ratio, img, dir)
-                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio_aper.fits', img.psf_vary_ratio_aper, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_maj.fits', img.psf_vary_maj_arr*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_min.fits', img.psf_vary_min_arr*fwsig, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_pa.fits', img.psf_vary_pa_arr, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio.fits', img.psf_vary_ratio_arr, img, dir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.psf_vary_ratio_aper.fits', img.psf_vary_ratio_aper_arr, img, dir)
 
                 # Loop through source and Gaussian lists and deconvolve the sizes using appropriate beam
                 bar2 = statusbar.StatusBar('Correcting deconvolved source sizes ..... : ', 0, img.nsrc)

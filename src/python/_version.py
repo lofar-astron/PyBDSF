@@ -27,16 +27,17 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2013/07/12 - Version 1.7.0
+    2013/08/20 - Version 1.7.0
 
-    2013/07/11 - Fix to avoid excessive memory usage in the wavelet module
+    2013/08/19 - PyBDSM will now use Astropy if installed for FITS and WCS
+        modules.
+
+    2013/08/11 - Fix to avoid excessive memory usage in the wavelet module
         (replaced scipy.signal.fftconvolve with a custom function).
 
-    2013/07/11 - Implemented disk caching for internally derived images.
-    	This caching reduces memory usage and is therefore useful when
-    	processing large images. By default, caching is turned on for
-    	images above 16 Mpix (e.g., 4096x4096 pixels), but this limit
-    	can be set manually with the cache_limit option.
+    2013/08/11 - Added option to use disk caching for internally derived
+    	images (do_cache). Caching can reduce memory usage and is
+    	therefore useful when processing large images.
 
     2013/07/11 - Implemented a variable operation chain for process_image
         (and img.process()) that allows unneeded steps to be skipped if

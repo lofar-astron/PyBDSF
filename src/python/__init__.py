@@ -130,7 +130,7 @@ def _run_op_list(img, chain):
     for op in ops:
         if isinstance(op, Op_gausfit) and img.opts.interactive:
             print dc + '--> Displaying islands and rms image...' + nc
-            if max(img.ch0.shape) > 4096:
+            if max(img.ch0_arr.shape) > 4096:
                 print dc + '--> Image is large. Showing islands only.' + nc
                 img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
                     ch0_islands=True, gresid_image=False, sresid_image=False,
@@ -162,7 +162,7 @@ def _run_op_list(img, chain):
             show_spec = True
         else:
             show_spec = False
-        if max(img.ch0.shape) > 4096:
+        if max(img.ch0_arr.shape) > 4096:
             print dc + '--> Image is large. Showing Gaussian residual image only.' + nc
             img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
                 ch0_islands=False, gresid_image=True, sresid_image=False,

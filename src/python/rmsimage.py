@@ -42,9 +42,9 @@ class Op_rmsimage(Op):
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
         else:
-            mask = img.mask
+            mask = img.mask_arr
         opts = img.opts
-        ch0_images = [img.ch0, img.ch0_Q, img.ch0_U, img.ch0_V]
+        ch0_images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
         cmeans = [img.clipped_mean] + img.clipped_mean_QUV
         crmss = [img.clipped_rms] + img.clipped_rms_QUV
         cdelt = N.array(img.wcs_obj.acdelt[:2])
@@ -329,8 +329,8 @@ class Op_rmsimage(Op):
                 mean[pix_masked] = N.nan
                 rms[pix_masked] = N.nan
 
-            img.put_map('mean', mean)
-            img.put_map('rms', rms)
+            img.mean_arr = mean
+            img.rms_arr = rms
 
             if opts.savefits_rmsim or opts.output_all:
               if img.waveletimage:
@@ -360,8 +360,8 @@ class Op_rmsimage(Op):
               func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
           else:
-              img.put_map('mean_'+pol, mean)
-              img.put_map('rms_'+pol, rms)
+              img.__setattr__('mean_'+pol+'_arr', mean)
+              img.__setattr__('rms_'+pol+'_arr', rms)
 
         img.completed_Ops.append('rmsimage')
         return img
@@ -456,7 +456,7 @@ class Op_rmsimage(Op):
                             new_width = img.rms_box_bright[0] + 1
                         new_step = int(new_width/3.0)
                         img.rms_box_bright = (new_width, new_step)
-                        if img.rms_box_bright[0] > min(img.ch0.shape)/4.0:
+                        if img.rms_box_bright[0] > min(img.ch0_arr.shape)/4.0:
                             mylogger.userinfo(mylog, 'Size of rms_box_bright larger than 1/4 of image size')
                             mylogger.userinfo(mylog, 'Using constant background rms and mean')
                             img.use_rms_map = False
@@ -471,7 +471,7 @@ class Op_rmsimage(Op):
                             new_width = img.rms_box[0] + 1
                         new_step = int(new_width/3.0)
                         img.rms_box = (new_width, new_step)
-                        if img.rms_box[0] > min(img.ch0.shape)/4.0:
+                        if img.rms_box[0] > min(img.ch0_arr.shape)/4.0:
                             mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
                             mylogger.userinfo(mylog, 'Using constant background rms and mean')
                             img.use_rms_map = False

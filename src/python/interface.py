@@ -176,8 +176,8 @@ def get_op_chain(img):
                     img.completed_Ops.remove('readimage')
                 found = True
             if k in collapse_opts:
-                if hasattr(img, 'mask'): del img.mask
-                if hasattr(img, 'ch0'): del img.ch0
+                if hasattr(img, 'mask'): del img.mask_arr
+                if hasattr(img, 'ch0'): del img.ch0_arr
                 while 'collapse' in img.completed_Ops:
                     img.completed_Ops.remove('collapse')
                 found = True
@@ -781,57 +781,57 @@ def export_image(img, outfile=None, img_format='fits',
     try:
         if img_type == 'ch0':
             func.write_image_to_file(use_io, filename,
-                                     img.ch0, img, bdir,
+                                     img.ch0_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'rms':
             func.write_image_to_file(use_io, filename,
-                                     img.rms, img, bdir,
+                                     img.rms_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'mean':
             func.write_image_to_file(use_io, filename,
-                                     img.mean, img, bdir,
+                                     img.mean_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'pi':
             func.write_image_to_file(use_io, filename,
-                                     img.ch0_pi, img, bdir,
+                                     img.ch0_pi_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_major':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_maj*fwsig, img, bdir,
+                                     img.psf_vary_maj_arr*fwsig, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_minor':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_min*fwsig, img, bdir,
+                                     img.psf_vary_min_arr*fwsig, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_pa':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_pa, img, bdir,
+                                     img.psf_vary_pa_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_ratio':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_ratio, img, bdir,
+                                     img.psf_vary_ratio_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_ratio_aper':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_ratio_aper, img, bdir,
+                                     img.psf_vary_ratio_aper_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'gaus_resid':
-            im = img.resid_gaus
+            im = img.resid_gaus_arr
             func.write_image_to_file(use_io, filename,
                                      im, img, bdir,
                                      clobber=clobber)
         elif img_type == 'gaus_model':
-            im = img.model_gaus
+            im = img.model_gaus_arr
             func.write_image_to_file(use_io, filename,
                                      im, img, bdir,
                                      clobber=clobber)
         elif img_type == 'shap_resid':
             func.write_image_to_file(use_io, filename,
-                                     img.resid_shap, img, bdir,
+                                     img.resid_shap_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'shap_model':
             func.write_image_to_file(use_io, filename,
-                                     img.model_shap, img, bdir,
+                                     img.model_shap_arr, img, bdir,
                                      clobber=clobber)
         else:
             print "\n\033[91mERROR\033[0m: img_type not recognized."

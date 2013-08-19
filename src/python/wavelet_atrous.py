@@ -66,11 +66,11 @@ class Op_wavelet_atrous(Op):
 
           if dobdsm: wchain, wopts = self.setpara_bdsm(img)
 
-          n, m = img.ch0.shape
+          n, m = img.ch0_arr.shape
 
           # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
           Op_make_residimage()(img)
-          resid = img.resid_gaus
+          resid = img.resid_gaus_arr
 
           lpf = img.opts.atrous_lpf
           if lpf not in ['b3', 'tr']: lpf = 'b3'
@@ -98,9 +98,9 @@ class Op_wavelet_atrous(Op):
           img.atrous_gaussians = []
           img.atrous_sources = []
           img.atrous_opts = []
-          img.resid_wavelets = cp(img.resid_gaus)
+          img.resid_wavelets_arr = cp(img.resid_gaus_arr)
 
-          im_old = img.resid_wavelets
+          im_old = img.resid_wavelets_arr
           total_flux = 0.0
           ntot_wvgaus = 0
           stop_wav = False
@@ -244,7 +244,7 @@ class Op_wavelet_atrous(Op):
                   dc = '\033[34;1m'
                   nc = '\033[0m'
                   print dc + '--> Displaying islands and rms image...' + nc
-                  if max(wimg.ch0.shape) > 4096:
+                  if max(wimg.ch0_arr.shape) > 4096:
                       print dc + '--> Image is large. Showing islands only.' + nc
                       wimg.show_fit(rms_image=False, mean_image=False, ch0_image=False,
                         ch0_islands=True, gresid_image=False, sresid_image=False,
@@ -260,7 +260,7 @@ class Op_wavelet_atrous(Op):
                           break
                       answ = raw_input_no_history(prompt)
               if len(wimg.gaussians) > 0:
-                img.resid_wavelets = self.subtract_wvgaus(img.opts, img.resid_wavelets, wimg.gaussians, wimg.islands)
+                img.resid_wavelets_arr = self.subtract_wvgaus(img.opts, img.resid_wavelets_arr, wimg.gaussians, wimg.islands)
               if stop_wav == True:
                   break
 
@@ -273,10 +273,10 @@ class Op_wavelet_atrous(Op):
                                        im_new, img, bdir)
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.cJ.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.resid_wavelets.fits',
-                                       (img.ch0 - img.resid_gaus + img.resid_wavelets), img, bdir + '/residual/')
+                                       (img.ch0_arr - img.resid_gaus_arr + img.resid_wavelets_arr), img, bdir + '/residual/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.resid_wavelets.fits'))
               func.write_image_to_file(img.use_io, img.imagename + '.model_wavelets.fits',
-                                       (img.resid_gaus - img.resid_wavelets), img, bdir + '/model/')
+                                       (img.resid_gaus_arr - img.resid_wavelets_arr), img, bdir + '/model/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
           img.completed_Ops.append('wavelet_atrous')
 
@@ -348,7 +348,10 @@ class Op_wavelet_atrous(Op):
 
 #######################################################################################################
     def init_image_simple(self, wimg, img, w, name):
-        wimg.put_map('ch0', w)
+        wimg.ch0_arr = w
+        wimg.ch0_Q_arr = None
+        wimg.ch0_U_arr = None
+        wimg.ch0_V_arr = None
         wimg.wcs_obj = img.wcs_obj
         wimg.parentname = img.filename
         wimg.filename = img.filename + name
@@ -362,7 +365,7 @@ class Op_wavelet_atrous(Op):
         wimg.pix2coord = img.pix2coord
         wimg.beam = img.beam
         wimg.masked = img.masked
-        wimg.mask = img.mask
+        wimg.mask_arr = img.mask_arr
         wimg.use_io = img.use_io
         wimg.do_cache = img.do_cache
         wimg.tempdir = img.tempdir
@@ -429,7 +432,7 @@ class Op_wavelet_atrous(Op):
             a = ceil(sqrt(jmax)); b = floor(jmax / a)
             if a * b < jmax: b += 1
             colours = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-            sh = img.ch0.shape
+            sh = img.ch0_arr.shape
             for pyr in img.pyrsrcs:
               for iisl, isl in enumerate(pyr.islands):
                 jj = pyr.jlevels[iisl]

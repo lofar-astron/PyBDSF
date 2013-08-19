@@ -24,13 +24,11 @@ class Image(object):
     as image data, mask, header, user options.
 
     To allow transparent caching of large image data to disk,
-    the image data attributes must be set using the put_map()
-    method, e.g.:
-        img.put_map('ch0', ch0_image)
-    The stored image data can then be accessed in the usual way:
-        ch0_image = img.ch0
-    However, any updates to the image data must use the put_map()
-    method again.
+    the image data must be stored in attributes ending in
+    "_arr". Additionally, setting subarrays does not work
+    using the attributes directly (e.g., img.ch0_arr[0:100,0:100]
+    = 0.0 will not work). Instead, set the subarray values then set
+    the attribute (e.g., ch0[0:100,0:100] = 0.0; img.ch0_arr = ch0).
 
     There is little sense in declaring all possible attributes
     right here as it will introduce unneeded dependencies
@@ -39,13 +37,7 @@ class Image(object):
     PyBDSM modules.
     """
     opts   = Instance(Opts, doc="User options")
-    image  = NArray(doc="Image data, Stokes I")
-    ch0    = NArray(doc="Channel-collapsed image data, Stokes I")
-    ch0_Q  = NArray(doc="Channel-collapsed image data, Stokes Q")
-    ch0_U  = NArray(doc="Channel-collapsed image data, Stokes U")
-    ch0_V  = NArray(doc="Channel-collapsed image data, Stokes V")
     header = Any(doc="Image header")
-    mask   = NArray(doc="Image mask (if present and attribute masked is set)")
     masked = Bool(False, doc="Flag if mask is present")
     basedir = String('DUMMY', doc="Base directory for output files")
     completed_Ops = List(String(), doc="List of completed operations")
@@ -73,6 +65,27 @@ class Image(object):
         state['clipped_mean'] = self.clipped_mean
         return state
 
+    def __getattribute__(self, name):
+        import functions as func
+        if name.endswith("_arr"):
+            if self.do_cache:
+                map_data = func.retrieve_map(self, name)
+                if map_data != None:
+                    return map_data
+                else:
+                    return object.__getattribute__(self, name)
+            else:
+                return object.__getattribute__(self, name)
+        else:
+            return object.__getattribute__(self, name)
+
+    def __setattr__(self, name, value):
+        import functions as func
+        if self.do_cache and name.endswith("_arr") and isinstance(value, N.ndarray):
+            func.store_map(self, name, value)
+        else:
+            super(Image, self).__setattr__(name, value)
+
     def get_map(self, map_name):
         """Returns requested map."""
         import functions as func
@@ -83,11 +96,10 @@ class Image(object):
         return map_data
 
     def put_map(self, map_name, map_data):
-        """Stores requested map as an attribute."""
+        """Stores requested map."""
         import functions as func
         if self.do_cache:
             func.store_map(self, map_name, map_data)
-            setattr(self, map_name, self.get_map(map_name))
         else:
             setattr(self, map_name, map_data)
 

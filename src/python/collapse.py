@@ -26,25 +26,28 @@ class Op_collapse(Op):
         pols = ['I', 'Q', 'U', 'V'] # make sure I is done first
       else:
         pols = ['I'] # assume I is always present
+        img.ch0_Q_arr = None
+        img.ch0_U_arr = None
+        img.ch0_V_arr = None
 
-      if img.image.shape[1] > 1:
+      if img.shape[1] > 1:
         c_mode = img.opts.collapse_mode
         chan0 = img.opts.collapse_ch0
         c_list = img.opts.collapse_av
         c_wts = img.opts.collapse_wt
-        if c_list == []: c_list = N.arange(img.image.shape[1])
+        if c_list == []: c_list = N.arange(img.shape[1])
         if len(c_list) == 1:
             c_mode = 'single'
             chan0 = c_list[0]
             img.collapse_ch0 = chan0
-        ch0sh = img.image.shape[2:]
+        ch0sh = img.image_arr.shape[2:]
         if img.opts.polarisation_do:
-          ch0images = ['ch0', 'ch0_Q', 'ch0_U', 'ch0_V']
+          ch0images = ['ch0_arr', 'ch0_Q_arr', 'ch0_U_arr', 'ch0_V_arr']
         else:
-          ch0images = ['ch0']
+          ch0images = ['ch0_arr']
 
         # assume all Stokes images have the same blank pixels as I:
-        blank = N.isnan(img.image[0])
+        blank = N.isnan(img.image_arr[0])
         hasblanks = blank.any()
         kappa = img.opts.kappa_clip
 
@@ -55,29 +58,29 @@ class Op_collapse(Op):
         for ipol, pol in enumerate(pols):
           if c_mode == 'single':
             if pol == 'I':
-              ch0 = img.image[0, chan0]
-              img.put_map('ch0', ch0)
+              ch0 = img.image_arr[0, chan0]
+              img.ch0_arr = ch0
               mylogger.userinfo(mylog, 'Source extraction will be ' \
                                     'done on channel', '%i (%.3f MHz)' % \
                                     (chan0, img.frequency/1e6))
             else:
-              ch0[:] = img.image[ipol, chan0][:]
-              img.put_map(ch0images[ipol][:], ch0)
+              ch0[:] = img.image_arr[ipol, chan0][:]
+              img.__setattr__(ch0images[ipol][:], ch0)
 
           if c_mode == 'average':
             if not hasblanks:
               if pol == 'I':
-                ch0, wtarr = avspc_direct(c_list, img.image[0], img.channel_clippedrms, c_wts)
+                ch0, wtarr = avspc_direct(c_list, img.image_arr[0], img.channel_clippedrms, c_wts)
               else:
                 # use wtarr from the I image, which is always collapsed first
-                ch0, wtarr = avspc_direct(c_list, img.image[ipol], img.channel_clippedrms, c_wts, wtarr=wtarr)
+                ch0, wtarr = avspc_direct(c_list, img.image_arr[ipol], img.channel_clippedrms, c_wts, wtarr=wtarr)
             else:
               if pol == 'I':
-                ch0, wtarr = avspc_blanks(c_list, img.image[0], img.channel_clippedrms, c_wts)
+                ch0, wtarr = avspc_blanks(c_list, img.image_arr[0], img.channel_clippedrms, c_wts)
               else:
                 # use wtarr from the I image, which is always collapsed first
-                ch0, wtarr = avspc_blanks(c_list, img.image[ipol], img.channel_clippedrms, c_wts, wtarr=wtarr)
-            img.put_map(ch0images[ipol][:], ch0) #ch0images[ipol][:] = ch0[:]
+                ch0, wtarr = avspc_blanks(c_list, img.image_arr[ipol], img.channel_clippedrms, c_wts, wtarr=wtarr)
+            img.__setattr__(ch0images[ipol][:], ch0)
 
             if pol == 'I':
               img.avspc_wtarr = wtarr
@@ -104,29 +107,28 @@ class Op_collapse(Op):
 
       else:
           # Only one channel in image
-          img.put_map('ch0', img.image[0, 0])
+          image = img.image_arr
+          img.ch0_arr = image[0, 0]
           mylogger.userinfo(mylog, 'Frequency of image',
                             '%.3f MHz' % (img.frequency/1e6,))
           if img.opts.polarisation_do:
             for pol in pols[1:]:
                 if pol == 'Q':
-                    img.put_map('ch0_Q', img.image[1, 0][:])
+                    img.ch0_Q_arr = image[1, 0][:]
                 if pol == 'U':
-                    img.put_map('ch0_U', img.image[2, 0][:])
+                    img.ch0_U_arr = image[2, 0][:]
                 if pol == 'V':
-                    img.put_map('ch0_V', img.image[3, 0][:])
-
-      # Remove img.image unless the spectra_index module is to be run
-      if not img.opts.spectralindex_do or img.image.shape[1] == 1:
-          del img.image
+                    img.ch0_V_arr = image[3, 0][:]
 
       # create mask if needed (assume all pols have the same mask as I)
-      mask = N.isnan(img.ch0)
+      image = img.ch0_arr
+      mask = N.isnan(image)
       masked = mask.any()
       img.masked = masked
       if masked:
-          img.mask = mask
-      image = img.ch0
+          img.mask_arr = mask
+      else:
+          img.mask_arr = None
       img.blankpix = N.sum(mask)
       frac_blank = round(float(img.blankpix)/float(image.shape[0]*image.shape[1]),3)
       mylogger.userinfo(mylog, "Number of blank pixels", str(img.blankpix)
@@ -141,15 +143,11 @@ class Op_collapse(Op):
 
 def chan_stats(img, kappa):
 
-    if isinstance(img, Image): # check if img is an Image or just an ndarray
-      nchan = img.image.shape[1]
-    else:
-      nchan = img.shape[1]
-
+    nchan = img.shape[1]
     mean = []; rms = []; cmean = []; crms = []
     for ichan in range(nchan):
       if isinstance(img, Image): # check if img is an Image or just an ndarray
-        im = img.image[0, ichan]
+        im = img.image_arr[0, ichan]
       else:
         im = img[0, ichan]
 
@@ -238,7 +236,7 @@ def init_freq_collapse(img, wtarr):
     # Calculate weighted average frequency
     if img.opts.frequency_sp != None:
         c_list = img.opts.collapse_av
-        if c_list == []: c_list = N.arange(img.image.shape[1])
+        if c_list == []: c_list = N.arange(img.image_arr.shape[1])
         freqs = img.opts.frequency_sp
         if len(freqs) != len(c_list):
             raise RuntimeError("Number of channels and number of frequencies specified "\
@@ -253,7 +251,7 @@ def init_freq_collapse(img, wtarr):
     else:
         # Calculate from header info
         c_list = img.opts.collapse_av
-        if c_list == []: c_list = N.arange(img.image.shape[1])
+        if c_list == []: c_list = N.arange(img.image_arr.shape[1])
         sumwts = 0.0
         sumfrq = 0.0
         spec_indx = img.wcs_obj.wcs.spec

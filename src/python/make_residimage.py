@@ -37,10 +37,10 @@ class Op_make_residimage(Op):
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"ResidImage")
         mylog.info("Calculating residual image after subtracting reconstructed gaussians")
-        shape = img.ch0.shape
+        shape = img.ch0_arr.shape
         thresh= img.opts.fittedimage_clip
 
-        resid_gaus = cp(img.ch0)
+        resid_gaus = cp(img.ch0_arr)
         model_gaus = N.zeros(shape, dtype=N.float32)
         for g in img.gaussians:
             C1, C2 = g.centre_pix
@@ -62,14 +62,14 @@ class Op_make_residimage(Op):
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
         else:
-            mask = img.mask
-        if isinstance(img.mask, N.ndarray):
-            pix_masked = N.where(img.mask == True)
+            mask = img.mask_arr
+        if isinstance(img.mask_arr, N.ndarray):
+            pix_masked = N.where(img.mask_arr == True)
             model_gaus[pix_masked] = N.nan
             resid_gaus[pix_masked] = N.nan
 
-        img.put_map('model_gaus', model_gaus)
-        img.put_map('resid_gaus', resid_gaus)
+        img.model_gaus_arr = model_gaus
+        img.resid_gaus_arr = resid_gaus
 
         if img.opts.output_all:
             if img.waveletimage:
@@ -82,7 +82,7 @@ class Op_make_residimage(Op):
             if not os.path.exists(moddir): os.makedirs(moddir)
             func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', resid_gaus, img, resdir)
             mylog.info('%s %s' % ('Writing', resdir+img.imagename+'.resid_gaus.fits'))
-            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0 - resid_gaus), img, moddir)
+            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0_arr - resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 
         ### residual rms and mean per island
@@ -91,7 +91,7 @@ class Op_make_residimage(Op):
             self.calc_resid_mean_rms(isl, resid, type='gaus')
 
         # Calculate some statistics for the Gaussian residual image
-        non_masked = N.where(~N.isnan(img.ch0))
+        non_masked = N.where(~N.isnan(img.ch0_arr))
         mean = N.mean(resid_gaus[non_masked], axis=None)
         std_dev = N.std(resid_gaus[non_masked], axis=None)
         skew = stats.skew(resid_gaus[non_masked], axis=None)
@@ -106,7 +106,7 @@ class Op_make_residimage(Op):
         # Now residual image for shapelets
         if img.opts.shapelet_do:
             mylog.info("Calculating residual image after subtracting reconstructed shapelets")
-            shape = img.ch0.shape
+            shape = img.ch0_arr.shape
             fimg = N.zeros(shape, dtype=N.float32)
 
             for isl in img.islands:
@@ -119,7 +119,7 @@ class Op_make_residimage(Op):
                 fimg[isl.bbox] += image_recons
 
             model_shap = fimg
-            resid_shap = img.ch0 - fimg
+            resid_shap = img.ch0_arr - fimg
 
             # Apply mask to model and resid images
             if hasattr(img, 'rms_mask'):
@@ -131,8 +131,8 @@ class Op_make_residimage(Op):
                 model_shap[pix_masked] = N.nan
                 resid_shap[pix_masked] = N.nan
 
-            img.put_map('model_shap', model_shap)
-            img.put_map('resid_shap', resid_shap)
+            img.model_shap_arr = model_shap
+            img.resid_shap_arr = resid_shap
 
             if img.opts.output_all:
                 func.write_image_to_file(img.use_io, img.imagename + '.resid_shap.fits', resid_shap, img, resdir)
@@ -144,7 +144,7 @@ class Op_make_residimage(Op):
                 self.calc_resid_mean_rms(isl, resid, type='shap')
 
             # Calculate some statistics for the Shapelet residual image
-            non_masked = N.where(~N.isnan(img.ch0))
+            non_masked = N.where(~N.isnan(img.ch0_arr))
             mean = N.mean(resid_shap[non_masked], axis=None)
             std_dev = N.std(resid_shap[non_masked], axis=None)
             skew = stats.skew(resid_shap[non_masked], axis=None)

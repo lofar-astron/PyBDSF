@@ -1069,6 +1069,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import mylogger
     import os
     import numpy as N
+    from copy import deepcopy as cp
     from distutils.version import StrictVersion
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
@@ -1086,12 +1087,12 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
-            import pyfits
             try:
-                if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
-                    fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-                else:
-                    fits = pyfits.open(image_file, mode="readonly")
+                from astropy.io import fits as pyfits
+            except ImportError, err:
+                import pyfits
+            try:
+                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             except IOError, err:
                 img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
@@ -1107,10 +1108,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
         # We need pyfits version 2.2 or greater to use the
         # "ignore_missing_end" argument to pyfits.open().
         try:
-            import pyfits
+            try:
+                from astropy.io import fits as pyfits
+            except ImportError, err:
+                import pyfits
             has_pyfits = True
         except ImportError, err:
-            raise RuntimeError("PyFITS is required.")
+            raise RuntimeError("Astropy or PyFITS is required.")
         try:
             import pyrap.images as pim
             has_pyrap = True
@@ -1123,10 +1127,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         failed_read = False
         reason = 0
         try:
-            if StrictVersion(pyfits.__version__) >= StrictVersion('2.2'):
-                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            else:
-                fits = pyfits.open(image_file, mode="readonly")
+            fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             img.use_io = 'fits'
         except IOError, err:
             e_pyfits = str(err)
@@ -1188,12 +1189,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 hdr['CUNIT' + str(i+1)] = 'Hz'
 
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
-        import warnings
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",category=DeprecationWarning)
-            from pywcs import WCS
-            t = WCS(hdr)
-            t.wcs.fix()
+        try:
+            from astropy.wcs import WCS
+        except ImportError, err:
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                from pywcs import WCS
+        t = WCS(hdr)
+        t.wcs.fix()
         spec_indx = t.wcs.spec
         if spec_indx != -1:
             ctype_in.reverse()
@@ -1429,8 +1433,11 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
 def retrieve_map(img, map_name):
     """Returns a map cached on disk."""
     import numpy as N
+    import os
 
     filename = get_name(img, map_name)
+    if not os.path.isfile(filename):
+        return None
     infile = file(filename, 'rb')
     data = N.load(infile)
     infile.close()
@@ -1759,7 +1766,7 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
         return [0.0, 0.0]
 
     # Make ch0 and rms subimages
-    ch0 = img.ch0
+    ch0 = img.ch0_arr
     shape = ch0.shape
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
@@ -1774,8 +1781,8 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     if yhi > shape[1]:
         yhi = shape[1]
 
-    mean = img.mean
-    rms = img.rms
+    mean = img.mean_arr
+    rms = img.rms_arr
     aper_im = ch0[xlo:xhi, ylo:yhi] - mean[xlo:xhi, ylo:yhi]
     aper_rms = rms[xlo:xhi, ylo:yhi]
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]

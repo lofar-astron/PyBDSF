@@ -7,7 +7,10 @@ Order n => J=n, where J=0 is the gaussian.
 """
 
 import numpy as N
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError, err:
+    import pyfits
 from scipy.optimize import leastsq
 
 def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):

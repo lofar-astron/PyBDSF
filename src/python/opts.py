@@ -587,12 +587,13 @@ class Opts(object):
                                 "use all\n"\
                                 "Sets the number of cores to use during fitting.",
                              group = "advanced_opts")
-    cache_limit = Option(None, Float(),
-                             doc = "Limit for image size in Mpix above which " \
-                                 "disk caching is used. None => 16 Mpix\n"\
+    do_cache = Bool(False,
+                             doc = "Cache internally derived images to disk\n" \
                                  "This option controls whether internally "\
                                  "derived images are stored in memory or are "\
-                                 "cached to disk.",
+                                 "cached to disk. Caching can reduce the amount "\
+                                 "of memory used, and is therefore useful when "\
+                                 "analyzing large images.",
                              group = "advanced_opts")
 
     #--------------------------------ADAPTIVE RMS_BOX OPTIONS--------------------------------
