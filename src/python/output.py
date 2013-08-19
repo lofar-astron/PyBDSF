@@ -362,6 +362,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     """ Write as FITS binary table.
     """
     import mylogger
+    from distutils.version import StrictVersion
     try:
         from astropy.io import fits as pyfits
         use_header_update = False
@@ -373,7 +374,6 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
             use_header_update = False
     import os
     import numpy as N
-    from distutils.version import StrictVersion
     from _version import __version__, __revision__
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")

@@ -599,7 +599,8 @@ The advanced options are:
     src_radius_pix
         This parameter is a float (default is ``None``) that determines the size
         of the region used to fit the source positions specified by the
-        ``src_ra_dec`` parameter.
+        ``src_ra_dec`` parameter. If ``None``, the radius is set to the FWHM of
+        the beam major axis.
 
     stop_at
         This parameter is a string (default is ``None``) that stops an analysis
