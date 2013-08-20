@@ -4,22 +4,6 @@
 What's New
 **********
 
-Version 1.7.0 (2013/08/20):
-
-    * PyBDSM will now use Astropy if installed for FITS and WCS modules.
-
-    * Fix to avoid excessive memory usage in the wavelet module (replaced ``scipy.signal.fftconvolve`` with a custom function).
-
-    * Added option to use disk caching for internally derived images (``do_cache``). Caching can reduce memory usage and is therefore useful when processing large images.
-
-    * Implemented a variable operation chain for process_image (and ``img.process()``) that allows unneeded steps to be skipped if the image is being reprocessed.
-
-    * Fixed a bug that could cause Gaussian fitting to hang during iterative fitting of large islands.
-
-    * Added option (``fix_to_beam``) to fix the size and position angle of Gaussians to the restoring beam during fitting.
-
-    * Fix to bug that caused the position angle used to initialize fitting to be incorrect.
-
 Version 1.6.1 (2013/03/22):
 
     * Fix to bug in ds9 and kvis catalog files that resulted in incorrect position angles.

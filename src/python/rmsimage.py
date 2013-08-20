@@ -36,20 +36,17 @@ class Op_rmsimage(Op):
         mylogger.userinfo(mylog, "Calculating background rms and mean images")
         if img.opts.polarisation_do:
             pols = ['I', 'Q', 'U', 'V']
-            ch0_images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
-            cmeans = [img.clipped_mean] + img.clipped_mean_QUV
-            crmss = [img.clipped_rms] + img.clipped_rms_QUV
         else:
             pols = ['I'] # assume I is always present
-            ch0_images = [img.ch0_arr]
-            cmeans = [img.clipped_mean]
-            crmss = [img.clipped_rms]
 
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
         else:
-            mask = img.mask_arr
+            mask = img.mask
         opts = img.opts
+        ch0_images = [img.ch0, img.ch0_Q, img.ch0_U, img.ch0_V]
+        cmeans = [img.clipped_mean] + img.clipped_mean_QUV
+        crmss = [img.clipped_rms] + img.clipped_rms_QUV
         cdelt = N.array(img.wcs_obj.acdelt[:2])
 
         # Determine box size for rms/mean map calculations.
@@ -107,7 +104,7 @@ class Op_rmsimage(Op):
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
-                act_pixels = (image-cmean)/threshold >= crms
+                act_pixels = (img.ch0-cmean)/threshold >= crms
                 threshold *= 0.8
                 if isinstance(mask, N.ndarray):
                     act_pixels[mask] = False
@@ -129,7 +126,7 @@ class Op_rmsimage(Op):
         # largest island at this threshold to set the large-scale rms_box
         bright_threshold = threshold
         threshold = 10.0
-        act_pixels = (image-cmean)/threshold >= crms
+        act_pixels = (img.ch0-cmean)/threshold >= crms
         if isinstance(mask, N.ndarray):
             act_pixels[mask] = False
         rank = len(image.shape)
@@ -177,7 +174,7 @@ class Op_rmsimage(Op):
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size_highthresh*2.0))
             else:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size*2.0))
-            bsize2 = int(max(min(image.shape)/10.0, max_isl_size*5.0))
+            bsize2 = int(max(min(img.ch0.shape)/10.0, max_isl_size*5.0))
             if bsize < min_size_allowed:
                 bsize = min_size_allowed
             if bsize % 10 == 0: bsize += 1
@@ -216,7 +213,7 @@ class Op_rmsimage(Op):
               pol_txt = ''
 
           ## calculate rms/mean maps if needed
-          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(image.shape)/4.0:
+          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(img.ch0.shape)/4.0:
             # rms box is too large - just use constant rms and mean
             self.output_rmsbox_size(img)
             mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
@@ -302,39 +299,12 @@ class Op_rmsimage(Op):
                               '(%.5f, %.5f) Jy/beam' % (mean_min, mean_max))
 
           if pol == 'I':
-            # Check for regions of abnormally low rms and blank
-#             if opts.blank_lowrms:
-#                 rms_lowfac = 0.001
-#                 mylogger.userinfo(mylog, "Checking for pixels with low rms (below 0.001 * clipped rms = %.2e Jy/beam)" %
-#                                   (rms_lowfac*img.clipped_rms,))
-#                 zero_pixels = N.where(rms <= rms_lowfac*img.clipped_rms)
-#                 nlow_rms = len(zero_pixels[0])
-#                 frac_blank = round(float(nlow_rms)/float(image.shape[0]*image.shape[1]),3)
-#                 mylogger.userinfo(mylog, "Number of additional pixels blanked", str(nlow_rms)
-#                                   +' ('+str(frac_blank*100.0)+'%)')
-#                 if nlow_rms > 0:
-#                     img.ch0[zero_pixels] = N.nan
-#             else:
-#                 nlow_rms = 0
-#
-#             # If needed, (re)mask the image
-#             if nlow_rms > 0:
-#                 mask = N.isnan(img.ch0)
-#                 masked = mask.any()
-#                 img.masked = masked
-#                 if masked:
-#                     img.mask = mask
-#                 img.blankpix = N.sum(mask)
-
             # Apply mask to mean_map and rms_map by setting masked values to NaN
             if isinstance(mask, N.ndarray):
                 pix_masked = N.where(mask == True)
                 mean[pix_masked] = N.nan
                 rms[pix_masked] = N.nan
-
-            img.mean_arr = mean
-            img.rms_arr = rms
-
+            img.mean = mean; img.rms  = rms
             if opts.savefits_rmsim or opts.output_all:
               if img.waveletimage:
                   resdir = img.basedir + '/wavelet/background/'
@@ -360,11 +330,10 @@ class Op_rmsimage(Op):
               zero_pixels = N.where(rms <= 0.0)
               rms_nonzero = rms.copy()
               rms_nonzero[zero_pixels] = N.NaN
-              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
+              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (img.ch0-mean)/rms_nonzero, img, resdir)
               mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
           else:
-              img.__setattr__('mean_'+pol+'_arr', mean)
-              img.__setattr__('rms_'+pol+'_arr', rms)
+            img.mean_QUV.append(mean); img.rms_QUV.append(rms)
 
         img.completed_Ops.append('rmsimage')
         return img
@@ -459,7 +428,7 @@ class Op_rmsimage(Op):
                             new_width = img.rms_box_bright[0] + 1
                         new_step = int(new_width/3.0)
                         img.rms_box_bright = (new_width, new_step)
-                        if img.rms_box_bright[0] > min(img.ch0_arr.shape)/4.0:
+                        if img.rms_box_bright[0] > min(img.ch0.shape)/4.0:
                             mylogger.userinfo(mylog, 'Size of rms_box_bright larger than 1/4 of image size')
                             mylogger.userinfo(mylog, 'Using constant background rms and mean')
                             img.use_rms_map = False
@@ -474,7 +443,7 @@ class Op_rmsimage(Op):
                             new_width = img.rms_box[0] + 1
                         new_step = int(new_width/3.0)
                         img.rms_box = (new_width, new_step)
-                        if img.rms_box[0] > min(img.ch0_arr.shape)/4.0:
+                        if img.rms_box[0] > min(img.ch0.shape)/4.0:
                             mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
                             mylogger.userinfo(mylog, 'Using constant background rms and mean')
                             img.use_rms_map = False
@@ -520,8 +489,8 @@ class Op_rmsimage(Op):
         ax = N.meshgrid(*ax[-1::-1])
         pt_src_scale = box[0]
         if do_adapt:
-            out_rms2 = N.zeros(rms_map1.shape, dtype=N.float32)
-            out_mean2 = N.zeros(rms_map1.shape, dtype=N.float32)
+            out_rms2 = N.zeros(rms_map1.shape)
+            out_mean2 = N.zeros(rms_map1.shape)
             # Generate rms/mean maps on large scale
             box2 = rms_box2
             axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores)
@@ -666,9 +635,9 @@ class Op_rmsimage(Op):
                 mask_pad = self.pad_array(mask, new_shape)
 
         # Make arrays for calculated data
-        mean_map = N.zeros(mapshape, dtype=N.float32)
-        rms_map  = N.zeros(mapshape, dtype=N.float32)
-        axes     = [N.zeros(len, dtype=N.float32) for len in mapshape]
+        mean_map = N.zeros(mapshape, dtype=float)
+        rms_map  = N.zeros(mapshape, dtype=float)
+        axes     = [N.zeros(len, dtype=float) for len in mapshape]
 
         # Step 1: internal area of the image
         # Make a list of coordinates to send to process_mean_rms_maps()
@@ -848,7 +817,7 @@ class Op_rmsimage(Op):
         # Assume that padding is the same for both axes and is equal
         # around all edges.
         half_size = (new_shape[0] - arr.shape[0]) / 2
-        arr_pad = N.zeros( (new_shape), dtype=arr.dtype)
+        arr_pad = N.zeros( (new_shape), dtype=arr.dtype )
 
         # left band
         band = arr[:half_size, :]
@@ -966,7 +935,7 @@ class Op_rmsimage(Op):
         should be obtained by interpolation)
         """
         from math import floor, ceil
-        res = N.zeros(size, dtype=N.float32)
+        res = N.zeros(size, dtype=float)
 
         for i in range(len(arr) - 1):
             i1 = arr[i]

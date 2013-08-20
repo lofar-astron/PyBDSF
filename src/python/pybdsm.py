@@ -671,7 +671,7 @@ if aps_local_val == None and check_for_newer:
         import ftplib
         from distutils.version import StrictVersion
         f = ftplib.FTP()
-        f.connect("ftp.strw.leidenuniv.nl", timeout=2.0)
+        f.connect("ftp.strw.leidenuniv.nl")
         f.login()
         file_list = []
         file_list = f.nlst('pub/rafferty/PyBDSM')
@@ -748,3 +748,5 @@ except ImportError:
     ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
     ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
 ipshell()
+
+

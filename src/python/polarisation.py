@@ -128,20 +128,19 @@ class Op_polarisation(Op):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Polarisatn")
         if img.opts.polarisation_do:
           mylog.info('Extracting polarisation properties for all sources')
-          pols = ['I', 'Q', 'U', 'V']
 
           # Run gausfit and gual2srl on PI image to look for polarized sources
           # undetected in I
           fit_PI = img.opts.pi_fit
           n_new = 0
-          ch0_pi = N.sqrt(img.ch0_Q_arr**2 + img.ch0_U_arr**2)
-          img.ch0_pi_arr = ch0_pi
+          ch0_pi = N.sqrt(img.ch0_Q**2 + img.ch0_U**2)
+          img.ch0_pi = ch0_pi
 
           if fit_PI:
               from . import _run_op_list
               mylogger.userinfo(mylog, "\nChecking PI image for new sources")
 
-              mask = img.mask_arr
+              mask = img.mask
               minsize = img.opts.minpix_isl
 
               # Set up image object for PI image.
@@ -159,8 +158,8 @@ class Op_polarisation(Op):
               pimg.sky2pix = img.sky2pix
               pimg.pix2coord = img.pix2coord
               pimg.wcs_obj = img.wcs_obj
-              pimg.mask_arr = mask
-              pimg.ch0_arr = ch0_pi
+              pimg.mask = mask
+              pimg.ch0 = ch0_pi
               pimg._pi = True
 
               success = _run_op_list(pimg, pi_chain)
@@ -224,10 +223,10 @@ class Op_polarisation(Op):
 
           for isl in img.islands:
             isl_bbox = isl.bbox
-            ch0_I = img.ch0_arr[isl_bbox]
-            ch0_Q = img.ch0_Q_arr[isl_bbox]
-            ch0_U = img.ch0_U_arr[isl_bbox]
-            ch0_V = img.ch0_V_arr[isl_bbox]
+            ch0_I = img.ch0[isl_bbox]
+            ch0_Q = img.ch0_Q[isl_bbox]
+            ch0_U = img.ch0_U[isl_bbox]
+            ch0_V = img.ch0_V[isl_bbox]
             ch0_images = [ch0_I, ch0_Q, ch0_U, ch0_V]
 
             for i, src in enumerate(isl.sources):
@@ -242,8 +241,8 @@ class Op_polarisation(Op):
                 gg = src.gaussians
                 fitfix = N.ones(len(gg)) # fit only normalization
                 srcmask = isl.mask_active
-                total_flux = N.zeros((4, len(fitfix)), dtype=N.float32) # array of fluxes: N_Stokes x N_Gaussians
-                errors = N.zeros((4, len(fitfix)), dtype=N.float32) # array of fluxes: N_Stokes x N_Gaussians
+                total_flux = N.zeros((4, len(fitfix))) # array of fluxes: N_Stokes x N_Gaussians
+                errors = N.zeros((4, len(fitfix))) # array of fluxes: N_Stokes x N_Gaussians
 
                 for sind, image in enumerate(ch0_images):
                     if (sind==0 and hasattr(src, '_pi')) or sind > 0: # Fit I only for PI sources
@@ -254,9 +253,9 @@ class Op_polarisation(Op):
                             total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
                         p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
                         if sind > 0:
-                            rms_img = img.__getattribute__('rms_'+pols[sind]+'_arr')
+                            rms_img = img.rms_QUV[sind-1]
                         else:
-                            rms_img = img.rms_arr
+                            rms_img = img.rms
                         if len(rms_img.shape) > 1:
                             rms_isl = rms_img[isl.bbox].mean()
                         else:
@@ -519,8 +518,8 @@ class Op_polarisation(Op):
     def setpara_bdsm(self, img):
         from types import ClassType, TypeType
 
-        chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
-                 Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
+        chain=[Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
+               Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
 
         opts = img.opts.to_dict()
         if img.opts.pi_thresh_isl != None:

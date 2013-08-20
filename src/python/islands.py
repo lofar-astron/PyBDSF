@@ -15,10 +15,7 @@ import numpy as N
 import scipy.ndimage as nd
 from image import *
 import mylogger
-try:
-    from astropy.io import fits as pyfits
-except ImportError, err:
-    import pyfits
+import pyfits
 import functions as func
 from output import write_islands
 from readimage import Op_readimage
@@ -76,20 +73,16 @@ class Op_islands(Op):
                 return
 
             # Check that the ch0 images are the same size
-            ch0_map = img.ch0_arr
-            det_ch0_map = det_img.ch0_arr
-            det_shape = det_ch0_map.shape
-            ch0_shape = ch0_map.shape
+            det_shape = det_img.ch0.shape
+            ch0_shape = img.ch0.shape
             if det_shape != ch0_shape:
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
             # Run through islands and correct the image and rms, mean and max values
             img.island_labels = det_img.island_labels
             corr_islands = []
-            mean_map = img.mean_arr
-            rms_map = img.rms_arr
             for i, isl in enumerate(det_img.islands):
-                islcp = isl.copy(img.pixel_beamarea(), image=ch0_map[isl.bbox], mean=mean_map[isl.bbox], rms=rms_map[isl.bbox])
+                islcp = isl.copy(img.pixel_beamarea(), image=img.ch0[isl.bbox], mean=img.mean[isl.bbox], rms=img.rms[isl.bbox])
                 islcp.island_id = i
                 corr_islands.append(islcp)
             img.islands = corr_islands
@@ -108,9 +101,7 @@ class Op_islands(Op):
             mylogger.userinfo(mylog, "Number of islands found", '%i' %
                               len(img.islands))
 
-            ch0_map = img.ch0_arr
-            ch0_shape = ch0_map.shape
-            pyrank = N.zeros(ch0_shape, dtype=N.int32) - 1
+            pyrank = N.zeros(img.ch0.shape, dtype=int) - 1
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
                 if i == 0:
@@ -153,10 +144,10 @@ class Op_islands(Op):
         ### islands detection
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
 
-        image = img.ch0_arr
-        mask = img.mask_arr
-        rms = img.rms_arr
-        mean = img.mean_arr
+        image = img.ch0
+        mask = img.mask
+        rms = img.rms
+        mean = img.mean
         thresh_isl = opts.thresh_isl
         thresh_pix = img.thresh_pix
         clipped_mean = img.clipped_mean
@@ -178,7 +169,7 @@ class Op_islands(Op):
         img.island_labels = labels
 
         ### apply cuts on island size and peak value
-        pyrank = N.zeros(image.shape, dtype=N.int32)
+        pyrank = N.zeros(image.shape)
         res = []
         islid = 0
         for idx, s in enumerate(slices):
@@ -212,10 +203,10 @@ class Op_islands(Op):
         for idx, coord in enumerate(coords):
             idx += 1 # nd.labels indices are counted from 1
             isl_posn_pix = img.sky2pix(coord)
-            image = img.ch0_arr
-            mask = img.mask_arr
-            rms = img.rms_arr
-            mean = img.mean_arr
+            image = img.ch0
+            mask = img.mask
+            rms = img.rms
+            mean = img.mean
             labels = func.make_src_mask(image.shape,
                         isl_posn_pix, isl_radius_pix)
             if img.masked:
@@ -395,9 +386,9 @@ class Island(object):
         if image == None:
             image = self.image
         if mean == None:
-            mean = N.zeros(mask.shape, dtype=N.float32) + self.mean
+            mean = N.zeros(mask.shape) + self.mean
         if rms == None:
-            rms =  N.zeros(mask.shape, dtype=N.float32) + self.rms
+            rms =  N.zeros(mask.shape) + self.rms
 
         bbox = self.bbox
         idx = self.oldidx

@@ -8,7 +8,7 @@ Below is an example of running PyBDSM on an image composed primarily of point so
 
     $ pybdsm
 
-    PyBDSM version 1.7.0 (LOFAR revision 20883)
+    PyBDSM version 1.1 (LOFAR revision 20883)
     ========================================================================
     PyBDSM commands
       inp task ............ : Set current task and list parameters
@@ -225,6 +225,7 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
      If you are working on the LOFAR CEP I/II clusters, then at some point before running the script, you will need to do::
 
         $ use LofIm
+        $ use Pythonlibs
 
 ::
 
@@ -234,7 +235,7 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
     # catalogs and residual and model images for each input image. Call it
     # with "python pybdsm_example.py"
 
-    from lofar import bdsm
+    import lofar.bdsm as bdsm
 
     # Define the list of images to process and the parameter save file
     input_images = ['a2597.fits', 'a2256_1.fits', 'a2256_2.fits',
