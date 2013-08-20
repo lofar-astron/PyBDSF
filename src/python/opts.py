@@ -1400,13 +1400,21 @@ class Opts(object):
                 opts_dict.update({k: self.__getattribute__(k)})
         return opts_dict
 
-    def get_names(self):
-        """Returns a sorted list of names of all opts."""
+    def get_names(self, group=None):
+        """Returns a sorted list of names for all opts.
+
+        If the group name is specified, only opts that belong to that group
+        are returned.
+        """
         import tc
         opts_list = []
         for k, v in self.__class__.__dict__.iteritems():
             if isinstance(v, tc.TC):
-                opts_list.append(k)
+                if group != None:
+                    if v.group() == group:
+                        opts_list.append(k)
+                else:
+                    opts_list.append(k)
         opts_list = sorted(opts_list)
         return opts_list
 

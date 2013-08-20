@@ -98,6 +98,7 @@ def get_op_chain(img):
     if prev_opts == None:
         return img, default_chain
     new_opts = img.opts.to_dict()
+    hidden_opts = img.opts.get_names(group='hidden')
 
     # Define lists of options for each Op. Some of these can be defined
     # using the "group" parameter of each option.
@@ -107,7 +108,7 @@ def get_op_chain(img):
                       'beam_spectrum', 'frequency_sp']
 
     # Op_collapse()
-    collapse_opts = img.opts.to_list(group='multichan_opts')
+    collapse_opts = img.opts.get_names(group='multichan_opts')
     collapse_opts.append('polarisation_do')
     collapse_opts += readimage_opts
 
@@ -131,12 +132,12 @@ def get_op_chain(img):
     gausfit_opts = islands_opts
 
     # Op_wavelet_atrous()
-    wavelet_atrous_opts = img.opts.to_list(group='atrous_do')
+    wavelet_atrous_opts = img.opts.get_names(group='atrous_do')
     wavelet_atrous_opts.append('atrous_do')
     wavelet_atrous_opts += gausfit_opts
 
     # Op_shapelets()
-    shapelets_opts = img.opts.to_list(group='shapelet_do')
+    shapelets_opts = img.opts.get_names(group='shapelet_do')
     shapelets_opts.append('shapelet_do')
     shapelets_opts += islands_opts
 
@@ -144,12 +145,12 @@ def get_op_chain(img):
     gaul2srl_opts = gausfit_opts + wavelet_atrous_opts + ['group_tol', 'group_by_isl', 'group_method']
 
     # Op_spectralindex()
-    spectralindex_opts = img.opts.to_list(group='spectralindex_do')
+    spectralindex_opts = img.opts.get_names(group='spectralindex_do')
     spectralindex_opts.append('spectralindex_do')
     spectralindex_opts += gaul2srl_opts
 
     # Op_polarisation()
-    polarisation_opts = img.opts.to_list(group='polarisation_do')
+    polarisation_opts = img.opts.get_names(group='polarisation_do')
     polarisation_opts.append('polarisation_do')
     polarisation_opts += gaul2srl_opts
 
@@ -157,17 +158,18 @@ def get_op_chain(img):
     make_residimage_opts = gausfit_opts + shapelets_opts + ['fittedimage_clip']
 
     # Op_psf_vary()
-    psf_vary_opts = img.opts.to_list(group='psf_vary_do')
+    psf_vary_opts = img.opts.get_names(group='psf_vary_do')
     psf_vary_opts.append('psf_vary_do')
     psf_vary_opts += gaul2srl_opts
 
     # Op_outlist() and Op_cleanup() are always done.
 
-    # Find whether new opts differ from previous opts. If so, reset relevant
+    # Find whether new opts differ from previous opts (and are not hidden
+    # opts, which should not be checked). If so, reset relevant
     # image parameters and add relevant Op to Op_chain.
     found = None
     for k, v in prev_opts.iteritems():
-        if v != new_opts[k]:
+        if v != new_opts[k] and k not in hidden_opts:
             found = False
             if k in readimage_opts:
                 if hasattr(img, 'use_io'): del img.use_io
@@ -254,6 +256,7 @@ def get_op_chain(img):
 
     # If no options have changed, don't re-run
     if found == None:
+        print 'No processing parameters have changed.'
         return img, []
 
     # If a changed option is not in any of the above lists,
