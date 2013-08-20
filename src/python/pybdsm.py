@@ -429,7 +429,7 @@ def write_catalog(**kwargs):
     "help 'format'" for more information.
 
     Parameters: outfile, format, srcroot, bbs_patches, incl_wavelet, clobber,
-                catalog_type, incl_empty
+                catalog_type, incl_empty, correct_proj
 
     For more information about a parameter, use help.  E.g.,
       > help 'bbs_patches'
@@ -452,7 +452,8 @@ def write_catalog(**kwargs):
         print "\n\033[31;1mAborted\033[0m"
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
-                          'incl_chan', 'clobber', 'catalog_type', 'incl_empty']
+                          'incl_chan', 'clobber', 'catalog_type', 'incl_empty',
+                          'correct_proj']
 write_catalog.use_groups = False
 
 
@@ -664,12 +665,13 @@ from lofar.bdsm._version import __version__, __revision__, changelog
 # Check whether called from the LOFAR CEPI/II. If so, skip check.
 import os
 aps_local_val = os.environ.get('APS_LOCAL')
-if aps_local_val == None:
+check_for_newer = True
+if aps_local_val == None and check_for_newer:
     try:
         import ftplib
         from distutils.version import StrictVersion
         f = ftplib.FTP()
-        f.connect("ftp.strw.leidenuniv.nl")
+        f.connect("ftp.strw.leidenuniv.nl", timeout=2.0)
         f.login()
         file_list = []
         file_list = f.nlst('pub/rafferty/PyBDSM')
@@ -746,5 +748,3 @@ except ImportError:
     ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
     ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
 ipshell()
-
-

@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.5'
+__version__ = '1.7.0'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -27,6 +27,93 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/08/20 - Version 1.7.0
+
+    2013/08/19 - PyBDSM will now use Astropy if installed for FITS and WCS
+        modules.
+
+    2013/08/11 - Fix to avoid excessive memory usage in the wavelet module
+        (replaced scipy.signal.fftconvolve with a custom function).
+
+    2013/08/11 - Added option to use disk caching for internally derived
+    	images (do_cache). Caching can reduce memory usage and is
+    	therefore useful when processing large images.
+
+    2013/07/11 - Implemented a variable operation chain for process_image
+        (and img.process()) that allows unneeded steps to be skipped if
+        the image is being reprocessed.
+
+    2013/07/11 - Fixed a bug that could cause Gaussian fitting to hang
+        during iterative fitting of large islands.
+
+    2013/06/24 - Added option (fix_to_beam) to fix the size and position
+    	angle of Gaussians to the restoring beam during fitting. Fix to
+    	bug that caused the position angle used to initialize fitting to
+    	be incorrect.
+
+    2013/03/22 - Version 1.6.1
+
+    2013/03/21 - Fix to bug in ds9 and kvis catalog files that resulted in
+        incorrect position angles. Fix to bug in position-dependent WCS
+        transformations that caused incorrect source parameters in output
+        catalogs. Added option to output uncorrected source parameters
+        to a BBS sky model file (correct_proj).
+
+    2013/03/14 - Removed sky transformations for flagged Gaussians, as
+        these could sometimes give math domain errors. Disabled aperture
+        flux measurement on wavelet images as it is not used/needed.
+
+    2013/02/25 - Version 1.6.0
+
+    2013/02/25 - Improved speed and accuracy of aperture flux
+        calculation.
+
+    2013/02/20 - Added option to use the curvature map method of
+        Hancock et al. (2012) for the initial estimation of Gaussian
+        parameters (ini_method = 'curvature') and for grouping of
+        Gaussians into sources (group_method = 'curvature').
+
+    2013/02/18 - Fix to bug in spectral index module that caused sources
+        with multiple Gaussians to be skipped. Minor adjustments to the
+        wavelet module to improve performance.
+
+    2013/02/08 - Implemented position-dependent WCS transformations.
+
+    2013/02/08 - Added option to fit to any arbitrary location in the
+        image within a given radius (src_ra_dec and src_radius_pix).
+
+    2013/02/04 - Fix to bug in wavelet module that caused crash when
+       no Gaussians were fit to the main image.
+
+    2013/01/30 - Fix to bug that resulted in incorrect numbering of
+       wavelet Gaussians. Added 'srl' output in ds9 format when using
+       output_all = True.
+
+    2013/01/28 - Fix to bug in source grouping algorithm. Improved fitting
+       when background mean is nonzero. Fix to allow images with GLAT and
+       GLON WCS coordinates. Fix to bug when equinox is taken from the
+       epoch keyword.
+
+    2012/12/19 - Version 1.5.1
+
+    2012/12/19 - Fix to bug in wavelet module that occurred when the
+        center of the wavelet Gaussian lies outside of the image. Fix
+        to re-enable srl output catalogs in ds9 region format. Fix to
+        bug that resulted in the output directory not always being
+        created. Added an option (aperture_posn), used when aperture
+        fluxes are desired, to specify whether to center the aperture
+        on the source centroid or the source peak.
+
+    2012/12/02 - Changes to reduce memory usage, particularly in the
+        wavelet module.
+
+    2012/11/30 - Fix to bypass bug in matplotlib when display variable
+        is not set.
+
+    2012/11/21 - Fixed bug that caused a crash when a detection image
+        was used. Fixed a bug with incorrect save directory when
+        plot_allgaus = True.
+
     2012/10/29 - Version 1.5.0
 
     2012/10/29 - Improved handling of WCS information so that a much
@@ -36,7 +123,7 @@ def changelog():
 
     2012/10/12 - Version 1.4.5
 
-    2012/10/12 - Added option ("incl_empty") to include empty islands (that
+    2012/10/12 - Added option (incl_empty) to include empty islands (that
         have no un-flagged Gaussians) in output catalogs. Any such empty
         islands are given negative source IDs and positions given by the
         location of the peak of the island.
@@ -60,13 +147,13 @@ def changelog():
 
     2012/10/04 - Fixed a bug in the mean map calculation that caused mean
         maps with constant values (i.e., non-2D maps) to have values of
-        0.0 Jy/beam unless "mean_map = 'const'" was explicitly specified.
+        0.0 Jy/beam unless mean_map = 'const' was explicitly specified.
         Fixed a bug in Gaussian fitting that could cause an island to be
         skipped.
 
     2012/10/02 - Fixed a bug in the PSF vary module that resulted in
         incorrect PSF generators being used. Added an option to smooth
-        the resulting PSF images ("psf_smooth"). Parallelized the PSF
+        the resulting PSF images (psf_smooth). Parallelized the PSF
         interpolation and smoothing steps. Improved PSF vary documentation.
 
     2012/09/25 - Version 1.4.2
@@ -84,7 +171,7 @@ def changelog():
     2012/09/20 - Fixed a bug in the wavelet module that caused a crash when
         no Gaussians were fit to the ch0 image.
 
-    2012/09/19 - Added "broadcast" option to show_fit task to send
+    2012/09/19 - Added option (broadcast) to show_fit task to send
     	coordinates and row highlight request to a SAMP hub when a Gaussian
     	is clicked. Fixed bug in aperture flux masking that sometimes caused
     	the mask to be the wrong shape.
@@ -101,8 +188,8 @@ def changelog():
 
     2012/09/11 - Parallelized Gaussian fitting, shapelet decomposition,
         validation of wavelet islands, and mean/rms map generation.
-        The number of cores to be used can be specified with the "ncores"
-        option (default is to use all). Fixed bug in SED plotting in
+        The number of cores to be used can be specified with the ncores
+        option (default is to use up to 8). Fixed bug in SED plotting in
         the show_fit task.
 
     2012/08/29 - Fixed incorrect terminal size in parameter listing. Added
@@ -113,7 +200,7 @@ def changelog():
 
     2012/08/22 - Fixed a bug that caused the user-specified rms_box to be
         ignored. Added an option to enable the Monte Carlo error estimation
-        for 'M'-type sources (the "do_mc_errors" option), which is now
+        for 'M'-type sources (the do_mc_errors option), which is now
         disabled by default.
 
     2012/07/11 - Version 1.3.1
@@ -168,7 +255,7 @@ def changelog():
 
     2012/06/06 - Added option to calculate fluxes within a specified
         aperture radius in pixels (set with the "aperture" option).
-        Aperture fluxes, if measured, are output in the "srl" catalogs.
+        Aperture fluxes, if measured, are output in the 'srl' catalogs.
         Changed code that determines terminal width to be more robust.
 
     2012/05/07 - Removed dependencies on matplotlib -- if matplotlib is
@@ -194,8 +281,8 @@ def changelog():
     	being masked properly.
 
     2012/04/17 - Fixed bug in psf_vary module that resulted in PSF major and
-    	minor axis maps in terms of sigma instead of FWHM. Added psf_vary
-    	option (psf_stype_only) to allow PSF fitting to non- S-type sources
+    	minor axis maps in terms of sigma instead of FWHM. Added option
+    	(psf_stype_only) to allow PSF fitting to non- S-type sources
     	(useful if sources are very distorted).
 
     2012/04/12 - Fixed bug in adaptive scaling code that could cause

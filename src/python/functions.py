@@ -485,6 +485,33 @@ def dist_2pt(p1, p2):
 
     return dist
 
+
+def angsep(ra1, dec1, ra2, dec2):
+    """Returns angular separation between two coordinates (all in degrees)"""
+    import math
+
+    const = math.pi/180.
+    ra1 = ra1*const
+    rb1 = dec1*const
+    ra2 = ra2*const
+    rb2 = dec2*const
+
+    v1_1 = math.cos(ra1)*math.cos(rb1)
+    v1_2 = math.sin(ra1)*math.cos(rb1)
+    v1_3 = math.sin(rb1)
+
+    v2_1 = math.cos(ra2)*math.cos(rb2)
+    v2_2 = math.sin(ra2)*math.cos(rb2)
+    v2_3 = math.sin(rb2)
+
+    w = ( (v1_1-v2_1)**2 + (v1_2-v2_2)**2 + (v1_3-v2_3)**2 )/4.0
+
+    x = math.sqrt(w)
+    y = math.sqrt(max(0.0, 1.0-w))
+    angle = 2.0*math.atan2(x, y)/const
+    return angle
+
+
 def std(y):
     """ Returns unbiased standard deviation. """
     from math import sqrt
@@ -721,7 +748,18 @@ def deconv2(gaus_bm, gaus_c):
 
 
 def get_errors(img, p, stdav, bm_pix=None):
+    """ Returns errors from Condon 1997
 
+    Returned list includes errors on:
+        peak flux [Jy/beam]
+        x_0 [pix]
+        y_0 [pix]
+        e_maj [pix]
+        e_min [pix]
+        e_pa [deg]
+        e_tot [Jy]
+
+    """
     from const import fwsig
     from math import sqrt, log, pow, pi
     import mylogger
@@ -743,23 +781,23 @@ def get_errors(img, p, stdav, bm_pix=None):
       else:
         sq2 = sqrt(2.0)
         if bm_pix == None:
-            bm_pix = N.array([img.pixel_beam[0]*fwsig, img.pixel_beam[1]*fwsig, img.pixel_beam[2]])
-        dumr = sqrt(abs(size[0]*size[1]/(4.0*bm_pix[0]*bm_pix[1])))
-        dumrr1 = 1.0+bm_pix[0]*bm_pix[1]/(size[0]*size[0])
-        dumrr2 = 1.0+bm_pix[0]*bm_pix[1]/(size[1]*size[1])
-        dumrr3 = dumr*pp[0]/stdav
-        d1 = sqrt(8.0*log(2.0))
-        d2 = (size[0]*size[0]-size[1]*size[1])/(size[0]*size[0])
+            bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
+        dumr = sqrt(abs(size[0] * size[1] / (4.0 * bm_pix[0] * bm_pix[1])))
+        dumrr1 = 1.0 + bm_pix[0] * bm_pix[1] / (size[0] * size[0])
+        dumrr2 = 1.0 + bm_pix[0] * bm_pix[1] / (size[1] * size[1])
+        dumrr3 = dumr * pp[0] / stdav
+        d1 = sqrt(8.0 * log(2.0))
+        d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[0])
         try:
-            e_peak = pp[0]*sq2/(dumrr3*pow(dumrr1,0.75)*pow(dumrr2,0.75))
-            e_maj=size[0]*sq2/(dumrr3*pow(dumrr1,1.25)*pow(dumrr2,0.25))
-            e_min=size[1]*sq2/(dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))  # in fw
-            pa_rad = size[2]*pi/180.0
-            e_x0 = sqrt( (e_maj*N.sin(pa_rad))**2 + (e_min*N.cos(pa_rad))**2 ) / d1
-            e_y0 = sqrt( (e_maj*N.cos(pa_rad))**2 + (e_min*N.sin(pa_rad))**2 ) / d1
-            e_pa=2.0/(d2*dumrr3*pow(dumrr1,0.25)*pow(dumrr2,1.25))
-            e_pa=e_pa*180.0/pi
-            e_tot=pp[0]*sqrt(e_peak*e_peak/(pp[0]*pp[0])+(0.25/dumr/dumr)*(e_maj*e_maj/(size[0]*size[0])+e_min*e_min/(size[1]*size[1])))
+            e_peak = pp[0] * sq2 / (dumrr3 * pow(dumrr1, 0.75) * pow(dumrr2, 0.75))
+            e_maj = size[0] * sq2 / (dumrr3 * pow(dumrr1, 1.25) * pow(dumrr2, 0.25))
+            e_min = size[1] * sq2 / (dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))  # in fw
+            pa_rad = size[2] * pi / 180.0
+            e_x0 = sqrt( (e_maj * N.sin(pa_rad))**2 + (e_min * N.cos(pa_rad))**2 ) / d1
+            e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
+            e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
+            e_pa = e_pa * 180.0/pi
+            e_tot = pp[0] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) * (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
         except:
             e_peak = 0.0
             e_x0 = 0.0
@@ -963,21 +1001,26 @@ def arrstatmask(im, mask):
 
     return (av, std, maxv, (xmax, ymax), minv, (xmin, ymin))
 
-def get_maxima(im, mask, thr, shape, beam):
+def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     """ Gets the peaks in an image """
     from copy import deepcopy as cp
     import numpy as N
 
+    if im_pos == None:
+        im_pos = im
     im1 = cp(im)
     ind = N.array(N.where(~mask)).transpose()
-    ind = [tuple(coord) for coord in ind if im[tuple(coord)] > thr]
-    n, m = shape; iniposn = []; inipeak = []
+    ind = [tuple(coord) for coord in ind if im_pos[tuple(coord)] > thr]
+    n, m = shape
+    iniposn = []
+    inipeak = []
     for c in ind:
-      goodlist = [im[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
+      goodlist = [im_pos[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
                    if i>=0 and i<n and j>=0 and j<m and (i,j) != c]
-      peak = N.sum(im[c] > goodlist) == len(goodlist)
+      peak = N.sum(im_pos[c] > goodlist) == len(goodlist)
       if peak:
-        iniposn.append(c); inipeak.append(im[c])
+        iniposn.append(c)
+        inipeak.append(im[c])
         im1 = mclean(im1, c, beam)
 
     return inipeak, iniposn, im1
@@ -1001,14 +1044,13 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
       im1 = cp(image)
       if im1.min() < 0.: im1 = im1-im1.min()
       im1 = 255 - im1/im1.max()*255
-      opw = nd.watershed_ift(N.array(im1, N.uint8), markers)
+      opw = nd.watershed_ift(N.array(im1, N.uint16), markers)
 
       return opw, markers
 
 def get_kwargs(kwargs, key, typ, default):
-
     obj = True
-    if kwargs.has_key(key):
+    if key in kwargs:
       obj = kwargs[key]
     if not isinstance(obj, typ):
       obj = default
@@ -1027,6 +1069,8 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import mylogger
     import os
     import numpy as N
+    from copy import deepcopy as cp
+    from distutils.version import StrictVersion
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir == None or indir == './':
@@ -1043,7 +1087,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
-            import pyfits
+            try:
+                from astropy.io import fits as pyfits
+            except ImportError, err:
+                import pyfits
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             except IOError, err:
@@ -1061,14 +1108,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
         # We need pyfits version 2.2 or greater to use the
         # "ignore_missing_end" argument to pyfits.open().
         try:
-            from distutils.version import StrictVersion
-            import pyfits
-            if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
-                has_pyfits = True
-            else:
-                raise RuntimeError("PyFITS (version 2.2 or greater) is required.")
+            try:
+                from astropy.io import fits as pyfits
+            except ImportError, err:
+                import pyfits
+            has_pyfits = True
         except ImportError, err:
-            raise RuntimeError("PyFITS is required.")
+            raise RuntimeError("Astropy or PyFITS is required.")
         try:
             import pyrap.images as pim
             has_pyrap = True
@@ -1124,18 +1170,55 @@ def read_image_from_file(filename, img, indir, quiet=False):
     ctype_in.reverse() # Need to reverse order, as pyfits does this
 
     if 'RA' not in ctype_in or 'DEC' not in ctype_in:
-        raise RuntimeError("Image data not found")
+        if 'GLON' not in ctype_in or 'GLAT' not in ctype_in:
+            raise RuntimeError("Image data not found")
+        else:
+            lat_lon = True
+    else:
+        lat_lon = False
+
+    # Check for incorrect spectral units. For example, "M/S" is not
+    # recognized by PyWCS as velocity ("S" is actually Siemens, not
+    # seconds).
+    for i in range(len(data.shape)):
+        key_val_raw = hdr.get('CUNIT' + str(i+1))
+        if key_val_raw != None:
+            if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:
+                hdr['CUNIT' + str(i+1)] = 'm/s'
+            if 'HZ' in key_val_raw or 'hZ' in key_val_raw or 'hz' in key_val_raw:
+                hdr['CUNIT' + str(i+1)] = 'Hz'
+
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
-        from pywcs import WCS
-        t = WCS(hdr)
-        t.wcs.fix()
+        try:
+            from astropy.wcs import WCS
+            # Check if one of the axes has units of "M/S", as this is not
+            # recognized by PyWCS as velocity ("S" is actually Siemens, not
+            # seconds). If "M/S", change to "m/s".
+            for i in range(len(data.shape)):
+                if 'CUNIT' + str(i+1) in hdr:
+                    key_val_raw = hdr['CUNIT' + str(i+1)]
+                    if 'M/S' in key_val_raw:
+                        hdr['CUNIT' + str(i+1)] = 'm/s'
+
+            t = WCS(hdr)
+            t.wcs.fix()
+        except ImportError, err:
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                from pywcs import WCS
+                t = WCS(hdr)
+                t.wcs.fix()
         spec_indx = t.wcs.spec
         if spec_indx != -1:
             ctype_in.reverse()
             ctype_in[spec_indx] = 'FREQ'
             ctype_in.reverse()
 
-    ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
+    if lat_lon:
+        ctype_out = ['STOKES', 'FREQ', 'GLON', 'GLAT']
+    else:
+        ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
     indx_out = [-1, -1, -1, -1]
     indx_in = range(len(data.shape))
     for i in indx_in:
@@ -1188,7 +1271,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
 def convert_pyrap_header(pyrap_image):
     """Converts a pyrap header to a PyFITS header."""
     import tempfile
-    import pyfits
+    try:
+        from astropy.io import fits as pyfits
+    except ImportError, err:
+        import pyfits
 
     tfile = tempfile.NamedTemporaryFile(delete=False)
     pyrap_image.tofits(tfile.name)
@@ -1219,11 +1305,10 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
     else:
         # Write image to FITS file
-        import pyfits
         if outdir == None:
             outdir = img.indir
         if not os.path.exists(outdir) and outdir != '':
-            os.mkdir(outdir)
+            os.makedirs(outdir)
         if os.path.exists(outdir + filename):
             if clobber:
                 os.remove(outdir + filename)
@@ -1234,52 +1319,172 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 
 def make_fits_image(imagedata, wcsobj, beam, freq):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
-    import pyfits
+    from distutils.version import StrictVersion
+    try:
+        from astropy.io import fits as pyfits
+        use_header_update = False
+    except ImportError, err:
+        import pyfits
+
+        # Due to changes in the way pyfits handles headers from version 3.1 on,
+        # we need to check for older versions and change the setting of header
+        # keywords accordingly.
+        if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+            use_header_update = True
+        else:
+            use_header_update = False
     shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
     hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
     header = hdulist[0].header
 
     # Add WCS info
-#     wcs_header = wcsobj.to_header()
-#     for key in wcs_header.keys():
-#         header.update(key, wcs_header[key])
-    header.update('CRVAL1', wcsobj.wcs.crval[0])
-    header.update('CDELT1', wcsobj.wcs.cdelt[0])
-    header.update('CRPIX1', wcsobj.wcs.crpix[0])
-    header.update('CUNIT1', wcsobj.wcs.cunit[0])
-    header.update('CTYPE1', wcsobj.wcs.ctype[0])
-    header.update('CRVAL2', wcsobj.wcs.crval[1])
-    header.update('CDELT2', wcsobj.wcs.cdelt[1])
-    header.update('CRPIX2', wcsobj.wcs.crpix[1])
-    header.update('CUNIT2', wcsobj.wcs.cunit[1])
-    header.update('CTYPE2', wcsobj.wcs.ctype[1])
+    if use_header_update:
+        header.update('CRVAL1', wcsobj.wcs.crval[0])
+        header.update('CDELT1', wcsobj.wcs.cdelt[0])
+        header.update('CRPIX1', wcsobj.wcs.crpix[0])
+        header.update('CUNIT1', wcsobj.wcs.cunit[0])
+        header.update('CTYPE1', wcsobj.wcs.ctype[0])
+        header.update('CRVAL2', wcsobj.wcs.crval[1])
+        header.update('CDELT2', wcsobj.wcs.cdelt[1])
+        header.update('CRPIX2', wcsobj.wcs.crpix[1])
+        header.update('CUNIT2', wcsobj.wcs.cunit[1])
+        header.update('CTYPE2', wcsobj.wcs.ctype[1])
+    else:
+        header['CRVAL1'] = wcsobj.wcs.crval[0]
+        header['CDELT1'] = wcsobj.wcs.cdelt[0]
+        header['CRPIX1'] = wcsobj.wcs.crpix[0]
+        header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).upper() # needed due to bug in astropy
+        header['CTYPE1'] = wcsobj.wcs.ctype[0]
+        header['CRVAL2'] = wcsobj.wcs.crval[1]
+        header['CDELT2'] = wcsobj.wcs.cdelt[1]
+        header['CRPIX2'] = wcsobj.wcs.crpix[1]
+        header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).upper() # needed due to bug in astropy
+        header['CTYPE2'] = wcsobj.wcs.ctype[1]
 
     # Add STOKES info
-    header.update('CRVAL3', 1)
-    header.update('CDELT3', 1)
-    header.update('CRPIX3', 1)
-    header.update('CUNIT3', '')
-    header.update('CTYPE3', 'STOKES')
+    if use_header_update:
+        header.update('CRVAL3', 1)
+        header.update('CDELT3', 1)
+        header.update('CRPIX3', 1)
+        header.update('CUNIT3', '')
+        header.update('CTYPE3', 'STOKES')
+    else:
+        header['CRVAL3'] = 1
+        header['CDELT3'] = 1
+        header['CRPIX3'] = 1
+        header['CUNIT3'] = ''
+        header['CTYPE3'] = 'STOKES'
 
     # Add or alter frequency info if needed
-    header.update('CRVAL4', freq)
-    header.update('CDELT4', 0.0)
-    header.update('CRPIX4', 1)
-    header.update('CUNIT4', 'Hz')
-    header.update('CTYPE4', 'FREQ')
+    if use_header_update:
+        header.update('CRVAL4', freq)
+        header.update('CDELT4', 0.0)
+        header.update('CRPIX4', 1)
+        header.update('CUNIT4', 'Hz')
+        header.update('CTYPE4', 'FREQ')
+    else:
+        header['CRVAL4'] = freq
+        header['CDELT4'] = 0.0
+        header['CRPIX4'] = 1
+        header['CUNIT4'] = 'Hz'
+        header['CTYPE4'] = 'FREQ'
 
     # Add beam info
-    header.update('BMAJ', beam[0])
-    header.update('BMIN', beam[1])
-    header.update('BPA', beam[2])
+    if use_header_update:
+        header.update('BMAJ', beam[0])
+        header.update('BMIN', beam[1])
+        header.update('BPA', beam[2])
+    else:
+        header['BMAJ'] = beam[0]
+        header['BMIN'] = beam[1]
+        header['BPA'] = beam[2]
+
+    # Add STOKES info
+    if use_header_update:
+        header.update('CRVAL3', 1)
+        header.update('CDELT3', 1)
+        header.update('CRPIX3', 1)
+        header.update('CUNIT3', '')
+        header.update('CTYPE3', 'STOKES')
+    else:
+        header['CRVAL3'] = 1
+        header['CDELT3'] = 1
+        header['CRPIX3'] = 1
+        header['CUNIT3'] = ''
+        header['CTYPE3'] = 'STOKES'
+
+    # Add or alter frequency info if needed
+    if wcsobj.wcs.spec != -1:
+        if use_header_update:
+            header.update('CRVAL' + str(wcsobj.wcs.spec + 1), freq)
+        else:
+            header['CRVAL' + str(wcsobj.wcs.spec + 1)] =  freq
+    else:
+        if use_header_update:
+            header.update('CRVAL4', freq)
+            header.update('CDELT4', 0.0)
+            header.update('CRPIX4', 1)
+            header.update('CUNIT4', 'Hz')
+            header.update('CTYPE4', 'FREQ')
+        else:
+            header['CRVAL4'] = freq
+            header['CDELT4'] = 0.0
+            header['CRPIX4'] = 1
+            header['CUNIT4'] = 'Hz'
+            header['CTYPE4'] = 'FREQ'
+
+    # Add beam info
+    if use_header_update:
+        header.update('BMAJ', beam[0])
+        header.update('BMIN', beam[1])
+        header.update('BPA', beam[2])
+    else:
+        header['BMAJ'] = beam[0]
+        header['BMIN'] = beam[1]
+        header['BPA'] = beam[2]
 
     hdulist[0].header = header
     return hdulist
 
+def retrieve_map(img, map_name):
+    """Returns a map cached on disk."""
+    import numpy as N
+    import os
+
+    filename = get_name(img, map_name)
+    if not os.path.isfile(filename):
+        return None
+    infile = file(filename, 'rb')
+    data = N.load(infile)
+    infile.close()
+    return data
+
+def store_map(img, map_name, map_data):
+    """Caches a map to disk."""
+    import numpy as N
+
+    filename = get_name(img, map_name)
+    outfile = file(filename, 'wb')
+    N.save(outfile, map_data)
+    outfile.close()
+
+def get_name(img, map_name):
+    """Returns name of cache file."""
+    import os
+
+    if img._pi:
+        pi_text = 'pi'
+    else:
+        pi_text = 'I'
+    suffix = '/w%i_%s/' % (img.j, pi_text)
+    dir = img.tempdir + suffix
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    return dir + map_name + '.bin'
+
 def connect(mask):
     """ Find if a mask is singly or multiply connected """
-
     import scipy.ndimage as nd
 
     connectivity = nd.generate_binary_structure(2,2)
@@ -1578,31 +1783,36 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
         return [0.0, 0.0]
 
     # Make ch0 and rms subimages
+    ch0 = img.ch0_arr
+    shape = ch0.shape
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
         xlo = 0
     xhi = posn_pix[0]+int(aperture_pix)+1
-    if xhi > img.ch0.shape[0]:
-        xhi = img.ch0.shape[0]
+    if xhi > shape[0]:
+        xhi = shape[0]
     ylo = posn_pix[1]-int(aperture_pix)-1
     if ylo < 0:
         ylo = 0
     yhi = posn_pix[1]+int(aperture_pix)+1
-    if yhi > img.ch0.shape[1]:
-        yhi = img.ch0.shape[1]
+    if yhi > shape[1]:
+        yhi = shape[1]
 
-    aper_im = img.ch0[xlo:xhi, ylo:yhi]
-    aper_rms = img.rms[xlo:xhi, ylo:yhi]
+    mean = img.mean_arr
+    rms = img.rms_arr
+    aper_im = ch0[xlo:xhi, ylo:yhi] - mean[xlo:xhi, ylo:yhi]
+    aper_rms = rms[xlo:xhi, ylo:yhi]
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
-    aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, img.pixel_beamarea)
+    pixel_beamarea = img.pixel_beamarea()
+    aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
     return aper_flux
 
 def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     """Returns aperture flux and error"""
     import numpy as N
 
-    dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[1], posn_pix[0], aperture_pix)
-    aper_mask = N.where(dist_mask)
+    dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[0], posn_pix[1], aperture_pix)
+    aper_mask = N.where(dist_mask.astype(bool))
     if N.size(aper_mask) == 0:
         return [0.0, 0.0]
     aper_flux = N.nansum(aper_im[aper_mask])/beamarea # Jy
@@ -1610,12 +1820,45 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
     return [aper_flux, aper_fluxE]
 
-def generate_aperture(ysize, xsize, ycenter, xcenter, radius):
-    """Makes a mask for a circular aperture"""
+def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
+    """Makes a mask (1 = inside aperture) for a circular aperture"""
     import numpy
 
-    x, y = numpy.mgrid[0:ysize,0:xsize]
-    return ((x - ycenter)**2 + (y - xcenter)**2 <= radius**2) * 1
+    x, y = numpy.mgrid[0.5:xsize, 0.5:ysize]
+    mask = ((x - xcenter)**2 + (y - ycenter)**2 <= radius**2) * 1
+    return mask
+
+def make_src_mask(mask_size, posn_pix, aperture_pix):
+    """Makes an island mask (1 = inside aperture)f or a given source position.
+    """
+    import numpy as N
+
+    xsize, ysize = mask_size
+    if aperture_pix == None:
+        return N.zeros((xsize, ysize), dtype=N.int)
+
+    # Make subimages
+    xlo = posn_pix[0]-int(aperture_pix)-1
+    if xlo < 0:
+        xlo = 0
+    xhi = posn_pix[0]+int(aperture_pix)+1
+    if xhi > xsize:
+        xhi = xsize
+    ylo = posn_pix[1]-int(aperture_pix)-1
+    if ylo < 0:
+        ylo = 0
+    yhi = posn_pix[1]+int(aperture_pix)+1
+    if yhi > ysize:
+        yhi = ysize
+
+    mask = N.zeros((xsize, ysize), dtype=N.int)
+    posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
+    submask_xsize = xhi - xlo
+    submask_ysize = yhi - ylo
+    submask = generate_aperture(submask_xsize, submask_ysize, posn_pix_new[0], posn_pix_new[1], aperture_pix)
+    submask_slice = [slice(xlo, xhi), slice(ylo, yhi)]
+    mask[submask_slice] = submask
+    return mask
 
 def getTerminalSize():
     """
@@ -1757,3 +2000,24 @@ def send_coords(s, private_key, coords):
         raise RuntimeError("A running SAMP hub was not found.")
     else:
         s.samp.hub.notifyAll(private_key, message)
+
+def make_curvature_map(subim):
+    """Makes a curvature map with the Aegean curvature algorithm
+    (Hancock et al. 2012)
+
+    The Aegean algorithm uses a curvature map to identify regions of negative
+    curvature. These regions then define distinct sources.
+    """
+    import scipy.signal as sg
+    import numpy as N
+    import sys
+
+    # Make average curavature map:
+    curv_kernal = N.array([[1, 1, 1],[1, -8, 1],[1, 1, 1]])
+    # The next step prints meaningless warnings, so suppress them
+    original_stdout = sys.stdout  # keep a reference to STDOUT
+    sys.stdout = NullDevice()  # redirect the real STDOUT
+    curv_map = sg.convolve2d(subim, curv_kernal)
+    sys.stdout = original_stdout  # turn STDOUT back on
+
+    return curv_map

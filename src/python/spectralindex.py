@@ -56,7 +56,7 @@ class Op_spectralindex(Op):
         img.mylog = mylog
         if img.opts.spectralindex_do:
             mylogger.userinfo(mylog, '\nExtracting spectral indices for all ch0 sources')
-            shp = img.image.shape
+            shp = img.image_arr.shape
             if shp[1] > 1:
                 # calc freq, beam_spectrum for nchan channels
                 self.freq_beamsp_unav(img)
@@ -67,7 +67,7 @@ class Op_spectralindex(Op):
                 iniflags = self.iniflag(img)
                 img.specind_iniflags = iniflags
                 good_chans = N.where(iniflags == False)
-                unav_image = img.image[0][good_chans]
+                unav_image = img.image_arr[0][good_chans]
                 unav_freqs = freqin[good_chans]
                 nmax_to_avg = img.opts.specind_maxchan
                 nchan = unav_image.shape[0]
@@ -199,10 +199,13 @@ class Op_spectralindex(Op):
                                 print 'Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id,
                                       len(src_total_flux), nchan)
                             else:
-                                 print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id,
+                                print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id,
                                        len(src_total_flux))
-                        npos = len(N.where(src_total_flux > 0.0))
-                        if (img.opts.flagchan_snr and n_good_chan < 2) or npos < 2:
+                        npos = len(N.where(src_total_flux > 0.0)[0])
+
+                        if isinstance(n_good_chan, int):
+                            n_good_chan = [n_good_chan]
+                        if (img.opts.flagchan_snr and n_good_chan[0] < 2) or npos < 2:
                             src.spec_indx = N.NaN
                             src.e_spec_indx = N.NaN
                             src.spec_norm = N.NaN
@@ -218,6 +221,7 @@ class Op_spectralindex(Op):
                             fluxes_to_fit = src_total_flux[good_fluxes_ind]
                             e_fluxes_to_fit = src_e_total_flux[good_fluxes_ind]
                             freqs_to_fit = freq_av[good_fluxes_ind]
+
 #                             if len(freqs_to_fit.shape) == 2:
 #                                 freqs_to_fit = freqs_to_fit.reshape((freqs_to_fit.shape[0],))
 #                             if len(fluxes_to_fit.shape) == 2:
@@ -277,7 +281,7 @@ class Op_spectralindex(Op):
         are less then 10 % of number of channels, flag them. This is done only when flagchan_rms = True.
         If False, only rms=0 (meaning, entire channel image is zero or blanked) is flagged."""
 
-        image = img.image
+        image = img.image_arr
         nchan = image.shape[1]
         iniflags = N.zeros(nchan, bool)
         zeroflags = N.zeros(nchan, bool)
@@ -297,7 +301,7 @@ class Op_spectralindex(Op):
     def freq_beamsp_unav(self, img):
         """ Defines img.beam_spectrum and img.freq for the unaveraged cube. """
 
-        shp = img.image.shape
+        shp = img.image_arr.shape
         sbeam = img.opts.beam_spectrum
         if sbeam != None and len(sbeam) != shp[1]: sbeam = None  # sanity check
         if sbeam == None:
@@ -332,9 +336,9 @@ class Op_spectralindex(Op):
         map_opts = (img.opts.kappa_clip, img.rms_box, img.opts.spline_rank)
 
         if rms_map:
-            rms_spec = N.zeros(image.shape)
-            mean = N.zeros(image.shape[1:])
-            rms = N.zeros(image.shape[1:])
+            rms_spec = N.zeros(image.shape, dtype=N.float32)
+            mean = N.zeros(image.shape[1:], dtype=N.float32)
+            rms = N.zeros(image.shape[1:], dtype=N.float32)
             median_rms = N.zeros(nchan)
             for ichan in range(nchan):
                 if bar1.started:
@@ -344,7 +348,7 @@ class Op_spectralindex(Op):
                 rms_spec[ichan,:,:] = rms
                 median_rms[ichan] = N.median(rms)
         else:
-            rms_spec = N.zeros(image.shape)
+            rms_spec = N.zeros(image.shape, dtype=N.float32)
             for ichan in range(nchan):
               if bar1.started:
                   bar1.increment()
@@ -432,7 +436,7 @@ class Op_spectralindex(Op):
         beamlist = []
         crms_av = N.zeros(n_new)
         freq_av = N.zeros(n_new)
-        imageout = N.zeros((n_new, imagein.shape[1], imagein.shape[2]))
+        imageout = N.zeros((n_new, imagein.shape[1], imagein.shape[2]), dtype=N.float32)
         blank = N.isnan(imagein[0])
         hasblanks = blank.any()
         for ichan, avg_list in enumerate(chan_list):

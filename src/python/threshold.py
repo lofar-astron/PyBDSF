@@ -26,10 +26,10 @@ class Op_threshold(Op):
     """
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Threshold ")
-        data = img.ch0
-        mask = img.mask
+        data = img.ch0_arr
+        mask = img.mask_arr
         opts = img.opts
-        size = N.product(img.ch0.shape)
+        size = N.product(img.ch0_arr.shape)
         sq2  = sqrt(2)
 
         if img.opts.thresh is None:
@@ -60,7 +60,7 @@ class Op_threshold(Op):
                 s0 +=  1.0/(i+1)
             slope = opts.fdr_alpha/s0
             # sort erf of normalised image as vector
-            v = N.sort(0.5*erfc(N.ravel((data-img.mean)/img.rms)/sq2))[::-1]
+            v = N.sort(0.5*erfc(N.ravel((data-img.mean_arr)/img.rms_arr)/sq2))[::-1]
             for i,x in enumerate(v):
                 if x < slope*i/size:
                     pcrit = x

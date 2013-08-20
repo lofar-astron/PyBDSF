@@ -4,6 +4,77 @@
 What's New
 **********
 
+Version 1.7.0 (2013/08/20):
+
+    * PyBDSM will now use Astropy if installed for FITS and WCS modules.
+
+    * Fix to avoid excessive memory usage in the wavelet module (replaced ``scipy.signal.fftconvolve`` with a custom function).
+
+    * Added option to use disk caching for internally derived images (``do_cache``). Caching can reduce memory usage and is therefore useful when processing large images.
+
+    * Implemented a variable operation chain for process_image (and ``img.process()``) that allows unneeded steps to be skipped if the image is being reprocessed.
+
+    * Fixed a bug that could cause Gaussian fitting to hang during iterative fitting of large islands.
+
+    * Added option (``fix_to_beam``) to fix the size and position angle of Gaussians to the restoring beam during fitting.
+
+    * Fix to bug that caused the position angle used to initialize fitting to be incorrect.
+
+Version 1.6.1 (2013/03/22):
+
+    * Fix to bug in ds9 and kvis catalog files that resulted in incorrect position angles.
+
+    * Fix to bug in position-dependent WCS transformations that caused incorrect source parameters in output catalogs.
+
+    * Added option to output uncorrected source parameters to a BBS sky model file (``correct_proj``).
+
+    * Removed sky transformations for flagged Gaussians, as these could sometimes give math domain errors.
+
+    * Disabled aperture flux measurement on wavelet images as it is not used/needed.
+
+Version 1.6.0 (2013/03/05):
+
+    * Improved speed and accuracy of aperture flux calculation.
+
+    * Added option to use the curvature map method of Hopkins et al. (2012) for the initial estimation of Gaussian parameters (``ini_method = 'curvature'``) and for grouping of Gaussians into sources (``group_method = 'curvature'``).
+
+    * Fix to bug in spectral index module that caused sources with multiple Gaussians to be skipped. Minor adjustments to the wavelet module to improve performance.
+
+    * Implemented position-dependent WCS transformations.
+
+    * Added option to fit to any arbitrary location in the image within a given radius (``src_ra_dec`` and ``src_radius_pix``).
+
+    * Fix to bug in wavelet module that caused crash when no Gaussians were fit to the main image.
+
+    * Fix to bug that resulted in incorrect numbering of wavelet Gaussians. Added ``'srl'`` output in ds9 format when using ``output_all = True``.
+
+    * Fix to bug in source grouping algorithm. Improved fitting when background mean is nonzero. Fix to allow images with GLAT and GLON WCS coordinates. Fix to bug when equinox is taken from the epoch keyword.
+
+
+Version 1.5.1 (2012/12/19):
+
+    * Fix to bug in wavelet module that occurred when the center of the wavelet Gaussian lies outside of the image.
+
+    * Fix to re-enable srl output catalogs in ds9 region format.
+
+    * Fix to bug that resulted in the output directory not always being created.
+
+    * Added an option (``aperture_posn``), used when aperture fluxes are desired, to specify whether to center the aperture on the source centroid or the source peak.
+
+    * Changes to reduce memory usage, particularly in the wavelet module.
+
+    * Fix to bypass bug in matplotlib when display variable is not set.
+
+    * Fixed bug that caused a crash when a detection image was used.
+
+    * Fixed a bug with incorrect save directory when "plot_allgaus" is True.
+
+Version 1.5.0 (2012/10/29):
+
+    * Improved WCS handling. PyBDSM can now read images with a much greater variety of WCS systems (e.g., the ``VOPT`` spectral system).
+
+    * Fixed a bug related to the use of a detection image when a subimage is specified (with ``trim_box``).
+
 Version 1.4.5 (2012/10/12):
 
     * Added option (``incl_empty``) to include empty islands (that have no un-flagged Gaussians) in output catalogs. Any such empty islands are given negative source IDs and have positions given by the location of the peak of the island.

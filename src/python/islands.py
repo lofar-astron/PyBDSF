@@ -15,7 +15,10 @@ import numpy as N
 import scipy.ndimage as nd
 from image import *
 import mylogger
-import pyfits
+try:
+    from astropy.io import fits as pyfits
+except ImportError, err:
+    import pyfits
 import functions as func
 from output import write_islands
 from readimage import Op_readimage
@@ -45,6 +48,15 @@ class Op_islands(Op):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
         opts = img.opts
 
+        minsize = opts.minpix_isl
+        if minsize == None:
+            minsize = int(img.pixel_beamarea()/3.0) # 1/3 of beam area in pixels
+            if minsize < 6:
+                minsize = 6 # Need at least 6 pixels to obtain good fits
+            mylogger.userinfo(mylog, "Minimum number of pixels per island", '%i' %
+                          minsize)
+        img.minpix_isl = minsize
+
         if opts.detection_image != '':
             # Use a different image for island detection. The detection
             # image and the measurement image must have the same shape
@@ -64,34 +76,47 @@ class Op_islands(Op):
                 return
 
             # Check that the ch0 images are the same size
-            det_shape = det_img.ch0.shape
-            ch0_shape = img.ch0.shape
+            ch0_map = img.ch0_arr
+            det_ch0_map = det_img.ch0_arr
+            det_shape = det_ch0_map.shape
+            ch0_shape = ch0_map.shape
             if det_shape != ch0_shape:
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
-            # Run through islands and correct the rms, mean and max values
+            # Run through islands and correct the image and rms, mean and max values
             img.island_labels = det_img.island_labels
             corr_islands = []
-            for isl in det_img.islands:
-                corr_islands.append(isl.copy(img.pixel_beamarea))
+            mean_map = img.mean_arr
+            rms_map = img.rms_arr
+            for i, isl in enumerate(det_img.islands):
+                islcp = isl.copy(img.pixel_beamarea(), image=ch0_map[isl.bbox], mean=mean_map[isl.bbox], rms=rms_map[isl.bbox])
+                islcp.island_id = i
+                corr_islands.append(islcp)
             img.islands = corr_islands
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
             img.minpix_isl = det_img.minpix_isl
+            mylogger.userinfo(mylog, "\nContinuing processing using primary image")
         else:
-            img.islands = self.ndimage_alg(img, opts)
+            if opts.src_ra_dec != None:
+                mylogger.userinfo(mylog, "Constructing islands at user-supplied source locations")
+                img.islands = self.coords_to_isl(img, opts)
+            else:
+                img.islands = self.ndimage_alg(img, opts)
             img.nisl = len(img.islands)
 
             mylogger.userinfo(mylog, "Number of islands found", '%i' %
                               len(img.islands))
 
-            pyrank = N.zeros(img.ch0.shape, dtype=int) - 1
+            ch0_map = img.ch0_arr
+            ch0_shape = ch0_map.shape
+            pyrank = N.zeros(ch0_shape, dtype=N.int32) - 1
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
                 if i == 0:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active)-1
+                    pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
                 else:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active)*i
+                    pyrank[isl.bbox] = N.invert(isl.mask_active) * i - isl.mask_active
 
             if opts.output_all: write_islands(img)
             if opts.savefits_rankim:
@@ -128,20 +153,12 @@ class Op_islands(Op):
         ### islands detection
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
 
-        image = img.ch0
-        mask = img.mask
-        rms = img.rms
-        mean = img.mean
+        image = img.ch0_arr
+        mask = img.mask_arr
+        rms = img.rms_arr
+        mean = img.mean_arr
         thresh_isl = opts.thresh_isl
         thresh_pix = img.thresh_pix
-        minsize = opts.minpix_isl
-        if minsize == None:
-            minsize = int(img.pixel_beamarea/3.0) # 1/3 of beam area in pixels
-            if minsize < 6:
-                minsize = 6 # Need at least 6 pixels to obtain good fits
-            mylogger.userinfo(mylog, "Minimum number of pixels per island", '%i' %
-                          minsize)
-        img.minpix_isl = minsize
         clipped_mean = img.clipped_mean
         saverank = opts.savefits_rankim
 
@@ -161,7 +178,7 @@ class Op_islands(Op):
         img.island_labels = labels
 
         ### apply cuts on island size and peak value
-        pyrank = N.zeros(image.shape)
+        pyrank = N.zeros(image.shape, dtype=N.int32)
         res = []
         islid = 0
         for idx, s in enumerate(slices):
@@ -171,17 +188,57 @@ class Op_islands(Op):
             isl_peak = nd.maximum(image[s], labels[s], idx)
             isl_maxposn = tuple(N.array(N.unravel_index(N.nanargmax(image[s]), image[s].shape))+\
                           N.array((s[0].start, s[1].start)))
-            if (isl_size >= minsize) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
-                isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea)
+            if (isl_size >= img.minpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
+                isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
                 pyrank[isl.bbox] += N.invert(isl.mask_active)*idx / idx
 
         return res
 
+
+    def coords_to_isl(self, img, opts):
+        """Construct islands around given coordinates with given size.
+
+        Returns a list of island objects.
+        """
+        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
+
+        coords = opts.src_ra_dec # list of RA and Dec tuples
+        isl_radius_pix = opts.src_radius_pix
+        if isl_radius_pix == None:
+            isl_radius_pix = img.beam2pix(img.beam)[0] # twice beam major axis radius at half max (= FWHM)
+
+        res = []
+        for idx, coord in enumerate(coords):
+            idx += 1 # nd.labels indices are counted from 1
+            isl_posn_pix = img.sky2pix(coord)
+            image = img.ch0_arr
+            mask = img.mask_arr
+            rms = img.rms_arr
+            mean = img.mean_arr
+            labels = func.make_src_mask(image.shape,
+                        isl_posn_pix, isl_radius_pix)
+            if img.masked:
+                aper_mask = N.where(labels.astype(bool) & ~img.mask)
+            else:
+                aper_mask = N.where(labels.astype(bool))
+            if N.size(aper_mask) > img.minpix_isl:
+                labels[aper_mask] = idx
+                s = [slice(max(0, isl_posn_pix[0] - isl_radius_pix - 1),
+                     min(image.shape[0], isl_posn_pix[0] + isl_radius_pix + 1)),
+                     slice(max(0, isl_posn_pix[1] - isl_radius_pix - 1),
+                     min(image.shape[1], isl_posn_pix[1] + isl_radius_pix + 1))]
+                isl = Island(image, mask, mean, rms, labels, s, idx,
+                        img.pixel_beamarea())
+                res.append(isl)
+        return res
+
+
     def setpara_bdsm(self, img, det_file):
         from types import ClassType, TypeType
 
-        chain=[Op_readimage(), Op_collapse(), Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands()]
+        chain=[Op_readimage(), Op_collapse(), Op_preprocess, Op_rmsimage(),
+                Op_threshold(), Op_islands()]
         opts = img.opts.to_dict()
         opts['filename'] = det_file
         opts['detection_image'] = ''
@@ -259,7 +316,7 @@ class Island(object):
             N.logical_not(noise_mask, noise_mask)
             if isinstance(mask, N.ndarray):
                 noise_mask[mask[bbox]] = True
-
+                isl_mask[mask[bbox]] = True
         else:
             if origin == None:
                 origin = [b.start for b in bbox]
@@ -287,6 +344,7 @@ class Island(object):
         self.rms  = bbox_rms_im[in_bbox_and_unmasked].mean()
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
         self.mean  = bbox_mean_im[in_bbox_and_unmasked].mean()
+        self.islmean  = bbox_mean_im[in_bbox_and_unmasked].mean()
         self.total_flux = N.nansum(self.image[in_bbox_and_unmasked])/beamarea
         pixels_in_isl = N.sum(~N.isnan(self.image[self.mask_active])) # number of unmasked pixels assigned to current island
         self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
@@ -331,12 +389,16 @@ class Island(object):
             return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
         return map(__expand, bbox, shape)
 
-    def copy(self, pixel_beamarea):
+    def copy(self, pixel_beamarea, image=None, mean=None, rms=None):
         mask = self.mask_active
         noise_mask = self.mask_noisy
-        mean = N.zeros(mask.shape) + self.mean
-        rms =  N.zeros(mask.shape) + self.rms
-        image = self.image
+        if image == None:
+            image = self.image
+        if mean == None:
+            mean = N.zeros(mask.shape, dtype=N.float32) + self.mean
+        if rms == None:
+            rms =  N.zeros(mask.shape, dtype=N.float32) + self.rms
+
         bbox = self.bbox
         idx = self.oldidx
         origin = self.origin

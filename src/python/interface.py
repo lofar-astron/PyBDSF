@@ -21,26 +21,15 @@ def process(img, **kwargs):
     from image import Image
     import mylogger
 
-    # First, reset img to initial state (in case img is being reprocessed)
-    if hasattr(img, 'use_io'): del img.use_io
-    if hasattr(img, 'sources'): del img.sources
-    if hasattr(img, 'dsources'): del img.dsources
-    if hasattr(img, 'gaussians'): del img.gaussians
-    if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
-    if hasattr(img, 'islands'): del img.islands
-    if hasattr(img, 'ch0'): del img.ch0
-    if hasattr(img, 'image'): del img.image
-    if hasattr(img, 'rms'): del img.rms
-    if hasattr(img, 'mean'): del img.mean
-    if hasattr(img, 'rms_QUV'): del img.rms_QUV
-    if hasattr(img, 'mean_QUV'): del img.mean_QUV
-    if hasattr(img, 'resid_gaus'): del img.resid_gaus
-    if hasattr(img, 'model_gaus'): del img.model_gaus
-    if hasattr(img, 'resid_shap'): del img.resid_shap
-    if hasattr(img, 'model_shap'): del img.model_shap
-    if hasattr(img, 'mask'): del img.mask
-    if hasattr(img, 'rms_mask'): del img.rms_mask
-    if hasattr(img, 'completed_Ops'): del img.completed_Ops
+    # Start up logger. We need to initialize it each time process() is
+    # called, in case the quiet or debug options have changed
+    log = img.opts.filename + '.pybdsm.log'
+    img.log = ''
+    mylogger.init_logger(log, quiet=img.opts.quiet,
+                         debug=img.opts.debug)
+    add_break_to_logfile(log)
+    mylog = mylogger.logging.getLogger("PyBDSM.Process")
+    mylog.info("Processing "+img.opts.filename)
 
     try:
         # set options if given
@@ -56,21 +45,12 @@ def process(img, **kwargs):
         else:
             raise
 
-    # Start up logger. We need to initialize it each time process() is
-    # called, in case the quiet or debug options have changed
-    log = img.opts.filename + '.pybdsm.log'
-    img.log = ''
-    mylogger.init_logger(log, quiet=img.opts.quiet,
-                         debug=img.opts.debug)
-    add_break_to_logfile(log)
-    mylog = mylogger.logging.getLogger("PyBDSM.Process")
-    mylog.info("Processing "+img.opts.filename)
-
     # Run all the op's
     try:
         # Run op's in chain
-        op_chain = get_op_chain(img)
+        img, op_chain = get_op_chain(img)
         _run_op_list(img, op_chain)
+        img._prev_opts = img.opts.to_dict()
         return True
     except RuntimeError, err:
         # Catch and log error
@@ -90,23 +70,222 @@ def get_op_chain(img):
 
     This is useful when reprocessing an Image object. For example,
     if Gaussians were already fit, but the user now wants to use
-    shapelets, we do not need to re-run Op_gausfit, etc. At the
-    moment, this just returns the default Op chain from __init__.py.
+    shapelets, we do not need to re-run Op_gausfit, etc.
+
+    Note that any new options added to opts.py should also be
+    added here. If not, a full reprocessing will be done if the
+    new option is changed.
     """
     from . import default_chain
+    Op_chain = default_chain[:]
+    Op_names = ['readimage',
+                'collapse',
+                'preprocess',
+                'rmsimage',
+                'threshold',
+                'islands',
+                'gausfit',
+                'wavelet_atrous',
+                'shapelets',
+                'gaul2srl',
+                'spectralindex',
+                'polarisation',
+                'make_residimage',
+                'psf_vary',
+                'outlist',
+                'cleanup']
+    prev_opts = img._prev_opts
+    if prev_opts == None:
+        return img, default_chain
+    new_opts = img.opts.to_dict()
 
-    return default_chain
-#     prev_opts = img._prev_opts
-#     new_opts = img.opts.to_dict()
-#
-#     # Find whether new opts differ from previous opts
-#     for k, v in prev_opts.iteritems():
-#         if v != new_opts[k]:
-#             if k == 'rms_box':
+    # Define lists of options for each Op. Some of these can be defined
+    # using the "group" parameter of each option.
+    #
+    # Op_readimage()
+    readimage_opts = ['filename', 'beam', 'trim_box', 'frequency',
+                      'beam_spectrum', 'frequency_sp']
 
-    # If filename, beam, trim_box differ, start from readimage
-    # Elif shapelet_do, etc. differ, start from there
+    # Op_collapse()
+    collapse_opts = img.opts.to_list(group='multichan_opts')
+    collapse_opts.append('polarisation_do')
+    collapse_opts += readimage_opts
 
+    # Op_preprocess()
+    preprocess_opts = ['kappa_clip', 'polarisation_do']
+    preprocess_opts += collapse_opts
+
+    # Op_rmsimage()
+    rmsimage_opts = ['rms_box', 'rms_box_bright', 'adaptive_rms_box',
+                     'mean_map', 'rms_map', 'adaptive_thresh', 'rms_box_bright']
+    rmsimage_opts += preprocess_opts
+
+    # Op_threshold()
+    threshold_opts = ['thresh', 'thresh_pix', 'thresh_isl']
+    threshold_opts += rmsimage_opts
+
+    # Op_islands()
+    islands_opts = threshold_opts + ['minpix_isl']
+
+    # Op_gausfit()
+    gausfit_opts = islands_opts
+
+    # Op_wavelet_atrous()
+    wavelet_atrous_opts = img.opts.to_list(group='atrous_do')
+    wavelet_atrous_opts.append('atrous_do')
+    wavelet_atrous_opts += gausfit_opts
+
+    # Op_shapelets()
+    shapelets_opts = img.opts.to_list(group='shapelet_do')
+    shapelets_opts.append('shapelet_do')
+    shapelets_opts += islands_opts
+
+    # Op_gaul2srl()
+    gaul2srl_opts = gausfit_opts + wavelet_atrous_opts + ['group_tol', 'group_by_isl', 'group_method']
+
+    # Op_spectralindex()
+    spectralindex_opts = img.opts.to_list(group='spectralindex_do')
+    spectralindex_opts.append('spectralindex_do')
+    spectralindex_opts += gaul2srl_opts
+
+    # Op_polarisation()
+    polarisation_opts = img.opts.to_list(group='polarisation_do')
+    polarisation_opts.append('polarisation_do')
+    polarisation_opts += gaul2srl_opts
+
+    # Op_make_residimage()
+    make_residimage_opts = gausfit_opts + shapelets_opts + ['fittedimage_clip']
+
+    # Op_psf_vary()
+    psf_vary_opts = img.opts.to_list(group='psf_vary_do')
+    psf_vary_opts.append('psf_vary_do')
+    psf_vary_opts += gaul2srl_opts
+
+    # Op_outlist() and Op_cleanup() are always done.
+
+    # Find whether new opts differ from previous opts. If so, reset relevant
+    # image parameters and add relevant Op to Op_chain.
+    found = None
+    for k, v in prev_opts.iteritems():
+        if v != new_opts[k]:
+            found = False
+            if k in readimage_opts:
+                if hasattr(img, 'use_io'): del img.use_io
+                if hasattr(img, 'image'): del img.image
+                while 'readimage' in img.completed_Ops:
+                    img.completed_Ops.remove('readimage')
+                found = True
+            if k in collapse_opts:
+                if hasattr(img, 'mask'): del img.mask_arr
+                if hasattr(img, 'ch0'): del img.ch0_arr
+                while 'collapse' in img.completed_Ops:
+                    img.completed_Ops.remove('collapse')
+                found = True
+            if k in preprocess_opts:
+                while 'preprocess' in img.completed_Ops:
+                    img.completed_Ops.remove('preprocess')
+                found = True
+            if k in rmsimage_opts:
+                if hasattr(img, 'rms'): del img.rms
+                if hasattr(img, 'mean'): del img.mean
+                if hasattr(img, 'rms_QUV'): del img.rms_QUV
+                if hasattr(img, 'mean_QUV'): del img.mean_QUV
+                if hasattr(img, 'rms_mask'): del img.rms_mask
+                while 'rmsimage' in img.completed_Ops:
+                    img.completed_Ops.remove('rmsimage')
+                found = True
+            if k in threshold_opts:
+                while 'threshold' in img.completed_Ops:
+                    img.completed_Ops.remove('threshold')
+                found = True
+            if k in islands_opts:
+                if hasattr(img, 'islands'): del img.islands
+                while 'islands' in img.completed_Ops:
+                    img.completed_Ops.remove('islands')
+                found = True
+            if k in gausfit_opts:
+                if hasattr(img, 'sources'): del img.sources
+                if hasattr(img, 'dsources'): del img.dsources
+                if hasattr(img, 'gaussians'): del img.gaussians
+                while 'gausfit' in img.completed_Ops:
+                    img.completed_Ops.remove('gausfit')
+                found = True
+            if k in wavelet_atrous_opts:
+                if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
+                g_filt = []
+                if hasattr(img, 'gaussians'):
+                    for g in img.gaussians:
+                        if g.jlevel == 0:
+                            g_filt.append(g)
+                    img.gaussians = g_filt
+                while 'wavelet_atrous' in img.completed_Ops:
+                    img.completed_Ops.remove('wavelet_atrous')
+                found = True
+            if k in shapelets_opts:
+                while 'shapelets' in img.completed_Ops:
+                    img.completed_Ops.remove('shapelets')
+                found = True
+            if k in gaul2srl_opts:
+                while 'gaul2srl' in img.completed_Ops:
+                    img.completed_Ops.remove('gaul2srl')
+                found = True
+            if k in spectralindex_opts:
+                while 'spectralindex' in img.completed_Ops:
+                    img.completed_Ops.remove('spectralindex')
+                found = True
+            if k in polarisation_opts:
+                while 'polarisation' in img.completed_Ops:
+                    img.completed_Ops.remove('polarisation')
+                found = True
+            if k in make_residimage_opts:
+                if hasattr(img, 'resid_gaus'): del img.resid_gaus
+                if hasattr(img, 'model_gaus'): del img.model_gaus
+                if hasattr(img, 'resid_shap'): del img.resid_shap
+                if hasattr(img, 'model_shap'): del img.model_shap
+                while 'make_residimage' in img.completed_Ops:
+                    img.completed_Ops.remove('make_residimage')
+                found = True
+            if k in psf_vary_opts:
+                while 'psf_vary' in img.completed_Ops:
+                    img.completed_Ops.remove('psf_vary')
+                found = True
+            if not found:
+                break
+
+    # If no options have changed, don't re-run
+    if found == None:
+        return img, []
+
+    # If a changed option is not in any of the above lists,
+    # re-run all Ops.
+    if not found:
+        del img.completed_Ops
+        if hasattr(img, 'rms'): del img.rms
+        if hasattr(img, 'mean'): del img.mean
+        if hasattr(img, 'rms_QUV'): del img.rms_QUV
+        if hasattr(img, 'mean_QUV'): del img.mean_QUV
+        if hasattr(img, 'rms_mask'): del img.rms_mask
+        if hasattr(img, 'sources'): del img.sources
+        if hasattr(img, 'dsources'): del img.dsources
+        if hasattr(img, 'gaussians'): del img.gaussians
+        if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
+        if hasattr(img, 'resid_gaus'): del img.resid_gaus
+        if hasattr(img, 'model_gaus'): del img.model_gaus
+        if hasattr(img, 'resid_shap'): del img.resid_shap
+        if hasattr(img, 'model_shap'): del img.model_shap
+        return img, Op_chain
+
+    while 'outlist' in img.completed_Ops:
+        img.completed_Ops.remove('outlist')
+    while 'cleanup' in img.completed_Ops:
+        img.completed_Ops.remove('cleanup')
+    for completed_Op in img.completed_Ops:
+        if completed_Op in Op_names:
+            Op_indx = Op_names.index(completed_Op)
+            Op_names.pop(Op_indx)
+            Op_chain.pop(Op_indx)
+
+    return img, Op_chain
 
 def load_pars(filename):
     """Load parameters from a save file or dictionary.
@@ -230,7 +409,7 @@ def set_pars(img, **kwargs):
     for i, key in enumerate(kwargs):
         if kwargs[key] == '':
             temp_img = Image({'filename':''})
-            opt_names = temp_img.opts.get_names
+            opt_names = temp_img.opts.get_names()
             for k in opt_names:
                 if key == k:
                     kwargs[key] = temp_img.opts.__getattribute__(k)
@@ -602,57 +781,57 @@ def export_image(img, outfile=None, img_format='fits',
     try:
         if img_type == 'ch0':
             func.write_image_to_file(use_io, filename,
-                                     img.ch0, img, bdir,
+                                     img.ch0_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'rms':
             func.write_image_to_file(use_io, filename,
-                                     img.rms, img, bdir,
+                                     img.rms_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'mean':
             func.write_image_to_file(use_io, filename,
-                                     img.mean, img, bdir,
+                                     img.mean_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'pi':
             func.write_image_to_file(use_io, filename,
-                                     img.ch0_pi, img, bdir,
+                                     img.ch0_pi_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_major':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_maj*fwsig, img, bdir,
+                                     img.psf_vary_maj_arr*fwsig, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_minor':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_min*fwsig, img, bdir,
+                                     img.psf_vary_min_arr*fwsig, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_pa':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_pa, img, bdir,
+                                     img.psf_vary_pa_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_ratio':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_ratio, img, bdir,
+                                     img.psf_vary_ratio_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'psf_ratio_aper':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_ratio_aper, img, bdir,
+                                     img.psf_vary_ratio_aper_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'gaus_resid':
-            im = img.resid_gaus
+            im = img.resid_gaus_arr
             func.write_image_to_file(use_io, filename,
                                      im, img, bdir,
                                      clobber=clobber)
         elif img_type == 'gaus_model':
-            im = img.model_gaus
+            im = img.model_gaus_arr
             func.write_image_to_file(use_io, filename,
                                      im, img, bdir,
                                      clobber=clobber)
         elif img_type == 'shap_resid':
             func.write_image_to_file(use_io, filename,
-                                     img.resid_shap, img, bdir,
+                                     img.resid_shap_arr, img, bdir,
                                      clobber=clobber)
         elif img_type == 'shap_model':
             func.write_image_to_file(use_io, filename,
-                                     img.model_shap, img, bdir,
+                                     img.model_shap_arr, img, bdir,
                                      clobber=clobber)
         else:
             print "\n\033[91mERROR\033[0m: img_type not recognized."
@@ -678,7 +857,7 @@ def export_image(img, outfile=None, img_format='fits',
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
                bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False,
-               force_output=False):
+               force_output=False, correct_proj=True):
     """Write the Gaussian, source, or shapelet list to a file. Returns True if
     successful, False if not.
 
@@ -710,6 +889,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "flux" - sort by total integrated flux, largest first
         "indx" - sort by Gaussian and island or source index, smallest first
     force_output - Force the creation of a catalog, even if it is empty
+    correct_proj - Correct source parameters for image projection effects (BBS only)?
     clobber - Overwrite existing file?
     """
     import output
@@ -797,8 +977,8 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with BBS files."
             return False
         filename = output.write_bbs_gaul(img, filename=filename,
-                                            srcroot=srcroot,
-                                            patch=patch,
+                                            srcroot=srcroot, incl_empty=incl_empty,
+                                            patch=patch, correct_proj=correct_proj,
                                             sort_by='flux',
                                             clobber=clobber)
         if filename == None:
@@ -812,7 +992,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             print "\033[91mERROR\033[0m: Only catalog_type = 'gaul' is supported with Sagecal files."
             return False
         filename = output.write_lsm_gaul(img, filename=filename,
-                                            srcroot=srcroot,
+                                            srcroot=srcroot, incl_empty=incl_empty,
                                             patch=patch,
                                             sort_by='flux',
                                             clobber=clobber)
@@ -824,7 +1004,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return True
     if format == 'ds9':
         filename = output.write_ds9_list(img, filename=filename,
-                                            srcroot=srcroot,
+                                            srcroot=srcroot, incl_empty=incl_empty,
                                             clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'

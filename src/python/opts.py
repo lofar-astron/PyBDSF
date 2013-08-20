@@ -410,11 +410,38 @@ class Opts(object):
     aperture = Option(None, Float(),
                              doc = "Radius of aperture in pixels inside which aperture fluxes are measured "\
                                  "for each source. None => no aperture fluxes measured\n" \
-                                 "This is a float and sets the radius (in pixels) inside "
-                                 "which the aperture flux is measured for each source. "
-                                 "The aperture is centered "
-                                 "on the centroid of the source. Errors are calculated "
+                                 "This is a float and sets the radius (in pixels) inside "\
+                                 "which the aperture flux is measured for each source. "\
+                                 "Depending on the value of aperture_posn, the aperture is centered either "\
+                                 "on the centroid or the peak of the source. Errors are calculated "\
                                  "from the mean of the rms map inside the aperture.",
+                             group = "advanced_opts")
+    aperture_posn = Enum('centroid', 'peak',
+                             doc = "Position the aperture (if aperture is not None) on: "\
+                                 "'centroid' or 'peak' of the source.\n"\
+                                 "This parameter determines how the aperture is "\
+                                 "positioned relative to the source. If 'centroid', "\
+                                 "the aperture is centered on the source centroid. If "\
+                                 "'peak', the aperture is centered on the source peak. "\
+                                 "If aperture=None (i.e., no aperture radius is specified), "\
+                                 "this parameter is ignored.",
+                             group = "advanced_opts")
+    src_ra_dec = Option(None, List(Tuple(Float(), Float())),
+                            doc = "List of source positions at which fitting is done.  "\
+                                 "E.g., src_ra_dec = [(197.1932, 47.9188), (196.5573, 42.4852)].\n"\
+                                 "This parameter defines the center positions at which "\
+                                 "fitting will be done. The size of the region used for "\
+                                 "the fit is given by the src_radius_pix parameter. "\
+                                 "Positions should be given as a list of RA and Dec, "\
+                                 "in degrees, one set per source. These positions will "\
+                                 "override the normal island finding module.",
+                             group = "advanced_opts")
+    src_radius_pix = Option(None, Float(),
+                             doc = "Radius of the island (if src_ra_dec is not None) in pixels. "\
+                                 "None => radius is set to the FWHM of the beam major axis.\n"\
+                                 "This parameter determines the size of the region used "\
+                                 "to fit the source positions specified by the src_ra_dec "\
+                                 "parameter.",
                              group = "advanced_opts")
     ini_gausfit = Enum('default', 'simple', 'nobeam',
                              doc = "Initial guess for Gaussian "\
@@ -436,6 +463,21 @@ class Opts(object):
                                  "For wavelet images, the value used for the original "\
                                  "image is used for wavelet order j <= 3 and 'nobeam' for "\
                                  "higher orders.",
+                             group = "advanced_opts")
+    ini_method = Enum('intensity', 'curvature',
+                             doc = "Method by which inital guess for fitting of Gaussians "\
+                                 "is chosen: 'intensity' or 'curvature'\n"\
+                                 "If 'intensity', the inital guess described in the help for "\
+                                 "the ini_gausfit parameter is calculated using the intensity "\
+                                 "(ch0) image. If 'curvature', it is done using the curvature "\
+                                 "map (see Hopkins et al. 2012).",
+                             group = "advanced_opts")
+    fix_to_beam = Bool(False,
+                             doc = "Fix major and minor axes and PA of Gaussians to beam?\n"\
+                                 "If True, then during fitting the major and minor axes "\
+                                 "and PA of the Gaussians are fixed to the beam. Only the "\
+                                 "amplitude and position are fit. If False, all parameters "\
+                                 "are fit.",
                              group = "advanced_opts")
     fittedimage_clip = Float(0.1,
                              doc = "Sigma for clipping Gaussians " \
@@ -475,6 +517,19 @@ class Opts(object):
                                  "single source. If False, grouping is controlled "\
                                  "by the group_tol parameter.",
                              group = "advanced_opts")
+    group_method = Enum('intensity', 'curvature',
+                             doc = "Group Gaussians into sources using 'intensity' map "\
+                                 "or 'curvature' map\n"\
+                                 "Gaussians are deemed to be a part of "\
+                                 "the same source if: 1. no pixel on the line joining "\
+                                 "the centers of any pair of Gaussians has a (Gaussian-"\
+                                 "reconstructed) value less than the island threshold, and "\
+                                 "2. the centers are separated by a distance less than "\
+                                 "half the sum of their FWHMs along the line joining them.\n"\
+                                 "If 'curvature', the above comparisons are done on the "\
+                                 "curature map (see Hopkins et al. 2012). If 'intensity', "\
+                                 "the comparisons are done on the intensity map.",
+                             group = "advanced_opts")
     group_tol = Float(1.0,
                              doc = "Tolerance for grouping of Gaussians into sources: "\
                                  "larger values will result in larger sources\n"\
@@ -491,9 +546,18 @@ class Opts(object):
                              doc = "Blank zeros in the image\n"\
                                 "If True, all pixels with a value of 0 are blanked."\
                                 "If False, any such pixels are left unblanked (and "\
-                                "hence will affect the rms and mean maps, etc.) "\
+                                "hence will affect the rms and mean maps, etc.). "\
                                 "Pixels with a value of NaN are always blanked.",
                              group = "advanced_opts")
+#     blank_lowrms = Bool(False,
+#                              doc = "Blank pixels where local rms falls below "\
+#                                 "0.001 * clipped_rms\n"\
+#                                 "If True, all pixels with a local value of the rms "\
+#                                 "of 0.001 times the clipped rms value of the image "\
+#                                 "are blanked."\
+#                                 "If False, any such pixels are left unblanked. "\
+#                                 "Pixels with a value of NaN are always blanked.",
+#                              group = "advanced_opts")
     detection_image = String(doc = "Detection image file name used only for detecting "\
                                  "islands of emission. Source measurement is still done "\
                                  "on the main image\n"\
@@ -522,6 +586,14 @@ class Opts(object):
                              doc = "Number of cores to use during fitting, None => "\
                                 "use all\n"\
                                 "Sets the number of cores to use during fitting.",
+                             group = "advanced_opts")
+    do_cache = Bool(False,
+                             doc = "Cache internally derived images to disk\n" \
+                                 "This option controls whether internally "\
+                                 "derived images are stored in memory or are "\
+                                 "cached to disk. Caching can reduce the amount "\
+                                 "of memory used, and is therefore useful when "\
+                                 "analyzing large images.",
                              group = "advanced_opts")
 
     #--------------------------------ADAPTIVE RMS_BOX OPTIONS--------------------------------
@@ -707,16 +779,19 @@ class Opts(object):
                              group = 'multichan_opts')
     collapse_ch0 = Int(0,
                              doc = "Number of the channel for source extraction, "\
-                                 "if collapse_mode = 'single'",
+                                 "if collapse_mode = 'single', starting from 0",
                              group = 'multichan_opts')
     collapse_av = List(None,
                              doc = "List of channels to average if collapse_mode "\
-                                 "= 'average'; None => all\n"\
+                                 "= 'average', starting from 0. E.g., collapse_av "\
+                                 "= [0, 1, 5]. [] => all\n"\
                                  "This parameter is a list of channels to be averaged "\
                                  "to produce the continuum image for performing source "\
                                  "extraction, if collapse_mode is 'average'. If the "\
-                                 "value is None, then all channels are used. Else, the "\
-                                 "value is a Python list of channel numbers.",
+                                 "value is an empty list ([]), then all channels are used. Else, the "\
+                                 "value is a Python list of channel numbers, starting "\
+                                 "from 0 (i.e., the first channel has number 0, the "\
+                                 "second has number 1, etc.).",
                              group = 'multichan_opts')
     collapse_wt = Enum('unity', 'rms',
                              doc = "Weighting: 'unity' or 'rms'. "\
@@ -995,7 +1070,13 @@ class Opts(object):
                                  "found by least-squares fitting of the shapelet basis "\
                                  "functions to the image.",
                              group = "shapelet_do")
-
+    shapelet_gresid = Bool(False,
+                             doc = "Use Gaussian residual image for shapelet "\
+                                 "decomposition?\n"\
+                                 "If True, then the shapelet decomposition is done "\
+                                 "on the Gaussian residual image rather that the "\
+                                 "ch0 image.",
+                             group = "shapelet_do")
 
     #-------------------------SPECTRAL INDEX OPTIONS--------------------------------
     flagchan_rms = Bool(True,
@@ -1058,7 +1139,7 @@ class Opts(object):
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
                              group = 'hidden')
-    format = Enum('bbs', 'ds9', 'fits', 'ascii', 'star', 'kvis',
+    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis',
                              doc = "Format of output catalog: 'bbs', "\
                                  "'ds9', 'fits', 'star', 'kvis', or 'ascii'\n"\
                                  "The following formats are supported:\n"\
@@ -1100,11 +1181,24 @@ class Opts(object):
                                  "even if there are no sources. In this case, "\
                                  "the catalog will have a header but no entries.",
                              group = 'hidden')
-    catalog_type = Enum('gaul', 'shap', 'srl',
+    catalog_type = Enum('srl', 'gaul', 'shap',
                              doc = "Type of catalog to write:  'gaul' - Gaussian "\
                                  "list, 'srl' - source list (formed "\
                                  "by grouping Gaussians), 'shap' - shapelet "\
                                  "list (FITS format only)",
+                             group = 'hidden')
+    correct_proj = Bool(True,
+                             doc = "Correct source parameters for image projection (BBS format only)?\n"\
+                                 "If True, the source parameters in the output catalog will be "\
+                                 "corrected for first-order projection effects. If False, "\
+                                 "no correction is done. In this case, the position angle "\
+                                 "is relative to the +y axis, NOT true north, and source sizes "\
+                                 "are calculated assuming a constant pixel scale (equal to the "
+                                 "scale at the image center).\n "\
+                                 "If True, the position angle and source size "\
+                                 "are corrected using the average pixel size and "
+                                 "angle offset (between the +y axis and north) at "\
+                                 "the location of the source center.",
                              group = 'hidden')
     img_format = Enum('fits', 'casa',
                              doc = "Format of output image: 'fits' or "\
@@ -1279,13 +1373,21 @@ class Opts(object):
 
         return res
 
-    def to_list(self):
-        """Returns a sorted list of (name, TC object) tuples for all opts."""
+    def to_list(self, group=None):
+        """Returns a sorted list of (name, TC object) tuples for all opts.
+
+        If the group name is specified, only opts that belong to that group
+        are returned.
+        """
         import tc
         opts_list = []
         for k, v in self.__class__.__dict__.iteritems():
             if isinstance(v, tc.TC):
-                opts_list.append((k, v))
+                if group != None:
+                    if v.group() == group:
+                        opts_list.append((k, v))
+                else:
+                    opts_list.append((k, v))
         opts_list = sorted(opts_list)
         return opts_list
 
