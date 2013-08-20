@@ -60,26 +60,26 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     gfactor = 2.0 * N.sqrt(2.0 * N.log(2.0))
     pixels_per_beam = 2.0 * N.pi * (img.beam2pix(img.beam)[0]
                                     * img.beam2pix(img.beam)[1]) / gfactor**2
-    img_gaus_mod = img.model_gaus
-    img_gaus_resid = img.resid_gaus
-    img_ch0 = img.ch0
-    img_rms = img.rms
-    img_mean = img.mean
+    img_gaus_mod = img.model_gaus_arr
+    img_gaus_resid = img.resid_gaus_arr
+    img_ch0 = img.ch0_arr
+    img_rms = img.rms_arr
+    img_mean = img.mean_arr
     if img.opts.shapelet_do:
-        img_shap_mod = img.model_shap
+        img_shap_mod = img.model_shap_arr
         if img_shap_mod == None:
             img_shap_resid = None
         else:
-            img_shap_resid = img.ch0 - img.model_shap
+            img_shap_resid = img_ch0 - img_shap_mod
     else:
         img_shap_mod = None
         img_shap_resid = None
     if hasattr(img, 'ch0_pi'):
-        img_pi = img.ch0_pi
+        img_pi = img.ch0_pi_arr
     if hasattr(img, 'psf_vary_maj'):
-        img_psf_maj = img.psf_vary_maj*fwsig
-        img_psf_min = img.psf_vary_min*fwsig
-        img_psf_pa = img.psf_vary_pa
+        img_psf_maj = img.psf_vary_maj_arr*fwsig
+        img_psf_min = img.psf_vary_min_arr*fwsig
+        img_psf_pa = img.psf_vary_pa_arr
 
     # Construct lists of images, titles, etc.
     images = []

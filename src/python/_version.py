@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.6.1'
+__version__ = '1.7.0'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,25 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2013/08/20 - Version 1.7.0
+
+    2013/08/19 - PyBDSM will now use Astropy if installed for FITS and WCS
+        modules.
+
+    2013/08/11 - Fix to avoid excessive memory usage in the wavelet module
+        (replaced scipy.signal.fftconvolve with a custom function).
+
+    2013/08/11 - Added option to use disk caching for internally derived
+    	images (do_cache). Caching can reduce memory usage and is
+    	therefore useful when processing large images.
+
+    2013/07/11 - Implemented a variable operation chain for process_image
+        (and img.process()) that allows unneeded steps to be skipped if
+        the image is being reprocessed.
+
+    2013/07/11 - Fixed a bug that could cause Gaussian fitting to hang
+        during iterative fitting of large islands.
 
     2013/06/24 - Added option (fix_to_beam) to fix the size and position
     	angle of Gaussians to the restoring beam during fitting. Fix to
@@ -50,7 +69,7 @@ def changelog():
         calculation.
 
     2013/02/20 - Added option to use the curvature map method of
-        Hopkins et al. (2012) for the initial estimation of Gaussian
+        Hancock et al. (2012) for the initial estimation of Gaussian
         parameters (ini_method = 'curvature') and for grouping of
         Gaussians into sources (group_method = 'curvature').
 

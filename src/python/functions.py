@@ -1044,7 +1044,7 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
       im1 = cp(image)
       if im1.min() < 0.: im1 = im1-im1.min()
       im1 = 255 - im1/im1.max()*255
-      opw = nd.watershed_ift(N.array(im1, N.uint8), markers)
+      opw = nd.watershed_ift(N.array(im1, N.uint16), markers)
 
       return opw, markers
 
@@ -1069,6 +1069,8 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import mylogger
     import os
     import numpy as N
+    from copy import deepcopy as cp
+    from distutils.version import StrictVersion
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir == None or indir == './':
@@ -1085,7 +1087,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # If img.use_io is set, then use appropriate io module
     if img.use_io != '':
         if img.use_io == 'fits':
-            import pyfits
+            try:
+                from astropy.io import fits as pyfits
+            except ImportError, err:
+                import pyfits
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             except IOError, err:
@@ -1103,14 +1108,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
         # We need pyfits version 2.2 or greater to use the
         # "ignore_missing_end" argument to pyfits.open().
         try:
-            from distutils.version import StrictVersion
-            import pyfits
-            if StrictVersion(pyfits.__version__) > StrictVersion('2.2'):
-                has_pyfits = True
-            else:
-                raise RuntimeError("PyFITS (version 2.2 or greater) is required.")
+            try:
+                from astropy.io import fits as pyfits
+            except ImportError, err:
+                import pyfits
+            has_pyfits = True
         except ImportError, err:
-            raise RuntimeError("PyFITS is required.")
+            raise RuntimeError("Astropy or PyFITS is required.")
         try:
             import pyrap.images as pim
             has_pyrap = True
@@ -1172,14 +1176,39 @@ def read_image_from_file(filename, img, indir, quiet=False):
             lat_lon = True
     else:
         lat_lon = False
+
+    # Check for incorrect spectral units. For example, "M/S" is not
+    # recognized by PyWCS as velocity ("S" is actually Siemens, not
+    # seconds).
+    for i in range(len(data.shape)):
+        key_val_raw = hdr.get('CUNIT' + str(i+1))
+        if key_val_raw != None:
+            if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:
+                hdr['CUNIT' + str(i+1)] = 'm/s'
+            if 'HZ' in key_val_raw or 'hZ' in key_val_raw or 'hz' in key_val_raw:
+                hdr['CUNIT' + str(i+1)] = 'Hz'
+
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
-        import warnings
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",category=DeprecationWarning)
-            from pywcs import WCS
+        try:
+            from astropy.wcs import WCS
+            # Check if one of the axes has units of "M/S", as this is not
+            # recognized by PyWCS as velocity ("S" is actually Siemens, not
+            # seconds). If "M/S", change to "m/s".
+            for i in range(len(data.shape)):
+                if 'CUNIT' + str(i+1) in hdr:
+                    key_val_raw = hdr['CUNIT' + str(i+1)]
+                    if 'M/S' in key_val_raw:
+                        hdr['CUNIT' + str(i+1)] = 'm/s'
 
             t = WCS(hdr)
             t.wcs.fix()
+        except ImportError, err:
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                from pywcs import WCS
+                t = WCS(hdr)
+                t.wcs.fix()
         spec_indx = t.wcs.spec
         if spec_indx != -1:
             ctype_in.reverse()
@@ -1242,7 +1271,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
 def convert_pyrap_header(pyrap_image):
     """Converts a pyrap header to a PyFITS header."""
     import tempfile
-    import pyfits
+    try:
+        from astropy.io import fits as pyfits
+    except ImportError, err:
+        import pyfits
 
     tfile = tempfile.NamedTemporaryFile(delete=False)
     pyrap_image.tofits(tfile.name)
@@ -1273,7 +1305,6 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
     else:
         # Write image to FITS file
-        import pyfits
         if outdir == None:
             outdir = img.indir
         if not os.path.exists(outdir) and outdir != '':
@@ -1289,14 +1320,19 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 def make_fits_image(imagedata, wcsobj, beam, freq):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
     from distutils.version import StrictVersion
-    import pyfits
-    # Due to changes in the way pyfits handles headers from version 3.1 on,
-    # we need to check for older versions and change the setting of header
-    # keywords accordingly.
-    if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
-        use_header_update = True
-    else:
+    try:
+        from astropy.io import fits as pyfits
         use_header_update = False
+    except ImportError, err:
+        import pyfits
+
+        # Due to changes in the way pyfits handles headers from version 3.1 on,
+        # we need to check for older versions and change the setting of header
+        # keywords accordingly.
+        if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+            use_header_update = True
+        else:
+            use_header_update = False
     shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
     hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
@@ -1318,12 +1354,12 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
         header['CRVAL1'] = wcsobj.wcs.crval[0]
         header['CDELT1'] = wcsobj.wcs.cdelt[0]
         header['CRPIX1'] = wcsobj.wcs.crpix[0]
-        header['CUNIT1'] = wcsobj.wcs.cunit[0]
+        header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).upper() # needed due to bug in astropy
         header['CTYPE1'] = wcsobj.wcs.ctype[0]
         header['CRVAL2'] = wcsobj.wcs.crval[1]
         header['CDELT2'] = wcsobj.wcs.cdelt[1]
         header['CRPIX2'] = wcsobj.wcs.crpix[1]
-        header['CUNIT2'] = wcsobj.wcs.cunit[1]
+        header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).upper() # needed due to bug in astropy
         header['CTYPE2'] = wcsobj.wcs.ctype[1]
 
     # Add STOKES info
@@ -1363,7 +1399,6 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
         header['BMAJ'] = beam[0]
         header['BMIN'] = beam[1]
         header['BPA'] = beam[2]
-
 
     # Add STOKES info
     if use_header_update:
@@ -1412,9 +1447,44 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     hdulist[0].header = header
     return hdulist
 
+def retrieve_map(img, map_name):
+    """Returns a map cached on disk."""
+    import numpy as N
+    import os
+
+    filename = get_name(img, map_name)
+    if not os.path.isfile(filename):
+        return None
+    infile = file(filename, 'rb')
+    data = N.load(infile)
+    infile.close()
+    return data
+
+def store_map(img, map_name, map_data):
+    """Caches a map to disk."""
+    import numpy as N
+
+    filename = get_name(img, map_name)
+    outfile = file(filename, 'wb')
+    N.save(outfile, map_data)
+    outfile.close()
+
+def get_name(img, map_name):
+    """Returns name of cache file."""
+    import os
+
+    if img._pi:
+        pi_text = 'pi'
+    else:
+        pi_text = 'I'
+    suffix = '/w%i_%s/' % (img.j, pi_text)
+    dir = img.tempdir + suffix
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    return dir + map_name + '.bin'
+
 def connect(mask):
     """ Find if a mask is singly or multiply connected """
-
     import scipy.ndimage as nd
 
     connectivity = nd.generate_binary_structure(2,2)
@@ -1713,21 +1783,25 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
         return [0.0, 0.0]
 
     # Make ch0 and rms subimages
+    ch0 = img.ch0_arr
+    shape = ch0.shape
     xlo = posn_pix[0]-int(aperture_pix)-1
     if xlo < 0:
         xlo = 0
     xhi = posn_pix[0]+int(aperture_pix)+1
-    if xhi > img.ch0.shape[0]:
-        xhi = img.ch0.shape[0]
+    if xhi > shape[0]:
+        xhi = shape[0]
     ylo = posn_pix[1]-int(aperture_pix)-1
     if ylo < 0:
         ylo = 0
     yhi = posn_pix[1]+int(aperture_pix)+1
-    if yhi > img.ch0.shape[1]:
-        yhi = img.ch0.shape[1]
+    if yhi > shape[1]:
+        yhi = shape[1]
 
-    aper_im = img.ch0[xlo:xhi, ylo:yhi] - img.mean[xlo:xhi, ylo:yhi]
-    aper_rms = img.rms[xlo:xhi, ylo:yhi]
+    mean = img.mean_arr
+    rms = img.rms_arr
+    aper_im = ch0[xlo:xhi, ylo:yhi] - mean[xlo:xhi, ylo:yhi]
+    aper_rms = rms[xlo:xhi, ylo:yhi]
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
     pixel_beamarea = img.pixel_beamarea()
     aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
@@ -1761,7 +1835,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
 
     xsize, ysize = mask_size
     if aperture_pix == None:
-        return N.zeros((xsize, ysize), dtype=int)
+        return N.zeros((xsize, ysize), dtype=N.int)
 
     # Make subimages
     xlo = posn_pix[0]-int(aperture_pix)-1
@@ -1777,7 +1851,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     if yhi > ysize:
         yhi = ysize
 
-    mask = N.zeros((xsize, ysize))
+    mask = N.zeros((xsize, ysize), dtype=N.int)
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
     submask_xsize = xhi - xlo
     submask_ysize = yhi - ylo

@@ -42,7 +42,7 @@ class Op_shapelets(Op):
             img_simple.thresh_pix = img.thresh_pix
             img_simple.minpix_isl = img.minpix_isl
             img_simple.clipped_mean = img.clipped_mean
-            img_simple.shape = img.ch0.shape
+            img_simple.shape = img.ch0_arr.shape
 
             # Now call the parallel mapping function. Returns a list of
             # [beta, centre, nmax, basis, cf] for each island
@@ -73,7 +73,7 @@ class Op_shapelets(Op):
         if opts.shapelet_gresid:
             shape = img.shape
             thresh= opts.fittedimage_clip
-            model_gaus = N.zeros(shape, dtype=float)
+            model_gaus = N.zeros(shape, dtype=N.float32)
             for g in isl.gaul:
                 C1, C2 = g.centre_pix
                 b = find_bbox(thresh*isl.rms, g)
