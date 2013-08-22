@@ -60,26 +60,6 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     gfactor = 2.0 * N.sqrt(2.0 * N.log(2.0))
     pixels_per_beam = 2.0 * N.pi * (img.beam2pix(img.beam)[0]
                                     * img.beam2pix(img.beam)[1]) / gfactor**2
-    img_gaus_mod = img.model_gaus_arr
-    img_gaus_resid = img.resid_gaus_arr
-    img_ch0 = img.ch0_arr
-    img_rms = img.rms_arr
-    img_mean = img.mean_arr
-    if img.opts.shapelet_do:
-        img_shap_mod = img.model_shap_arr
-        if img_shap_mod == None:
-            img_shap_resid = None
-        else:
-            img_shap_resid = img_ch0 - img_shap_mod
-    else:
-        img_shap_mod = None
-        img_shap_resid = None
-    if hasattr(img, 'ch0_pi'):
-        img_pi = img.ch0_pi_arr
-    if hasattr(img, 'psf_vary_maj'):
-        img_psf_maj = img.psf_vary_maj_arr*fwsig
-        img_psf_min = img.psf_vary_min_arr*fwsig
-        img_psf_pa = img.psf_vary_pa_arr
 
     # Construct lists of images, titles, etc.
     images = []
@@ -87,13 +67,15 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     names = []
     markers = []
     if ch0_image:
+        img_ch0 = img.ch0_arr
         images.append(img_ch0)
         titles.append('Original (ch0) Image\n(arbitrary logarithmic scale)')
         names.append('ch0')
     if ch0_islands:
+        img_ch0 = img.ch0_arr
         images.append(img_ch0)
         if hasattr(img, 'ngaus'):
-            if hasattr(img, 'ch0_pi'):
+            if hasattr(img, 'ch0_pi_arr'):
                 ch0_str = 'Islands (hatched boundaries; red = PI only) and\nGaussians'
             else:
                 ch0_str = 'Islands (hatched boundaries) and\nGaussians'
@@ -107,17 +89,20 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         if not hasattr(img, 'ngaus'):
             print 'Image was not fit with Gaussians. Skipping display of flagged Gaussians.'
         else:
+            img_ch0 = img.ch0_arr
             images.append(img_ch0)
             titles.append('Flagged Gaussians')
         names.append('ch0')
     if pi_image:
-        if not hasattr(img, 'ch0_pi'):
+        if not hasattr(img, 'ch0_pi_arr'):
             print 'Polarization module not run. Skipping PI image.'
         else:
+            img_pi = img.ch0_pi_arr
             images.append(img_pi)
             titles.append('Polarized Intensity Image')
             names.append('ch0_pi')
     if rms_image:
+        img_rms = img.rms_arr
         images.append(img_rms)
         titles.append('Background rms Image')
         names.append('rms')
@@ -125,6 +110,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         if not hasattr(img, 'ngaus'):
             print 'Image was not fit with Gaussians. Skipping residual Gaussian image.'
         else:
+            img_gaus_resid = img.resid_gaus_arr
             images.append(img_gaus_resid)
             titles.append('Gaussian Residual Image')
             names.append('gaus_resid')
@@ -132,10 +118,12 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         if not hasattr(img, 'ngaus'):
             print 'Image was not fit with Gaussians. Skipping model Gaussian image.'
         else:
+            img_gaus_mod = img.model_gaus_arr
             images.append(img_gaus_mod)
             titles.append('Gaussian Model Image')
             names.append('gaus_mod')
     if mean_image:
+        img_mean = img.mean_arr
         images.append(img_mean)
         titles.append('Background mean Image')
         names.append('mean')
@@ -143,6 +131,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         if img.opts.shapelet_do == False:
             print 'Image was not decomposed into shapelets. Skipping residual shapelet image.'
         else:
+            img_shap_resid = img.ch0_arr - img.model_shap_arr
             images.append(img_shap_resid)
             titles.append('Shapelet Residual Image')
             names.append('shap_resid')
@@ -150,6 +139,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         if img.opts.shapelet_do == False:
             print 'Image was not decomposed into shapelets. Skipping model shapelet image.'
         else:
+            img_shap_mod = img.model_shap_arr
             images.append(img_shap_mod)
             titles.append('Shapelet Model Image')
             names.append('shap_mod')
@@ -185,17 +175,20 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 #                 names.append('pyrsrc'+str(i))
     if psf_major or psf_minor or psf_pa:
         if img.opts.psf_vary_do == False:
-            print 'PSF variation not calculated. Skipping PSF varyiation images.'
+            print 'PSF variation not calculated. Skipping PSF variation images.'
         else:
             if psf_major:
+                img_psf_maj = img.psf_vary_maj_arr*fwsig
                 images.append(img_psf_maj)
                 titles.append('PSF Major Axis FWHM (pixels)')
                 names.append('psf_maj')
             if psf_minor:
+                img_psf_min = img.psf_vary_min_arr*fwsig
                 images.append(img_psf_min)
                 titles.append('PSF Minor Axis FWHM (pixels)')
                 names.append('psf_min')
             if psf_pa:
+                img_psf_pa = img.psf_vary_pa_arr
                 images.append(img_psf_pa)
                 titles.append('PSF Pos. Angle FWhM (degrees)')
                 names.append('psf_pa')

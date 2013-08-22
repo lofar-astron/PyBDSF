@@ -1191,15 +1191,6 @@ def read_image_from_file(filename, img, indir, quiet=False):
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         try:
             from astropy.wcs import WCS
-            # Check if one of the axes has units of "M/S", as this is not
-            # recognized by PyWCS as velocity ("S" is actually Siemens, not
-            # seconds). If "M/S", change to "m/s".
-            for i in range(len(data.shape)):
-                if 'CUNIT' + str(i+1) in hdr:
-                    key_val_raw = hdr['CUNIT' + str(i+1)]
-                    if 'M/S' in key_val_raw:
-                        hdr['CUNIT' + str(i+1)] = 'm/s'
-
             t = WCS(hdr)
             t.wcs.fix()
         except ImportError, err:

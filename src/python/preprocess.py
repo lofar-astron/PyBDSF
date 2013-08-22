@@ -41,6 +41,7 @@ class Op_preprocess(Op):
         if img.opts.polarisation_do:
           pols = ['I', 'Q', 'U', 'V']
           ch0images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
+#           ch0images = ['ch0', 'ch0_Q', 'ch0_U', 'ch0_V']
           img.clipped_mean_QUV = []
           img.clipped_rms_QUV = []
         else:
@@ -54,6 +55,7 @@ class Op_preprocess(Op):
         opts = img.opts
         kappa = opts.kappa_clip
         for ipol, pol in enumerate(pols):
+#           image = img.get_map(ch0images[ipol])
           image = ch0images[ipol]
 
           ### basic stats

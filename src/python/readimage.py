@@ -96,8 +96,8 @@ class Op_readimage(Op):
             tmpdir = img.parentname+'_tmp'
             if not os.path.exists(tmpdir):
                 os.makedirs(tmpdir)
-            img._tempdir_parent = TempDir(tmpdir)
-            img.tempdir = tempfile.mkdtemp(dir=tmpdir)
+                img._tempdir_parent = TempDir(tmpdir)
+            img.tempdir = TempDir(tempfile.mkdtemp(dir=tmpdir))
         else:
             img.tempdir = None
 
