@@ -4,6 +4,14 @@
 What's New
 **********
 
+Version 1.7.1 (2013/08/22):
+
+    * Fix to bug that caused cached images to be deleted when rerunning an analysis.
+
+    * Fix to bug in ``show_fit`` due to undefined images.
+
+    * Fix to bug in ``process_image`` (and ``img.process()``) that would result in unneeded reprocessing.
+
 Version 1.7.0 (2013/08/20):
 
     * PyBDSM will now use Astropy if installed for FITS and WCS modules.
