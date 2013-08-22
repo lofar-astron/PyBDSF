@@ -381,7 +381,7 @@ class Op_rmsimage(Op):
     	bm = (img.beam[0], img.beam[1])
     	fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
     	if img.masked:
-    	    unmasked = N.where(~img.mask)
+    	    unmasked = N.where(~img.mask_arr)
             stdsub = N.std(rms[unmasked])
             maxrms = N.max(rms[unmasked])
         else:
@@ -412,7 +412,7 @@ class Op_rmsimage(Op):
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
     	if img.masked:
-            unmasked = N.where(~img.mask)
+            unmasked = N.where(~img.mask_arr)
             stdsub = N.std(mean[unmasked])
             maxmean = N.max(mean[unmasked])
         else:

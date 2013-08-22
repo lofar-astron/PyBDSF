@@ -176,6 +176,7 @@ class Op_polarisation(Op):
               # adjust their IDs to follow after those found in I.
               new_isl = []
               new_src = []
+              new_gaus = []
               n_new_src = 0
               isl_id = img.islands[-1].island_id
               src_id = img.sources[-1].source_id
@@ -201,6 +202,7 @@ class Op_polarisation(Op):
                           n_new_src += 1
                           for g in pi_src.gaussians:
                               gaus_id += 1
+                              new_gaus.append(g)
                               g.gaus_num = gaus_id
                   if len(new_sources) > 0:
                       isl_id += 1
@@ -216,6 +218,7 @@ class Op_polarisation(Op):
           if n_new > 0:
               img.islands += new_isl
               img.sources += new_src
+              img.gaussians += new_gaus
               img.nsrc += n_new_src
 
           bar = statusbar.StatusBar('Calculating polarisation properties ....  : ', 0, img.nsrc)
