@@ -1147,27 +1147,29 @@ def read_image_from_file(filename, img, indir, quiet=False):
             img._reason += '\nOriginal errors: {0}\n {1}'.format(e_pyfits, e_pyrap)
             return None
 
-    # Now that image has been read in successfully, get data and header
+    # Now that image has been read in successfully, get header (data is loaded
+    # later to take advantage of sectioning if trim_box is specified.
     if not quiet:
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
-        data = inputimage.getdata()
         hdr = convert_pyrap_header(inputimage)
     if img.use_io == 'fits':
-        data = fits[0].data
         hdr = fits[0].header
-        fits.close()
 
     # Make sure data is in proper order. Final order is [pol, chan, x (RA), y (DEC)],
     # so we need to rearrange dimensions if they are not in this order. Use the
     # ctype FITS keywords to determine order of dimensions.
-    mylog.info("Original data shape of " + image_file +': ' +str(data.shape))
+    naxis = hdr['NAXIS']
+    data_shape = []
+    for i in range(naxis):
+        data_shape.append(hdr['NAXIS'+str(i+1)])
+    data_shape = tuple(data_shape)
+    mylog.info("Original data shape of " + image_file +': ' +str(data_shape))
     ctype_in = []
-    for i in range(len(data.shape)):
+    for i in range(naxis):
         key_val_raw = hdr['CTYPE' + str(i+1)]
         key_val = key_val_raw.split('-')[0]
         ctype_in.append(key_val.strip())
-    ctype_in.reverse() # Need to reverse order, as pyfits does this
 
     if 'RA' not in ctype_in or 'DEC' not in ctype_in:
         if 'GLON' not in ctype_in or 'GLAT' not in ctype_in:
@@ -1180,13 +1182,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # Check for incorrect spectral units. For example, "M/S" is not
     # recognized by PyWCS as velocity ("S" is actually Siemens, not
     # seconds).
-    for i in range(len(data.shape)):
+    for i in range(naxis):
         key_val_raw = hdr.get('CUNIT' + str(i+1))
         if key_val_raw != None:
             if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:
                 hdr['CUNIT' + str(i+1)] = 'm/s'
             if 'HZ' in key_val_raw or 'hZ' in key_val_raw or 'hz' in key_val_raw:
                 hdr['CUNIT' + str(i+1)] = 'Hz'
+            if 'DEG' in key_val_raw or 'Deg' in key_val_raw:
+                hdr['CUNIT' + str(i+1)] = 'deg'
 
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         try:
@@ -1202,59 +1206,93 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 t.wcs.fix()
         spec_indx = t.wcs.spec
         if spec_indx != -1:
-            ctype_in.reverse()
             ctype_in[spec_indx] = 'FREQ'
-            ctype_in.reverse()
 
     if lat_lon:
         ctype_out = ['STOKES', 'FREQ', 'GLON', 'GLAT']
     else:
         ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
     indx_out = [-1, -1, -1, -1]
-    indx_in = range(len(data.shape))
+    indx_in = range(naxis)
     for i in indx_in:
         for j in range(4):
             if ctype_in[i] == ctype_out[j]:
                 indx_out[j] = i
-    shape_out = [1, 1, data.shape[indx_out[2]], data.shape[indx_out[3]]]
+    shape_out = [1, 1, data_shape[indx_out[2]], data_shape[indx_out[3]]]
     if indx_out[0] != -1:
-        shape_out[0] = data.shape[indx_out[0]]
+        shape_out[0] = data_shape[indx_out[0]]
     if indx_out[1] != -1:
-        shape_out[1] = data.shape[indx_out[1]]
+        shape_out[1] = data_shape[indx_out[1]]
 
     ### now we need to transpose columns to get the right order
-    axes = range(len(data.shape))
-    indx_out.reverse()
+    axes = range(naxis)
     for indx in indx_out:
         if indx != -1:
             axes.remove(indx)
             axes.insert(0, indx)
-    data = data.transpose(*axes)
-    data.shape = data.shape[0:4] # trim unused dimensions (if any)
-    data = data.reshape(shape_out)
-    mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
 
-    ### and make a copy of it to get proper layout & byteorder
-    data = N.array(data, order='C',
-                   dtype=data.dtype.newbyteorder('='))
-
-    ### trim image if trim_box is specified
+    ### adjust header if trim_box is specified
     if img.opts.trim_box != None:
         img.trim_box = img.opts.trim_box
         xmin, xmax, ymin, ymax = img.trim_box
         if xmin < 0: xmin = 0
         if ymin < 0: ymin = 0
-        if xmax > data.shape[2]: xmax = data.shape[2]
-        if ymax > data.shape[3]: ymax = data.shape[3]
+        if xmax > shape_out[2]: xmax = shape_out[2]
+        if ymax > shape_out[3]: ymax = shape_out[3]
         if xmin >= xmax or ymin >= ymax:
             raise RuntimeError("The trim_box option does not specify a valid part of the image.")
-        data = data[:, :, xmin:xmax, ymin:ymax]
+
+        if img.use_io == 'fits':
+            sx = slice(int(xmin),int(xmax))
+            sy = slice(int(ymin),int(ymax))
+            sn = slice(None)
+            s_array = [sx, sy]
+            for i in range(naxis-2):
+                s_array.append(sn)
+            s_array.reverse() # to match ordering of data array returned by PyFITS
+            if naxis == 2:
+                data = fits[0].section[s_array[0], s_array[1]]
+            elif naxis == 3:
+                data = fits[0].section[s_array[0], s_array[1], s_array[2]]
+            elif naxis == 4:
+                data = fits[0].section[s_array[0], s_array[1], s_array[2], s_array[3]]
+            else:
+                # If more than 4 axes, just read in the whole image and
+                # do the trimming after reordering.
+                data = fits[0].data
+            fits.close()
+            data = data.transpose(*axes)
+            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            if naxis > 4:
+                data = data[:, :, xmin:xmax, ymin:ymax]
+            shape_trim = [shape_out[0], shape_out[1], xmax-xmin, ymax-ymin]
+            data = data.reshape(shape_trim)
+        else:
+            # With pyrap, just read in the whole image
+            data = inputimage.getdata()
+            data = data.transpose(*axes)
+            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(shape_out)
+            data = data[:, :, xmin:xmax, ymin:ymax]
 
         # Adjust WCS keywords
         hdr['crpix1'] -= xmin
         hdr['crpix2'] -= ymin
     else:
-        img.trim_box = None
+        if img.use_io == 'fits':
+            data = fits[0].data
+            fits.close()
+        else:
+            data = inputimage.getdata()
+        data = data.transpose(*axes)
+        data.shape = data.shape[0:4] # trim unused dimensions (if any)
+        data = data.reshape(shape_out)
+
+    mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
+
+    ### and make a copy of it to get proper layout & byteorder
+    data = N.array(data, order='C',
+                   dtype=data.dtype.newbyteorder('='))
 
     return data, hdr
 
@@ -1345,12 +1383,12 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
         header['CRVAL1'] = wcsobj.wcs.crval[0]
         header['CDELT1'] = wcsobj.wcs.cdelt[0]
         header['CRPIX1'] = wcsobj.wcs.crpix[0]
-        header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).upper() # needed due to bug in astropy
+        header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).strip().lower() # needed due to bug in pywcs/astropy
         header['CTYPE1'] = wcsobj.wcs.ctype[0]
         header['CRVAL2'] = wcsobj.wcs.crval[1]
         header['CDELT2'] = wcsobj.wcs.cdelt[1]
         header['CRPIX2'] = wcsobj.wcs.crpix[1]
-        header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).upper() # needed due to bug in astropy
+        header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).strip().lower() # needed due to bug in pywcs/astropy
         header['CTYPE2'] = wcsobj.wcs.ctype[1]
 
     # Add STOKES info

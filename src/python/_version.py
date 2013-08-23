@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.7.1'
+__version__ = '1.7.2'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -27,7 +27,12 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2013/08/21 - Version 1.7.1
+    2013/08/23 - Version 1.7.2
+
+    2013/08/21 - Improved handling of non-standard FITS CUNIT keywords.
+        Improved loading of FITS images when trim_box is specified.
+
+    2013/08/22 - Version 1.7.1
 
     2013/08/21 - Fix to bug that caused cached images to be deleted when
         rerunning an analysis. Fix to bug in show_fit() due to undefined
