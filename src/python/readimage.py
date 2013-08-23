@@ -194,18 +194,24 @@ class Op_readimage(Op):
         # spectral) are striped out.
         def p2s(self, xy):
             xy = list(xy)
-            for i in range(t.wcs.naxis - 2):
+            for i in range(2):
                 xy.append(0)
             xy_arr = N.array([xy])
-            sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
+            if hasattr(self, 'wcs_pix2world'):
+                sky = self.wcs_pix2world(xy_arr, 0)
+            else:
+                sky = self.wcs_pix2sky(xy_arr, 0)
             return sky.tolist()[0][0:2]
 
         def s2p(self, rd):
             rd = list(rd)
-            for i in range(t.wcs.naxis - 2):
+            for i in range(2):
                 rd.append(0)
             rd_arr = N.array([rd])
-            pix = self.wcs_sky2pix(rd_arr, 0)#, ra_dec_order=True)
+            if hasattr(self, 'wcs_world2pix'):
+                pix = self.wcs_world2pix(rd_arr, 0)
+            else:
+                pix = self.wcs_sky2pix(rd_arr, 0)
             return pix.tolist()[0][0:2]
 
         # Here we define functions to transform Gaussian parameters (major axis,
@@ -283,9 +289,15 @@ class Op_readimage(Op):
                 s2 = abs(y * cdelt2)
             return (s1, s2)
 
-        instancemethod = type(t.wcs_pix2sky)
+        if hasattr(t, 'wcs_pix2world'):
+            instancemethod = type(t.wcs_pix2world)
+        else:
+            instancemethod = type(t.wcs_pix2sky)
         t.p2s = instancemethod(p2s, t, WCS)
-        instancemethod = type(t.wcs_sky2pix)
+        if hasattr(t, 'wcs_world2pix'):
+            instancemethod = type(t.wcs_world2pix)
+        else:
+            instancemethod = type(t.wcs_sky2pix)
         t.s2p = instancemethod(s2p, t, WCS)
 
         img.wcs_obj = t
@@ -433,26 +445,33 @@ class Op_readimage(Op):
                 #
                 # First, convert frequency to Hz if needed:
                 img.wcs_obj.wcs.sptr('FREQ-???')
-                naxis = img.wcs_obj.wcs.naxis
                 def p2f(self, spec_pix):
-                    spec_list = []
-                    for i in range(naxis):
-                        spec_list.append(0)
+                    spec_list = [0, 0, 0, 0]
                     spec_list[spec_indx] = spec_pix
                     spec_pix_arr = N.array([spec_list])
-                    freq = self.wcs_pix2sky(spec_pix_arr, 0)
+                    if hasattr(self, 'wcs_pix2world'):
+                        freq = self.wcs_pix2world(spec_pix_arr, 0)
+                    else:
+                        freq = self.wcs_pix2sky(spec_pix_arr, 0)
                     return freq.tolist()[0][spec_indx]
                 def f2p(self, freq):
-                    freq_list = []
-                    for i in range(naxis):
-                        freq_list.append(0)
+                    freq_list = [0, 0, 0, 0]
                     freq_list[spec_indx] = freq
                     freq_arr = N.array([freq_list])
-                    pix = self.wcs_sky2pix(freq_arr, 0)
+                    if hasattr(self, 'wcs_world2pix'):
+                        pix = self.wcs_world2pix(freq_arr, 0)
+                    else:
+                        pix = self.wcs_sky2pix(freq_arr, 0)
                     return pix.tolist()[0][spec_indx]
-                instancemethod = type(img.wcs_obj.wcs_pix2sky)
+                if hasattr(img.wcs_obj, 'wcs_pix2world'):
+                    instancemethod = type(img.wcs_obj.wcs_pix2world)
+                else:
+                    instancemethod = type(img.wcs_obj.wcs_pix2sky)
                 img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj, WCS)
-                instancemethod = type(img.wcs_obj.wcs_sky2pix)
+                if hasattr(img.wcs_obj, 'wcs_world2pix'):
+                    instancemethod = type(img.wcs_obj.wcs_world2pix)
+                else:
+                    instancemethod = type(img.wcs_obj.wcs_sky2pix)
                 img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj, WCS)
 
                 if img.opts.frequency != None:
