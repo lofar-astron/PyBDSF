@@ -1089,10 +1089,18 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if img.use_io == 'fits':
             try:
                 from astropy.io import fits as pyfits
+                old_pyfits = False
             except ImportError, err:
                 import pyfits
+                if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
+                    old_pyfits = True
+                else:
+                    old_pyfits = False
             try:
-                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+                if not old_pyfits:
+                    fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+                else:
+                    fits = pyfits.open(image_file, mode="readonly")
             except IOError, err:
                 img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
@@ -1110,8 +1118,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
         try:
             try:
                 from astropy.io import fits as pyfits
+                old_pyfits = False
             except ImportError, err:
                 import pyfits
+                if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
+                    old_pyfits = True
+                else:
+                    old_pyfits = False
             has_pyfits = True
         except ImportError, err:
             raise RuntimeError("Astropy or PyFITS is required.")
@@ -1127,7 +1140,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
         failed_read = False
         reason = 0
         try:
-            fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+            if not old_pyfits:
+                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+            else:
+                fits = pyfits.open(image_file, mode="readonly")
             img.use_io = 'fits'
         except IOError, err:
             e_pyfits = str(err)
@@ -1249,20 +1265,23 @@ def read_image_from_file(filename, img, indir, quiet=False):
             for i in range(naxis-2):
                 s_array.append(sn)
             s_array.reverse() # to match ordering of data array returned by PyFITS
-            if naxis == 2:
-                data = fits[0].section[s_array[0], s_array[1]]
-            elif naxis == 3:
-                data = fits[0].section[s_array[0], s_array[1], s_array[2]]
-            elif naxis == 4:
-                data = fits[0].section[s_array[0], s_array[1], s_array[2], s_array[3]]
+            if not old_pyfits:
+                if naxis == 2:
+                    data = fits[0].section[s_array[0], s_array[1]]
+                elif naxis == 3:
+                    data = fits[0].section[s_array[0], s_array[1], s_array[2]]
+                elif naxis == 4:
+                    data = fits[0].section[s_array[0], s_array[1], s_array[2], s_array[3]]
+                else:
+                    # If more than 4 axes, just read in the whole image and
+                    # do the trimming after reordering.
+                    data = fits[0].data
             else:
-                # If more than 4 axes, just read in the whole image and
-                # do the trimming after reordering.
                 data = fits[0].data
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
-            if naxis > 4:
+            if naxis > 4 or old_pyfits:
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
         else:
             # With pyrap, just read in the whole image and then trim
