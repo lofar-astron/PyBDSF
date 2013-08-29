@@ -11,5 +11,10 @@ else
 fi
 PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}@PYTHON_INSTALL_DIR@
 
-# And execute pybdsm.py.
-exec @PYTHON_EXECUTABLE@ @PYTHON_INSTALL_DIR@/lofar/bdsm/pybdsm.py
+# And execute pybdsm.py. On a Mac, use pythonw if it exists instead of python
+# to avoid problems with the matplotlib OS X backend.
+if [ `uname` == "Darwin" ] && [ -f @PYTHON_EXECUTABLE@w ]; then
+    exec @PYTHON_EXECUTABLE@w @PYTHON_INSTALL_DIR@/lofar/bdsm/pybdsm.py
+else
+    exec @PYTHON_EXECUTABLE@ @PYTHON_INSTALL_DIR@/lofar/bdsm/pybdsm.py
+fi

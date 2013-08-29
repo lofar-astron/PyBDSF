@@ -232,7 +232,7 @@ class Opts(object):
                                  "use sigma clipping\nIf thresh = 'hard', "\
                                  "then a hard threshold is assumed, given by thresh_pix. "\
                                  "If thresh = 'fdr', then the False Detection Rate algorithm of "\
-                                 "Hopkins et al. (2002) is used to calculate the value of "\
+                                 "Hancock et al. (2002) is used to calculate the value of "\
                                  "thresh_pix. If thresh is None, then the false detection "\
                                  "probability is first calculated, and if the number of false "\
                                  "source pixels is more than fdr_ratio times the estimated "\
@@ -341,7 +341,7 @@ class Opts(object):
     fdr_alpha = Float(0.05,
                              doc = "Alpha for FDR algorithm for thresholds\n"\
                                  "If thresh is 'fdr', then the estimate of fdr_alpha "\
-                                 "(see Hopkins et al. 2002 for details) is stored "\
+                                 "(see Hancock et al. 2002 for details) is stored "\
                                  "in this parameter.",
                              group = "advanced_opts")
     fdr_ratio = Float(0.1,
@@ -470,7 +470,7 @@ class Opts(object):
                                  "If 'intensity', the inital guess described in the help for "\
                                  "the ini_gausfit parameter is calculated using the intensity "\
                                  "(ch0) image. If 'curvature', it is done using the curvature "\
-                                 "map (see Hopkins et al. 2012).",
+                                 "map (see Hancock et al. 2012).",
                              group = "advanced_opts")
     fix_to_beam = Bool(False,
                              doc = "Fix major and minor axes and PA of Gaussians to beam?\n"\
@@ -527,7 +527,7 @@ class Opts(object):
                                  "2. the centers are separated by a distance less than "\
                                  "half the sum of their FWHMs along the line joining them.\n"\
                                  "If 'curvature', the above comparisons are done on the "\
-                                 "curature map (see Hopkins et al. 2012). If 'intensity', "\
+                                 "curature map (see Hancock et al. 2012). If 'intensity', "\
                                  "the comparisons are done on the intensity map.",
                              group = "advanced_opts")
     group_tol = Float(1.0,

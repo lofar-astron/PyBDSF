@@ -4,6 +4,14 @@
 What's New
 **********
 
+Version 1.7.4 (2013/08/29):
+
+    * Fix to bug in ``show_fit`` that caused error when ``i`` is pressed in the plot window and shapelet decomposition had not been done.
+
+    * Tweak to ``pybdsm`` startup shell script to avoid problems with the Mac OS X matplotlib backend on non-framework Python installations (such as Anaconda Python).
+
+    * Fix to bug in ``process_image`` that could result in wavelet Gaussians being excluded from model image under certain conditions.
+
 Version 1.7.3 (2013/08/27):
 
     * Fix to bug in image reading that caused images to be distorted.

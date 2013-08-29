@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.7.3'
+__version__ = '1.7.4'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -27,6 +27,18 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/08/27 - Version 1.7.4
+
+    2013/08/29 - Fix to bug in show_fit() that caused error when
+        'i' is pressed in the plot window and shapelet decomposition
+        had not been done. Tweak to 'pybdsm' startup shell script to
+        avoid problems with the Mac OS X matplotlib backend on non-
+        framework Python installations (such as Anaconda Python).
+
+    2013/08/28 - Fix to bug in process_image() that could result in
+        wavelet Gaussians being excluded from model image under certain
+        conditions.
+
     2013/08/27 - Version 1.7.3
 
     2013/08/27 - Fix to bug in image reading that caused images to be
@@ -34,7 +46,7 @@ def changelog():
 
     2013/08/23 - Version 1.7.2
 
-    2013/08/21 - Improved handling of non-standard FITS CUNIT keywords.
+    2013/08/23 - Improved handling of non-standard FITS CUNIT keywords.
         Improved loading of FITS images when trim_box is specified.
 
     2013/08/22 - Version 1.7.1

@@ -155,7 +155,7 @@ def get_op_chain(img):
     polarisation_opts += gaul2srl_opts
 
     # Op_make_residimage()
-    make_residimage_opts = gausfit_opts + shapelets_opts + ['fittedimage_clip']
+    make_residimage_opts = gausfit_opts + wavelet_atrous_opts + shapelets_opts + ['fittedimage_clip']
 
     # Op_psf_vary()
     psf_vary_opts = img.opts.get_names(group='psf_vary_do')

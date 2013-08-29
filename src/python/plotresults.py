@@ -66,6 +66,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     titles = []
     names = []
     markers = []
+    img_gaus_mod = None # default needed for key press event
+    img_shap_mod = None # default needed for key press event
     if ch0_image:
         img_ch0 = img.ch0_arr
         images.append(img_ch0)

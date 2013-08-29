@@ -1090,10 +1090,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
             try:
                 from astropy.io import fits as pyfits
                 old_pyfits = False
+                use_sections = True
             except ImportError, err:
                 import pyfits
                 if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
                     old_pyfits = True
+                    use_sections = False
+                elif StrictVersion(pyfits.__version__) < StrictVersion('2.4'):
+                    old_pyfits = False
+                    use_sections = False
                 else:
                     old_pyfits = False
             try:
@@ -1119,12 +1124,18 @@ def read_image_from_file(filename, img, indir, quiet=False):
             try:
                 from astropy.io import fits as pyfits
                 old_pyfits = False
+                use_sections = True
             except ImportError, err:
                 import pyfits
                 if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
                     old_pyfits = True
+                    use_sections = False
+                elif StrictVersion(pyfits.__version__) < StrictVersion('2.4'):
+                    old_pyfits = False
+                    use_sections = False
                 else:
                     old_pyfits = False
+                    use_sections = True
             has_pyfits = True
         except ImportError, err:
             raise RuntimeError("Astropy or PyFITS is required.")
@@ -1265,7 +1276,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             for i in range(naxis-2):
                 s_array.append(sn)
             s_array.reverse() # to match ordering of data array returned by PyFITS
-            if not old_pyfits:
+            if not old_pyfits and use_sections:
                 if naxis == 2:
                     data = fits[0].section[s_array[0], s_array[1]]
                 elif naxis == 3:
