@@ -54,9 +54,9 @@ class Op_outlist(Op):
 
         # Write Gaussian list
         write_bbs_gaul(img, filename=fname, srcroot=img.opts.srcroot,
-                       patch=img.opts.bbs_patches,
-                       sort_by='flux', clobber=True)
-
+                       patch=img.opts.bbs_patches, sort_by='flux',
+                       clobber=True, incl_empty=img.opts.incl_empty,
+                       correct_proj=img.opts.correct_proj)
 
     def write_gaul(self, img, dir):
         """ Writes the gaussian list as an ASCII file"""
@@ -362,15 +362,19 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     """ Write as FITS binary table.
     """
     import mylogger
-    import pyfits
+    from distutils.version import StrictVersion
+    try:
+        from astropy.io import fits as pyfits
+        use_header_update = False
+    except ImportError, err:
+        import pyfits
+        if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+            use_header_update = True
+        else:
+            use_header_update = False
     import os
     import numpy as N
-    from distutils.version import StrictVersion
     from _version import __version__, __revision__
-    if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
-        use_header_update = True
-    else:
-        use_header_update = False
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
     if objtype == 'gaul':
@@ -1044,8 +1048,10 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'centre_sky', 'centre_skyE', 'total_flux',
                  'total_fluxE', 'peak_flux', 'peak_fluxE',
                  'centre_pix', 'centre_pixE', 'size_sky', 'size_skyE',
-                 'deconv_size_sky',
-                 'deconv_size_skyE', 'total_flux_isl', 'total_flux_islE', 'rms',
+                 'size_sky_uncorr', 'size_skyE_uncorr',
+                 'deconv_size_sky', 'deconv_size_skyE',
+                 'deconv_size_sky_uncorr', 'deconv_size_skyE_uncorr',
+                 'total_flux_isl', 'total_flux_islE', 'rms',
                  'mean', 'gresid_rms', 'gresid_mean',
                  'code']
     elif objtype == 'srl':
@@ -1060,8 +1066,11 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  ['posn_sky_max', 'posn_sky_maxE',
                  'posn_pix_centroid', 'posn_pix_centroidE', 'posn_pix_max',
                  'posn_pix_maxE',
-                 'size_sky', 'size_skyE', 'deconv_size_sky',
-                 'deconv_size_skyE', 'total_flux_isl', 'total_flux_islE',
+                 'size_sky', 'size_skyE',
+                 'size_sky_uncorr', 'size_skyE_uncorr',
+                 'deconv_size_sky', 'deconv_size_skyE',
+                 'deconv_size_sky_uncorr', 'deconv_size_skyE_uncorr',
+                 'total_flux_isl', 'total_flux_islE',
                  'rms_isl', 'mean_isl', 'gresid_rms',
                  'gresid_mean', 'code']
     elif objtype == 'shap':

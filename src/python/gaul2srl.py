@@ -240,7 +240,7 @@ class Op_gaul2srl(Op):
                 yline = N.round(min(pix1[1],pix2[1])+N.arange(maxline))
                 xline = N.round((pix1[0]-pix2[0])/(pix1[1]-pix2[1])* \
                        (min(pix1[1],pix2[1])+N.arange(maxline)-pix1[1])+pix1[0])
-              rpixval = N.zeros(maxline)
+              rpixval = N.zeros(maxline, dtype=N.float32)
               xbig = N.where(xline >= N.size(subim,0))
               xline[xbig] = N.size(subim,0) - 1
               ybig = N.where(yline >= N.size(subim,1))
@@ -411,12 +411,12 @@ class Op_gaul2srl(Op):
 
         if img.opts.do_mc_errors:
             nMC = 20
-            mompara0_MC = N.zeros(nMC, dtype=float)
-            mompara1_MC = N.zeros(nMC, dtype=float)
-            mompara2_MC = N.zeros(nMC, dtype=float)
-            mompara3_MC = N.zeros(nMC, dtype=float)
-            mompara4_MC = N.zeros(nMC, dtype=float)
-            mompara5_MC = N.zeros(nMC, dtype=float)
+            mompara0_MC = N.zeros(nMC, dtype=N.float32)
+            mompara1_MC = N.zeros(nMC, dtype=N.float32)
+            mompara2_MC = N.zeros(nMC, dtype=N.float32)
+            mompara3_MC = N.zeros(nMC, dtype=N.float32)
+            mompara4_MC = N.zeros(nMC, dtype=N.float32)
+            mompara5_MC = N.zeros(nMC, dtype=N.float32)
             for i in range(nMC):
                 # Reconstruct source from component Gaussians. Draw the Gaussian
                 # parameters from random distributions given by their errors.
@@ -496,7 +496,7 @@ class Op_gaul2srl(Op):
     def make_subim(self, subn, subm, g_list, delc, mc=False):
         import functions as func
 
-        subim = N.zeros((subn, subm))
+        subim = N.zeros((subn, subm), dtype=N.float32)
         x, y = N.indices((subn, subm))
         for g in g_list:
             params = func.g2param(g)
@@ -521,7 +521,7 @@ class Op_gaul2srl(Op):
         subn = boxx.stop-boxx.start; subm = boxy.stop-boxy.start
         x, y = N.indices((subn, subm))
                                         # construct image of each source in the island
-        src_image = N.zeros((subn, subm, nsrc))
+        src_image = N.zeros((subn, subm, nsrc), dtype=N.float32)
         nn = 1
         for isrc in range(nsrc):
             if nsrc == 1:
@@ -600,6 +600,18 @@ class Source(object):
     deconv_size_skyE    = List(Float(), doc="Error on deconvolved shape of the source FWHM, BPA, deg",
                                colname=['E_DC_Maj', 'E_DC_Min', 'E_DC_PA'], units=['deg', 'deg',
                               'deg'])
+    size_sky_uncorr   = List(Float(), doc="Shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['Maj_img_plane', 'Min_img_plane', 'PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
+    size_skyE_uncorr  = List(Float(), doc="Error on shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['E_Maj_img_plane', 'E_Min_img_plane', 'E_PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
+    deconv_size_sky_uncorr = List(Float(), doc="Deconvolved shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['DC_Maj_img_plane', 'DC_Min_img_plane', 'DC_PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
+    deconv_size_skyE_uncorr = List(Float(), doc="Error on deconvolved shape in image plane of the gaussian FWHM, PA, deg",
+                      colname=['E_DC_Maj_img_plane', 'E_DC_Min_img_plane', 'E_DC_PA_img_plane'], units=['deg', 'deg',
+                      'deg'])
     rms_isl             = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
     mean_isl            = Float(doc="Island mean Jy/beam", colname='Isl_mean', units='Jy/beam')
     total_flux_isl      = Float(doc="Island total flux from sum of pixels", colname='Isl_Total_flux', units='Jy')
