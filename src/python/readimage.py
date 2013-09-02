@@ -3,7 +3,7 @@
 Defines operation Op_readimage which initializes image and WCS
 
 The current implementation tries to reduce input file to 2D if
-possible, as this makes more sence atm. One more important thing
+possible, as this makes more sense atm. One more important thing
 to note -- in its default configuration pyfits will read data
 in non-native format, so we have to convert it before usage. See
 the read_image_from_file in functions.py for details.
@@ -17,6 +17,8 @@ from image import *
 from functions import read_image_from_file
 import mylogger
 import sys
+import shutil
+import tempfile
 
 Image.imagename = String(doc="Identifier name for output files")
 Image.filename = String(doc="Name of input file without extension")
@@ -65,37 +67,6 @@ class Op_readimage(Op):
         else:
             data, hdr = result
 
-        # Store data and header in img. If polarisation_do = False, only store pol == 'I'
-        img.nchan = data.shape[1]
-        img.nstokes = data.shape[0]
-        mylogger.userinfo(mylog, 'Image size',
-                          str(data.shape[-2:]) + ' pixels')
-        mylogger.userinfo(mylog, 'Number of channels',
-                          '%i' % data.shape[1])
-        mylogger.userinfo(mylog, 'Number of Stokes parameters',
-                          '%i' % data.shape[0])
-        if img.opts.polarisation_do and data.shape[0] == 1:
-            img.opts.polarisation_do = False
-            mylog.warning('Image has Stokes I only. Polarisation module disabled.')
-        if img.opts.polarisation_do or data.shape[0] == 1:
-            img.image = data
-        else:
-            img.image = data[0, :].reshape(1, data.shape[1], data.shape[2], data.shape[3])
-        img.header = hdr
-        img.j = 0
-
-        ### initialize wcs conversion routines
-        self.init_wcs(img)
-        self.init_beam(img)
-        self.init_freq(img)
-        year, code = self.get_equinox(img)
-        if year == None:
-            mylog.info('Equinox not found in image header. Assuming J2000.')
-            img.equinox = 2000.0
-        else:
-            mylog.info('Equinox of image is %f.' % year)
-            img.equinox = year
-
         # Try to trim common extensions from filename
         root, ext = os.path.splitext(img.opts.filename)
         if ext in ['.fits', '.FITS', '.image']:
@@ -112,6 +83,63 @@ class Op_readimage(Op):
         img.parentname = fname
         img.imagename = fname + '.pybdsm'
         img.basedir = './' + fname + '_pybdsm/'
+
+        # Check whether caching is to be used. If it is, set up a
+        # temporary directory. The temporary directory will be
+        # removed automatically upon exit.
+        if img.opts.do_cache:
+            img.do_cache = True
+        else:
+            img.do_cache = False
+        if img.do_cache:
+            mylog.info('Using disk caching.')
+            tmpdir = img.parentname+'_tmp'
+            if not os.path.exists(tmpdir):
+                os.makedirs(tmpdir)
+                img._tempdir_parent = TempDir(tmpdir)
+            img.tempdir = TempDir(tempfile.mkdtemp(dir=tmpdir))
+        else:
+            img.tempdir = None
+
+        # Check for zeros and blank if blank_zeros = True
+        if img.opts.blank_zeros:
+            zero_pixels = N.where(data[0] == 0.0)
+            mylog.info('Blanking %i zeros in image' % len(zero_pixels[1]))
+            data[0][zero_pixels] = N.nan
+
+        # Store data and header in img. If polarisation_do = False, only store pol == 'I'
+        img.nchan = data.shape[1]
+        img.nstokes = data.shape[0]
+        mylogger.userinfo(mylog, 'Image size',
+                          str(data.shape[-2:]) + ' pixels')
+        mylogger.userinfo(mylog, 'Number of channels',
+                          '%i' % data.shape[1])
+        mylogger.userinfo(mylog, 'Number of Stokes parameters',
+                          '%i' % data.shape[0])
+        if img.opts.polarisation_do and data.shape[0] == 1:
+            img.opts.polarisation_do = False
+            mylog.warning('Image has Stokes I only. Polarisation module disabled.')
+
+        if img.opts.polarisation_do or data.shape[0] == 1:
+            img.image_arr = data
+        else:
+            img.image_arr = data[0, :].reshape(1, data.shape[1], data.shape[2], data.shape[3])
+        img.header = hdr
+        img.shape = data.shape
+        img.j = 0
+
+        ### initialize wcs conversion routines
+        self.init_wcs(img)
+        self.init_beam(img)
+        self.init_freq(img)
+        year, code = self.get_equinox(img)
+        if year == None:
+            mylog.info('Equinox not found in image header. Assuming J2000.')
+            img.equinox = 2000.0
+        else:
+            mylog.info('Equinox of image is %f.' % year)
+            img.equinox = year
+
         if img.opts.output_all:
             # Set up directory to write output to
             opdir = img.opts.opdir_overwrite
@@ -135,12 +163,7 @@ class Op_readimage(Op):
             if not os.path.isdir(img.basedir):
                 os.makedirs(img.basedir)
 
-        # Check for zeros and blank if img.opts.blank_zeros is True
-        if img.opts.blank_zeros:
-            zero_pixels = N.where(img.image[0] == 0.0)
-            mylog.info('Blanking %i zeros in image' % len(zero_pixels[1]))
-            img.image[0][zero_pixels] = N.nan
-
+        del data
         img.completed_Ops.append('readimage')
         return img
 
@@ -152,11 +175,17 @@ class Op_readimage(Op):
 
         hdr = img.header
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            from pywcs import WCS
+        try:
+            from astropy.wcs import WCS
             t = WCS(hdr)
             t.wcs.fix()
+        except ImportError, err:
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                from pywcs import WCS
+                t = WCS(hdr)
+                t.wcs.fix()
 
         acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
 
@@ -165,18 +194,24 @@ class Op_readimage(Op):
         # spectral) are striped out.
         def p2s(self, xy):
             xy = list(xy)
-            for i in range(t.wcs.naxis - 2):
+            for i in range(2):
                 xy.append(0)
             xy_arr = N.array([xy])
-            sky = self.wcs_pix2sky(xy_arr, 0)#, ra_dec_order=True)
+            if hasattr(self, 'wcs_pix2world'):
+                sky = self.wcs_pix2world(xy_arr, 0)
+            else:
+                sky = self.wcs_pix2sky(xy_arr, 0)
             return sky.tolist()[0][0:2]
 
         def s2p(self, rd):
             rd = list(rd)
-            for i in range(t.wcs.naxis - 2):
+            for i in range(2):
                 rd.append(0)
             rd_arr = N.array([rd])
-            pix = self.wcs_sky2pix(rd_arr, 0)#, ra_dec_order=True)
+            if hasattr(self, 'wcs_world2pix'):
+                pix = self.wcs_world2pix(rd_arr, 0)
+            else:
+                pix = self.wcs_sky2pix(rd_arr, 0)
             return pix.tolist()[0][0:2]
 
         # Here we define functions to transform Gaussian parameters (major axis,
@@ -254,9 +289,15 @@ class Op_readimage(Op):
                 s2 = abs(y * cdelt2)
             return (s1, s2)
 
-        instancemethod = type(t.wcs_pix2sky)
+        if hasattr(t, 'wcs_pix2world'):
+            instancemethod = type(t.wcs_pix2world)
+        else:
+            instancemethod = type(t.wcs_pix2sky)
         t.p2s = instancemethod(p2s, t, WCS)
-        instancemethod = type(t.wcs_sky2pix)
+        if hasattr(t, 'wcs_world2pix'):
+            instancemethod = type(t.wcs_world2pix)
+        else:
+            instancemethod = type(t.wcs_sky2pix)
         t.s2p = instancemethod(s2p, t, WCS)
 
         img.wcs_obj = t
@@ -374,19 +415,22 @@ class Op_readimage(Op):
         If the input frequency info (in the WCS) is not in Hz, it is
         converted.
         """
-        import warnings
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            from pywcs import WCS
+        try:
+            from astropy.wcs import WCS
+        except ImportError, err:
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                from pywcs import WCS
 
         mylog = mylogger.logging.getLogger("PyBDSM.InitFreq")
-        if img.opts.frequency_sp != None and img.image.shape[1] > 1:
+        if img.opts.frequency_sp != None and img.image_arr.shape[1] > 1:
             # If user specifies multiple frequencies, then let
             # collapse.py do the initialization
             img.frequency = img.opts.frequency_sp[0]
             img.freq_pars = (0.0, 0.0, 0.0)
             mylog.info('Using user-specified frequencies.')
-        elif img.opts.frequency != None and img.image.shape[1] == 1:
+        elif img.opts.frequency != None and img.image_arr.shape[1] == 1:
             img.frequency = img.opts.frequency
             img.freq_pars = (img.frequency, 0.0, 0.0)
             mylog.info('Using user-specified frequency.')
@@ -401,26 +445,33 @@ class Op_readimage(Op):
                 #
                 # First, convert frequency to Hz if needed:
                 img.wcs_obj.wcs.sptr('FREQ-???')
-                naxis = img.wcs_obj.wcs.naxis
                 def p2f(self, spec_pix):
-                    spec_list = []
-                    for i in range(naxis):
-                        spec_list.append(0)
+                    spec_list = [0, 0, 0, 0]
                     spec_list[spec_indx] = spec_pix
                     spec_pix_arr = N.array([spec_list])
-                    freq = self.wcs_pix2sky(spec_pix_arr, 0)
+                    if hasattr(self, 'wcs_pix2world'):
+                        freq = self.wcs_pix2world(spec_pix_arr, 0)
+                    else:
+                        freq = self.wcs_pix2sky(spec_pix_arr, 0)
                     return freq.tolist()[0][spec_indx]
                 def f2p(self, freq):
-                    freq_list = []
-                    for i in range(naxis):
-                        freq_list.append(0)
+                    freq_list = [0, 0, 0, 0]
                     freq_list[spec_indx] = freq
                     freq_arr = N.array([freq_list])
-                    pix = self.wcs_sky2pix(freq_arr, 0)
+                    if hasattr(self, 'wcs_world2pix'):
+                        pix = self.wcs_world2pix(freq_arr, 0)
+                    else:
+                        pix = self.wcs_sky2pix(freq_arr, 0)
                     return pix.tolist()[0][spec_indx]
-                instancemethod = type(img.wcs_obj.wcs_pix2sky)
+                if hasattr(img.wcs_obj, 'wcs_pix2world'):
+                    instancemethod = type(img.wcs_obj.wcs_pix2world)
+                else:
+                    instancemethod = type(img.wcs_obj.wcs_pix2sky)
                 img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj, WCS)
-                instancemethod = type(img.wcs_obj.wcs_sky2pix)
+                if hasattr(img.wcs_obj, 'wcs_world2pix'):
+                    instancemethod = type(img.wcs_obj.wcs_world2pix)
+                else:
+                    instancemethod = type(img.wcs_obj.wcs_sky2pix)
                 img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj, WCS)
 
                 if img.opts.frequency != None:
@@ -472,8 +523,8 @@ class Op_readimage(Op):
         location specifies the location in pixels (x, y) for which angle is desired
         """
         if location == None:
-            x1 = img.image.shape[2] / 2.0
-            y1 = img.image.shape[3] / 2.0
+            x1 = img.image_arr.shape[2] / 2.0
+            y1 = img.image_arr.shape[3] / 2.0
         else:
             x1, y1 = location
         ra, dec = img.pix2sky([x1, y1])
@@ -499,8 +550,8 @@ class Op_readimage(Op):
         import functions as func
 
         if location == None:
-            x1 = int(img.image.shape[2] / 2.0)
-            y1 = int(img.image.shape[3] / 2.0)
+            x1 = int(img.image_arr.shape[2] / 2.0)
+            y1 = int(img.image_arr.shape[3] / 2.0)
         else:
             x1, y1 = location
 
@@ -531,8 +582,8 @@ class Op_readimage(Op):
         import functions as func
 
         if location == None:
-            x1 = int(img.image.shape[2] / 2.0)
-            y1 = int(img.image.shape[3] / 2.0)
+            x1 = int(img.image_arr.shape[2] / 2.0)
+            y1 = int(img.image_arr.shape[3] / 2.0)
         else:
             x1, y1 = location
 
@@ -547,4 +598,10 @@ class Op_readimage(Op):
         return angdist12
 
 
+class TempDir(str):
+    """Container for temporary directory for image caching.
+
+    Directory is deleted when garbage collected/zero references """
+    def __del__(self):
+        shutil.rmtree(self.__str__())
 

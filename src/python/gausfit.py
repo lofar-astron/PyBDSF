@@ -730,9 +730,13 @@ class Op_gausfit(Op):
             return -1
 
         if s1 < s2:   # s1 etc are sigma
-          ss1=s2; ss2=s1; th1 = divmod(th+90.0, 180)[1]
+            ss1 = s2
+            ss2 = s1
+            th1 = divmod(th+90.0, 180)[1]
         else:
-          ss1=s1; ss2=s2; th1 = divmod(th, 180)[1]
+            ss1 = s1
+            ss2 = s2
+            th1 = divmod(th, 180)[1]
         th1 = th1/180.0*pi
         if ss1 > 1e4 and ss2 > 1e4:
           xbox = 1e9; ybox = 1e9
@@ -783,10 +787,9 @@ class Op_gausfit(Op):
         if not opts.flag_smallsrc:
                 if s1*s2 == 0.: flag += 128
 
-        if ss1/ss2 > 3.0: #size_bms > 30.0:
-            # Only check if island is big enough, as this flagging step
-            # is unreliable for small islands. size_bms is size of island
-            # in number of beam areas
+        if ss1/ss2 > 2.0:
+            # Only check for fairly elliptical Gaussians, as this condition
+            # is unreliable for more circular ones.
             ellx, elly = func.drawellipse([A, x1, x2, s1*opts.flag_maxsize_fwhm,
                                            s2*opts.flag_maxsize_fwhm, th])
             pt1 = [N.min(ellx), elly[N.argmin(ellx)]]

@@ -325,6 +325,7 @@ The advanced options are:
       :term:`detection_image` ........ '': Detection image file name used only for
                                    detecting islands of emission. Source
                                    measurement is still done on the main image
+      :term:`do_cache` ........... False : Cache internally derived images to disk
       :term:`do_mc_errors` ....... False : Estimate uncertainties for 'M'-type sources
                                    using Monte Carlo method
       :term:`fdr_alpha` ........... 0.05 : Alpha for FDR algorithm for thresholds
@@ -429,6 +430,12 @@ The advanced options are:
         a FITS or CASA 2-, 3-, or 4-D cube and must have the same size and WCS
         parameters as the main image.
 
+    do_cache
+        This parameter is a Boolean (default is ``False``) that controls
+        whether internally derived images are stored in memory or are cached
+        to disk. Caching can reduce the amount of memory used, and is
+        therefore useful when analyzing large images.
+
     do_mc_errors
         This parameter is a Boolean (default is ``False``). If ``True``,
         uncertainties on the sizes and positions of 'M'-type sources due to
@@ -478,7 +485,7 @@ The advanced options are:
         (Gaussian-reconstructed) value less than the island threshold, and 2.
         the centers are separated by a distance less than half the sum of their
         FWHMs along the line joining them. If ``'curvature'``, the above
-        comparisons are done on the curature map (see Hopkins et al. 2012). If
+        comparisons are done on the curature map (see Hancock et al. 2012). If
         ``'intensity'``, the comparisons are done on the intensity map.
 
     group_tol
@@ -511,7 +518,7 @@ The advanced options are:
         This parameter is a string (default is ``'intensity'``). If
         ``'intensity'``, the inital guess described in the help for the
         ``ini_gausfit`` parameter is calculated using the intensity (ch0) image.
-        If ``'curvature'``, it is done using the curvature map (see Hopkins et
+        If ``'curvature'``, it is done using the curvature map (see Hancock et
         al. 2012).
 
     kappa_clip
@@ -592,7 +599,8 @@ The advanced options are:
     src_radius_pix
         This parameter is a float (default is ``None``) that determines the size
         of the region used to fit the source positions specified by the
-        ``src_ra_dec`` parameter.
+        ``src_ra_dec`` parameter. If ``None``, the radius is set to the FWHM of
+        the beam major axis.
 
     stop_at
         This parameter is a string (default is ``None``) that stops an analysis
