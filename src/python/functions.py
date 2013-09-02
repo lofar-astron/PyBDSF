@@ -1268,6 +1268,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if ymax > shape_out[3]: ymax = shape_out[3]
         if xmin >= xmax or ymin >= ymax:
             raise RuntimeError("The trim_box option does not specify a valid part of the image.")
+        shape_out_untrimmed = shape_out[:]
         shape_out[2] = xmax-xmin
         shape_out[3] = ymax-ymin
 
@@ -1295,15 +1296,17 @@ def read_image_from_file(filename, img, indir, quiet=False):
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
-            data = data.reshape(shape_out) # Add axes if needed
             if naxis > 4 or not use_sections:
+                data = data.reshape(shape_out_untrimmed) # Add axes if needed
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
+            else:
+                data = data.reshape(shape_out) # Add axes if needed
         else:
             # With pyrap, just read in the whole image and then trim
             data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
-            data = data.reshape(shape_out) # Add axes if needed
+            data = data.reshape(shape_out_untrimmed) # Add axes if needed
             data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
 
         # Adjust WCS keywords for trim_box starting x and y.
