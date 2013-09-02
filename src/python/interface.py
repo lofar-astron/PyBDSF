@@ -126,10 +126,14 @@ def get_op_chain(img):
     threshold_opts += rmsimage_opts
 
     # Op_islands()
-    islands_opts = threshold_opts + ['minpix_isl']
+    islands_opts = threshold_opts
+    islands_opts.append('minpix_isl')
 
     # Op_gausfit()
-    gausfit_opts = islands_opts
+    gausfit_opts = ['verbose_fitting']
+    gausfit_opts += islands_opts
+    gausfit_opts += img.opts.get_names(group='flagging_opts')
+    gausfit_opts.append('flagging_opts')
 
     # Op_wavelet_atrous()
     wavelet_atrous_opts = img.opts.get_names(group='atrous_do')
@@ -142,7 +146,9 @@ def get_op_chain(img):
     shapelets_opts += islands_opts
 
     # Op_gaul2srl()
-    gaul2srl_opts = gausfit_opts + wavelet_atrous_opts + ['group_tol', 'group_by_isl', 'group_method']
+    gaul2srl_opts = ['group_tol', 'group_by_isl', 'group_method']
+    gaul2srl_opts += gausfit_opts
+    gaul2srl_opts += wavelet_atrous_opts
 
     # Op_spectralindex()
     spectralindex_opts = img.opts.get_names(group='spectralindex_do')
@@ -155,7 +161,10 @@ def get_op_chain(img):
     polarisation_opts += gaul2srl_opts
 
     # Op_make_residimage()
-    make_residimage_opts = gausfit_opts + wavelet_atrous_opts + shapelets_opts + ['fittedimage_clip']
+    make_residimage_opts = ['fittedimage_clip']
+    make_residimage_opts += gausfit_opts
+    make_residimage_opts += wavelet_atrous_opts
+    make_residimage_opts += shapelets_opts
 
     # Op_psf_vary()
     psf_vary_opts = img.opts.get_names(group='psf_vary_do')

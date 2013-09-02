@@ -201,10 +201,16 @@ class Op_rmsimage(Op):
             else:
                 img.rms_box_bright = opts.rms_box
                 img.rms_box = opts.rms_box
-        if do_adapt:
-            map_opts = (opts.kappa_clip, img.rms_box_bright, opts.spline_rank)
+
+        if opts.kappa_clip is None:
+            kappa = -img.pixel_beamarea()
         else:
-            map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)
+            kappa = img.opts.kappa_clip
+
+        if do_adapt:
+            map_opts = (kappa, img.rms_box_bright, opts.spline_rank)
+        else:
+            map_opts = (kappa, img.rms_box, opts.spline_rank)
 
         for ipol, pol in enumerate(pols):
           data = ch0_images[ipol]
@@ -445,6 +451,7 @@ class Op_rmsimage(Op):
         rms_ok = False
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
         opts = img.opts
+        kappa = map_opts[0]
         while not rms_ok:
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
@@ -467,7 +474,7 @@ class Op_rmsimage(Op):
                             img.mean_map_type = 'const'
                             rms_ok = True
                         else:
-                            map_opts = (opts.kappa_clip, img.rms_box_bright, opts.spline_rank)
+                            map_opts = (kappa, img.rms_box_bright, opts.spline_rank)
                     else:
                         new_width = int(img.rms_box[0]*1.2)
                         if new_width == img.rms_box[0]:
@@ -481,7 +488,7 @@ class Op_rmsimage(Op):
                             img.mean_map_type = 'const'
                             rms_ok = True
                         else:
-                            map_opts = (opts.kappa_clip, img.rms_box, opts.spline_rank)
+                            map_opts = (kappa, img.rms_box, opts.spline_rank)
 
                 else:
                     # User has specified box size, use order=1 to prevent negatives
@@ -489,9 +496,9 @@ class Op_rmsimage(Op):
                         mylog.warning('Negative values found in rms map interpolated with spline_rank = %i' % opts.spline_rank)
                         mylog.warning('Using spline_rank = 1 (bilinear interpolation) instead')
                         if do_adapt:
-                            map_opts = (opts.kappa_clip, img.rms_box_bright, 1)
+                            map_opts = (kappa, img.rms_box_bright, 1)
                         else:
-                            map_opts = (opts.kappa_clip, img.rms_box, 1)
+                            map_opts = (kappa, img.rms_box, 1)
             else:
                 rms_ok = True
 
@@ -889,7 +896,7 @@ class Op_rmsimage(Op):
 
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
 
-        bstat = _cbdsm.bstat
+        bstat = func.bstat#_cbdsm.bstat
         a, b, c, d = ind; i, j = co
         if mask == None:
           m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
@@ -913,7 +920,7 @@ class Op_rmsimage(Op):
 
     def for_masked_mp(self, mask, arr, ind, kappa):
 
-        bstat = _cbdsm.bstat
+        bstat = func.bstat #_cbdsm.bstat
         a, b, c, d = ind
         if mask == None:
           m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)

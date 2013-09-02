@@ -1255,6 +1255,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         shape_out[0] = data_shape[indx_out[0]]
     if indx_out[1] != -1:
         shape_out[1] = data_shape[indx_out[1]]
+    indx_out = [a for a in indx_out if a >= 0] # trim unused axes
 
     # Read in data. If only a subsection of the image is desired (as defined
     # by the trim_box option), we can try to use PyFITS to read only that section.
@@ -1267,6 +1268,8 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if ymax > shape_out[3]: ymax = shape_out[3]
         if xmin >= xmax or ymin >= ymax:
             raise RuntimeError("The trim_box option does not specify a valid part of the image.")
+        shape_out[2] = xmax-xmin
+        shape_out[3] = ymax-ymin
 
         if img.use_io == 'fits':
             sx = slice(int(xmin),int(xmax))
@@ -1292,13 +1295,15 @@ def read_image_from_file(filename, img, indir, quiet=False):
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
-            if naxis > 4 or old_pyfits:
+            data = data.reshape(shape_out) # Add axes if needed
+            if naxis > 4 or not use_sections:
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
         else:
             # With pyrap, just read in the whole image and then trim
             data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(shape_out) # Add axes if needed
             data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
 
         # Adjust WCS keywords for trim_box starting x and y.
@@ -1312,6 +1317,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             data = inputimage.getdata()
         data = data.transpose(*indx_out) # transpose axes to final order
         data.shape = data.shape[0:4] # trim unused dimensions (if any)
+        data = data.reshape(shape_out) # Add axes if needed
 
     mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
 
@@ -2075,3 +2081,70 @@ def make_curvature_map(subim):
     sys.stdout = original_stdout  # turn STDOUT back on
 
     return curv_map
+
+
+def bstat(indata, mask, kappa_npixbeam):
+    """Numpy version of the c++ bstat routine
+
+    Uses the PySE method for calculating the clipped mean and rms of an array.
+    This method is superior to the c++ bstat routine (see section 2.7.3 of
+    http://dare.uva.nl/document/174052 for details) and, since the Numpy
+    functions used here are written in c, there is no real computational
+    penalty in using Python code.
+    """
+    import numpy
+    from scipy.special import erf, erfcinv
+
+    # Flatten array
+    skpix = indata.flatten()
+    if mask is not None:
+        msk_flat = mask.flatten()
+        unmasked = numpy.where(~msk_flat)
+        skpix = skpix[unmasked]
+
+    ct = skpix.size
+    iter = 0
+    c1 = 1.0
+    c2 = 0.0
+    maxiter = 200
+    converge_num = 1e-6
+    m_raw = numpy.mean(skpix)
+    r_raw = numpy.std(skpix, ddof=1)
+
+    while (c1 >= c2) and (iter < maxiter):
+        npix = skpix.size
+        if kappa_npixbeam > 0.0:
+            kappa = kappa_npixbeam
+        else:
+            npixbeam = abs(kappa_npixbeam)
+            kappa = numpy.sqrt(2.0)*erfcinv(1.0 / (2.0*npix/npixbeam))
+        lastct = ct
+        medval = numpy.median(skpix)
+        sig = numpy.std(skpix)
+        wsm = numpy.where(abs(skpix-medval) < kappa*sig)
+        ct = len(wsm[0])
+        if ct > 0:
+            skpix = skpix[wsm]
+
+        c1 = abs(ct - lastct)
+        c2 = converge_num * lastct
+        iter += 1
+
+
+    mean  = numpy.mean(skpix)
+    median = numpy.median(skpix)
+    sigma = numpy.std(skpix, ddof=1)
+    mode = 2.5*median - 1.5*mean
+
+    skew_par = abs(mean - median)/sigma
+    if skew_par <= 0.3:
+        m = mode
+    else:
+        m = median
+
+    r1 = numpy.sqrt(2.0*numpy.pi)*erf(kappa/numpy.sqrt(2.0))
+    r = numpy.sqrt(sigma**2 * (r1 / (r1 - 2.0*kappa*numpy.exp(-kappa**2/2.0))))
+
+    return m_raw, r_raw, m, r, iter
+
+

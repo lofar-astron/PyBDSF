@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.7.4'
+__version__ = '1.7.5'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,15 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2013/09/02 - Version 1.7.5
+
+    2013/09/02 - Fix to bug that caused a crash when images with 2 or
+        3 axes were used. Improved rms and mean calculation (following the
+        implementation used in PySE, see http://dare.uva.nl/document/174052
+        for details). The threshold used to determine the clipped rms and
+        mean values is now determined internally by default (kappa_clip =
+        None).
 
     2013/08/27 - Version 1.7.4
 

@@ -49,7 +49,10 @@ class Op_collapse(Op):
         # assume all Stokes images have the same blank pixels as I:
         blank = N.isnan(img.image_arr[0])
         hasblanks = blank.any()
-        kappa = img.opts.kappa_clip
+        if img.opts.kappa_clip is None:
+            kappa = -img.pixel_beamarea()
+        else:
+            kappa = img.opts.kappa_clip
 
         mean, rms, cmean, crms = chan_stats(img, kappa)
         img.channel_mean = mean; img.channel_rms = rms
@@ -143,6 +146,7 @@ class Op_collapse(Op):
 
 def chan_stats(img, kappa):
 
+    bstat = func.bstat #_cbdsm.bstat
     nchan = img.shape[1]
     mean = []; rms = []; cmean = []; crms = []
     for ichan in range(nchan):
@@ -157,9 +161,9 @@ def chan_stats(img, kappa):
           m, r, cm, cr = 0, 0, 0, 0
         else:
           if immask.any():
-            m, r, cm, cr, cnt = _cbdsm.bstat(im, immask, kappa)
+            m, r, cm, cr, cnt = bstat(im, immask, kappa)
           else:
-            m, r, cm, cr, cnt = _cbdsm.bstat(im, None, kappa)
+            m, r, cm, cr, cnt = bstat(im, None, kappa)
       else:
         m, r, cm, cr = 0, 0, 0, 0
       mean.append(m); rms.append(r); cmean.append(cm); crms.append(cr)

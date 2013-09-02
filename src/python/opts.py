@@ -349,8 +349,9 @@ class Opts(object):
                                  "if #false_pix / #source_pix < fdr_ratio, " \
                                  "thresh = 'hard' else thresh = 'fdr'",
                              group = "advanced_opts")
-    kappa_clip = Float(3,
-                             doc = "Kappa for clipped mean and rms\n"\
+    kappa_clip = Option(None, Float(),
+                             doc = "Kappa for clipped mean and rms. None => calculate "\
+                                 "inside program\n"\
                                  "The value of this is the factor used for Kappa-alpha "\
                                  "clipping, as in AIPS. For an image with few source "\
                                  "pixels added on to (Gaussian) noise pixels, the "\

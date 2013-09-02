@@ -4,6 +4,12 @@
 What's New
 **********
 
+Version 1.7.5 (2013/09/02):
+
+    * Fix to bug that caused a crash when images with 2 or 3 axes were used.
+
+    * Improved rms and mean calculation (following the implementation used in PySE, see http://dare.uva.nl/document/174052 for details). The threshold used to determine the clipped rms and mean values is now determined internally by default (i.e., ``kappa_clip = None``).
+
 Version 1.7.4 (2013/08/29):
 
     * Fix to bug in ``show_fit`` that caused error when ``i`` is pressed in the plot window and shapelet decomposition had not been done.
