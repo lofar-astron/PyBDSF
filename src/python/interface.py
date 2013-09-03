@@ -49,8 +49,9 @@ def process(img, **kwargs):
     try:
         # Run op's in chain
         img, op_chain = get_op_chain(img)
-        _run_op_list(img, op_chain)
-        img._prev_opts = img.opts.to_dict()
+        if op_chain is not None:
+            _run_op_list(img, op_chain)
+            img._prev_opts = img.opts.to_dict()
         return True
     except RuntimeError, err:
         # Catch and log error
@@ -98,7 +99,14 @@ def get_op_chain(img):
     if prev_opts == None:
         return img, default_chain
     new_opts = img.opts.to_dict()
+
+    # Set the hidden options, which should include any option whose change
+    # should not trigger a process_image action
     hidden_opts = img.opts.get_names(group='hidden')
+    hidden_opts.append('advanced_opts')
+    hidden_opts.append('flagging_opts')
+    hidden_opts.append('multichan_opts')
+    hidden_opts.append('output_opts')
 
     # Define lists of options for each Op. Some of these can be defined
     # using the "group" parameter of each option.
@@ -133,7 +141,6 @@ def get_op_chain(img):
     gausfit_opts = ['verbose_fitting']
     gausfit_opts += islands_opts
     gausfit_opts += img.opts.get_names(group='flagging_opts')
-    gausfit_opts.append('flagging_opts')
 
     # Op_wavelet_atrous()
     wavelet_atrous_opts = img.opts.get_names(group='atrous_do')
@@ -176,10 +183,11 @@ def get_op_chain(img):
     # Find whether new opts differ from previous opts (and are not hidden
     # opts, which should not be checked). If so, found = True and we reset
     # the relevant image parameters and add the relevant Op to the Op_chain.
+    re_run = False
     found = False
     for k, v in prev_opts.iteritems():
         if v != new_opts[k] and k not in hidden_opts:
-            found = False
+            re_run = True
             if k in readimage_opts:
                 if hasattr(img, 'use_io'): del img.use_io
                 if hasattr(img, 'image'): del img.image
@@ -263,8 +271,19 @@ def get_op_chain(img):
             if not found:
                 break
 
-    # If a changed option is not in any of the above lists (or no options
-    # have changed), force a re-run of all Ops.
+    # If nothing has changed, ask if user wants to re-run
+    if not found and not re_run:
+        prompt = "Analysis appears to be up-to-date. Force reprocessing (y/n)? "
+        answ = raw_input_no_history(prompt)
+        while answ.lower() not in  ['y', 'n', 'yes', 'no']:
+            answ = raw_input_no_history(prompt)
+        if answ.lower() in ['y', 'yes']:
+            re_run = True # Force re-run
+        else:
+            return img, None
+
+    # If a changed option is not in any of the above lists,
+    # force a re-run of all Ops.
     if not found:
         del img.completed_Ops
         if hasattr(img, 'rms'): del img.rms
@@ -297,9 +316,9 @@ def get_op_chain(img):
 def load_pars(filename):
     """Load parameters from a save file or dictionary.
 
-    The file must be a pickled opts dictionary.
+    If a file is given, it must be a pickled opts dictionary.
 
-    filename - name of options file to load.
+    filename - name of options file to load or a dictionary of opts.
     Returns None (and original error) if no file can be loaded successfully.
     """
     from image import Image
