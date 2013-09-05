@@ -900,7 +900,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "ds9"   - ds9 region file
         "star"  - AIPS STAR file (Gaussian list only)
         "kvis"  - kvis file (Gaussian list only)
-        "sagecal" - Sagecal file (Gaussian list only)
+        "sagecal" - SAGECAL file (Gaussian list only)
     srcroot - root for source and patch names (BBS/ds9 only);
               if None, the srcroot is chosen automatically
     bbs_patches - type of patches to use:

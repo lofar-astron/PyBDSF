@@ -8,7 +8,7 @@ The properties of the fitted Gaussians, sources, and shapelets may be written in
 
 .. note::
 
-    For BBS format, the output catalogs always use the J2000 equinox. If the input image does not have an equinox of J2000, the coordinates of sources will be precessed to J2000. Catalogs in other formats will have the equinox of the image.
+    For BBS and SAGECAL formats, the output catalogs always use the J2000 equinox. If the input image does not have an equinox of J2000, the coordinates of sources will be precessed to J2000. Catalogs in other formats will have the equinox of the image.
 
 The task parameters are as follows:
 
@@ -32,7 +32,7 @@ The task parameters are as follows:
     :term:`correct_proj` .......... True : Correct source parameters for image projection
                                    (BBS format only)?
     :term:`format` ............... 'fits': Format of output Gaussian list: 'bbs', 'ds9',
-                                   'fits', 'star', 'kvis', or 'ascii'
+                                   'fits', 'star', 'kvis', 'ascii', or 'sagecal'
     :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?
     :term:`incl_empty` ........... False : Include islands without any valid Gaussians
                                    (source list only)?
@@ -94,6 +94,8 @@ Each of the parameters is described in detail below.
         * ``'kvis'`` - kvis format (Gaussian list only)
 
         * ``'ascii'`` - simple text file
+
+        * ``'sagecal'`` - SAGECAL sky model format (Gaussian list only)
 
         Catalogues with the ``'fits'`` and ``'ascii'`` formats include all available
         information (see :ref:`output_cols` for column definitions). The
@@ -182,6 +184,18 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_PA:** the 1-:math:`\sigma` error on the position angle of the major axis of the source, in degrees
 
+* **Maj_img_plane:** the FWHM of the major axis of the source in the image plane, in degrees
+
+* **E_Maj_img_plane:** the 1-:math:`\sigma` error on the FWHM of the major axis of the source in the image plane, in degrees
+
+* **Min_img_plane:** the FWHM of the minor axis of the source in the image plane, in degrees
+
+* **E_Min_img_plane:** the 1-:math:`\sigma` error on the FWHM of the minor axis of the source in the image plane, in degrees
+
+* **PA_img_plane:** the position angle in the image plane of the major axis of the source measured east of north, in degrees
+
+* **E_PA_img_plane:** the 1-:math:`\sigma` error on the position angle in the image plane of the major axis of the source, in degrees
+
 * **DC_Maj:** the FWHM of the deconvolved major axis of the source, in degrees
 
 * **E_DC_Maj:** the 1-:math:`\sigma` error on the FWHM of the deconvolved major axis of the source, in degrees
@@ -193,6 +207,18 @@ The information included in the Gaussian and source catalogs varies by format an
 * **DC_PA:** the position angle of the deconvolved major axis of the source measured east of north, in degrees
 
 * **E_DC_PA:** the 1-:math:`\sigma` error on the position angle of the deconvolved major axis of the source, in degrees
+
+* **DC_Maj_img_plane:** the FWHM of the deconvolved major axis of the source in the image plane, in degrees
+
+* **E_DC_Maj_img_plane:** the 1-:math:`\sigma` error on the FWHM of the deconvolved major axis of the source in the image plane, in degrees
+
+* **DC_Min_img_plane:** the FWHM of the deconvolved minor axis of the source in the image plane, in degrees
+
+* **E_DC_Min_img_plane:** the 1-:math:`\sigma` error on the FWHM of the deconvolved minor axis of the source in the image plane, in degrees
+
+* **DC_PA_img_plane:** the position angle in the image plane of the deconvolved major axis of the source measured east of north, in degrees
+
+* **E_DC_PA_img_plane:** the 1-:math:`\sigma` error on the position angle in the image plane of the deconvolved major axis of the source, in degrees
 
 * **Isl_Total_flux:** the total, integrated Stokes I flux density of the island in which the source is located, in Jy. This value is calculated from the sum of all non-masked pixels in the island with values above ``thresh_isl``
 

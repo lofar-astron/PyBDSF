@@ -27,6 +27,8 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/09/05 - Enabled SAGECAL sky-model output.
+
     2013/09/02 - Version 1.7.5
 
     2013/09/02 - Fix to bug that caused a crash when images with 2 or
