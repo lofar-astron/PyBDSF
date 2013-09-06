@@ -101,12 +101,6 @@ class Op_readimage(Op):
         else:
             img.tempdir = None
 
-        # Check for zeros and blank if blank_zeros = True
-        if img.opts.blank_zeros:
-            zero_pixels = N.where(data[0] == 0.0)
-            mylog.info('Blanking %i zeros in image' % len(zero_pixels[1]))
-            data[0][zero_pixels] = N.nan
-
         # Store data and header in img. If polarisation_do = False, only store pol == 'I'
         img.nchan = data.shape[1]
         img.nstokes = data.shape[0]

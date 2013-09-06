@@ -27,6 +27,9 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/09/05 - Renamed blank_zeros to blank_limit. The blank_limit
+        option now specifies a limit below which pixels are blanked.
+
     2013/09/05 - Enabled SAGECAL sky-model output.
 
     2013/09/02 - Version 1.7.5

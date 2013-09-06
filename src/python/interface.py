@@ -190,13 +190,13 @@ def get_op_chain(img):
             re_run = True
             if k in readimage_opts:
                 if hasattr(img, 'use_io'): del img.use_io
-                if hasattr(img, 'image'): del img.image
+                if hasattr(img, 'image_arr'): del img.image_arr
                 while 'readimage' in img.completed_Ops:
                     img.completed_Ops.remove('readimage')
                 found = True
             if k in collapse_opts:
-                if hasattr(img, 'mask'): del img.mask_arr
-                if hasattr(img, 'ch0'): del img.ch0_arr
+                if hasattr(img, 'mask_arr'): del img.mask_arr
+                if hasattr(img, 'ch0_arr'): del img.ch0_arr
                 while 'collapse' in img.completed_Ops:
                     img.completed_Ops.remove('collapse')
                 found = True
@@ -205,11 +205,14 @@ def get_op_chain(img):
                     img.completed_Ops.remove('preprocess')
                 found = True
             if k in rmsimage_opts:
-                if hasattr(img, 'rms'): del img.rms
-                if hasattr(img, 'mean'): del img.mean
-                if hasattr(img, 'rms_QUV'): del img.rms_QUV
-                if hasattr(img, 'mean_QUV'): del img.mean_QUV
-                if hasattr(img, 'rms_mask'): del img.rms_mask
+                if hasattr(img, 'rms_arr'): del img.rms_arr
+                if hasattr(img, 'mean_arr'): del img.mean_arr
+                if hasattr(img, 'rms_Q_arr'): del img.rms_Q_arr
+                if hasattr(img, 'mean_Q_arr'): del img.mean_Q_arr
+                if hasattr(img, 'rms_U_arr'): del img.rms_U_arr
+                if hasattr(img, 'mean_U_arr'): del img.mean_U_arr
+                if hasattr(img, 'rms_V_arr'): del img.rms_V_arr
+                if hasattr(img, 'mean_V_arr'): del img.mean_V_arr
                 while 'rmsimage' in img.completed_Ops:
                     img.completed_Ops.remove('rmsimage')
                 found = True
@@ -257,10 +260,10 @@ def get_op_chain(img):
                     img.completed_Ops.remove('polarisation')
                 found = True
             if k in make_residimage_opts:
-                if hasattr(img, 'resid_gaus'): del img.resid_gaus
-                if hasattr(img, 'model_gaus'): del img.model_gaus
-                if hasattr(img, 'resid_shap'): del img.resid_shap
-                if hasattr(img, 'model_shap'): del img.model_shap
+                if hasattr(img, 'resid_gaus_arr'): del img.resid_gaus_arr
+                if hasattr(img, 'model_gaus_arr'): del img.model_gaus_arr
+                if hasattr(img, 'resid_shap_arr'): del img.resid_shap_arr
+                if hasattr(img, 'model_shap_arr'): del img.model_shap_arr
                 while 'make_residimage' in img.completed_Ops:
                     img.completed_Ops.remove('make_residimage')
                 found = True
@@ -286,19 +289,27 @@ def get_op_chain(img):
     # force a re-run of all Ops.
     if not found:
         del img.completed_Ops
-        if hasattr(img, 'rms'): del img.rms
-        if hasattr(img, 'mean'): del img.mean
-        if hasattr(img, 'rms_QUV'): del img.rms_QUV
-        if hasattr(img, 'mean_QUV'): del img.mean_QUV
-        if hasattr(img, 'rms_mask'): del img.rms_mask
+        if hasattr(img, 'use_io'): del img.use_io
+        if hasattr(img, 'image_arr'): del img.image_arr
+        if hasattr(img, 'mask_arr'): del img.mask_arr
+        if hasattr(img, 'ch0_arr'): del img.ch0_arr
+        if hasattr(img, 'rms_arr'): del img.rms_arr
+        if hasattr(img, 'mean_arr'): del img.mean_arr
+        if hasattr(img, 'rms_Q_arr'): del img.rms_Q_arr
+        if hasattr(img, 'mean_Q_arr'): del img.mean_Q_arr
+        if hasattr(img, 'rms_U_arr'): del img.rms_U_arr
+        if hasattr(img, 'mean_U_arr'): del img.mean_U_arr
+        if hasattr(img, 'rms_V_arr'): del img.rms_V_arr
+        if hasattr(img, 'mean_V_arr'): del img.mean_V_arr
+        if hasattr(img, 'islands'): del img.islands
         if hasattr(img, 'sources'): del img.sources
         if hasattr(img, 'dsources'): del img.dsources
         if hasattr(img, 'gaussians'): del img.gaussians
         if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
-        if hasattr(img, 'resid_gaus'): del img.resid_gaus
-        if hasattr(img, 'model_gaus'): del img.model_gaus
-        if hasattr(img, 'resid_shap'): del img.resid_shap
-        if hasattr(img, 'model_shap'): del img.model_shap
+        if hasattr(img, 'resid_gaus_arr'): del img.resid_gaus_arr
+        if hasattr(img, 'model_gaus_arr'): del img.model_gaus_arr
+        if hasattr(img, 'resid_shap_arr'): del img.resid_shap_arr
+        if hasattr(img, 'model_shap_arr'): del img.model_shap_arr
         return img, Op_chain
 
     while 'outlist' in img.completed_Ops:

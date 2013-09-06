@@ -2092,7 +2092,7 @@ def bstat(indata, mask, kappa_npixbeam):
     Uses the PySE method for calculating the clipped mean and rms of an array.
     This method is superior to the c++ bstat routine (see section 2.7.3 of
     http://dare.uva.nl/document/174052 for details) and, since the Numpy
-    functions used here are written in c, there is no real computational
+    functions used here are written in c, there should be no big computational
     penalty in using Python code.
     """
     import numpy
@@ -2121,6 +2121,8 @@ def bstat(indata, mask, kappa_npixbeam):
         else:
             npixbeam = abs(kappa_npixbeam)
             kappa = numpy.sqrt(2.0)*erfcinv(1.0 / (2.0*npix/npixbeam))
+            if kappa < 3.0:
+                kappa = 3.0
         lastct = ct
         medval = numpy.median(skpix)
         sig = numpy.std(skpix)
