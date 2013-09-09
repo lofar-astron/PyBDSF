@@ -34,7 +34,11 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
 
 .. note::
 
-    If you don't have superuser access, you can install Boost to a local directory and pass this directory to the cmake command below by adding::
+    If you don't have superuser access, you can install Boost to a local directory by adding::
+
+        --prefix=path/to/installation/prefix
+
+    to the bootstrap.sh command above and then passing this directory to the cmake command below by adding::
 
         -DBOOST_ROOT_DIR=/path/to/boost
 
