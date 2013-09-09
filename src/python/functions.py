@@ -1209,8 +1209,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
     # Check for incorrect spectral units. For example, "M/S" is not
     # recognized by PyWCS as velocity ("S" is actually Siemens, not
-    # seconds).
-    for i in range(naxis):
+    # seconds). Note that we check CUNIT3 and CUNIT4 even if the
+    # image has only 2 axes, as the header may still have these
+    # entries.
+    for i in range(4):
         key_val_raw = hdr.get('CUNIT' + str(i+1))
         if key_val_raw != None:
             if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:

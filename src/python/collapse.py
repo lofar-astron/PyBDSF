@@ -146,6 +146,7 @@ class Op_collapse(Op):
 
       if img.opts.blank_limit is not None or check_low:
           import scipy
+          import sys
           if check_low:
               threshold = 1e-5
           else:
@@ -153,7 +154,10 @@ class Op_collapse(Op):
               mylogger.userinfo(mylog, "Blanking pixels with values "
                   "below %.1e Jy/beam" % (threshold,))
           bad = (abs(image) < threshold)
+          original_stdout = sys.stdout  # keep a reference to STDOUT
+          sys.stdout = func.NullDevice()  # redirect the real STDOUT
           count = scipy.signal.convolve2d(bad, N.ones((3, 3)), mode='same')
+          sys.stdout = original_stdout  # turn STDOUT back on
           mask_low = (count >= 5)
           if check_low:
               nlow = len(N.where(mask_low)[0])
