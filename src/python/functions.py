@@ -1268,6 +1268,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if ymax > shape_out[3]: ymax = shape_out[3]
         if xmin >= xmax or ymin >= ymax:
             raise RuntimeError("The trim_box option does not specify a valid part of the image.")
+        shape_out_untrimmed = shape_out[:]
         shape_out[2] = xmax-xmin
         shape_out[3] = ymax-ymin
 
@@ -1295,15 +1296,17 @@ def read_image_from_file(filename, img, indir, quiet=False):
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
-            data = data.reshape(shape_out) # Add axes if needed
             if naxis > 4 or not use_sections:
+                data = data.reshape(shape_out_untrimmed) # Add axes if needed
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
+            else:
+                data = data.reshape(shape_out) # Add axes if needed
         else:
             # With pyrap, just read in the whole image and then trim
             data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
-            data = data.reshape(shape_out) # Add axes if needed
+            data = data.reshape(shape_out_untrimmed) # Add axes if needed
             data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
 
         # Adjust WCS keywords for trim_box starting x and y.
@@ -2089,7 +2092,7 @@ def bstat(indata, mask, kappa_npixbeam):
     Uses the PySE method for calculating the clipped mean and rms of an array.
     This method is superior to the c++ bstat routine (see section 2.7.3 of
     http://dare.uva.nl/document/174052 for details) and, since the Numpy
-    functions used here are written in c, there is no real computational
+    functions used here are written in c, there should be no big computational
     penalty in using Python code.
     """
     import numpy
@@ -2118,6 +2121,8 @@ def bstat(indata, mask, kappa_npixbeam):
         else:
             npixbeam = abs(kappa_npixbeam)
             kappa = numpy.sqrt(2.0)*erfcinv(1.0 / (2.0*npix/npixbeam))
+            if kappa < 3.0:
+                kappa = 3.0
         lastct = ct
         medval = numpy.median(skpix)
         sig = numpy.std(skpix)

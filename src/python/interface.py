@@ -49,8 +49,9 @@ def process(img, **kwargs):
     try:
         # Run op's in chain
         img, op_chain = get_op_chain(img)
-        _run_op_list(img, op_chain)
-        img._prev_opts = img.opts.to_dict()
+        if op_chain is not None:
+            _run_op_list(img, op_chain)
+            img._prev_opts = img.opts.to_dict()
         return True
     except RuntimeError, err:
         # Catch and log error
@@ -98,7 +99,14 @@ def get_op_chain(img):
     if prev_opts == None:
         return img, default_chain
     new_opts = img.opts.to_dict()
+
+    # Set the hidden options, which should include any option whose change
+    # should not trigger a process_image action
     hidden_opts = img.opts.get_names(group='hidden')
+    hidden_opts.append('advanced_opts')
+    hidden_opts.append('flagging_opts')
+    hidden_opts.append('multichan_opts')
+    hidden_opts.append('output_opts')
 
     # Define lists of options for each Op. Some of these can be defined
     # using the "group" parameter of each option.
@@ -133,7 +141,6 @@ def get_op_chain(img):
     gausfit_opts = ['verbose_fitting']
     gausfit_opts += islands_opts
     gausfit_opts += img.opts.get_names(group='flagging_opts')
-    gausfit_opts.append('flagging_opts')
 
     # Op_wavelet_atrous()
     wavelet_atrous_opts = img.opts.get_names(group='atrous_do')
@@ -176,19 +183,20 @@ def get_op_chain(img):
     # Find whether new opts differ from previous opts (and are not hidden
     # opts, which should not be checked). If so, found = True and we reset
     # the relevant image parameters and add the relevant Op to the Op_chain.
+    re_run = False
     found = False
     for k, v in prev_opts.iteritems():
         if v != new_opts[k] and k not in hidden_opts:
-            found = False
+            re_run = True
             if k in readimage_opts:
                 if hasattr(img, 'use_io'): del img.use_io
-                if hasattr(img, 'image'): del img.image
+                if hasattr(img, 'image_arr'): del img.image_arr
                 while 'readimage' in img.completed_Ops:
                     img.completed_Ops.remove('readimage')
                 found = True
             if k in collapse_opts:
-                if hasattr(img, 'mask'): del img.mask_arr
-                if hasattr(img, 'ch0'): del img.ch0_arr
+                if hasattr(img, 'mask_arr'): del img.mask_arr
+                if hasattr(img, 'ch0_arr'): del img.ch0_arr
                 while 'collapse' in img.completed_Ops:
                     img.completed_Ops.remove('collapse')
                 found = True
@@ -197,11 +205,14 @@ def get_op_chain(img):
                     img.completed_Ops.remove('preprocess')
                 found = True
             if k in rmsimage_opts:
-                if hasattr(img, 'rms'): del img.rms
-                if hasattr(img, 'mean'): del img.mean
-                if hasattr(img, 'rms_QUV'): del img.rms_QUV
-                if hasattr(img, 'mean_QUV'): del img.mean_QUV
-                if hasattr(img, 'rms_mask'): del img.rms_mask
+                if hasattr(img, 'rms_arr'): del img.rms_arr
+                if hasattr(img, 'mean_arr'): del img.mean_arr
+                if hasattr(img, 'rms_Q_arr'): del img.rms_Q_arr
+                if hasattr(img, 'mean_Q_arr'): del img.mean_Q_arr
+                if hasattr(img, 'rms_U_arr'): del img.rms_U_arr
+                if hasattr(img, 'mean_U_arr'): del img.mean_U_arr
+                if hasattr(img, 'rms_V_arr'): del img.rms_V_arr
+                if hasattr(img, 'mean_V_arr'): del img.mean_V_arr
                 while 'rmsimage' in img.completed_Ops:
                     img.completed_Ops.remove('rmsimage')
                 found = True
@@ -249,10 +260,10 @@ def get_op_chain(img):
                     img.completed_Ops.remove('polarisation')
                 found = True
             if k in make_residimage_opts:
-                if hasattr(img, 'resid_gaus'): del img.resid_gaus
-                if hasattr(img, 'model_gaus'): del img.model_gaus
-                if hasattr(img, 'resid_shap'): del img.resid_shap
-                if hasattr(img, 'model_shap'): del img.model_shap
+                if hasattr(img, 'resid_gaus_arr'): del img.resid_gaus_arr
+                if hasattr(img, 'model_gaus_arr'): del img.model_gaus_arr
+                if hasattr(img, 'resid_shap_arr'): del img.resid_shap_arr
+                if hasattr(img, 'model_shap_arr'): del img.model_shap_arr
                 while 'make_residimage' in img.completed_Ops:
                     img.completed_Ops.remove('make_residimage')
                 found = True
@@ -263,23 +274,42 @@ def get_op_chain(img):
             if not found:
                 break
 
-    # If a changed option is not in any of the above lists (or no options
-    # have changed), force a re-run of all Ops.
+    # If nothing has changed, ask if user wants to re-run
+    if not found and not re_run:
+        prompt = "Analysis appears to be up-to-date. Force reprocessing (y/n)? "
+        answ = raw_input_no_history(prompt)
+        while answ.lower() not in  ['y', 'n', 'yes', 'no']:
+            answ = raw_input_no_history(prompt)
+        if answ.lower() in ['y', 'yes']:
+            re_run = True # Force re-run
+        else:
+            return img, None
+
+    # If a changed option is not in any of the above lists,
+    # force a re-run of all Ops.
     if not found:
         del img.completed_Ops
-        if hasattr(img, 'rms'): del img.rms
-        if hasattr(img, 'mean'): del img.mean
-        if hasattr(img, 'rms_QUV'): del img.rms_QUV
-        if hasattr(img, 'mean_QUV'): del img.mean_QUV
-        if hasattr(img, 'rms_mask'): del img.rms_mask
+        if hasattr(img, 'use_io'): del img.use_io
+        if hasattr(img, 'image_arr'): del img.image_arr
+        if hasattr(img, 'mask_arr'): del img.mask_arr
+        if hasattr(img, 'ch0_arr'): del img.ch0_arr
+        if hasattr(img, 'rms_arr'): del img.rms_arr
+        if hasattr(img, 'mean_arr'): del img.mean_arr
+        if hasattr(img, 'rms_Q_arr'): del img.rms_Q_arr
+        if hasattr(img, 'mean_Q_arr'): del img.mean_Q_arr
+        if hasattr(img, 'rms_U_arr'): del img.rms_U_arr
+        if hasattr(img, 'mean_U_arr'): del img.mean_U_arr
+        if hasattr(img, 'rms_V_arr'): del img.rms_V_arr
+        if hasattr(img, 'mean_V_arr'): del img.mean_V_arr
+        if hasattr(img, 'islands'): del img.islands
         if hasattr(img, 'sources'): del img.sources
         if hasattr(img, 'dsources'): del img.dsources
         if hasattr(img, 'gaussians'): del img.gaussians
         if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
-        if hasattr(img, 'resid_gaus'): del img.resid_gaus
-        if hasattr(img, 'model_gaus'): del img.model_gaus
-        if hasattr(img, 'resid_shap'): del img.resid_shap
-        if hasattr(img, 'model_shap'): del img.model_shap
+        if hasattr(img, 'resid_gaus_arr'): del img.resid_gaus_arr
+        if hasattr(img, 'model_gaus_arr'): del img.model_gaus_arr
+        if hasattr(img, 'resid_shap_arr'): del img.resid_shap_arr
+        if hasattr(img, 'model_shap_arr'): del img.model_shap_arr
         return img, Op_chain
 
     while 'outlist' in img.completed_Ops:
@@ -297,9 +327,9 @@ def get_op_chain(img):
 def load_pars(filename):
     """Load parameters from a save file or dictionary.
 
-    The file must be a pickled opts dictionary.
+    If a file is given, it must be a pickled opts dictionary.
 
-    filename - name of options file to load.
+    filename - name of options file to load or a dictionary of opts.
     Returns None (and original error) if no file can be loaded successfully.
     """
     from image import Image
@@ -881,7 +911,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "ds9"   - ds9 region file
         "star"  - AIPS STAR file (Gaussian list only)
         "kvis"  - kvis file (Gaussian list only)
-        "sagecal" - Sagecal file (Gaussian list only)
+        "sagecal" - SAGECAL file (Gaussian list only)
     srcroot - root for source and patch names (BBS/ds9 only);
               if None, the srcroot is chosen automatically
     bbs_patches - type of patches to use:

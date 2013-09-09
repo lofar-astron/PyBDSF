@@ -543,22 +543,15 @@ class Opts(object):
                                  "PA of the line joining them, they belong to the "\
                                  "same island.",
                              group = "advanced_opts")
-    blank_zeros = Bool(False,
-                             doc = "Blank zeros in the image\n"\
-                                "If True, all pixels with a value of 0 are blanked."\
-                                "If False, any such pixels are left unblanked (and "\
-                                "hence will affect the rms and mean maps, etc.). "\
+    blank_limit = Option(None, Float(),
+                             doc = "Limit in Jy/beam below which pixels are blanked. "\
+                                "None => no such blanking is done\n"\
+                                "All pixels in the ch0 image with a value less than the "\
+                                "specified limit and with at least 4 neighboring pixels "\
+                                "with values also less than this limit are blanked. "\
+                                "If None, any such pixels are left unblanked. "\
                                 "Pixels with a value of NaN are always blanked.",
                              group = "advanced_opts")
-#     blank_lowrms = Bool(False,
-#                              doc = "Blank pixels where local rms falls below "\
-#                                 "0.001 * clipped_rms\n"\
-#                                 "If True, all pixels with a local value of the rms "\
-#                                 "of 0.001 times the clipped rms value of the image "\
-#                                 "are blanked."\
-#                                 "If False, any such pixels are left unblanked. "\
-#                                 "Pixels with a value of NaN are always blanked.",
-#                              group = "advanced_opts")
     detection_image = String(doc = "Detection image file name used only for detecting "\
                                  "islands of emission. Source measurement is still done "\
                                  "on the main image\n"\
@@ -1140,9 +1133,9 @@ class Opts(object):
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
                              group = 'hidden')
-    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis',
+    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis', 'sagecal',
                              doc = "Format of output catalog: 'bbs', "\
-                                 "'ds9', 'fits', 'star', 'kvis', or 'ascii'\n"\
+                                 "'ds9', 'fits', 'star', 'kvis', 'ascii', or 'sagecal'\n"\
                                  "The following formats are supported:\n"\
                                  "'bbs' - BlackBoard Selfcal sky model format "\
                                  "(Gaussian list only)\n"\
@@ -1153,6 +1146,7 @@ class Opts(object):
                                  "'star' - AIPS STAR format (Gaussian list only)\n"\
                                  "'kvis' - kvis format (Gaussian list only)\n"\
                                  "'ascii' - simple text file\n"\
+                                 "'sagecal' - SAGECAL format (Gaussian list only)\n"\
                                  "Catalogues with the 'fits' and 'ascii' formats "\
                                  "include all available information (see headers "\
                                  "of the output file for column definitions). The "\
