@@ -192,7 +192,7 @@ class Op_wavelet_atrous(Op):
                         for wvindx, wvisl in enumerate(wimg.islands):
                             wvisl.island_id = wvindx
 
-                if isinstance(op, Op_gaul2srl):
+                if isinstance(op, Op_gausfit):
                   # Restrict Gaussians to original ch0 islands.
                   gaul = wimg.gaussians
                   tot_flux = 0.0
@@ -203,7 +203,6 @@ class Op_wavelet_atrous(Op):
                       gaus_id = img.gaussians[-1].gaus_num
                   wvgaul = []
                   for g in gaul:
-                      gaus_id += 1
                       if not hasattr(g, 'valid'):
                           g.valid = False
                       if not g.valid:
@@ -216,6 +215,7 @@ class Op_wavelet_atrous(Op):
                               gcenter = (g.centre_pix[0] - isl.origin[0],
                                          g.centre_pix[1] - isl.origin[1])
                               if not isl.mask_active[gcenter]:
+                                  gaus_id += 1
                                   gcp = Gaussian(img, g.parameters[:], isl.island_id, gaus_id)
                                   gcp.gaus_num = gaus_id
                                   gcp.wisland_id = g.island_id

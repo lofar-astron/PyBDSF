@@ -259,7 +259,6 @@ class Op_spectralindex(Op):
         of all channels, flag them.
 
         """
-
         # crms_rms and median dont include rms=0 channels
         nchan = len(crms)
         mean, rms, cmean, crms_rms, cnt = _cbdsm.bstat(crms, zeroflags, cutoff)

@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.7.0'
+__version__ = '1.7.5'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,49 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2013/09/05 - Renamed blank_zeros to blank_limit. The blank_limit
+        option now specifies a limit below which pixels are blanked.
+
+    2013/09/05 - Enabled SAGECAL sky-model output.
+
+    2013/09/02 - Version 1.7.5
+
+    2013/09/02 - Fix to bug that caused a crash when images with 2 or
+        3 axes were used. Improved rms and mean calculation (following the
+        implementation used in PySE, see http://dare.uva.nl/document/174052
+        for details). The threshold used to determine the clipped rms and
+        mean values is now determined internally by default (kappa_clip =
+        None).
+
+    2013/08/27 - Version 1.7.4
+
+    2013/08/29 - Fix to bug in show_fit() that caused error when
+        'i' is pressed in the plot window and shapelet decomposition
+        had not been done. Tweak to 'pybdsm' startup shell script to
+        avoid problems with the Mac OS X matplotlib backend on non-
+        framework Python installations (such as Anaconda Python).
+
+    2013/08/28 - Fix to bug in process_image() that could result in
+        wavelet Gaussians being excluded from model image under certain
+        conditions.
+
+    2013/08/27 - Version 1.7.3
+
+    2013/08/27 - Fix to bug in image reading that caused images to be
+        distorted.
+
+    2013/08/23 - Version 1.7.2
+
+    2013/08/23 - Improved handling of non-standard FITS CUNIT keywords.
+        Improved loading of FITS images when trim_box is specified.
+
+    2013/08/22 - Version 1.7.1
+
+    2013/08/21 - Fix to bug that caused cached images to be deleted when
+        rerunning an analysis. Fix to bug in show_fit() due to undefined
+        images. Fix to bug in process_image() that would result in unneeded
+        reprocessing.
 
     2013/08/20 - Version 1.7.0
 
