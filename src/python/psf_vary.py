@@ -34,6 +34,21 @@ class Op_psf_vary(Op):
         plot = False # debug figures
         image = img.ch0_arr
 
+        try:
+            from astropy.io import fits as pyfits
+            old_pyfits = False
+        except ImportError, err:
+            from distutils.version import StrictVersion
+            import pyfits
+            if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
+                old_pyfits = True
+            else:
+                old_pyfits = False
+
+        if old_pyfits:
+            mylog.warning('PyFITS version is too old: psf_vary module skipped')
+            return
+
         over = 2
         generators = opts.psf_generators; nsig = opts.psf_nsig; kappa2 = opts.psf_kappa2
         snrtop = opts.psf_snrtop; snrbot = opts.psf_snrbot; snrcutstack = opts.psf_snrcutstack

@@ -9,15 +9,7 @@ from image import Op
 class Op_outlist(Op):
     """Write out list of Gaussians
 
-    Currently 6 output formats are supported:
-    - FIST list
-    - BBS list
-    - star list
-    - kvis annotations
-    - ascii list
-    - ds9 region list
-
-    All output lists are generated atm.
+    All available output lists are generated atm.
     """
     def __call__(self, img):
         if img.opts.output_all:
@@ -27,6 +19,7 @@ class Op_outlist(Op):
                 if not os.path.exists(dir):
                     os.makedirs(dir)
                 self.write_bbs(img, dir)
+                self.write_lsm(img, dir)
                 self.write_gaul(img, dir)
                 self.write_srl(img, dir)
                 self.write_aips(img, dir)
@@ -58,17 +51,26 @@ class Op_outlist(Op):
                        clobber=True, incl_empty=img.opts.incl_empty,
                        correct_proj=img.opts.correct_proj)
 
+    def write_lsm(self, img, dir):
+        """ Writes the gaussian list as an SAGECAL file"""
+        fname = dir + img.imagename + '.lsm'
+        write_lsm_gaul(img, filename=fname, sort_by='indx',
+                         clobber=True,
+                         incl_empty=img.opts.incl_empty)
+
     def write_gaul(self, img, dir):
         """ Writes the gaussian list as an ASCII file"""
         fname = dir + img.imagename + '.gaul'
         write_ascii_list(img, filename=fname, sort_by='indx',
-                         clobber=True, objtype='gaul')
+                         clobber=True, objtype='gaul',
+                         incl_empty=img.opts.incl_empty)
 
     def write_srl(self, img, dir):
         """ Writes the source list as an ASCII file"""
         fname = dir + img.imagename + '.srl'
         write_ascii_list(img, filename=fname, sort_by='indx',
-                         clobber=True, objtype='srl')
+                         clobber=True, objtype='srl',
+                         incl_empty=img.opts.incl_empty)
 
     def write_aips(self, img, dir):
         """ Writes the gaussian list an AIPS STAR file"""
@@ -86,19 +88,22 @@ class Op_outlist(Op):
         """ Writes the gaussian list as a ds9 region file"""
         fname = dir + img.imagename + '.' + objtype + '.ds9.reg'
         write_ds9_list(img, filename=fname, srcroot=img.opts.srcroot,
-                       clobber=True, deconvolve=False, objtype=objtype)
+                       clobber=True, deconvolve=False, objtype=objtype,
+                       incl_empty=img.opts.incl_empty,)
 
     def write_gaul_FITS(self, img, dir):
         """ Writes the gaussian list as FITS binary table"""
         fname = dir + img.imagename+'.gaul.FITS'
         write_fits_list(img, filename=fname, sort_by='indx',
-                        clobber=True, objtype='gaul')
+                        clobber=True, objtype='gaul',
+                        incl_empty=img.opts.incl_empty,)
 
     def write_srl_FITS(self, img, dir):
         """ Writes the source list as FITS binary table"""
         fname = dir + img.imagename+'.srl.FITS'
         write_fits_list(img, filename=fname, sort_by='indx',
-                        clobber=True, objtype='srl')
+                        clobber=True, objtype='srl',
+                        incl_empty=img.opts.incl_empty,)
 
     def write_shap_FITS(self, img, dir):
         """ Writes the shapelet list as a FITS file"""
@@ -237,7 +242,7 @@ def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
 def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
                    incl_primary=True, sort_by='flux',
                    clobber=False, incl_empty=False):
-    """Writes Gaussian list to a Sagecal lsm sky model"""
+    """Writes Gaussian list to a SAGECAL lsm sky model"""
     import numpy as N
     from const import fwsig
     import mylogger
@@ -596,7 +601,7 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                   deconv3 = str("%.5e" % (deconv[2]))
                   deconvstr = deconv1 + ', ' + deconv2 + ', ' + deconv3
                   specin = '-0.8'
-                  if hasattr(g, 'spec_indx'):
+                  if 'spectralindex' in img.completed_Ops:
                       if g.spec_indx != None and N.isfinite(g.spec_indx):
                           specin = str("%.3e" % (g.spec_indx))
                   sep = ', '
@@ -668,17 +673,19 @@ def make_bbs_shapeletfiles(img):
         return filename
 
 
-
 def make_lsm_str(img, glist, gnames, incl_empty=False):
-    """Makes a list of string entries for a BBS sky model."""
+    """Makes a list of string entries for a SAGECAL sky model."""
     from output import ra2hhmmss
     from output import dec2ddmmss
     from const import fwsig
     import numpy as N
+    from _version import __version__, __revision__
 
-    outstr_list = []
+    outstr_list = ["# SAGECAL sky model\n"]
     freq = "%.5e" % img.frequency
-    outstr_list.append("## LSM file\n### Name  | RA (hr,min,sec) | DEC (deg,min,sec) | I | Q | U | V | SI | RM | eX | eY | eP | freq0\n\n")
+    outstr_list.append('# Generated by PyBDSM version %s (LOFAR revision %s)\n'
+                       % (__version__, __revision__))
+    outstr_list.append("# Name  | RA (hr,min,sec) | DEC (deg,min,sec) | I | Q | U | V | SI | RM | eX | eY | eP | freq0\n\n")
     for gindx, g in enumerate(glist[0]):
         if g.gaus_num >= 0 or (g.gaus_num < 0 and incl_empty):
             src_name = gnames[0][gindx]
@@ -690,34 +697,38 @@ def make_lsm_str(img, glist, gnames, incl_empty=False):
             dec = dec2ddmmss(dec)
             decsign = ('-' if dec[3] < 0 else '+')
             sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
-            size = g.size_sky #  degrees, in terms of FWHM
-            src_area = 1.1331*size[0]*size[1]*fwsig*fwsig*3600.0**2 # area of source in arcsec**2
-            peak = str("%.3e" % (g.total_flux/src_area)) # peak flux in Jy/arcsec**2
+            total = str("%.3e" % (g.total_flux))
             deconv = g.deconv_size_sky
             if deconv[0] == 0.0  and deconv[1] == 0.0:
                 sname = 'P' + src_name
                 deconv[2] = 0.0
             else:
                 sname = 'G' + src_name
+                # Make sure Gaussian is not 1-D, as SAGECAL cannot handle these
+                if deconv[0] < 1e-5:
+                    deconv[0] = 1e-5
+                if deconv[1] < 1e-5 :
+                    deconv[1] = 1e-5
+            # The following conversions taken from the SABECAL script "convert_skymodel.py"
             deconv1 = str("%.5e" % (deconv[0]*N.pi/180.0/2.0))
             deconv2 = str("%.5e" % (deconv[1]*N.pi/180.0/2.0))
-            deconv3 = str("%.5e" % (deconv[2]*N.pi/180.0/2.0))
+            deconv3 = str("%.5e" % (N.pi/2-(N.pi-deconv[2]/180.0*N.pi)))
             deconvstr = deconv1 + ' ' + deconv2 + ' ' + deconv3
             specin = '-0.8'
-            if hasattr(g, 'spec_indx'):
+            if 'spectralindex' in img.completed_Ops:
                 if g.spec_indx != None and N.isfinite(g.spec_indx):
                     specin = str("%.3e" % (g.spec_indx))
             sep = ' '
             if img.opts.polarisation_do:
-                Q_flux = str("%.3e" % (g.total_flux_Q/src_area))
-                U_flux = str("%.3e" % (g.total_flux_U/src_area))
-                V_flux = str("%.3e" % (g.total_flux_V/src_area))
+                Q_flux = str("%.3e" % g.total_flux_Q)
+                U_flux = str("%.3e" % g.total_flux_U)
+                V_flux = str("%.3e" % g.total_flux_V)
             else:
                 Q_flux = '0.0'
                 U_flux = '0.0'
                 V_flux = '0.0'
             outstr_list.append(sname + sep + sra + sep +
-                                   sdec + sep + peak + sep + Q_flux + sep +
+                                   sdec + sep + total + sep + Q_flux + sep +
                                    U_flux + sep + V_flux + sep +
                                    specin + sep + '0' + sep + deconvstr + sep +
                                    freq + sep + '\n')

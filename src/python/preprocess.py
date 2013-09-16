@@ -38,6 +38,12 @@ class Op_preprocess(Op):
 
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Preprocess")
+        bstat = func.bstat
+        if img.opts.kappa_clip is None:
+            kappa = -img.pixel_beamarea()
+        else:
+            kappa = img.opts.kappa_clip
+
         if img.opts.polarisation_do:
           pols = ['I', 'Q', 'U', 'V']
           ch0images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
@@ -52,12 +58,12 @@ class Op_preprocess(Op):
         else:
             mask = img.mask_arr
         opts = img.opts
-        kappa = opts.kappa_clip
+
         for ipol, pol in enumerate(pols):
           image = ch0images[ipol]
 
           ### basic stats
-          mean, rms, cmean, crms, cnt = _cbdsm.bstat(image, mask, kappa)
+          mean, rms, cmean, crms, cnt = bstat(image, mask, kappa)
           if cnt > 198: cmean = mean; crms = rms
           if pol == 'I':
             if func.approx_equal(crms, 0.0, rel=None):
@@ -70,13 +76,13 @@ class Op_preprocess(Op):
             img.clipped_rms = crms
             mylog.info('%s %.4f %s %.4f %s ' % ("Raw mean (Stokes I) = ", mean*1000.0, \
                        'mJy and raw rms = ',rms*1000.0, 'mJy'))
-            mylog.info('%d %s %.4f %s %d %s %.4f %s ' % (kappa,"sigma clipped mean (Stokes I) = ", cmean*1000.0, \
-                       'mJy and ',kappa,'sigma clipped rms = ',crms*1000.0, 'mJy'))
+            mylog.info('%s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes I) = ", cmean*1000.0, \
+                       'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
           else:
             img.clipped_mean_QUV.append(cmean)
             img.clipped_rms_QUV.append(crms)
-            mylog.info('%d %s %s %s %.4f %s %d %s %.4f %s ' % (kappa,"sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
-                       'mJy and ',kappa,'sigma clipped rms = ',crms*1000.0, 'mJy'))
+            mylog.info('%s %s %s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
+                       'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
 
         image = img.ch0_arr
         # Check if pixels are outside the universe

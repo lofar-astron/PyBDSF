@@ -318,7 +318,8 @@ The advanced options are:
                                    fluxes measured
       :term:`aperture_posn` .. 'centroid': Position the aperture (if aperture is not None) on: 'centroid' or
                                    'peak' of the source.
-      :term:`blank_zeros` ........ False : Blank zeros in the image
+      :term:`blank_limit` ......... None : Limit in Jy/beam below which pixels are blanked. None => no such
+                                   blanking is done
       :term:`bmpersrc_th` ......... None : Theoretical estimate of number of beams per
                                    source. None => calculate inside program
       :term:`check_outsideuniv` .. False : Check for pixels outside the universe
@@ -392,9 +393,11 @@ The advanced options are:
         If 'peak', the aperture is centered on the source peak. If aperture=None
         (i.e., no aperture radius is specified), this parameter is ignored.
 
-    blank_zeros
-        This parameter is a Boolean (default is ``False``). If ``True``, all
-        pixels in the input image with values of 0.0 are blanked. If ``False``,
+    blank_limit
+        This parameter is a float (default is ``None``) that sets the limit in
+        Jy/beam below which pixels are blanked. All pixels in the ch0 image with
+        a value less than the specified limit and with at least 4 neighboring
+        pixels with values also less than this limit are blanked. If ``None``,
         any such pixels are left unblanked (and hence will affect the rms and
         mean maps, etc.). Pixels with a value of NaN are always blanked.
 
