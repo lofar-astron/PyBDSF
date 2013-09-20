@@ -728,6 +728,7 @@ _set_current_cmd(process_image)
 # greater is in common use.
 try:
     # IPython >= 0.11
+    from distutils.version import StrictVersion
     from IPython import __version__ as ipython_version
     if StrictVersion(ipython_version) < StrictVersion('1.0.0'):
         from IPython.frontend.terminal.embed import InteractiveShellEmbed
