@@ -11,7 +11,6 @@ if has_pl:
     import matplotlib.pyplot as pl
 import _cbdsm
 from math import log, floor, sqrt
-# import scipy.signal as S
 from const import fwsig
 from copy import deepcopy as cp
 import functions as func

@@ -86,6 +86,13 @@ class Image(object):
         else:
             super(Image, self).__setattr__(name, value)
 
+    def __delattr__(self, name):
+        import functions as func
+        if self.do_cache and name.endswith("_arr"):
+            func.del_map(self, name)
+        else:
+            super(Image, self).__delattr__(name)
+
     def get_map(self, map_name):
         """Returns requested map."""
         import functions as func
