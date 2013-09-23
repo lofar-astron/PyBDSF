@@ -1534,6 +1534,14 @@ def store_map(img, map_name, map_data):
     N.save(outfile, map_data)
     outfile.close()
 
+def del_map(img, map_name):
+    """Deletes a cached map."""
+    import os
+
+    filename = get_name(img, map_name)
+    if os.path.isfile(filename):
+        os.remove(filename)
+
 def get_name(img, map_name):
     """Returns name of cache file."""
     import os
