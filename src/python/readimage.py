@@ -96,8 +96,10 @@ class Op_readimage(Op):
             tmpdir = img.parentname+'_tmp'
             if not os.path.exists(tmpdir):
                 os.makedirs(tmpdir)
-                img._tempdir_parent = TempDir(tmpdir)
+            img._tempdir_parent = TempDir(tmpdir)
             img.tempdir = TempDir(tempfile.mkdtemp(dir=tmpdir))
+            import atexit, shutil
+            atexit.register(shutil.rmtree, img._tempdir_parent, ignore_errors=True)
         else:
             img.tempdir = None
 
@@ -597,5 +599,7 @@ class TempDir(str):
 
     Directory is deleted when garbage collected/zero references """
     def __del__(self):
-        shutil.rmtree(self.__str__())
+        import os
+        if os.path.exists(self.__str__()):
+            shutil.rmtree(self.__str__())
 
