@@ -60,14 +60,8 @@ class Op_readimage(Op):
         else:
             img.indir = img.opts.indir
 
-        image_file = os.path.basename(img.opts.filename)
-        result = read_image_from_file(image_file, img, img.indir)
-        if result == None:
-            raise RuntimeError("Cannot open file " + repr(image_file) + ". " + img._reason)
-        else:
-            data, hdr = result
-
-        # Try to trim common extensions from filename
+        # Try to trim common extensions from filename and store various
+        # paths
         root, ext = os.path.splitext(img.opts.filename)
         if ext in ['.fits', '.FITS', '.image']:
             fname = root
@@ -83,6 +77,14 @@ class Op_readimage(Op):
         img.parentname = fname
         img.imagename = fname + '.pybdsm'
         img.basedir = './' + fname + '_pybdsm/'
+
+        # Read in data and header
+        image_file = os.path.basename(img.opts.filename)
+        result = read_image_from_file(image_file, img, img.indir)
+        if result == None:
+            raise RuntimeError("Cannot open file " + repr(image_file) + ". " + img._reason)
+        else:
+            data, hdr = result
 
         # Check whether caching is to be used. If it is, set up a
         # temporary directory. The temporary directory will be
