@@ -728,9 +728,13 @@ _set_current_cmd(process_image)
 # greater is in common use.
 try:
     # IPython >= 0.11
-    from IPython.frontend.terminal.embed import InteractiveShellEmbed
-    from IPython.config.loader import Config
+    from distutils.version import StrictVersion
     from IPython import __version__ as ipython_version
+    if StrictVersion(ipython_version) < StrictVersion('1.0.0'):
+        from IPython.frontend.terminal.embed import InteractiveShellEmbed
+    else:
+        from IPython.terminal.embed import InteractiveShellEmbed
+    from IPython.config.loader import Config
     cfg = Config()
     prompt_config = cfg.PromptManager
     if ipython_version == '0.11':

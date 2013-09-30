@@ -1179,7 +1179,8 @@ def read_image_from_file(filename, img, indir, quiet=False):
     if not quiet:
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
-        hdr = convert_pyrap_header(inputimage)
+        tmpdir = img.parentname+'_tmp'
+        hdr = convert_pyrap_header(inputimage, tmpdir)
     if img.use_io == 'fits':
         hdr = fits[0].header
 
@@ -1333,17 +1334,28 @@ def read_image_from_file(filename, img, indir, quiet=False):
     return data, hdr
 
 
-def convert_pyrap_header(pyrap_image):
+def convert_pyrap_header(pyrap_image, tmpdir):
     """Converts a pyrap header to a PyFITS header."""
     import tempfile
+    import os
+    import atexit
+    import shutil
     try:
         from astropy.io import fits as pyfits
     except ImportError, err:
         import pyfits
 
-    tfile = tempfile.NamedTemporaryFile(delete=False)
+    if not os.path.exists(tmpdir):
+        os.makedirs(tmpdir)
+    tfile = tempfile.NamedTemporaryFile(delete=False, dir=tmpdir)
     pyrap_image.tofits(tfile.name)
     hdr = pyfits.getheader(tfile.name)
+    if os.path.isfile(tfile.name):
+        os.remove(tfile.name)
+
+    # Register deletion of temp directory at exit to be sure it is deleted
+    atexit.register(shutil.rmtree, tmpdir, ignore_errors=True)
+
     return hdr
 
 
@@ -1533,6 +1545,14 @@ def store_map(img, map_name, map_data):
     outfile = file(filename, 'wb')
     N.save(outfile, map_data)
     outfile.close()
+
+def del_map(img, map_name):
+    """Deletes a cached map."""
+    import os
+
+    filename = get_name(img, map_name)
+    if os.path.isfile(filename):
+        os.remove(filename)
 
 def get_name(img, map_name):
     """Returns name of cache file."""
