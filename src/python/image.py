@@ -23,6 +23,13 @@ class Image(object):
     are defined for the most basic image attributes, such
     as image data, mask, header, user options.
 
+    To allow transparent caching of large image data to disk,
+    the image data must be stored in attributes ending in
+    "_arr". Additionally, setting subarrays does not work
+    using the attributes directly (e.g., img.ch0_arr[0:100,0:100]
+    = 0.0 will not work). Instead, set the subarray values then set
+    the attribute (e.g., ch0[0:100,0:100] = 0.0; img.ch0_arr = ch0).
+
     There is little sense in declaring all possible attributes
     right here as it will introduce unneeded dependencies
     between modules, thus most other attributes (like island lists,
@@ -30,30 +37,22 @@ class Image(object):
     PyBDSM modules.
     """
     opts   = Instance(Opts, doc="User options")
-    image  = NArray(doc="Image data, Stokes I")
-    ch0    = NArray(doc="Channel-collapsed image data, Stokes I")
-    ch0_Q  = NArray(doc="Channel-collapsed image data, Stokes Q")
-    ch0_U  = NArray(doc="Channel-collapsed image data, Stokes U")
-    ch0_V  = NArray(doc="Channel-collapsed image data, Stokes V")
     header = Any(doc="Image header")
-    mask   = NArray(doc="Image mask (if present and attribute masked is set)")
     masked = Bool(False, doc="Flag if mask is present")
     basedir = String('DUMMY', doc="Base directory for output files")
     completed_Ops = List(String(), doc="List of completed operations")
     _is_interactive_shell = Bool(False, doc="PyBDSM is being used in the interactive shell")
     waveletimage = Bool(False, doc="Image is a wavelet transform image")
     _pi = Bool(False, doc="Image is a polarized intensity image")
-
-
+    do_cache = Bool(False, doc="Cache images to disk")
 
     def __init__(self, opts):
         self.opts = Opts(opts)
+        self._prev_opts = None
         self.extraparams = {}
 
     def __setstate__(self, state):
         """Needed for multiprocessing"""
-#         self.pixel_beamarea = state['pixel_beamarea']
-#         self.pixel_beam = state['pixel_beam']
         self.thresh_pix = state['thresh_pix']
         self.minpix_isl = state['minpix_isl']
         self.clipped_mean = state['clipped_mean']
@@ -61,12 +60,55 @@ class Image(object):
     def __getstate__(self):
         """Needed for multiprocessing"""
         state = {}
-#         state['pixel_beamarea'] = self.pixel_beamarea
-#         state['pixel_beam'] = self.pixel_beam
         state['thresh_pix'] = self.thresh_pix
         state['minpix_isl'] = self.minpix_isl
         state['clipped_mean'] = self.clipped_mean
         return state
+
+    def __getattribute__(self, name):
+        import functions as func
+        if name.endswith("_arr"):
+            if self.do_cache:
+                map_data = func.retrieve_map(self, name)
+                if map_data != None:
+                    return map_data
+                else:
+                    return object.__getattribute__(self, name)
+            else:
+                return object.__getattribute__(self, name)
+        else:
+            return object.__getattribute__(self, name)
+
+    def __setattr__(self, name, value):
+        import functions as func
+        if self.do_cache and name.endswith("_arr") and isinstance(value, N.ndarray):
+            func.store_map(self, name, value)
+        else:
+            super(Image, self).__setattr__(name, value)
+
+    def __delattr__(self, name):
+        import functions as func
+        if self.do_cache and name.endswith("_arr"):
+            func.del_map(self, name)
+        else:
+            super(Image, self).__delattr__(name)
+
+    def get_map(self, map_name):
+        """Returns requested map."""
+        import functions as func
+        if self.do_cache:
+            map_data = func.retrieve_map(self, map_name)
+        else:
+            map_data = getattr(self, map_name)
+        return map_data
+
+    def put_map(self, map_name, map_data):
+        """Stores requested map."""
+        import functions as func
+        if self.do_cache:
+            func.store_map(self, map_name, map_data)
+        else:
+            setattr(self, map_name, map_data)
 
     def list_pars(self):
         """List parameter values."""

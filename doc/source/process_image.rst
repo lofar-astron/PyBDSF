@@ -318,13 +318,15 @@ The advanced options are:
                                    fluxes measured
       :term:`aperture_posn` .. 'centroid': Position the aperture (if aperture is not None) on: 'centroid' or
                                    'peak' of the source.
-      :term:`blank_zeros` ........ False : Blank zeros in the image
+      :term:`blank_limit` ......... None : Limit in Jy/beam below which pixels are blanked. None => no such
+                                   blanking is done
       :term:`bmpersrc_th` ......... None : Theoretical estimate of number of beams per
                                    source. None => calculate inside program
       :term:`check_outsideuniv` .. False : Check for pixels outside the universe
       :term:`detection_image` ........ '': Detection image file name used only for
                                    detecting islands of emission. Source
                                    measurement is still done on the main image
+      :term:`do_cache` ........... False : Cache internally derived images to disk
       :term:`do_mc_errors` ....... False : Estimate uncertainties for 'M'-type sources
                                    using Monte Carlo method
       :term:`fdr_alpha` ........... 0.05 : Alpha for FDR algorithm for thresholds
@@ -391,9 +393,11 @@ The advanced options are:
         If 'peak', the aperture is centered on the source peak. If aperture=None
         (i.e., no aperture radius is specified), this parameter is ignored.
 
-    blank_zeros
-        This parameter is a Boolean (default is ``False``). If ``True``, all
-        pixels in the input image with values of 0.0 are blanked. If ``False``,
+    blank_limit
+        This parameter is a float (default is ``None``) that sets the limit in
+        Jy/beam below which pixels are blanked. All pixels in the ch0 image with
+        a value less than the specified limit and with at least 4 neighboring
+        pixels with values also less than this limit are blanked. If ``None``,
         any such pixels are left unblanked (and hence will affect the rms and
         mean maps, etc.). Pixels with a value of NaN are always blanked.
 
@@ -428,6 +432,12 @@ The advanced options are:
         measurement is still done on the main image. The detection image can be
         a FITS or CASA 2-, 3-, or 4-D cube and must have the same size and WCS
         parameters as the main image.
+
+    do_cache
+        This parameter is a Boolean (default is ``False``) that controls
+        whether internally derived images are stored in memory or are cached
+        to disk. Caching can reduce the amount of memory used, and is
+        therefore useful when analyzing large images.
 
     do_mc_errors
         This parameter is a Boolean (default is ``False``). If ``True``,
@@ -478,7 +488,7 @@ The advanced options are:
         (Gaussian-reconstructed) value less than the island threshold, and 2.
         the centers are separated by a distance less than half the sum of their
         FWHMs along the line joining them. If ``'curvature'``, the above
-        comparisons are done on the curature map (see Hopkins et al. 2012). If
+        comparisons are done on the curature map (see Hancock et al. 2012). If
         ``'intensity'``, the comparisons are done on the intensity map.
 
     group_tol
@@ -511,7 +521,7 @@ The advanced options are:
         This parameter is a string (default is ``'intensity'``). If
         ``'intensity'``, the inital guess described in the help for the
         ``ini_gausfit`` parameter is calculated using the intensity (ch0) image.
-        If ``'curvature'``, it is done using the curvature map (see Hopkins et
+        If ``'curvature'``, it is done using the curvature map (see Hancock et
         al. 2012).
 
     kappa_clip
@@ -592,7 +602,8 @@ The advanced options are:
     src_radius_pix
         This parameter is a float (default is ``None``) that determines the size
         of the region used to fit the source positions specified by the
-        ``src_ra_dec`` parameter.
+        ``src_ra_dec`` parameter. If ``None``, the radius is set to the FWHM of
+        the beam major axis.
 
     stop_at
         This parameter is a string (default is ``None``) that stops an analysis

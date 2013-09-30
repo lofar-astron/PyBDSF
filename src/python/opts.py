@@ -232,7 +232,7 @@ class Opts(object):
                                  "use sigma clipping\nIf thresh = 'hard', "\
                                  "then a hard threshold is assumed, given by thresh_pix. "\
                                  "If thresh = 'fdr', then the False Detection Rate algorithm of "\
-                                 "Hopkins et al. (2002) is used to calculate the value of "\
+                                 "Hancock et al. (2002) is used to calculate the value of "\
                                  "thresh_pix. If thresh is None, then the false detection "\
                                  "probability is first calculated, and if the number of false "\
                                  "source pixels is more than fdr_ratio times the estimated "\
@@ -341,7 +341,7 @@ class Opts(object):
     fdr_alpha = Float(0.05,
                              doc = "Alpha for FDR algorithm for thresholds\n"\
                                  "If thresh is 'fdr', then the estimate of fdr_alpha "\
-                                 "(see Hopkins et al. 2002 for details) is stored "\
+                                 "(see Hancock et al. 2002 for details) is stored "\
                                  "in this parameter.",
                              group = "advanced_opts")
     fdr_ratio = Float(0.1,
@@ -349,8 +349,9 @@ class Opts(object):
                                  "if #false_pix / #source_pix < fdr_ratio, " \
                                  "thresh = 'hard' else thresh = 'fdr'",
                              group = "advanced_opts")
-    kappa_clip = Float(3,
-                             doc = "Kappa for clipped mean and rms\n"\
+    kappa_clip = Option(None, Float(),
+                             doc = "Kappa for clipped mean and rms. None => calculate "\
+                                 "inside program\n"\
                                  "The value of this is the factor used for Kappa-alpha "\
                                  "clipping, as in AIPS. For an image with few source "\
                                  "pixels added on to (Gaussian) noise pixels, the "\
@@ -470,7 +471,7 @@ class Opts(object):
                                  "If 'intensity', the inital guess described in the help for "\
                                  "the ini_gausfit parameter is calculated using the intensity "\
                                  "(ch0) image. If 'curvature', it is done using the curvature "\
-                                 "map (see Hopkins et al. 2012).",
+                                 "map (see Hancock et al. 2012).",
                              group = "advanced_opts")
     fix_to_beam = Bool(False,
                              doc = "Fix major and minor axes and PA of Gaussians to beam?\n"\
@@ -527,7 +528,7 @@ class Opts(object):
                                  "2. the centers are separated by a distance less than "\
                                  "half the sum of their FWHMs along the line joining them.\n"\
                                  "If 'curvature', the above comparisons are done on the "\
-                                 "curature map (see Hopkins et al. 2012). If 'intensity', "\
+                                 "curature map (see Hancock et al. 2012). If 'intensity', "\
                                  "the comparisons are done on the intensity map.",
                              group = "advanced_opts")
     group_tol = Float(1.0,
@@ -542,11 +543,13 @@ class Opts(object):
                                  "PA of the line joining them, they belong to the "\
                                  "same island.",
                              group = "advanced_opts")
-    blank_zeros = Bool(False,
-                             doc = "Blank zeros in the image\n"\
-                                "If True, all pixels with a value of 0 are blanked."\
-                                "If False, any such pixels are left unblanked (and "\
-                                "hence will affect the rms and mean maps, etc.) "\
+    blank_limit = Option(None, Float(),
+                             doc = "Limit in Jy/beam below which pixels are blanked. "\
+                                "None => no such blanking is done\n"\
+                                "All pixels in the ch0 image with a value less than the "\
+                                "specified limit and with at least 4 neighboring pixels "\
+                                "with values also less than this limit are blanked. "\
+                                "If None, any such pixels are left unblanked. "\
                                 "Pixels with a value of NaN are always blanked.",
                              group = "advanced_opts")
     detection_image = String(doc = "Detection image file name used only for detecting "\
@@ -577,6 +580,14 @@ class Opts(object):
                              doc = "Number of cores to use during fitting, None => "\
                                 "use all\n"\
                                 "Sets the number of cores to use during fitting.",
+                             group = "advanced_opts")
+    do_cache = Bool(False,
+                             doc = "Cache internally derived images to disk\n" \
+                                 "This option controls whether internally "\
+                                 "derived images are stored in memory or are "\
+                                 "cached to disk. Caching can reduce the amount "\
+                                 "of memory used, and is therefore useful when "\
+                                 "analyzing large images.",
                              group = "advanced_opts")
 
     #--------------------------------ADAPTIVE RMS_BOX OPTIONS--------------------------------
@@ -1122,9 +1133,9 @@ class Opts(object):
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
                              group = 'hidden')
-    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis',
+    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis', 'sagecal',
                              doc = "Format of output catalog: 'bbs', "\
-                                 "'ds9', 'fits', 'star', 'kvis', or 'ascii'\n"\
+                                 "'ds9', 'fits', 'star', 'kvis', 'ascii', or 'sagecal'\n"\
                                  "The following formats are supported:\n"\
                                  "'bbs' - BlackBoard Selfcal sky model format "\
                                  "(Gaussian list only)\n"\
@@ -1135,6 +1146,7 @@ class Opts(object):
                                  "'star' - AIPS STAR format (Gaussian list only)\n"\
                                  "'kvis' - kvis format (Gaussian list only)\n"\
                                  "'ascii' - simple text file\n"\
+                                 "'sagecal' - SAGECAL format (Gaussian list only)\n"\
                                  "Catalogues with the 'fits' and 'ascii' formats "\
                                  "include all available information (see headers "\
                                  "of the output file for column definitions). The "\
@@ -1383,13 +1395,21 @@ class Opts(object):
                 opts_dict.update({k: self.__getattribute__(k)})
         return opts_dict
 
-    def get_names(self):
-        """Returns a sorted list of names of all opts."""
+    def get_names(self, group=None):
+        """Returns a sorted list of names for all opts.
+
+        If the group name is specified, only opts that belong to that group
+        are returned.
+        """
         import tc
         opts_list = []
         for k, v in self.__class__.__dict__.iteritems():
             if isinstance(v, tc.TC):
-                opts_list.append(k)
+                if group != None:
+                    if v.group() == group:
+                        opts_list.append(k)
+                else:
+                    opts_list.append(k)
         opts_list = sorted(opts_list)
         return opts_list
 

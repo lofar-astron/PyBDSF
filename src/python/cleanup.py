@@ -41,7 +41,7 @@ class Op_cleanup(Op):
             if low1 > low: low = low1
             vmin = log10(im_mean-im_rms*5.0 + low)
             vmax = log10(im_mean+im_rms*15.0 + low)
-            im = N.log10(img.ch0 + low)
+            im = N.log10(img.ch0_arr + low)
 
             pl.imshow(N.transpose(im), origin='lower', interpolation='nearest',vmin=vmin, vmax=vmax, \
                       cmap=cm.gray); pl.colorbar()

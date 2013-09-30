@@ -4,6 +4,62 @@
 What's New
 **********
 
+Version 1.7.6 (2013/09/27):
+
+    * Changed caching behavior to ensure that temporary files are always deleted after they are no longer needed or on exit.
+
+    * Renamed ``blank_zeros`` to ``blank_limit``. The ``blank_limit`` option now specifies a limit below which pixels are blanked.
+
+    * Enabled SAGECAL sky-model output.
+
+Version 1.7.5 (2013/09/02):
+
+    * Fix to bug that caused a crash when images with 2 or 3 axes were used.
+
+    * Improved rms and mean calculation (following the implementation used in PySE, see http://dare.uva.nl/document/174052 for details). The threshold used to determine the clipped rms and mean values is now determined internally by default (i.e., ``kappa_clip = None``).
+
+Version 1.7.4 (2013/08/29):
+
+    * Fix to bug in ``show_fit`` that caused error when ``i`` is pressed in the plot window and shapelet decomposition had not been done.
+
+    * Tweak to ``pybdsm`` startup shell script to avoid problems with the Mac OS X matplotlib backend on non-framework Python installations (such as Anaconda Python).
+
+    * Fix to bug in ``process_image`` that could result in wavelet Gaussians being excluded from model image under certain conditions.
+
+Version 1.7.3 (2013/08/27):
+
+    * Fix to bug in image reading that caused images to be distorted.
+
+Version 1.7.2 (2013/08/23):
+
+    * Improved handling of non-standard FITS CUNIT keywords.
+
+    * Improved loading of FITS images when ``trim_box`` is specified.
+
+Version 1.7.1 (2013/08/22):
+
+    * Fix to bug that caused cached images to be deleted when rerunning an analysis.
+
+    * Fix to bug in ``show_fit`` due to undefined images.
+
+    * Fix to bug in ``process_image`` (and ``img.process()``) that would result in unneeded reprocessing.
+
+Version 1.7.0 (2013/08/20):
+
+    * PyBDSM will now use Astropy if installed for FITS and WCS modules.
+
+    * Fix to avoid excessive memory usage in the wavelet module (replaced ``scipy.signal.fftconvolve`` with a custom function).
+
+    * Added option to use disk caching for internally derived images (``do_cache``). Caching can reduce memory usage and is therefore useful when processing large images.
+
+    * Implemented a variable operation chain for process_image (and ``img.process()``) that allows unneeded steps to be skipped if the image is being reprocessed.
+
+    * Fixed a bug that could cause Gaussian fitting to hang during iterative fitting of large islands.
+
+    * Added option (``fix_to_beam``) to fix the size and position angle of Gaussians to the restoring beam during fitting.
+
+    * Fix to bug that caused the position angle used to initialize fitting to be incorrect.
+
 Version 1.6.1 (2013/03/22):
 
     * Fix to bug in ds9 and kvis catalog files that resulted in incorrect position angles.
@@ -20,7 +76,7 @@ Version 1.6.0 (2013/03/05):
 
     * Improved speed and accuracy of aperture flux calculation.
 
-    * Added option to use the curvature map method of Hopkins et al. (2012) for the initial estimation of Gaussian parameters (``ini_method = 'curvature'``) and for grouping of Gaussians into sources (``group_method = 'curvature'``).
+    * Added option to use the curvature map method of Hancock et al. (2012) for the initial estimation of Gaussian parameters (``ini_method = 'curvature'``) and for grouping of Gaussians into sources (``group_method = 'curvature'``).
 
     * Fix to bug in spectral index module that caused sources with multiple Gaussians to be skipped. Minor adjustments to the wavelet module to improve performance.
 

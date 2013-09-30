@@ -38,26 +38,32 @@ class Op_preprocess(Op):
 
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Preprocess")
+        bstat = func.bstat
+        if img.opts.kappa_clip is None:
+            kappa = -img.pixel_beamarea()
+        else:
+            kappa = img.opts.kappa_clip
+
         if img.opts.polarisation_do:
           pols = ['I', 'Q', 'U', 'V']
-          ch0images = [img.ch0, img.ch0_Q, img.ch0_U, img.ch0_V]
+          ch0images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
           img.clipped_mean_QUV = []
           img.clipped_rms_QUV = []
         else:
           pols = ['I'] # assume I is always present
-          ch0images = [img.ch0]
+          ch0images = [img.ch0_arr]
 
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
         else:
-            mask = img.mask
+            mask = img.mask_arr
         opts = img.opts
-        kappa = opts.kappa_clip
+
         for ipol, pol in enumerate(pols):
           image = ch0images[ipol]
 
           ### basic stats
-          mean, rms, cmean, crms, cnt = _cbdsm.bstat(image, mask, kappa)
+          mean, rms, cmean, crms, cnt = bstat(image, mask, kappa)
           if cnt > 198: cmean = mean; crms = rms
           if pol == 'I':
             if func.approx_equal(crms, 0.0, rel=None):
@@ -70,35 +76,35 @@ class Op_preprocess(Op):
             img.clipped_rms = crms
             mylog.info('%s %.4f %s %.4f %s ' % ("Raw mean (Stokes I) = ", mean*1000.0, \
                        'mJy and raw rms = ',rms*1000.0, 'mJy'))
-            mylog.info('%d %s %.4f %s %d %s %.4f %s ' % (kappa,"sigma clipped mean (Stokes I) = ", cmean*1000.0, \
-                       'mJy and ',kappa,'sigma clipped rms = ',crms*1000.0, 'mJy'))
+            mylog.info('%s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes I) = ", cmean*1000.0, \
+                       'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
           else:
             img.clipped_mean_QUV.append(cmean)
             img.clipped_rms_QUV.append(crms)
-            mylog.info('%d %s %s %s %.4f %s %d %s %.4f %s ' % (kappa,"sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
-                       'mJy and ',kappa,'sigma clipped rms = ',crms*1000.0, 'mJy'))
+            mylog.info('%s %s %s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
+                       'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
 
-        image = img.ch0
-        # blank pixels; check if pixels are outside the universe
+        image = img.ch0_arr
+        # Check if pixels are outside the universe
         if opts.check_outsideuniv:
-          mylogger.userinfo(mylog, "Determining the pixels outside the universe")
-          noutside_univ = self.outside_univ(img)
-          img.noutside_univ = noutside_univ
-
-          # If any are found, (re)mask the image
-          if noutside_univ > 0:
-              mask = N.isnan(img.ch0)
-              masked = mask.any()
-              img.masked = masked
-              if masked:
-                  img.mask = mask
-              img.blankpix = N.sum(mask)
-              frac_blank = round(float(noutside_univ)/float(image.shape[0]*image.shape[1]),3)
-          mylogger.userinfo(mylog, "Number of additional pixels blanked", str(noutside_univ)
-                            +' ('+str(frac_blank*100.0)+'%)')
-
+            mylogger.userinfo(mylog, "Checking for pixels outside the universe")
+            noutside_univ = self.outside_univ(img)
+            img.noutside_univ = noutside_univ
+            frac_blank = round(float(noutside_univ)/float(image.shape[0]*image.shape[1]),3)
+            mylogger.userinfo(mylog, "Number of additional pixels blanked", str(noutside_univ)
+                              +' ('+str(frac_blank*100.0)+'%)')
         else:
-          mylog.info("Not checking to see if there are pixels outside the universe")
+            noutside_univ = 0
+
+        # If needed, (re)mask the image
+        if noutside_univ > 0:
+            mask = N.isnan(img.ch0_arr)
+            masked = mask.any()
+            img.masked = masked
+            if masked:
+                img.mask_arr = mask
+            img.blankpix = N.sum(mask)
+
 
         ### max/min pixel value & coordinates
         shape = image.shape[0:2]
@@ -121,7 +127,7 @@ class Op_preprocess(Op):
         img.omega = N.product(shape)*abs(N.product(cdelt))/(180.*180./pi/pi)
 
         ### Total flux in ch0 image
-        if 'atrous' in img.filename or hasattr(img, '_pi') or img.log == 'Detection image':
+        if 'atrous' in img.filename or img._pi or img.log == 'Detection image':
             # Don't do this estimate for atrous wavelet images
             # or polarized intensity image,
             # as it doesn't give the correct flux. Also, ignore
@@ -129,7 +135,7 @@ class Op_preprocess(Op):
             # wrong (e.g., not corrected for the primary beam).
             img.ch0_sum_jy = 0
         else:
-            im_flux = N.nansum(img.ch0)/img.pixel_beamarea() # Jy
+            im_flux = N.nansum(image)/img.pixel_beamarea() # Jy
             img.ch0_sum_jy = im_flux
             mylogger.userinfo(mylog, 'Flux from sum of (non-blank) pixels',
                               '%.3f Jy' % (im_flux,))
@@ -163,7 +169,7 @@ class Op_preprocess(Op):
         and blanks it. (fits files written by CASA dont do this).  """
 
         noutside = 0
-        n, m = img.ch0.shape
+        n, m = img.ch0_arr.shape
         for i in range(n):
           for j in range(m):
             out = False
@@ -177,7 +183,9 @@ class Op_preprocess(Op):
               pass
             if out or ("8" in str(err)):
               noutside += 1
-              img.ch0[pix1] = float("NaN")
+              ch0 = img.ch0_arr
+              ch0[pix1] = float("NaN")
+              img.ch0_arr = ch0
         return noutside
 
 

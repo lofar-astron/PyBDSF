@@ -671,7 +671,7 @@ if aps_local_val == None and check_for_newer:
         import ftplib
         from distutils.version import StrictVersion
         f = ftplib.FTP()
-        f.connect("ftp.strw.leidenuniv.nl")
+        f.connect("ftp.strw.leidenuniv.nl", timeout=2.0)
         f.login()
         file_list = []
         file_list = f.nlst('pub/rafferty/PyBDSM')
@@ -728,9 +728,13 @@ _set_current_cmd(process_image)
 # greater is in common use.
 try:
     # IPython >= 0.11
-    from IPython.frontend.terminal.embed import InteractiveShellEmbed
-    from IPython.config.loader import Config
+    from distutils.version import StrictVersion
     from IPython import __version__ as ipython_version
+    if StrictVersion(ipython_version) < StrictVersion('1.0.0'):
+        from IPython.frontend.terminal.embed import InteractiveShellEmbed
+    else:
+        from IPython.terminal.embed import InteractiveShellEmbed
+    from IPython.config.loader import Config
     cfg = Config()
     prompt_config = cfg.PromptManager
     if ipython_version == '0.11':
@@ -748,5 +752,3 @@ except ImportError:
     ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
     ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
 ipshell()
-
-

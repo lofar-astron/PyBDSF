@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.6.1'
+__version__ = '1.7.6'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,73 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2013/09/27 - Version 1.7.6
+
+    2013/09/27 - Changed caching behavior to ensure that temporary files
+        are always deleted after they are no longer needed or on exit.
+
+    2013/09/05 - Renamed blank_zeros to blank_limit. The blank_limit
+        option now specifies a limit below which pixels are blanked.
+
+    2013/09/05 - Enabled SAGECAL sky-model output.
+
+    2013/09/02 - Version 1.7.5
+
+    2013/09/02 - Fix to bug that caused a crash when images with 2 or
+        3 axes were used. Improved rms and mean calculation (following the
+        implementation used in PySE, see http://dare.uva.nl/document/174052
+        for details). The threshold used to determine the clipped rms and
+        mean values is now determined internally by default (kappa_clip =
+        None).
+
+    2013/08/27 - Version 1.7.4
+
+    2013/08/29 - Fix to bug in show_fit() that caused error when
+        'i' is pressed in the plot window and shapelet decomposition
+        had not been done. Tweak to 'pybdsm' startup shell script to
+        avoid problems with the Mac OS X matplotlib backend on non-
+        framework Python installations (such as Anaconda Python).
+
+    2013/08/28 - Fix to bug in process_image() that could result in
+        wavelet Gaussians being excluded from model image under certain
+        conditions.
+
+    2013/08/27 - Version 1.7.3
+
+    2013/08/27 - Fix to bug in image reading that caused images to be
+        distorted.
+
+    2013/08/23 - Version 1.7.2
+
+    2013/08/23 - Improved handling of non-standard FITS CUNIT keywords.
+        Improved loading of FITS images when trim_box is specified.
+
+    2013/08/22 - Version 1.7.1
+
+    2013/08/21 - Fix to bug that caused cached images to be deleted when
+        rerunning an analysis. Fix to bug in show_fit() due to undefined
+        images. Fix to bug in process_image() that would result in unneeded
+        reprocessing.
+
+    2013/08/20 - Version 1.7.0
+
+    2013/08/19 - PyBDSM will now use Astropy if installed for FITS and WCS
+        modules.
+
+    2013/08/11 - Fix to avoid excessive memory usage in the wavelet module
+        (replaced scipy.signal.fftconvolve with a custom function).
+
+    2013/08/11 - Added option to use disk caching for internally derived
+    	images (do_cache). Caching can reduce memory usage and is
+    	therefore useful when processing large images.
+
+    2013/07/11 - Implemented a variable operation chain for process_image
+        (and img.process()) that allows unneeded steps to be skipped if
+        the image is being reprocessed.
+
+    2013/07/11 - Fixed a bug that could cause Gaussian fitting to hang
+        during iterative fitting of large islands.
 
     2013/06/24 - Added option (fix_to_beam) to fix the size and position
     	angle of Gaussians to the restoring beam during fitting. Fix to
@@ -50,7 +117,7 @@ def changelog():
         calculation.
 
     2013/02/20 - Added option to use the curvature map method of
-        Hopkins et al. (2012) for the initial estimation of Gaussian
+        Hancock et al. (2012) for the initial estimation of Gaussian
         parameters (ini_method = 'curvature') and for grouping of
         Gaussians into sources (group_method = 'curvature').
 
