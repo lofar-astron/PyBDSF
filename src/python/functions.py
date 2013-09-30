@@ -1179,8 +1179,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     if not quiet:
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
-        tmpdir = img.parentname+'_tmp'
-        hdr = convert_pyrap_header(inputimage, tmpdir)
+        hdr = convert_pyrap_header(inputimage)
     if img.use_io == 'fits':
         hdr = fits[0].header
 
@@ -1334,28 +1333,17 @@ def read_image_from_file(filename, img, indir, quiet=False):
     return data, hdr
 
 
-def convert_pyrap_header(pyrap_image, tmpdir):
+def convert_pyrap_header(pyrap_image):
     """Converts a pyrap header to a PyFITS header."""
     import tempfile
-    import os
-    import atexit
-    import shutil
     try:
         from astropy.io import fits as pyfits
     except ImportError, err:
         import pyfits
 
-    if not os.path.exists(tmpdir):
-        os.makedirs(tmpdir)
-    tfile = tempfile.NamedTemporaryFile(delete=False, dir=tmpdir)
+    tfile = tempfile.NamedTemporaryFile(delete=False)
     pyrap_image.tofits(tfile.name)
     hdr = pyfits.getheader(tfile.name)
-    if os.path.isfile(tfile.name):
-        os.remove(tfile.name)
-
-    # Register deletion of temp directory at exit to be sure it is deleted
-    atexit.register(shutil.rmtree, tmpdir, ignore_errors=True)
-
     return hdr
 
 

@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.7.6'
+__version__ = '1.7.5'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,11 +26,6 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
-
-    2013/09/27 - Version 1.7.6
-
-    2013/09/27 - Changed caching behavior to ensure that temporary files
-        are always deleted after they are no longer needed or on exit.
 
     2013/09/05 - Renamed blank_zeros to blank_limit. The blank_limit
         option now specifies a limit below which pixels are blanked.
