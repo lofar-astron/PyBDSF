@@ -251,14 +251,9 @@ class Op_gausfit(Op):
         Function returns 2 lists with parameters of good and flagged
         gaussians. Gaussian parameters are updated to be image-relative.
 
-        My own notes (Niruj)
-        fcn = MGFunction(im, mask, 1) makes an fcn object
-        fcn.find_peak() finds peak and posn in im after subtracting all gaussians in fcn.parameters
-        fcn.add_gaussian(gtype, (blah)) adds to fcn.parameters.
-        fit(fcn, 0, 1) fits using fcn.parameters as initial guess and overwrites to fcn.parameters.
-        fcn.reset() resets just the fcn.parameters. Image is still there.
-        Atleast, thats what I think it is.
-
+        Note: "fitok" indicates whether fit converged
+               and one or more flagged Gaussians indicate
+               that significant residuals remain (peak > thr).
         """
         from _cbdsm import MGFunction
         import functions as func
@@ -308,7 +303,7 @@ class Op_gausfit(Op):
             ng1 = len(gaul)
             if fitok and len(fgaul) == 0:
                 break
-        if not fitok and ini_gausfit != 'simple':
+        if (not fitok or len(fgaul) > 0) and ini_gausfit != 'simple':
             # If fits using default or nobeam methods did not work,
             # try using simple instead
             gaul = []
@@ -324,18 +319,8 @@ class Op_gausfit(Op):
                ng1 = len(gaul)
                if fitok and len(fgaul) == 0:
                    break
-        if not fitok:
-            # If normal fitting fails, try to fit 5 or fewer Gaussians to the island
-            ngmax = 6
-            while not fitok and ngmax > 1:
-                ngmax -= 1
-                fitok = self.fit_iter([], 0, fcn, dof, beam, thr0, 1, 'simple', ngmax, verbose, g3_only)
-                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                          beam, thr0, peak, shape, isl.mask_active,
-                                          isl.image, size)
-
         sm_isl = nd.binary_dilation(isl.mask_active)
-        if not fitok and N.sum(~sm_isl) >= img.minpix_isl:
+        if (not fitok or len(fgaul) > 0) and N.sum(~sm_isl) >= img.minpix_isl:
             # If fitting still fails, shrink the island a little and try again
             fcn = MGFunction(fit_image, nd.binary_dilation(isl.mask_active), 1)
             gaul = []
@@ -352,7 +337,7 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
         lg_isl = nd.binary_erosion(isl.mask_active)
-        if not fitok and N.sum(~lg_isl) >= img.minpix_isl:
+        if (not fitok or len(fgaul) > 0) and N.sum(~lg_isl) >= img.minpix_isl:
             # If fitting still fails, expand the island a little and try again
             fcn = MGFunction(fit_image, nd.binary_erosion(isl.mask_active), 1)
             gaul = []
@@ -388,6 +373,8 @@ class Op_gausfit(Op):
                          t*u*fit_image[x1+1,y1+1]+(1.0-t)*u*fit_image[x1,y1+1]
                     mompara[0] = s_peak
                     par = [mompara.tolist()]
+                    par[3] /= fwsig
+                    par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians(par, opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
                                                       isl.image, size)
@@ -645,7 +632,7 @@ class Op_gausfit(Op):
              ng1 = ng1 + 1
              g = gaul[ng1-1]
           else:
-            if len(fcn.parameters) < ngmax and inifit in ['simple', 'nobeam']:
+            if len(fcn.parameters) < ngmax:# and inifit in ['simple', 'nobeam']:
               g = [peak, coords[0], coords[1]] + beam
             else:
               break
@@ -657,6 +644,7 @@ class Op_gausfit(Op):
         ### make sure we return False when fitok==False due to lack
         ### of free parameters
         fitok &= fit(fcn, final=1, verbose=verbose)
+
         return fitok
 
     def add_gaussian(self, fcn, parameters, dof, g3_only=False):

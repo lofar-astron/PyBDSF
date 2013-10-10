@@ -1175,7 +1175,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             return None
 
     # Now that image has been read in successfully, get header (data is loaded
-    # later to take advantage of sectioning if trim_box is specified.
+    # later to take advantage of sectioning if trim_box is specified).
     if not quiet:
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':

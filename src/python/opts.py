@@ -1154,8 +1154,8 @@ class Opts(object):
                                  "information.",
                              group = 'hidden')
     srcroot = Option(None, String(),
-                             doc = "Root name for entries in the output catalog. "\
-                                 "None => use image file name",
+                             doc = "Root name for entries in the output catalog "\
+                                 "(BBS format only). None => use image file name",
                              group = 'hidden')
     incl_chan = Bool(False,
                              doc = "Include flux densities from each channel "\
