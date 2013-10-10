@@ -4,6 +4,10 @@
 What's New
 **********
 
+Version 1.7.7 (2013/10/10):
+
+    * Improved fitting of bright sources under certain circumstances.
+
 Version 1.7.6 (2013/09/27):
 
     * Changed caching behavior to ensure that temporary files are always deleted after they are no longer needed or on exit.
