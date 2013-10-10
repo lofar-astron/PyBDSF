@@ -303,7 +303,7 @@ class Op_gausfit(Op):
             ng1 = len(gaul)
             if fitok and len(fgaul) == 0:
                 break
-        if (not fitok or len(fgaul) > 0) and ini_gausfit != 'simple':
+        if (not fitok or len(gaul) == 0) and ini_gausfit != 'simple':
             # If fits using default or nobeam methods did not work,
             # try using simple instead
             gaul = []
@@ -320,7 +320,7 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
         sm_isl = nd.binary_dilation(isl.mask_active)
-        if (not fitok or len(fgaul) > 0) and N.sum(~sm_isl) >= img.minpix_isl:
+        if (not fitok or len(gaul) == 0) and N.sum(~sm_isl) >= img.minpix_isl:
             # If fitting still fails, shrink the island a little and try again
             fcn = MGFunction(fit_image, nd.binary_dilation(isl.mask_active), 1)
             gaul = []
@@ -337,7 +337,7 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
         lg_isl = nd.binary_erosion(isl.mask_active)
-        if (not fitok or len(fgaul) > 0) and N.sum(~lg_isl) >= img.minpix_isl:
+        if (not fitok or len(gaul) == 0) and N.sum(~lg_isl) >= img.minpix_isl:
             # If fitting still fails, expand the island a little and try again
             fcn = MGFunction(fit_image, nd.binary_erosion(isl.mask_active), 1)
             gaul = []
@@ -354,7 +354,7 @@ class Op_gausfit(Op):
                if fitok and len(fgaul) == 0:
                    break
 
-        if not fitok:
+        if not fitok or len(gaul) == 0:
             # If all else fails, try to use moment analysis
             inisl = N.where(~isl.mask_active)
             mask_id = N.zeros(isl.image.shape, dtype=N.int32) - 1
@@ -632,7 +632,7 @@ class Op_gausfit(Op):
              ng1 = ng1 + 1
              g = gaul[ng1-1]
           else:
-            if len(fcn.parameters) < ngmax:# and inifit in ['simple', 'nobeam']:
+            if len(fcn.parameters) < ngmax:
               g = [peak, coords[0], coords[1]] + beam
             else:
               break
@@ -643,7 +643,8 @@ class Op_gausfit(Op):
         ### and one last fit with higher precision
         ### make sure we return False when fitok==False due to lack
         ### of free parameters
-        fitok &= fit(fcn, final=1, verbose=verbose)
+        fitok &= fit(fcn, final=0, verbose=verbose)
+#         fitok &= fit(fcn, final=1, verbose=verbose)
 
         return fitok
 
