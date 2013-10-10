@@ -4,6 +4,14 @@
 What's New
 **********
 
+Version 1.7.6 (2013/09/27):
+
+    * Changed caching behavior to ensure that temporary files are always deleted after they are no longer needed or on exit.
+
+    * Renamed ``blank_zeros`` to ``blank_limit``. The ``blank_limit`` option now specifies a limit below which pixels are blanked.
+
+    * Enabled SAGECAL sky-model output.
+
 Version 1.7.5 (2013/09/02):
 
     * Fix to bug that caused a crash when images with 2 or 3 axes were used.
