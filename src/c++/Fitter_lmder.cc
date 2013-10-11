@@ -1,10 +1,10 @@
 /*!
   \file Fitter_lmder.cc
-  
+
   \ingroup pybdsm
-  
+
   \author Oleksandr Usov
-  
+
   \date 30/10/2007
 */
 
@@ -23,7 +23,7 @@ using namespace std;
 
 
 // this is prototype for a fortran minimization routine
-extern "C" 
+extern "C"
 void lmder_(void *fcn, int &m, int &n, double *x, double *F, double *J, int &ldfjac,
 	    double &ftol, double &xtol, double &gtol, int &maxfev,
 	    double *diag, int &mode, double &factor,
@@ -34,7 +34,7 @@ void lmder_(void *fcn, int &m, int &n, double *x, double *F, double *J, int &ldf
 // user function
 // FIXME: these should have been declared "extern "C" static ...", but gcc 4.2.2 rejects such declarations
 static
-void lmder_fcn(int &m, int &n, double *x, double *F, double *J, int &ldfjac, 
+void lmder_fcn(int &m, int &n, double *x, double *F, double *J, int &ldfjac,
 	       int &iflag, void *userpar);
 
 
@@ -55,7 +55,7 @@ bool lmder_fit(MGFunction &fcn, bool final, int verbose)
   // set run-time parameters
   gtol = 0;
   if (final)
-    ftol = xtol = 1e-8;
+    ftol = xtol = 1e-6;
   else
     ftol = xtol = 1e-4;
 
@@ -92,7 +92,7 @@ bool lmder_fit(MGFunction &fcn, bool final, int verbose)
 }
 
 // user-supplied function
-static void lmder_fcn(int &m, int &n, double *x, double *F, double *J, int &ldfjac, 
+static void lmder_fcn(int &m, int &n, double *x, double *F, double *J, int &ldfjac,
 		       int &iflag, void *userpar)
 {
   (void)ldfjac;
@@ -112,7 +112,7 @@ static void lmder_fcn(int &m, int &n, double *x, double *F, double *J, int &ldfj
     return fcn->fcn_diff_transposed_gradient(J);
 
   default:
-    cerr << 
+    cerr <<
       "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
       " LMDER C-wrapper\n"
       " unexpected value of iflag\n"

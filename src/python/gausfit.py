@@ -643,8 +643,7 @@ class Op_gausfit(Op):
         ### and one last fit with higher precision
         ### make sure we return False when fitok==False due to lack
         ### of free parameters
-        fitok &= fit(fcn, final=0, verbose=verbose)
-#         fitok &= fit(fcn, final=1, verbose=verbose)
+        fitok &= fit(fcn, final=1, verbose=verbose)
 
         return fitok
 
