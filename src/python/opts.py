@@ -637,7 +637,7 @@ class Opts(object):
     atrous_lpf = Enum('b3', 'tr',
                              doc = "Low pass filter, either 'b3' or "\
                                  "'tr', for B3 spline or Triangle\n"\
-                                 "This is the low pass filter, which can currently be "\
+                                 "This is the low pass filter, which can be "\
                                  "either the B3 spline or the Triangle function, which "\
                                  "is used to generate the a-trous wavelets. The B3 "\
                                  "spline is [1, 4, 6, 4, 1] and the triangle is "\
@@ -647,9 +647,26 @@ class Opts(object):
     atrous_bdsm_do = Bool(True,
                              doc = "Perform source extraction on each wavelet "\
                                  "scale\n"\
-                                 "Unless this is set to True, the image cannot be "\
-                                 "decomposed into a Pyramidal set of sources for "\
-                                 "morphological transforms.",
+                                 "If True, fitting is done on each wavelet scale "\
+                                 "(or sum of scales if atrous_sum is True). If False, "\
+                                 "no fitting is done.",
+                             group = "atrous_do")
+    atrous_orig_isl = Bool(False,
+                             doc = "Restrict wavelet Gaussians to islands found "\
+                                 "in original image\n"\
+                                 "If True, all wavelet Gaussians must lie within "\
+                                 "the boundaries of islands found in the original "\
+                                 "image. If False, new islands that are found only in "\
+                                 "the wavelet images are included in the final "\
+                                 "fit.",
+                             group = "atrous_do")
+    atrous_sum = Bool(True,
+                             doc = "Fit to the sum of remaining wavelet scales\n"\
+                                 "If True, fitting is done on an image that is the sum "\
+                                 "of the remaining wavelet scales. Using the sum will "\
+                                 "generally result in improved signal. If False, "\
+                                 "fitting is done on only the wavelet scale under "\
+                                 "consideration.",
                              group = "atrous_do")
 
     #--------------------------------FLAGGING OPTIONS--------------------------------

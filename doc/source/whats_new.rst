@@ -4,6 +4,14 @@
 What's New
 **********
 
+Version 1.8.0 (2013/10/16):
+
+    * Improved wavelet fitting. Added option so that wavelet fitting can be done to the sum of images on the remaining wavelet scales, improving the signal for fitting (controlled with the ``atrous_sum`` option). Added option so that user can choose whether to include new islands found only in the wavelet images in the final fit or not (controlled with the ``atrous_orig_isl`` option).
+
+    * Fixed a bug that could lead to incomplete fitting of some islands.
+
+    * Improved overall convergence of fits.
+
 Version 1.7.7 (2013/10/10):
 
     * Improved fitting of bright sources under certain circumstances.
