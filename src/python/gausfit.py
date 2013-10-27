@@ -77,6 +77,8 @@ class Op_gausfit(Op):
         img_simple.thresh_pix = img.thresh_pix
         img_simple.minpix_isl = img.minpix_isl
         img_simple.clipped_mean = img.clipped_mean
+        img_simple.beam2pix = img.beam2pix
+        img_simple.beam = img.beam
 
         # Next, define the weights to use when distributing islands among cores.
         # The weight should scale with the processing time. At the moment
@@ -257,14 +259,18 @@ class Op_gausfit(Op):
         """
         from _cbdsm import MGFunction
         import functions as func
+        from const import fwsig
 
         if ffimg == None:
             fit_image = isl.image-isl.islmean
         else:
             fit_image = isl.image-isl.islmean-ffimg
         fcn = MGFunction(fit_image, isl.mask_active, 1)
-        beam = img.pixel_beam()
-        beam = (1.1*beam[0], beam[1], beam[2]+90.0) # change angle from +y-axis to +x-axis
+        # For fitting, use img.beam instead of img.pixel_beam, as we want
+        # to pick up the wavelet beam (img.pixel_beam is not changed for
+        # wavelet images, but img.beam is)
+        beam = N.array(img.beam2pix(img.beam))
+        beam = (beam[0]/fwsig, beam[1]/fwsig, beam[2]+90.0) # change angle from +y-axis to +x-axis and FWHM to sigma
 
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
@@ -403,7 +409,6 @@ class Op_gausfit(Op):
         import functions as func
         sgaul = []; sfgaul = []
         gaul = []; fgaul = []
-        beam = img.pixel_beam()
         if opts == None:
             opts = img.opts
         thresh_isl = opts.thresh_isl

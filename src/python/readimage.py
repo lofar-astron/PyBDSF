@@ -350,7 +350,7 @@ class Op_readimage(Op):
         def pixel_beam():
             """Returns the beam in sigma units in pixels"""
             pbeam = beam2pix(img.beam)
-            return (pbeam[0] / fwsig, pbeam[1] / fwsig, pbeam[2])
+            return (pbeam[0]/fwsig, pbeam[1]/fwsig, pbeam[2])
 
         def pixel_beamarea():
             """Returns the beam area in pixels"""

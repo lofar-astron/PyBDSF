@@ -159,9 +159,13 @@ class Op_rmsimage(Op):
             max_isl_size_lowthresh = max(isl_size_lowthresh)
             avg_max_isl_size = (max_isl_size_highthresh + max_isl_size_lowthresh) / 2.0
 
+        if hasattr(img, '_adapt_rms_isl_pos'):
+            isl_pos = img._adapt_rms_isl_pos # set isl_pos to existing value (for wavelet analysis)
         if len(isl_pos) == 0:
             # No bright sources found
             do_adapt = False
+        else:
+            img._adapt_rms_isl_pos = isl_pos
         min_size_allowed = int(img.pixel_beam()[0]*9.0)
 
         if opts.rms_box is None or (opts.rms_box_bright is None and do_adapt):
