@@ -27,6 +27,9 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2013/11/04 - Added error message when rms is zero in some part of the
+        image.
+
     2013/10/16 - Version 1.8.0
 
     2013/10/16 - Improved wavelet fitting. Added option so that wavelet
