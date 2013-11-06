@@ -2157,13 +2157,17 @@ def bstat(indata, mask, kappa_npixbeam):
         c2 = converge_num * lastct
         iter += 1
 
-
     mean  = numpy.mean(skpix)
     median = numpy.median(skpix)
     sigma = numpy.std(skpix, ddof=1)
     mode = 2.5*median - 1.5*mean
 
-    skew_par = abs(mean - median)/sigma
+    if sigma > 0.0:
+        skew_par = abs(mean - median)/sigma
+    else:
+        raise RuntimeError("A region with an unphysical rms value has been found. "
+            "Please check the input image.")
+
     if skew_par <= 0.3:
         m = mode
     else:
