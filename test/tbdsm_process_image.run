@@ -1,4 +1,4 @@
-#!/bin/csh
+#!/bin/sh
 
 # Set-up the Python environment for running the PyBDSM source finder.
 use Pythonlibs
