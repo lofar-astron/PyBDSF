@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.7.5'
+__version__ = '1.8.0'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -21,11 +21,36 @@ __version__ = '1.7.5'
 __revision__ = filter(str.isdigit, "$Revision$")
 
 
-# Change log
+# Changelog
 def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2013/11/04 - Added error message when rms is zero in some part of the
+        image.
+
+    2013/10/16 - Version 1.8.0
+
+    2013/10/16 - Improved wavelet fitting. Added option so that wavelet
+    	fitting can be done to the sum of images on the remaining wavelet
+    	scales, improving the signal for fitting (controlled with the
+    	atrous_sum option). Added option so that user can choose whether to
+    	include new islands found only in the wavelet images in the final
+    	fit or not (controlled with the atrous_orig_isl option).
+
+    2013/10/10 - Fixed a bug that could lead to incomplete fitting of
+        some islands. Improved overall convergence of fits.
+
+    2013/10/10 - Version 1.7.7
+
+    2013/10/10 - Improved fitting of bright sources under certain
+        circumstances.
+
+    2013/09/27 - Version 1.7.6
+
+    2013/09/27 - Changed caching behavior to ensure that temporary files
+        are always deleted after they are no longer needed or on exit.
 
     2013/09/05 - Renamed blank_zeros to blank_limit. The blank_limit
         option now specifies a limit below which pixels are blanked.

@@ -213,6 +213,7 @@ def get_op_chain(img):
                 if hasattr(img, 'mean_U_arr'): del img.mean_U_arr
                 if hasattr(img, 'rms_V_arr'): del img.rms_V_arr
                 if hasattr(img, 'mean_V_arr'): del img.mean_V_arr
+                if hasattr(img, '_adapt_rms_isl_pos'): del img._adapt_rms_isl_pos
                 while 'rmsimage' in img.completed_Ops:
                     img.completed_Ops.remove('rmsimage')
                 found = True
@@ -234,12 +235,14 @@ def get_op_chain(img):
                 found = True
             if k in wavelet_atrous_opts:
                 if hasattr(img, 'atrous_gaussians'): del img.atrous_gaussians
-                g_filt = []
-                if hasattr(img, 'gaussians'):
-                    for g in img.gaussians:
-                        if g.jlevel == 0:
-                            g_filt.append(g)
-                    img.gaussians = g_filt
+                if hasattr(img, 'islands'): del img.islands
+                if hasattr(img, 'sources'): del img.sources
+                if hasattr(img, 'dsources'): del img.dsources
+                if hasattr(img, 'gaussians'): del img.gaussians
+                while 'islands' in img.completed_Ops:
+                    img.completed_Ops.remove('islands')
+                while 'gausfit' in img.completed_Ops:
+                    img.completed_Ops.remove('gausfit')
                 while 'wavelet_atrous' in img.completed_Ops:
                     img.completed_Ops.remove('wavelet_atrous')
                 found = True
@@ -310,6 +313,7 @@ def get_op_chain(img):
         if hasattr(img, 'model_gaus_arr'): del img.model_gaus_arr
         if hasattr(img, 'resid_shap_arr'): del img.resid_shap_arr
         if hasattr(img, 'model_shap_arr'): del img.model_shap_arr
+        if hasattr(img, '_adapt_rms_isl_pos'): del img._adapt_rms_isl_pos
         return img, Op_chain
 
     while 'outlist' in img.completed_Ops:

@@ -406,8 +406,8 @@ class Op_spectralindex(Op):
         clipped rms is too high, the channel is averaged with as many neighboring
         channels as necessary to obtain at least the desired rms. This is done
         until the number of OK channels is 2. The averaging is done first at
-        the frequency extremes, as frequency range the resulting averaged flux array
-        will be maximized.
+        the frequency extremes, as the frequency range of the resulting averaged
+        flux array will be maximized.
 
         For example, if the desired rms is 0.1 and the list of rms's is:
 

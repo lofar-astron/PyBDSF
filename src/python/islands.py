@@ -332,6 +332,7 @@ class Island(object):
 
         ### finish initialization
         isl_size = N.sum(~isl_mask)
+        self.island_id = idx
         self.bbox = bbox
         self.origin = origin
         self.image = data

@@ -1175,11 +1175,12 @@ def read_image_from_file(filename, img, indir, quiet=False):
             return None
 
     # Now that image has been read in successfully, get header (data is loaded
-    # later to take advantage of sectioning if trim_box is specified.
+    # later to take advantage of sectioning if trim_box is specified).
     if not quiet:
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
-        hdr = convert_pyrap_header(inputimage)
+        tmpdir = img.parentname+'_tmp'
+        hdr = convert_pyrap_header(inputimage, tmpdir)
     if img.use_io == 'fits':
         hdr = fits[0].header
 
@@ -1333,17 +1334,28 @@ def read_image_from_file(filename, img, indir, quiet=False):
     return data, hdr
 
 
-def convert_pyrap_header(pyrap_image):
+def convert_pyrap_header(pyrap_image, tmpdir):
     """Converts a pyrap header to a PyFITS header."""
     import tempfile
+    import os
+    import atexit
+    import shutil
     try:
         from astropy.io import fits as pyfits
     except ImportError, err:
         import pyfits
 
-    tfile = tempfile.NamedTemporaryFile(delete=False)
+    if not os.path.exists(tmpdir):
+        os.makedirs(tmpdir)
+    tfile = tempfile.NamedTemporaryFile(delete=False, dir=tmpdir)
     pyrap_image.tofits(tfile.name)
     hdr = pyfits.getheader(tfile.name)
+    if os.path.isfile(tfile.name):
+        os.remove(tfile.name)
+
+    # Register deletion of temp directory at exit to be sure it is deleted
+    atexit.register(shutil.rmtree, tmpdir, ignore_errors=True)
+
     return hdr
 
 
@@ -1533,6 +1545,14 @@ def store_map(img, map_name, map_data):
     outfile = file(filename, 'wb')
     N.save(outfile, map_data)
     outfile.close()
+
+def del_map(img, map_name):
+    """Deletes a cached map."""
+    import os
+
+    filename = get_name(img, map_name)
+    if os.path.isfile(filename):
+        os.remove(filename)
 
 def get_name(img, map_name):
     """Returns name of cache file."""
@@ -2137,13 +2157,17 @@ def bstat(indata, mask, kappa_npixbeam):
         c2 = converge_num * lastct
         iter += 1
 
-
     mean  = numpy.mean(skpix)
     median = numpy.median(skpix)
     sigma = numpy.std(skpix, ddof=1)
     mode = 2.5*median - 1.5*mean
 
-    skew_par = abs(mean - median)/sigma
+    if sigma > 0.0:
+        skew_par = abs(mean - median)/sigma
+    else:
+        raise RuntimeError("A region with an unphysical rms value has been found. "
+            "Please check the input image.")
+
     if skew_par <= 0.3:
         m = mode
     else:

@@ -884,7 +884,9 @@ The wavelet module performs the following steps:
 
 * For each scale (*j*), the appropriate *à trous* wavelet transformation is made (see Holschneider et al. 1989 for details). Additionally, the "remainder" image (called the *c_J* image) is also made. This image includes all emission not included in the other wavelet images.
 
-* If ``atrous_bdsm = True``, an rms map and a mean map are made for each wavelet image and Gaussians are fit in the normal way. These wavelet Gaussians can then be included in source catalogs (see :ref:`write_catalog`).
+* Depending on the value of the ``atrous_sum`` option, fitting is done to either an image that is a sum over all scales equal to or larger than the scale under consideration (``atrous_sum = True``) or to an image of a single scale (``atrous_sum = False``). Fitting to the sum over all larger scales will generally result in increased signal to noise.
+
+* If ``atrous_bdsm = True``, an rms map and a mean map are made for each wavelet image and Gaussians are fit in the normal way. Gaussians can be optionally restricted to lie within islands found from the initial image. If a wavelet island overlaps spatially with an existing island, the two islands are merged together to form a single island. The wavelet Gaussians can then be included in source catalogs (see :ref:`write_catalog`).
 
 The options for this module are as follows:
 
@@ -897,11 +899,15 @@ The options for this module are as follows:
                                    inside program
       :term:`atrous_lpf` ........... 'b3': Low pass filter, either 'b3' or 'tr', for B3
                                    spline or Triangle
+      :term:`atrous_orig_isl` .... False : Restrict wavelet Gaussians to islands found in
+                                   original image
+      :term:`atrous_sum` .......... True : Fit to the sum of images of the remaining wavelet
+                                   scales
 
 .. glossary::
 
     atrous_bdsm_do
-        This parameter is a Boolean (default is ``False``). If ``True``\, PyBDSM performs source extraction on each wavelet scale.
+        This parameter is a Boolean (default is ``False``). If ``True``, PyBDSM performs source extraction on each wavelet scale.
 
     atrous_jmax
         This parameter is an integer (default is 0) which is the maximum order of the *à trous* wavelet
@@ -916,11 +922,19 @@ The options for this module are as follows:
         3-4 times smaller than the smallest image dimension.
 
     atrous_lpf
-        This parameter is a string (default is ``'b3'``) that sets the low pass filter, which can currently be either the B3 spline
+        This parameter is a string (default is ``'b3'``) that sets the low pass filter, which can be either the B3 spline
         or the triangle function, which is used to generate the *à trous*
         wavelets. The B3 spline is [1, 4, 6, 4, 1] and the triangle is [1, 2,
         1], normalised so that the sum is unity. The lengths of the filters are
         hence 5 and 3 respectively.
+
+    atrous_orig_isl
+        This parameter is a Boolean (default is ``False``). If ``True``, all wavelet Gaussians must lie within the boundaries of islands found in the original image. If ``False``, new islands that are found only
+        in the wavelet images are included in the final fit.
+
+    atrous_sum
+        This parameter is a Boolean (default is ``True``). If ``True``, fitting is done on an image that is the sum of the remaining wavelet scales. Using the sum will generally result in improved signal.
+        If ``False``, fitting is done on only the wavelet scale under consideration.
 
 .. _psf_vary_do:
 

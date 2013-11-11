@@ -60,14 +60,8 @@ class Op_readimage(Op):
         else:
             img.indir = img.opts.indir
 
-        image_file = os.path.basename(img.opts.filename)
-        result = read_image_from_file(image_file, img, img.indir)
-        if result == None:
-            raise RuntimeError("Cannot open file " + repr(image_file) + ". " + img._reason)
-        else:
-            data, hdr = result
-
-        # Try to trim common extensions from filename
+        # Try to trim common extensions from filename and store various
+        # paths
         root, ext = os.path.splitext(img.opts.filename)
         if ext in ['.fits', '.FITS', '.image']:
             fname = root
@@ -84,6 +78,14 @@ class Op_readimage(Op):
         img.imagename = fname + '.pybdsm'
         img.basedir = './' + fname + '_pybdsm/'
 
+        # Read in data and header
+        image_file = os.path.basename(img.opts.filename)
+        result = read_image_from_file(image_file, img, img.indir)
+        if result == None:
+            raise RuntimeError("Cannot open file " + repr(image_file) + ". " + img._reason)
+        else:
+            data, hdr = result
+
         # Check whether caching is to be used. If it is, set up a
         # temporary directory. The temporary directory will be
         # removed automatically upon exit.
@@ -96,8 +98,10 @@ class Op_readimage(Op):
             tmpdir = img.parentname+'_tmp'
             if not os.path.exists(tmpdir):
                 os.makedirs(tmpdir)
-                img._tempdir_parent = TempDir(tmpdir)
+            img._tempdir_parent = TempDir(tmpdir)
             img.tempdir = TempDir(tempfile.mkdtemp(dir=tmpdir))
+            import atexit, shutil
+            atexit.register(shutil.rmtree, img._tempdir_parent, ignore_errors=True)
         else:
             img.tempdir = None
 
@@ -346,7 +350,7 @@ class Op_readimage(Op):
         def pixel_beam():
             """Returns the beam in sigma units in pixels"""
             pbeam = beam2pix(img.beam)
-            return (pbeam[0] / fwsig, pbeam[1] / fwsig, pbeam[2])
+            return (pbeam[0]/fwsig, pbeam[1]/fwsig, pbeam[2])
 
         def pixel_beamarea():
             """Returns the beam area in pixels"""
@@ -597,5 +601,7 @@ class TempDir(str):
 
     Directory is deleted when garbage collected/zero references """
     def __del__(self):
-        shutil.rmtree(self.__str__())
+        import os
+        if os.path.exists(self.__str__()):
+            shutil.rmtree(self.__str__())
 
