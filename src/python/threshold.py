@@ -61,11 +61,14 @@ class Op_threshold(Op):
             slope = opts.fdr_alpha/s0
             # sort erf of normalised image as vector
             v = N.sort(0.5*erfc(N.ravel((data-img.mean_arr)/img.rms_arr)/sq2))[::-1]
+            pcrit = None
             for i,x in enumerate(v):
                 if x < slope*i/size:
                     pcrit = x
                     break
-            dumr1 = 1.0-2.0*pcrit;
+            if pcrit is None:
+                raise RuntimeError("FDR thresholding failed. Please check the input image for problems.")
+            dumr1 = 1.0-2.0*pcrit
             dumr = 8.0/3.0/pi*(pi-3.0)/(4.0-pi)
             # approx for inv(erfc)
             sigcrit = sqrt(-2.0/pi/dumr-log(1.0-dumr1*dumr1)/2.0+  \
