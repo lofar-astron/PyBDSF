@@ -1092,7 +1092,7 @@ class Opts(object):
     #-------------------------SPECTRAL INDEX OPTIONS--------------------------------
     flagchan_rms = Bool(True,
                              doc = "Flag channels before (averaging and) "\
-                                 "extracting spectral index, if their rms if "\
+                                 "extracting spectral index, if their rms is "\
                                  "more than 5 (clipped) sigma outside the median "\
                                  "rms over all channels, but only if <= 10% of "\
                                  "channels\n"\
@@ -1125,7 +1125,7 @@ class Opts(object):
                                  "there is insufficient SNR, neighboring channels "\
                                  "are averaged to attempt to obtain the target SNR. "\
                                  "Channels with SNRs below this will be flagged if "\
-                                 "flagchan_snr=True.\n"\
+                                 "flagchan_snr = True\n"\
                                  "The maximum allowable number of channels to average "\
                                  "is determined by the specind_maxchan parameter.",
                              group = "spectralindex_do")
