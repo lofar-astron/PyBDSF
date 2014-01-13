@@ -32,7 +32,8 @@ The task parameters are as follows:
     :term:`correct_proj` .......... True : Correct source parameters for image projection
                                    (BBS format only)?
     :term:`format` ............... 'fits': Format of output Gaussian list: 'bbs', 'ds9',
-                                   'fits', 'star', 'kvis', 'ascii', or 'sagecal'
+                                   'fits', 'star', 'kvis', 'ascii', 'csv', 'casabox', or
+                                   'sagecal'
     :term:`incl_chan` ............ False : Include fluxes from each channel (if any)?
     :term:`incl_empty` ........... False : Include islands without any valid Gaussians
                                    (source list only)?
@@ -93,11 +94,15 @@ Each of the parameters is described in detail below.
 
         * ``'kvis'`` - kvis format (Gaussian list only)
 
-        * ``'ascii'`` - simple text file
+        * ``'ascii'`` - simple text file with spaces separating the values
+
+        * ``'csv'`` - Comma-separated Values (CSV) text file
+
+        * ``'casabox'`` - CASA region file (boxes only)
 
         * ``'sagecal'`` - SAGECAL sky model format (Gaussian list only)
 
-        Catalogues with the ``'fits'`` and ``'ascii'`` formats include all available
+        Catalogues with the ``'fits'``, ``'ascii'``, and ``'csv'`` formats include all available
         information (see :ref:`output_cols` for column definitions). The
         other formats include only a subset of the full information.
 
@@ -118,7 +123,7 @@ Definition of output columns
 The information included in the Gaussian and source catalogs varies by format and can include the following quantities.
 
 .. note::
-    For ACSII and FITS formats, the reference frequency (in Hz) and equinox are stored in the header of the catalog. The header in ASCII catalogs is the first few lines of the catalog. For FITS catalogs, this information is stored in the comments as well as in the FREQ0 and EQUINOX keywords in the primary header.
+    For ACSII, CSV, and FITS formats, the reference frequency (in Hz) and equinox are stored in the header of the catalog. The header in ASCII and CSV catalogs is the first few lines of the catalog. For FITS catalogs, this information is stored in the comments as well as in the FREQ0 and EQUINOX keywords in the primary header.
 
 * **Gaus_id:** a unique number that identifies the Gaussian, starting from zero
 

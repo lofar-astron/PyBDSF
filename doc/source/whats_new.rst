@@ -4,6 +4,20 @@
 What's New
 **********
 
+Version 1.8.1 (2014/01/10):
+
+    * Fix to bug that caused the ``incl_empty`` option to be ignored when ``format='fits'`` in the ``write_catalog`` task.
+
+    * Enabled output of images in CASA format in the ``export_image`` task (``img_format = 'casa'``).
+
+    * Added an option to ``export_image`` to export an island-mask image, with ones where there is emission and zeros elsewhere (``image_type = 'island_mask'``). Features in the island mask may be optionally dilated by specifying the number of dilation iterations with the ``mask_dilation`` parameter.
+
+    * Added an option to write a CASA region file to the ``write_catalog`` task (``format = 'casabox'``).
+
+    * Added an option to write a CSV catalog to the ``write_catalog`` task (``format = 'csv'``).
+
+    * Added error message when the rms is zero in some part of the rms map.
+
 Version 1.8.0 (2013/10/16):
 
     * Improved wavelet fitting. Added option so that wavelet fitting can be done to the sum of images on the remaining wavelet scales, improving the signal for fitting (controlled with the ``atrous_sum`` option). Added option so that user can choose whether to include new islands found only in the wavelet images in the final fit or not (controlled with the ``atrous_orig_isl`` option).
