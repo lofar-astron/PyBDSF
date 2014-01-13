@@ -146,6 +146,8 @@ Lastly, the plot window is closed, and the source catalog is written out to an A
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
                                    source are grouped into one patch
+    bbs_patches_mask ...... None : Name of the mask file (of same size as input image)
+                                   that defines the patches if bbs_patches = 'mask'
     catalog_type .......... 'srl': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
                                    Gaussians), 'shap' - shapelet list

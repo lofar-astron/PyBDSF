@@ -4,13 +4,15 @@
 What's New
 **********
 
-Version 1.8.1 (2014/01/10):
+Version 1.8.1 (2014/01/14):
+
+    * Added option (``bbs_patches = 'mask'``) to allow patches in an output BBS sky model to be defined using a mask image (set with the ``bbs_patches_mask`` option).
 
     * Fix to bug that caused the ``incl_empty`` option to be ignored when ``format='fits'`` in the ``write_catalog`` task.
 
     * Enabled output of images in CASA format in the ``export_image`` task (``img_format = 'casa'``).
 
-    * Added an option to ``export_image`` to export an island-mask image, with ones where there is emission and zeros elsewhere (``image_type = 'island_mask'``). Features in the island mask may be optionally dilated by specifying the number of dilation iterations with the ``mask_dilation`` parameter.
+    * Added an option to ``export_image`` to export an island-mask image, with ones where there is emission and zeros elsewhere (``image_type = 'island_mask'``). Features in the island mask may be optionally dilated by specifying the number of dilation iterations with the ``mask_dilation`` parameter. The mask image may be padded with zeros to match the original image when the ``trim_box`` option was used to analyze only a portion of the image (``pad_image = True``).
 
     * Added an option to write a CASA region file to the ``write_catalog`` task (``format = 'casabox'``).
 

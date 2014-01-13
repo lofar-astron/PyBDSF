@@ -846,10 +846,11 @@ class Opts(object):
                                  "BBS-readable sky file, this determines whether "\
                                  "all Gaussians are in a single patch, there are "\
                                  "no patches, all Gaussians for a given source "\
-                                 "are in a separate patch, or each Gaussian gets "\
-                                 "its own patch.\n"\
+                                 "are in a separate patch, each Gaussian gets "\
+                                 "its own patch, or a mask image is used to define "\
+                                 "the patches.\n"\
                                  "If you wish to have patches defined by island, "\
-                                 "then set group_by_isl=True (under advanced_opts) "\
+                                 "then set group_by_isl = True (under advanced_opts) "\
                                  "before fitting to force all Gaussians in an "\
                                  "island to be in a single source. Then set "\
                                  "bbs_patches='source' when writing the catalog.",
@@ -861,7 +862,7 @@ class Opts(object):
                                  "patches in the output BBS sky model. The mask "\
                                  "image should be 1 inside the patches and 0 "\
                                  "elsewhere and should be the same size as the "\
-                                 "input image (before trim_box is applied). Any "\
+                                 "input image (before any trim_box is applied). Any "\
                                  "Gaussians that fall outside of the patches "\
                                  "will be ignored and will not appear in the "\
                                  "output sky model.",
@@ -1245,7 +1246,7 @@ class Opts(object):
                              doc = "Type of image to export: 'gaus_resid', "\
                                  "'shap_resid', 'rms', 'mean', 'gaus_model', "\
                                  "'shap_model', 'ch0', 'pi', 'psf_major', "\
-                                 "'psf_minor', 'psf_pa', 'psf_ratio', 'psf_ratio_aper',"\
+                                 "'psf_minor', 'psf_pa', 'psf_ratio', 'psf_ratio_aper', "\
                                  "'island_mask'\nThe following images "\
                                  "can be exported:\n"\
                                  "'ch0' - image used for source detection\n"\

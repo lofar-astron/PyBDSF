@@ -23,11 +23,14 @@ The task parameters are as follows:
                                    patches. 'single' => all Gaussians in one patch.
                                    'gaussian' => each Gaussian gets its own patch.
                                    'source' => all Gaussians belonging to a single
-                                   source are grouped into one patch
+                                   source are grouped into one patch. 'mask' => use mask
+                                   file specified by bbs_patches_mask
+    :term:`bbs_patches_mask` ...... None : Name of the mask file (of same size as input image)
+                                   that defines the patches if bbs_patches = 'mask'
     :term:`catalog_type` .......... 'srl': Type of catalog to write:  'gaul' - Gaussian
                                    list, 'srl' - source list (formed by grouping
-                                   Gaussians), 'shap' - shapelet list (not yet
-                                   supported)
+                                   Gaussians), 'shap' - shapelet list (FITS
+                                   format only)
     :term:`clobber` .............. False : Overwrite existing file?
     :term:`correct_proj` .......... True : Correct source parameters for image projection
                                    (BBS format only)?
@@ -48,15 +51,15 @@ Each of the parameters is described in detail below.
         This parameter is a string (default is ``None``) that sets the name of the output file. If ``None``, the file is named automatically. If 'SAMP' the full catalog (i.e., ``format = 'fits'``) is sent to a running SAMP Hub (e.g., to TOPCAT or Aladin).
 
     bbs_patches
-        This parameter is a string (default is ``None``) that sets the type of patch to use in BBS-formatted catalogs. When the Gaussian catalogue is written as a BBS-readable sky file, this
-        determines whether all Gaussians are in a single patch (``'single'``), there are no
-        patches (``None``), all Gaussians for a given source are in a separate patch (``'source'``), or
-        each Gaussian gets its own patch (``'gaussian'``).
+        This parameter is a string (default is ``None``) that sets the type of patch to use in BBS-formatted catalogs. When the Gaussian catalogue is written as a BBS-readable sky file, this option determines whether all Gaussians are in a single patch (``'single'``), there are no patches (``None``), all Gaussians for a given source are in a separate patch (``'source'``), each Gaussian gets its own patch (``'gaussian'``), or a mask image is used to define the patches (``'mask'``).
 
         If you wish to have patches defined by island, then set
         ``group_by_isl = True`` before fitting to force all
         Gaussians in an island to be in a single source. Then set
         ``bbs_patches = 'source'`` when writing the catalog.
+
+    bbs_patches_mask
+        This parameter is a string (default is ``None``) that sets the file name of the mask file to use to define patches in BBS-formatted catalogs. The mask image should be 1 inside the patches and 0 elsewhere and should be the same size as the input image (before any ``trim_box`` is applied). Any Gaussians that fall outside of the patches will be ignored and will not appear in the output sky model.
 
     catalog_type
         This parameter is a string (default is ``'srl'``) that sets the type of catalog to write:  ``'gaul'`` - Gaussian list, ``'srl'`` - source list
