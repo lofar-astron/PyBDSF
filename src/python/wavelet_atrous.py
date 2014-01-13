@@ -254,41 +254,8 @@ class Op_wavelet_atrous(Op):
                       mylogger.userinfo(mylog, "Number of valid wavelet Gaussians", str(nwvgaus))
                   else:
                       # Keep all Gaussians and merge islands that overlap
-                      tot_flux = 0.0
-                      wav_rankim_bool = N.array(wimg.pyrank + 1, dtype = bool)
-                      for idx, wvisl in enumerate(wimg.islands):
-                          orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
-                          orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
-                          wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
-                          orig_ids = set(orig_islands.flatten())
-                          orig_ids_arr = N.array(tuple(set(orig_islands.flatten())))
-                          wav_ids =  N.array(tuple(set(wav_islands.flatten())))
-                          if len(wvisl.gaul) > 0:
+                      tot_flux = check_islands_for_overlap(img, wimg)
 
-                              # Get unique island IDs. If an island overlaps with one
-                              # in the original ch0 image, merge them together. If not,
-                              # add the island as a new one.
-                              for wvg in wvisl.gaul:
-                                  tot_flux += wvg.total_flux
-                                  wvg.valid = True
-                              if idx in wav_ids:
-                                  orig_idx = list(set(orig_islands[N.where(wav_islands == idx)]))
-                                  if len(orig_idx) == 1:
-                                      merge_islands(img, img.islands[orig_idx[0]], wvisl)
-                                  else:
-                                      merge_islands(img, img.islands[orig_idx[0]], wvisl)
-                                      for oidx in orig_idx[1:]:
-                                          merge_islands(img, img.islands[orig_idx[0]], img.islands[oidx])
-                                      img.islands = [x for x in img.islands if x.island_id not in orig_idx[1:]]
-                                      renumber_islands(img)
-                              else:
-                                  isl_id = img.islands[-1].island_id + 1
-                                  new_isl = wvisl.copy(img.pixel_beamarea(), image=img.ch0_arr[wvisl.bbox], mean=img.mean_arr[wvisl.bbox], rms=img.rms_arr[wvisl.bbox])
-                                  new_isl.gaul = []
-                                  new_isl.dgaul = []
-                                  new_isl.island_id = isl_id
-                                  img.islands.append(new_isl)
-                                  copy_gaussians(img, new_isl, wvisl)
                       # Now renumber the islands and adjust the rank image before going to next wavelet image
                       renumber_islands(img)
 
@@ -648,5 +615,39 @@ def renumber_islands(img):
     img.gaussians = gaussian_list
 
 
+def check_islands_for_overlap(img, wimg):
+    """Checks for overlaps between img and wimg islands"""
+    tot_flux = 0.0
+    wav_rankim_bool = N.array(wimg.pyrank + 1, dtype = bool)
+    for idx, wvisl in enumerate(wimg.islands):
+        orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+        orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
+        wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
+        wav_ids =  N.array(tuple(set(wav_islands.flatten())))
+        if len(wvisl.gaul) > 0:
 
-
+            # Get unique island IDs. If an island overlaps with one
+            # in the original ch0 image, merge them together. If not,
+            # add the island as a new one.
+            for wvg in wvisl.gaul:
+                tot_flux += wvg.total_flux
+                wvg.valid = True
+            if idx in wav_ids:
+                orig_idx = list(set(orig_islands[N.where(wav_islands == idx)]))
+                if len(orig_idx) == 1:
+                    merge_islands(img, img.islands[orig_idx[0]], wvisl)
+                else:
+                    merge_islands(img, img.islands[orig_idx[0]], wvisl)
+                    for oidx in orig_idx[1:]:
+                        merge_islands(img, img.islands[orig_idx[0]], img.islands[oidx])
+                    img.islands = [x for x in img.islands if x.island_id not in orig_idx[1:]]
+                    renumber_islands(img)
+            else:
+                isl_id = img.islands[-1].island_id + 1
+                new_isl = wvisl.copy(img.pixel_beamarea(), image=img.ch0_arr[wvisl.bbox], mean=img.mean_arr[wvisl.bbox], rms=img.rms_arr[wvisl.bbox])
+                new_isl.gaul = []
+                new_isl.dgaul = []
+                new_isl.island_id = isl_id
+                img.islands.append(new_isl)
+                copy_gaussians(img, new_isl, wvisl)
+    return tot_flux
