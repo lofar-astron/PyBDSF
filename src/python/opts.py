@@ -841,22 +841,31 @@ class Opts(object):
                                  "'gaussian' => each Gaussian gets its own "\
                                  "patch. 'source' => all Gaussians belonging "\
                                  "to a single source are grouped into one patch. "\
-                                 "'mask' => use mask file (bbs_patches_mask)\n"\
+                                 "'mask' => use mask file specified by bbs_patches_mask\n"\
                                  "When the Gaussian catalogue is written as a "\
                                  "BBS-readable sky file, this determines whether "\
                                  "all Gaussians are in a single patch, there are "\
                                  "no patches, all Gaussians for a given source "\
-                                 "are in a separate patch, or each Gaussian gets "\
-                                 "its own patch.\n"\
+                                 "are in a separate patch, each Gaussian gets "\
+                                 "its own patch, or a mask image is used to define "\
+                                 "the patches.\n"\
                                  "If you wish to have patches defined by island, "\
-                                 "then set group_by_isl=True (under advanced_opts) "\
+                                 "then set group_by_isl = True (under advanced_opts) "\
                                  "before fitting to force all Gaussians in an "\
                                  "island to be in a single source. Then set "\
                                  "bbs_patches='source' when writing the catalog.",
                              group = "output_opts")
     bbs_patches_mask = Option(None, String(),
-                             doc = "Name of the mask file to use to define the BBS "\
-                                 "patches (FITS or CASA format)",
+                             doc = "Name of the mask file (of same size as input "\
+                                 "image) that defines the patches if bbs_patches "\
+                                 "= 'mask'\nA mask file may be used to define the "\
+                                 "patches in the output BBS sky model. The mask "\
+                                 "image should be 1 inside the patches and 0 "\
+                                 "elsewhere and should be the same size as the "\
+                                 "input image (before any trim_box is applied). Any "\
+                                 "Gaussians that fall outside of the patches "\
+                                 "will be ignored and will not appear in the "\
+                                 "output sky model.",
                              group = "output_opts")
     solnname = Option(None, String(),
                              doc = "Name of the run, to be prepended "\
@@ -1061,6 +1070,22 @@ class Opts(object):
                              doc = "Restrict sources to "\
                                  "be only of type 'S'",
                              group = "psf_vary_do")
+    psf_stype_only = Bool(True,
+                             doc = "Restrict sources to "\
+                                 "be only of type 'S'",
+                             group = "psf_vary_do")
+    psf_fwhm = Option(None, Tuple(Float(), Float(), Float()),
+                             doc = "FWHM of the PSF. Specify as (maj, "\
+                                 "min, pos ang E of N) in degrees. "\
+                                 "E.g., psf_fwhm = (0.06, 0.02, 13.3). None => "\
+                                 "estimate from image\n"\
+                                 "If the size of the PSF is specified with this option, "\
+                                 "the PSF and its variation acrosss the image are "\
+                                 "assumed to be constant and are not estimated "\
+                                 "from the image. Instead, all sources "\
+                                 "are deconvolved with the specified PSF.",
+                             group = "psf_vary_do")
+
 
     #-----------------------------SHAPELET OPTIONS--------------------------------
     shapelet_basis = Enum("cartesian", "polar",
@@ -1092,7 +1117,7 @@ class Opts(object):
     #-------------------------SPECTRAL INDEX OPTIONS--------------------------------
     flagchan_rms = Bool(True,
                              doc = "Flag channels before (averaging and) "\
-                                 "extracting spectral index, if their rms if "\
+                                 "extracting spectral index, if their rms is "\
                                  "more than 5 (clipped) sigma outside the median "\
                                  "rms over all channels, but only if <= 10% of "\
                                  "channels\n"\
@@ -1125,7 +1150,7 @@ class Opts(object):
                                  "there is insufficient SNR, neighboring channels "\
                                  "are averaged to attempt to obtain the target SNR. "\
                                  "Channels with SNRs below this will be flagged if "\
-                                 "flagchan_snr=True.\n"\
+                                 "flagchan_snr = True\n"\
                                  "The maximum allowable number of channels to average "\
                                  "is determined by the specind_maxchan parameter.",
                              group = "spectralindex_do")
@@ -1150,9 +1175,9 @@ class Opts(object):
     clobber = Bool(False,
                              doc = "Overwrite existing file?",
                              group = 'hidden')
-    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis', 'sagecal',
+    format = Enum('fits', 'ds9', 'ascii', 'bbs', 'star', 'kvis', 'sagecal', 'csv', 'casabox',
                              doc = "Format of output catalog: 'bbs', "\
-                                 "'ds9', 'fits', 'star', 'kvis', 'ascii', or 'sagecal'\n"\
+                                 "'ds9', 'fits', 'star', 'kvis', 'ascii', 'csv', 'casabox', or 'sagecal'\n"\
                                  "The following formats are supported:\n"\
                                  "'bbs' - BlackBoard Selfcal sky model format "\
                                  "(Gaussian list only)\n"\
@@ -1213,17 +1238,16 @@ class Opts(object):
                                  "the location of the source center.",
                              group = 'hidden')
     img_format = Enum('fits', 'casa',
-                             doc = "Format of output image: 'fits' or "\
-                                 "'casa' (at the moment only 'fits' is "\
-                                 "supported)",
+                             doc = "Format of output image: 'fits' or 'casa'",
                              group = 'hidden')
     img_type = Enum('gaus_resid', 'shap_resid', 'rms', 'mean', 'gaus_model',
                              'shap_model', 'ch0', 'pi', 'psf_major', 'psf_minor',
-                             'psf_pa', 'psf_ratio', 'psf_ratio_aper',
+                             'psf_pa', 'psf_ratio', 'psf_ratio_aper', 'island_mask',
                              doc = "Type of image to export: 'gaus_resid', "\
                                  "'shap_resid', 'rms', 'mean', 'gaus_model', "\
                                  "'shap_model', 'ch0', 'pi', 'psf_major', "\
-                                 "'psf_minor', 'psf_pa'\nThe following images "\
+                                 "'psf_minor', 'psf_pa', 'psf_ratio', 'psf_ratio_aper', "\
+                                 "'island_mask'\nThe following images "\
                                  "can be exported:\n"\
                                  "'ch0' - image used for source detection\n"\
                                  "'rms' - rms map image\n"\
@@ -1237,8 +1261,26 @@ class Opts(object):
                                  "'psf_minor' - PSF minor axis FWHM image (FWHM in arcsec)\n"\
                                  "'psf_pa' - PSF position angle image (degrees east of north)\n"\
                                  "'psf_ratio' - PSF peak-to-total flux ratio (in units of 1/beam)\n"\
-                                 "'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)",
+                                 "'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)\n"\
+                                 "'island_mask' - Island mask image (0 = outside island, 1 = inside island)",
                              group = 'hidden')
+    mask_dilation = Int(0,
+                             doc = "Number of iterations to use for island-mask dilation. "\
+                                 "0 => no dilation\nThis option determines the number of "\
+                                 "dilation iterations to use when making the island mask. "\
+                                 "More iterations implies larger masked regions (one iteration "\
+                                 "expands the size of features in the mask by one pixel in all "\
+                                 "directions). After dilation, a closing operation is performed "\
+                                 "(using a structure array the size of the beam) to remove gaps "\
+                                 "and holes in the mask that are smaller than the beam.",
+                             group = "hidden")
+    pad_image = Bool(False,
+                             doc = "Pad image (with zeros) to original size\nIf True, the output "\
+                                 "image is padded to be the same size as the original "\
+                                 "image (without any trimming defined by the trim_box "\
+                                 "parameter). If False, the output image will have the "\
+                                 "size specified by the trim_box parameter.",
+                             group = "hidden")
     ch0_image = Bool(True,
                              doc = "Show the ch0 image. This is the image used for "\
                                  "source detection",

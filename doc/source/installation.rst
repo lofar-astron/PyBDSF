@@ -11,7 +11,7 @@ Downloading and installing
 
 Downloading the code
 --------------------
-The latest version of the code may be obtained as a gzipped tar file from the STRW FTP server at ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM (e.g., ``PyBDSM-1.7.0.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
+The latest version of the code may be obtained as a gzipped tar file from the STRW FTP server at ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM (e.g., ``PyBDSM-1.8.0.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
 
 Preparing to compile the code
 -----------------------------
@@ -19,10 +19,11 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
 
 .. note::
 
-    The minimal set of dependencies is usually part of most Linux distributions, so if you are installing PyBDSM on Linux you can likely skip to the next step (compiling and installing).
+    The minimal set of dependencies is usually part of most Linux distributions, so if you are installing PyBDSM on Linux you can likely skip to the next step (compiling and installing). On a Mac, you will also need to have XCode installed (from the Mac App Store), including the command-line tools (installed either from XCode's Preferences or, on 10.9 Mavericks, by running ``xcode-select --install`` in a terminal).
 
 * Python 2.6 or 2.7 (including NumPy, SciPy, Matplotlib, and IPython). The easiest way to install Python and all of the required modules is to use the free 64-bit Anaconda distribution, available at http://www.continuum.io/downloads (Anaconda also includes Astropy, which is needed by PyBDSM). Python 3 is not yet supported.
 * gfortran. Binaries are available from http://gcc.gnu.org/wiki/GFortranBinaries.
+* A C++ compiler. Note that the default system compiler on OS 10.9 does not work with PyBDSM at this time, so it is necessary to install a recent version of the GCC compiler suite (e.g., the GCC 4.8 binaries from http://hpc.sourceforge.net). The easiest way to use these alternative compilers is to replace the system versions of the compilers in /usr/bin/ (i.e., cc, gcc, g++, c++) with these versions (before compiling Boost).
 * Boost. Get the latest version from http://www.boost.org. Only the Python libraries need to be compiled. For example, on a Mac, do the following (which assumes the latest version is ``boost_1_49_0.tar.gz``)::
 
     $ cd /usr/local/

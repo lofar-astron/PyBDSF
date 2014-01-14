@@ -1262,6 +1262,8 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
     # Read in data. If only a subsection of the image is desired (as defined
     # by the trim_box option), we can try to use PyFITS to read only that section.
+    img._original_shape = (shape_out[2], shape_out[3])
+    img._xy_hdr_shift = (0, 0)
     if img.opts.trim_box != None:
         img.trim_box = img.opts.trim_box
         xmin, xmax, ymin, ymax = img.trim_box
@@ -1315,6 +1317,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         # Adjust WCS keywords for trim_box starting x and y.
         hdr['crpix1'] -= xmin
         hdr['crpix2'] -= ymin
+        img._xy_hdr_shift = (xmin, ymin)
     else:
         if img.use_io == 'fits':
             data = fits[0].data
@@ -1360,13 +1363,25 @@ def convert_pyrap_header(pyrap_image, tmpdir):
 
 
 def write_image_to_file(use, filename, image, img, outdir=None,
-                                           clobber=True):
+                        pad_image=False, clobber=True):
     """ Writes image array to dir/filename using pyfits"""
     import numpy as N
     import os
     import mylogger
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Writefile")
+
+    wcs_obj = img.wcs_obj
+    if pad_image and img.opts.trim_box is not None:
+        # Pad image to original size
+        xsize, ysize = img._original_shape
+        xmin, ymin = img._xy_hdr_shift
+        image_pad = N.zeros((xsize, ysize), dtype=N.float32)
+        image_pad[xmin:xmin+image.shape[0], ymin:ymin+image.shape[1]] = image
+        image = image_pad
+    else:
+        xmin = 0
+        ymin = 0
 
     if filename == 'SAMP':
         import tempfile
@@ -1376,9 +1391,10 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             img.samp_key = private_key
 
         # Broadcast image to SAMP Hub
-        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.frequency)
+        temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
+            img.frequency, xmin=xmin, ymin=ymin)
         tfile = tempfile.NamedTemporaryFile(delete=False)
-        temp_im.writeto(tfile.name,  clobber=clobber)
+        temp_im.writeto(tfile.name, clobber=clobber)
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
     else:
         # Write image to FITS file
@@ -1386,15 +1402,34 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             outdir = img.indir
         if not os.path.exists(outdir) and outdir != '':
             os.makedirs(outdir)
-        if os.path.exists(outdir + filename):
+        if os.path.exists(outdir+filename) and use == 'fits':
             if clobber:
-                os.remove(outdir + filename)
+                os.remove(outdir+filename)
             else:
                 return
-        temp_im = make_fits_image(N.transpose(image), img.wcs_obj, img.beam, img.frequency)
-        temp_im.writeto(outdir + filename,  clobber=clobber)
+        temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
+            img.frequency, xmin=xmin, ymin=ymin)
+        if use == 'rap':
+            outfile = outdir + filename + '.fits'
+        else:
+            outfile = outdir + filename
+        temp_im.writeto(outfile,  clobber=clobber)
+        temp_im.close()
 
-def make_fits_image(imagedata, wcsobj, beam, freq):
+        if use == 'rap':
+            # For CASA images, read in FITS image and convert
+            try:
+                import pyrap.images as pim
+                import os
+                outimage = pim.image(outfile)
+                outimage.saveas(outdir+filename, overwrite=clobber)
+            except ImportError, err:
+                import os
+                os.remove(outfile)
+                raise RuntimeError("Error writing CASA image. Use img_format = 'fits' instead.")
+
+
+def make_fits_image(imagedata, wcsobj, beam, freq, xmin=0, ymin=0):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
     from distutils.version import StrictVersion
     try:
@@ -1419,37 +1454,37 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     if use_header_update:
         header.update('CRVAL1', wcsobj.wcs.crval[0])
         header.update('CDELT1', wcsobj.wcs.cdelt[0])
-        header.update('CRPIX1', wcsobj.wcs.crpix[0])
+        header.update('CRPIX1', wcsobj.wcs.crpix[0] + xmin)
         header.update('CUNIT1', wcsobj.wcs.cunit[0])
         header.update('CTYPE1', wcsobj.wcs.ctype[0])
         header.update('CRVAL2', wcsobj.wcs.crval[1])
         header.update('CDELT2', wcsobj.wcs.cdelt[1])
-        header.update('CRPIX2', wcsobj.wcs.crpix[1])
+        header.update('CRPIX2', wcsobj.wcs.crpix[1] + ymin)
         header.update('CUNIT2', wcsobj.wcs.cunit[1])
         header.update('CTYPE2', wcsobj.wcs.ctype[1])
     else:
         header['CRVAL1'] = wcsobj.wcs.crval[0]
         header['CDELT1'] = wcsobj.wcs.cdelt[0]
-        header['CRPIX1'] = wcsobj.wcs.crpix[0]
+        header['CRPIX1'] = wcsobj.wcs.crpix[0] + xmin
         header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).strip().lower() # needed due to bug in pywcs/astropy
         header['CTYPE1'] = wcsobj.wcs.ctype[0]
         header['CRVAL2'] = wcsobj.wcs.crval[1]
         header['CDELT2'] = wcsobj.wcs.cdelt[1]
-        header['CRPIX2'] = wcsobj.wcs.crpix[1]
+        header['CRPIX2'] = wcsobj.wcs.crpix[1] + ymin
         header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).strip().lower() # needed due to bug in pywcs/astropy
         header['CTYPE2'] = wcsobj.wcs.ctype[1]
 
     # Add STOKES info
     if use_header_update:
-        header.update('CRVAL3', 1)
-        header.update('CDELT3', 1)
-        header.update('CRPIX3', 1)
+        header.update('CRVAL3', 1.0)
+        header.update('CDELT3', 1.0)
+        header.update('CRPIX3', 1.0)
         header.update('CUNIT3', '')
         header.update('CTYPE3', 'STOKES')
     else:
-        header['CRVAL3'] = 1
-        header['CDELT3'] = 1
-        header['CRPIX3'] = 1
+        header['CRVAL3'] = 1.0
+        header['CDELT3'] = 1.0
+        header['CRPIX3'] = 1.0
         header['CUNIT3'] = ''
         header['CTYPE3'] = 'STOKES'
 
@@ -1457,13 +1492,13 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
     if use_header_update:
         header.update('CRVAL4', freq)
         header.update('CDELT4', 0.0)
-        header.update('CRPIX4', 1)
+        header.update('CRPIX4', 1.0)
         header.update('CUNIT4', 'Hz')
         header.update('CTYPE4', 'FREQ')
     else:
         header['CRVAL4'] = freq
         header['CDELT4'] = 0.0
-        header['CRPIX4'] = 1
+        header['CRPIX4'] = 1.0
         header['CUNIT4'] = 'Hz'
         header['CTYPE4'] = 'FREQ'
 
@@ -1479,15 +1514,15 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
 
     # Add STOKES info
     if use_header_update:
-        header.update('CRVAL3', 1)
-        header.update('CDELT3', 1)
-        header.update('CRPIX3', 1)
+        header.update('CRVAL3', 1.0)
+        header.update('CDELT3', 1.0)
+        header.update('CRPIX3', 1.0)
         header.update('CUNIT3', '')
         header.update('CTYPE3', 'STOKES')
     else:
-        header['CRVAL3'] = 1
-        header['CDELT3'] = 1
-        header['CRPIX3'] = 1
+        header['CRVAL3'] = 1.0
+        header['CDELT3'] = 1.0
+        header['CRPIX3'] = 1.0
         header['CUNIT3'] = ''
         header['CTYPE3'] = 'STOKES'
 
@@ -1501,13 +1536,13 @@ def make_fits_image(imagedata, wcsobj, beam, freq):
         if use_header_update:
             header.update('CRVAL4', freq)
             header.update('CDELT4', 0.0)
-            header.update('CRPIX4', 1)
+            header.update('CRPIX4', 1.0)
             header.update('CUNIT4', 'Hz')
             header.update('CTYPE4', 'FREQ')
         else:
             header['CRVAL4'] = freq
             header['CDELT4'] = 0.0
-            header['CRPIX4'] = 1
+            header['CRPIX4'] = 1.0
             header['CUNIT4'] = 'Hz'
             header['CTYPE4'] = 'FREQ'
 
@@ -2157,13 +2192,17 @@ def bstat(indata, mask, kappa_npixbeam):
         c2 = converge_num * lastct
         iter += 1
 
-
     mean  = numpy.mean(skpix)
     median = numpy.median(skpix)
     sigma = numpy.std(skpix, ddof=1)
     mode = 2.5*median - 1.5*mean
 
-    skew_par = abs(mean - median)/sigma
+    if sigma > 0.0:
+        skew_par = abs(mean - median)/sigma
+    else:
+        raise RuntimeError("A region with an unphysical rms value has been found. "
+            "Please check the input image.")
+
     if skew_par <= 0.3:
         m = mode
     else:

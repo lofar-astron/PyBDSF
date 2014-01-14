@@ -428,8 +428,8 @@ def write_catalog(**kwargs):
     included in the output file varies with the format used. Use
     "help 'format'" for more information.
 
-    Parameters: outfile, format, srcroot, bbs_patches, incl_wavelet, clobber,
-                catalog_type, incl_empty, correct_proj
+    Parameters: outfile, format, srcroot, bbs_patches, incl_chan, clobber,
+                catalog_type, incl_empty, correct_proj, bbs_patches_mask
 
     For more information about a parameter, use help.  E.g.,
       > help 'bbs_patches'
@@ -453,14 +453,14 @@ def write_catalog(**kwargs):
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
                           'incl_chan', 'clobber', 'catalog_type', 'incl_empty',
-                          'correct_proj']
+                          'correct_proj', 'bbs_patches_mask']
 write_catalog.use_groups = False
 
 
 def export_image(**kwargs):
     """Write an image to disk.
 
-    Parameters: filename, img_type, img_format, incl_wavelet, clobber
+    Parameters: outfile, img_type, img_format, mask_dilation, pad_image, clobber
 
     For more information about a parameter, use help.  E.g.,
       > help 'img_type'
@@ -482,8 +482,8 @@ def export_image(**kwargs):
     except KeyboardInterrupt:
         print "\n\033[31;1mAborted\033[0m"
 
-export_image.arg_list = ['outfile', 'img_type', 'img_format',
-                         'clobber']
+export_image.arg_list = ['outfile', 'img_type', 'img_format', 'mask_dilation',
+                         'pad_image', 'clobber']
 export_image.use_groups = False
 
 
