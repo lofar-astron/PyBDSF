@@ -195,8 +195,12 @@ class Op_readimage(Op):
             for i in range(2):
                 xy.append(0)
             if hasattr(self, 'wcs_pix2world'):
-                xy_arr = N.array([xy[0:2]])
-                sky = self.wcs_pix2world(xy_arr, 0)
+                try:
+                    xy_arr = N.array([xy[0:2]])
+                    sky = self.wcs_pix2world(xy_arr, 0)
+                except:
+                    xy_arr = N.array([xy])
+                    sky = self.wcs_pix2world(xy_arr, 0)
             else:
                 xy_arr = N.array([xy])
                 sky = self.wcs_pix2sky(xy_arr, 0)
@@ -207,8 +211,12 @@ class Op_readimage(Op):
             for i in range(2):
                 rd.append(0)
             if hasattr(self, 'wcs_world2pix'):
-                rd_arr = N.array([rd[0:2]])
-                pix = self.wcs_world2pix(rd_arr, 0)
+                try:
+                    rd_arr = N.array([rd[0:2]])
+                    pix = self.wcs_world2pix(rd_arr, 0)
+                except:
+                    rd_arr = N.array([rd])
+                    pix = self.wcs_world2pix(rd_arr, 0)
             else:
                 rd_arr = N.array([rd])
                 pix = self.wcs_sky2pix(rd_arr, 0)
