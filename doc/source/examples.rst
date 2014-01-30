@@ -292,7 +292,7 @@ At this point, make sure that TOPCAT is started and its SAMP hub is running (act
 
 ::
 
-    BSDM [2]: inp write_catalog
+    BDSM [2]: inp write_catalog
 
     BDSM [3]: outfile='SAMP'
 
