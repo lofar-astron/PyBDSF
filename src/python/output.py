@@ -312,7 +312,7 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
     return filename
 
 
-def write_ascii_list(img, filename=None, sort_by='indx',
+def write_ascii_list(img, filename=None, sort_by='indx', format = 'ascii',
                      incl_chan=False, incl_empty=False, clobber=False, objtype='gaul'):
     """Writes Gaussian list to an ASCII file"""
     import mylogger
@@ -326,7 +326,8 @@ def write_ascii_list(img, filename=None, sort_by='indx',
         if incl_empty:
             # Append the dummy sources for islands without any unflagged Gaussians
             outl[0] += img.dsources
-    outstr_list = make_ascii_str(img, outl, objtype=objtype, incl_empty=incl_empty)
+    outstr_list = make_ascii_str(img, outl, objtype=objtype,
+                                 incl_empty=incl_empty, format=format)
     if filename == None:
         if objtype == 'gaul':
             filename = img.imagename + '.gaul'
@@ -342,7 +343,7 @@ def write_ascii_list(img, filename=None, sort_by='indx',
     return filename
 
 
-def write_casa_gaul(img, filename=None, clobber=False):
+def write_casa_gaul(img, filename=None,  incl_empty=False, clobber=False):
     """Writes a clean box file for use in casapy"""
     import mylogger
     import os
@@ -413,7 +414,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                                                               incl_aper=incl_aper,
                                                               incl_empty=incl_empty,
                                                               nmax=nmax, nchan=img.nchan)
-    out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax)
+    out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax, incl_empty=incl_empty)
     col_list = []
     for ind, col in enumerate(out_list):
       list1 = pyfits.Column(name=cnames[ind], format=cformats[ind],
@@ -790,7 +791,7 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
     return outstr_list
 
 
-def make_ascii_str(img, glist, objtype='gaul', incl_empty=False):
+def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False):
     """Makes a list of string entries for an ascii region file."""
     from _version import __version__, __revision__
     outstr_list = []
@@ -821,9 +822,14 @@ def make_ascii_str(img, glist, objtype='gaul', incl_empty=False):
                                                               nchan=img.nchan)
         if cvals != None:
             cformats[-1] += "\n"
-            if i == 0:
-                outstr_list.append("# " + " ".join(cnames) + "\n")
-            outstr_list.append(" ".join(cformats) % tuple(cvals))
+            if format == 'ascii':
+                if i == 0:
+                    outstr_list.append("# " + " ".join(cnames) + "\n")
+                outstr_list.append(" ".join(cformats) % tuple(cvals))
+            else:
+                if i == 0:
+                    outstr_list.append("# " + ", ".join(cnames) + "\n")
+                outstr_list.append(", ".join(cformats) % tuple(cvals))
     return outstr_list
 
 
@@ -850,29 +856,34 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False):
 
 
 def make_casa_str(img, glist):
-    """Makes a list of string entries for a casa clean box file."""
+    """Makes a list of string entries for a casa region file."""
     import functions as func
-    outstr_list = []
+    outstr_list = ['#CRTFv0 CASA Region Text Format version 0\n']
     sep = ' '
-    scale = 2.0
+    scale = 2.0 # scale box to 2 times FWHM of Gaussian
     for gindx, g in enumerate(glist[0]):
         x, y = g.centre_pix
-        xsize, ysize, ang = g.size_pix # FWHM
         ellx, elly = func.drawellipse(g)
-        blc = [int(min(ellx)), int(min(elly))]
-        trc = [int(max(ellx)), int(max(elly))]
+        blc = [min(ellx), min(elly)]
+        trc = [max(ellx), max(elly)]
 
         blc[0] -= (x - blc[0]) * scale
         blc[1] -= (y - blc[1]) * scale
         trc[0] += (trc[0] - x) * scale
         trc[1] += (trc[1] - y) * scale
-        # Format is: <id> <blcx> <blcy> <trcx> <trcy>
+
+        blc_sky = img.pix2sky(blc)
+        trc_sky = img.pix2sky(trc)
+
+        blc_sky_str = convert_radec_str(blc_sky[0], blc_sky[1])
+        trc_sky_str = convert_radec_str(trc_sky[0], trc_sky[1])
+
+        # Format is: box [ [<blcx>, <blcy>], [<trcx>, <trcy>] ]
         # Note that we use gindx rather than g.gaus_num so that
         # all Gaussians will have a unique id, even if wavelet
         # Gaussians are included.
-        outstr_list.append(str(gindx+1) + sep + str(blc[0]) + sep +
-                           str(blc[1]) + sep + str(trc[0]) + sep +
-                           str(trc[1]) +'\n')
+        outstr_list.append('box [[' + ', '.join(blc_sky_str) + '], [' +
+                           ', '.join(trc_sky_str) + ']] coord=J2000\n')
     return outstr_list
 
 
@@ -901,12 +912,24 @@ def write_islands(img):
 
     f.close()
 
+
 def get_src(src_list, srcid):
     """Returns the source for srcid or None if not found"""
     for src in src_list:
         if src.source_id == srcid:
             return src
     return None
+
+
+def convert_radec_str(ra, dec):
+    """Takes ra, dec in degrees and returns BBS/CASA strings"""
+    ra = ra2hhmmss(ra)
+    sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.3f" % (ra[2])).zfill(6)
+    dec = dec2ddmmss(dec)
+    decsign = ('-' if dec[3] < 0 else '+')
+    sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.3f" % (dec[2])).zfill(6)
+    return sra, sdec
+
 
 def list_and_sort_gaussians(img, patch=None, root=None,
                             sort_by='index'):
@@ -937,17 +960,20 @@ def list_and_sort_gaussians(img, patch=None, root=None,
     gausindx = [] # indices of Gaussians
     patchflux = [] # total flux of each patch
     patchindx = [] # indices of sources
+    patchnums = [] # number of patch from mask
 
     # If a mask image is to be used to define patches, read it in and
     # make a rank image from it
-#     if patch == 'mask':
-#         patches_mask = func.readimage(mask_file)
-#         act_pixels = patches_mask
-#         rank = len(patches_mask.shape)
-#         connectivity = nd.generate_binary_structure(rank, rank)
-#         labels, count = nd.label(act_pixels, connectivity)
-#         mask_labels = labels
-
+    use_mask = False
+    if patch not in ['single', 'gaussian', 'source', None]:
+        mask_file = img.opts.bbs_patches_mask
+        patches_mask, hdr = func.read_image_from_file(mask_file, img, img.indir)
+        use_mask = True
+        act_pixels = patches_mask[0,0]
+        rank = len(act_pixels.shape)
+        import scipy.ndimage as nd
+        connectivity = nd.generate_binary_structure(rank, rank)
+        mask_labels, count = nd.label(act_pixels, connectivity)
 
     src_list = img.sources
     for src in src_list:
@@ -968,8 +994,9 @@ def list_and_sort_gaussians(img, patch=None, root=None,
                 gausname = []
                 gausflux = []
                 gausindx = []
-#                 if patch == 'mask':
-#                     patchnum = mask_labels[g.centre_pix]
+            if use_mask:
+                patchnums.append(mask_labels[g.centre_pix[0], g.centre_pix[1]])
+
 
         if patch == 'source':
             sorted_gauslist = list(gauslist)
@@ -997,6 +1024,27 @@ def list_and_sort_gaussians(img, patch=None, root=None,
             gauslist = [] # reset for next source
             gausname = []
             gausflux = []
+
+    if use_mask:
+        unique_patch_ids = set(patchnums)
+
+        # Check if there is a patch with id = 0. If so, this means there were
+        # some Gaussians that fell outside of the regions in the patch
+        # mask file.
+        if 0 in unique_patch_ids:
+            import mylogger
+            mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
+            mylog.warning('Some sources fall outside of the regions '
+                      'defined in the mask file. These sources are not '
+                      'included in the output sky model.')
+        for p in unique_patch_ids:
+            if p != 0:
+                in_patch = N.where(patchnums == p)
+                outlist.append(N.array(gauslist)[in_patch].tolist())
+                outnames.append(N.array(gausname)[in_patch].tolist())
+                patchnames.append('patch_'+str(p))
+                patchflux.append(N.sum(N.array(gausflux)[in_patch]))
+                patchindx.append(p)
 
     # Sort
     if patch == 'single' or patch == None:
@@ -1170,11 +1218,11 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
     for i, v in enumerate(cvals):
         if fits:
             if isinstance(v, int):
-                cformats.append('1J')
+                cformats.append('J')
             if isinstance(v, float):
-                cformats.append('1D')
+                cformats.append('D')
             if isinstance(v, str):
-                cformats.append('1A')
+                cformats.append('A')
             if isinstance(v, N.ndarray):
                 cformats.append('%iD' % (nmax**2,))
         else:

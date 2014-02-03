@@ -745,8 +745,8 @@ def round_list_of_tuples(val):
 
 # The following functions give convenient access to the output functions in
 # output.py
-def export_image(img, outfile=None, img_format='fits',
-                 img_type='gaus_resid', clobber=False):
+def export_image(img, outfile=None, img_format='fits', pad_image = False,
+                 img_type='gaus_resid', mask_dilation=0, clobber=False):
     """Write an image to a file. Returns True if successful, False if not.
 
     outfile - name of resulting file; if None, file is
@@ -771,6 +771,7 @@ def export_image(img, outfile=None, img_format='fits',
         'psf_pa' - PSF position angle image (degrees east of north)
         'psf_ratio' - PSF peak-to-total flux ratio (in units of 1/beam)
         'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)
+        'island_mask' - Island mask image (0 = outside island, 1 = inside island)
     """
     import os
     import functions as func
@@ -805,9 +806,6 @@ def export_image(img, outfile=None, img_format='fits',
     if (format in ['fits', 'casa']) == False:
         print '\033[91mERROR\033[0m: img_format must be "fits" or "casa"'
         return False
-    if format == 'casa':
-        print "\033[91mERROR\033[0m: Only img_format = 'fits' is supported at the moment"
-        return False
     filename = outfile
     if filename == None or filename == '':
         filename = img.imagename + '_' + img_type + '.' + format
@@ -822,57 +820,76 @@ def export_image(img, outfile=None, img_format='fits',
     try:
         if img_type == 'ch0':
             func.write_image_to_file(use_io, filename,
-                                     img.ch0_arr, img, bdir,
+                                     img.ch0_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'rms':
             func.write_image_to_file(use_io, filename,
-                                     img.rms_arr, img, bdir,
+                                     img.rms_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'mean':
             func.write_image_to_file(use_io, filename,
-                                     img.mean_arr, img, bdir,
+                                     img.mean_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'pi':
             func.write_image_to_file(use_io, filename,
-                                     img.ch0_pi_arr, img, bdir,
+                                     img.ch0_pi_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'psf_major':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_maj_arr*fwsig, img, bdir,
+                                     img.psf_vary_maj_arr*fwsig, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'psf_minor':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_min_arr*fwsig, img, bdir,
+                                     img.psf_vary_min_arr*fwsig, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'psf_pa':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_pa_arr, img, bdir,
+                                     img.psf_vary_pa_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'psf_ratio':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_ratio_arr, img, bdir,
+                                     img.psf_vary_ratio_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'psf_ratio_aper':
             func.write_image_to_file(use_io, filename,
-                                     img.psf_vary_ratio_aper_arr, img, bdir,
+                                     img.psf_vary_ratio_aper_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'gaus_resid':
             im = img.resid_gaus_arr
             func.write_image_to_file(use_io, filename,
-                                     im, img, bdir,
+                                     im, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'gaus_model':
             im = img.model_gaus_arr
             func.write_image_to_file(use_io, filename,
-                                     im, img, bdir,
+                                     im, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'shap_resid':
             func.write_image_to_file(use_io, filename,
-                                     img.resid_shap_arr, img, bdir,
+                                     img.resid_shap_arr, img, bdir, pad_image,
                                      clobber=clobber)
         elif img_type == 'shap_model':
             func.write_image_to_file(use_io, filename,
-                                     img.model_shap_arr, img, bdir,
+                                     img.model_shap_arr, img, bdir, pad_image,
+                                     clobber=clobber)
+        elif img_type == 'island_mask':
+            import numpy as N
+            import scipy.ndimage as nd
+            island_mask_bool = img.pyrank + 1 > 0
+            if mask_dilation > 0:
+                # Dilate the mask by specified number of iterations
+                island_mask_bool = nd.binary_dilation(island_mask_bool,
+                    iterations=mask_dilation)
+                # Perform a binary closing to remove small holes/gaps. The
+                # structure array is chosen to be about the size of the
+                # beam (assuming a normally sampled psf), so that holes/gaps
+                # smaller than the beam are removed.
+                pbeam = int(round(img.beam2pix(img.beam)[0] * 1.5))
+                island_mask_bool = nd.binary_closing(island_mask_bool,
+                    structure=N.ones((pbeam, pbeam)))
+            island_mask = N.array(island_mask_bool, dtype=N.float32)
+            func.write_image_to_file(use_io, filename,
+                                     island_mask, img, bdir, pad_image,
                                      clobber=clobber)
         else:
             print "\n\033[91mERROR\033[0m: img_type not recognized."
@@ -881,6 +898,11 @@ def export_image(img, outfile=None, img_format='fits',
             print '--> Image sent to SMAP hub'
         else:
             print '--> Wrote file ' + repr(filename)
+            if use_io == 'rap':
+                # remove the temporary fits file used as a pyrap template
+                import os
+                os.remove(filename+'.fits')
+
         return True
     except RuntimeError, err:
         # Catch and log error
@@ -898,12 +920,14 @@ def export_image(img, outfile=None, img_format='fits',
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
                bbs_patches=None, incl_chan=False, incl_empty=False, clobber=False,
-               force_output=False, correct_proj=True):
+               force_output=False, correct_proj=True, bbs_patches_mask=None):
     """Write the Gaussian, source, or shapelet list to a file. Returns True if
     successful, False if not.
 
     filename - name of resulting file; if None, file is
-               named automatically.
+               named automatically. If 'SAMP', table is sent to a samp hub
+               (must be running already). If 'SCREEN', table is sent to the
+               screen.
     catalog_type - type of catalog
         "gaul"  - Gaussian list
         "srl"   - Source list
@@ -924,6 +948,8 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         "single"   - all Gaussians are put into a single
                      patch
         "source"   - sources are grouped by source into patches
+        "mask"     - use a Boolean mask to define the patches
+    bbs_patches_mask - file name of mask file if bbs_patches="mask"
     incl_chan - Include fluxes for each channel?
     incl_empty - Include islands without any valid Gaussians (source list only)?
     sort_by - Property to sort output list by:
@@ -950,15 +976,19 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     filename = outfile
     if isinstance(patch, str):
         patch = patch.lower()
-    if (format in ['fits', 'ascii', 'bbs', 'ds9', 'star',
-                   'kvis', 'sagecal']) == False:
+    if format not in ['fits', 'ascii', 'bbs', 'ds9', 'star',
+                   'kvis', 'sagecal', 'csv', 'casabox']:
         print '\033[91mERROR\033[0m: format must be "fits", '\
-            '"ascii", "ds9", "star", "kvis",  or "bbs"'
+            '"ascii", "ds9", "star", "kvis", "csv", "casabox", or "bbs"'
         return False
-    if (patch in [None, 'gaussian', 'single', 'source']) == False:
+    if patch not in [None, 'gaussian', 'single', 'source', 'mask']:
         print '\033[91mERROR\033[0m: patch must be None, '\
-            '"gaussian", "source", or "single"'
+                '"gaussian", "source", "single", or "mask"'
         return False
+    if patch == 'mask':
+        if bbs_patches_mask is None:
+            print '\033[91mERROR\033[0m: if patch is "mask", bbs_patches_mask must be set to the file name of the mask file'
+            return False
     if (catalog_type in ['gaul', 'srl', 'shap']) == False:
         print '\033[91mERROR\033[0m: catalog_type must be "gaul", '\
               '"srl", or "shap"'
@@ -967,10 +997,13 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         if not force_output:
             print 'No sources were found in the image. Output file not written.'
             return False
-    if filename == '': filename = None
+    if filename == '':
+        filename = None
+    if filename is not None:
+        filename = filename.lower()
 
     # Now go format by format and call appropriate function
-    if filename == 'SAMP':
+    if filename == 'samp':
         import tempfile
         import functions as func
         import os
@@ -992,6 +1025,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         func.send_fits_table(img.samp_client, img.samp_key, table_name, tfile.name)
         print '--> Table sent to SMAP hub'
         return True
+
     if format == 'fits':
         filename = output.write_fits_list(img, filename=filename,
                                              incl_chan=incl_chan, incl_empty=incl_empty,
@@ -1002,10 +1036,10 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         else:
             print '--> Wrote FITS file ' + repr(filename)
             return True
-    if format == 'ascii':
+    if format == 'ascii' or format == 'csv':
         filename = output.write_ascii_list(img, filename=filename,
                                               incl_chan=incl_chan, incl_empty=incl_empty,
-                                              sort_by='index',
+                                              sort_by='index', format = format,
                                               clobber=clobber, objtype=catalog_type)
         if filename == None:
             print '\033[91mERROR\033[0m: File exists and clobber = False.'
@@ -1077,14 +1111,13 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         else:
             print '--> Wrote kvis file ' + repr(filename)
             return True
-    # if format == 'casabox':
-    #     filename = output.write_casa_gaul(img, filename=filename,
-    #                                   incl_wavelet=incl_wavelet,
-    #                                   clobber=clobber)
-    #     if filename == None:
-    #         print '\033[91mERROR\033[0m: File exists and clobber=False.'
-    #     else:
-    #         print '--> Wrote CASA clean box file ' + filename
+    if format == 'casabox':
+        filename = output.write_casa_gaul(img, filename=filename,
+                                      incl_empty=incl_empty, clobber=clobber)
+        if filename == None:
+            print '\033[91mERROR\033[0m: File exists and clobber=False.'
+        else:
+            print '--> Wrote CASA clean box file ' + filename
 
 def add_break_to_logfile(logfile):
     f = open(logfile, 'a')
