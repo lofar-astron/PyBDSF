@@ -27,6 +27,9 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2014/02/05 - Fix to bug that resulted in output file names being
+        converted to lower case inappropriately.
+
     2014/01/14 - Version 1.8.1
 
     2014/01/13 - Added option (bbs_patches = 'mask') to allow patches in

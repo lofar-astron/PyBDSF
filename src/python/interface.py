@@ -926,8 +926,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
 
     filename - name of resulting file; if None, file is
                named automatically. If 'SAMP', table is sent to a samp hub
-               (must be running already). If 'SCREEN', table is sent to the
-               screen.
+               (must be running already).
     catalog_type - type of catalog
         "gaul"  - Gaussian list
         "srl"   - Source list
@@ -999,11 +998,9 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
             return False
     if filename == '':
         filename = None
-    if filename is not None:
-        filename = filename.lower()
 
     # Now go format by format and call appropriate function
-    if filename == 'samp':
+    if filename == 'samp' or filename == 'SAMP':
         import tempfile
         import functions as func
         import os
