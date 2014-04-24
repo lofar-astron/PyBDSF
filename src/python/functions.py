@@ -1364,7 +1364,7 @@ def convert_pyrap_header(pyrap_image, tmpdir):
 
 def write_image_to_file(use, filename, image, img, outdir=None,
                         pad_image=False, clobber=True):
-    """ Writes image array to dir/filename using pyfits"""
+    """ Writes image array to dir/filename"""
     import numpy as N
     import os
     import mylogger
@@ -1392,7 +1392,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 
         # Broadcast image to SAMP Hub
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
-            img.frequency, xmin=xmin, ymin=ymin)
+            img.frequency, img.equinox, xmin=xmin, ymin=ymin)
         tfile = tempfile.NamedTemporaryFile(delete=False)
         temp_im.writeto(tfile.name, clobber=clobber)
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
@@ -1408,7 +1408,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             else:
                 return
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
-            img.frequency, xmin=xmin, ymin=ymin)
+            img.frequency, img.equinox, xmin=xmin, ymin=ymin)
         if use == 'rap':
             outfile = outdir + filename + '.fits'
         else:
@@ -1429,7 +1429,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                 raise RuntimeError("Error writing CASA image. Use img_format = 'fits' instead.")
 
 
-def make_fits_image(imagedata, wcsobj, beam, freq, xmin=0, ymin=0):
+def make_fits_image(imagedata, wcsobj, beam, freq, equinox, xmin=0, ymin=0):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
     from distutils.version import StrictVersion
     try:
@@ -1474,33 +1474,35 @@ def make_fits_image(imagedata, wcsobj, beam, freq, xmin=0, ymin=0):
         header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).strip().lower() # needed due to bug in pywcs/astropy
         header['CTYPE2'] = wcsobj.wcs.ctype[1]
 
+    # Add frequency info
+    if use_header_update:
+        header.update('CRVAL3', freq)
+        header.update('CDELT3', 3e8)
+        header.update('CRPIX3', 1.0)
+        header.update('CUNIT3', 'HZ')
+        header.update('CTYPE3', 'FREQ')
+        header.update('SPECSYS', 'TOPOCENT')
+    else:
+        header['CRVAL3'] = freq
+        header['CDELT3'] = 3e8
+        header['CRPIX3'] = 1.0
+        header['CUNIT3'] = 'HZ'
+        header['CTYPE3'] = 'FREQ'
+        header['SPECSYS'] = 'TOPOCENT'
+
     # Add STOKES info
     if use_header_update:
-        header.update('CRVAL3', 1.0)
-        header.update('CDELT3', 1.0)
-        header.update('CRPIX3', 1.0)
-        header.update('CUNIT3', '')
-        header.update('CTYPE3', 'STOKES')
-    else:
-        header['CRVAL3'] = 1.0
-        header['CDELT3'] = 1.0
-        header['CRPIX3'] = 1.0
-        header['CUNIT3'] = ''
-        header['CTYPE3'] = 'STOKES'
-
-    # Add or alter frequency info if needed
-    if use_header_update:
-        header.update('CRVAL4', freq)
-        header.update('CDELT4', 0.0)
+        header.update('CRVAL4', 1.0)
+        header.update('CDELT4', 1.0)
         header.update('CRPIX4', 1.0)
-        header.update('CUNIT4', 'Hz')
-        header.update('CTYPE4', 'FREQ')
+        header.update('CUNIT4', '')
+        header.update('CTYPE4', 'STOKES')
     else:
-        header['CRVAL4'] = freq
-        header['CDELT4'] = 0.0
+        header['CRVAL4'] = 1.0
+        header['CDELT4'] = 1.0
         header['CRPIX4'] = 1.0
-        header['CUNIT4'] = 'Hz'
-        header['CTYPE4'] = 'FREQ'
+        header['CUNIT4'] = ''
+        header['CTYPE4'] = 'STOKES'
 
     # Add beam info
     if use_header_update:
@@ -1512,49 +1514,11 @@ def make_fits_image(imagedata, wcsobj, beam, freq, xmin=0, ymin=0):
         header['BMIN'] = beam[1]
         header['BPA'] = beam[2]
 
-    # Add STOKES info
+    # Add equinox
     if use_header_update:
-        header.update('CRVAL3', 1.0)
-        header.update('CDELT3', 1.0)
-        header.update('CRPIX3', 1.0)
-        header.update('CUNIT3', '')
-        header.update('CTYPE3', 'STOKES')
+        header.update('EQUINOX', equinox)
     else:
-        header['CRVAL3'] = 1.0
-        header['CDELT3'] = 1.0
-        header['CRPIX3'] = 1.0
-        header['CUNIT3'] = ''
-        header['CTYPE3'] = 'STOKES'
-
-    # Add or alter frequency info if needed
-    if wcsobj.wcs.spec != -1:
-        if use_header_update:
-            header.update('CRVAL' + str(wcsobj.wcs.spec + 1), freq)
-        else:
-            header['CRVAL' + str(wcsobj.wcs.spec + 1)] =  freq
-    else:
-        if use_header_update:
-            header.update('CRVAL4', freq)
-            header.update('CDELT4', 0.0)
-            header.update('CRPIX4', 1.0)
-            header.update('CUNIT4', 'Hz')
-            header.update('CTYPE4', 'FREQ')
-        else:
-            header['CRVAL4'] = freq
-            header['CDELT4'] = 0.0
-            header['CRPIX4'] = 1.0
-            header['CUNIT4'] = 'Hz'
-            header['CTYPE4'] = 'FREQ'
-
-    # Add beam info
-    if use_header_update:
-        header.update('BMAJ', beam[0])
-        header.update('BMIN', beam[1])
-        header.update('BPA', beam[2])
-    else:
-        header['BMAJ'] = beam[0]
-        header['BMIN'] = beam[1]
-        header['BPA'] = beam[2]
+        header['EQUINOX'] = equinox
 
     hdulist[0].header = header
     return hdulist
