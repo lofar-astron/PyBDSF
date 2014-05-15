@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.8.1'
+__version__ = '1.8.2'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,11 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+
+    2014/01/14 - Version 1.8.2
+
+    2014/05/15 - Fix to bug in CASA masks generated with export_image() that
+        caused cleaning to fail in CASA 4.2 and above.
 
     2014/02/05 - Fix to bug that resulted in output file names being
         converted to lower case inappropriately.
