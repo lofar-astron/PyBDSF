@@ -887,10 +887,14 @@ def export_image(img, outfile=None, img_format='fits', pad_image = False,
                 pbeam = int(round(img.beam2pix(img.beam)[0] * 1.5))
                 island_mask_bool = nd.binary_closing(island_mask_bool,
                     structure=N.ones((pbeam, pbeam)))
+
+            # Check for telescope, needed for CASA clean masks
+            if img._telescope is None:
+                print '\033[91mWARNING\033[0m: Telescope is unknown. Mask may not work correctly in CASA.'
             island_mask = N.array(island_mask_bool, dtype=N.float32)
             func.write_image_to_file(use_io, filename,
                                      island_mask, img, bdir, pad_image,
-                                     clobber=clobber)
+                                     clobber=clobber, is_mask=True)
         else:
             print "\n\033[91mERROR\033[0m: img_type not recognized."
             return False
