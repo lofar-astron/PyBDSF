@@ -1427,8 +1427,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                 return
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
             img.frequency, img.equinox, img._telescope, xmin=xmin, ymin=ymin,
-            is_mask=is_mask, shape=(img.shape[1], img.shape[0], img.shape[2],
-            img.shape[3]))
+            is_mask=is_mask)
         if use == 'rap':
             outfile = outdir + filename + '.fits'
         else:
@@ -1447,7 +1446,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 
                 # For masks, use the coordinates dictionary from the input
                 # image, as this is needed in order for the
-                # image to work as a clean mask in CASA.
+                # image to work as a clean mask in CASA
                 if is_mask:
                     if img.coords_dict is None:
                         mylog.warning('Mask header information may be incomplete.')
@@ -1463,7 +1462,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 
 
 def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, ymin=0,
-                    is_mask=False, shape=None):
+                    is_mask=False):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
     from distutils.version import StrictVersion
     try:
@@ -1481,12 +1480,8 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
             use_header_update = False
     import numpy as np
 
-    # If mask, expand to all channels and Stokes for compatibility with casa
-    if is_mask and shape is not None:
-        shape_out = shape
-    else:
-        shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
-    hdu = pyfits.PrimaryHDU(np.resize(imagedata, shape_out))
+    shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
+    hdu = pyfits.PrimaryHDU(imagedata.reshape(shape_out))
     hdulist = pyfits.HDUList([hdu])
     header = hdulist[0].header
 

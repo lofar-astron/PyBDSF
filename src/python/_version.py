@@ -27,10 +27,7 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
-    2014/07/03 - Mask will now be expanded to match input image shape. Fix
-        to bug that caused image read failure when image lacks a Stokes axis.
-
-    2014/05/14 - Version 1.8.2
+    2014/01/14 - Version 1.8.2
 
     2014/05/15 - Fix to bug in CASA masks generated with export_image() that
         caused cleaning to fail in CASA 4.2 and above.
