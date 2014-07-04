@@ -4,6 +4,12 @@
 What's New
 **********
 
+Version 1.8.2 (2014/05/15):
+
+    * Fix to bug in CASA masks generated with the ``export_image`` task that caused cleaning to fail in CASA 4.2 and above.
+
+    * Fix to bug that resulted in output file names being converted to lower case inappropriately.
+
 Version 1.8.1 (2014/01/14):
 
     * Added option (``bbs_patches = 'mask'``) to allow patches in an output BBS sky model to be defined using a mask image (set with the ``bbs_patches_mask`` option).
