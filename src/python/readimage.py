@@ -192,7 +192,7 @@ class Op_readimage(Op):
         # spectral) are striped out.
         def p2s(self, xy):
             xy = list(xy)
-            for i in range(2):
+            for i in range(self.naxis-2):
                 xy.append(0)
             if hasattr(self, 'wcs_pix2world'):
                 try:
@@ -208,7 +208,7 @@ class Op_readimage(Op):
 
         def s2p(self, rd):
             rd = list(rd)
-            for i in range(2):
+            for i in range(self.naxis-2):
                 rd.append(0)
             if hasattr(self, 'wcs_world2pix'):
                 try:
@@ -454,7 +454,7 @@ class Op_readimage(Op):
                 # First, convert frequency to Hz if needed:
                 img.wcs_obj.wcs.sptr('FREQ-???')
                 def p2f(self, spec_pix):
-                    spec_list = [0, 0, 0, 0]
+                    spec_list = [0] * self.naxis
                     spec_list[spec_indx] = spec_pix
                     spec_pix_arr = N.array([spec_list])
                     if hasattr(self, 'wcs_pix2world'):
@@ -463,7 +463,7 @@ class Op_readimage(Op):
                         freq = self.wcs_pix2sky(spec_pix_arr, 0)
                     return freq.tolist()[0][spec_indx]
                 def f2p(self, freq):
-                    freq_list = [0, 0, 0, 0]
+                    freq_list = [0] * self.naxis
                     freq_list[spec_indx] = freq
                     freq_arr = N.array([freq_list])
                     if hasattr(self, 'wcs_world2pix'):
