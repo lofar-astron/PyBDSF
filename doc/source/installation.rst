@@ -11,7 +11,7 @@ Downloading and installing
 
 Downloading the code
 --------------------
-The latest version of the code may be obtained as a gzipped tar file from the Hamburg Observatory FTP server at ftp://ftp.hs.uni-hamburg.de/pub/outgoing/rafferty/PyBDSM (e.g., ``PyBDSM-1.8.1.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
+The latest version of the code may be obtained as a gzipped tar file from the Hamburg Observatory FTP server at ftp://ftp.hs.uni-hamburg.de/pub/outgoing/rafferty/PyBDSM (e.g., ``PyBDSM-1.8.2.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
 
 Preparing to compile the code
 -----------------------------
