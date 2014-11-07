@@ -1378,7 +1378,7 @@ class Opts(object):
                 # and then try to parse it
                 if hasattr(self, k):
                     if isinstance(self.__getattribute__(k), bool):
-                        if isinstance(v, bool) or v == None:
+                        if isinstance(v, bool) or v is None:
                             # just enter the bool into the parameter
                             pass
                         elif isinstance(v, basestring):
@@ -1404,7 +1404,7 @@ class Opts(object):
         a string of a single opt name.
 
         If None, set all opts to default values."""
-        if opt_names == None:
+        if opt_names is None:
             TCInit(self)
         else:
             if isinstance(opt_names, str):
@@ -1437,7 +1437,7 @@ class Opts(object):
         opts_list = []
         for k, v in self.__class__.__dict__.iteritems():
             if isinstance(v, tc.TC):
-                if group != None:
+                if group is not None:
                     if v.group() == group:
                         opts_list.append((k, v))
                 else:
@@ -1464,7 +1464,7 @@ class Opts(object):
         opts_list = []
         for k, v in self.__class__.__dict__.iteritems():
             if isinstance(v, tc.TC):
-                if group != None:
+                if group is not None:
                     if v.group() == group:
                         opts_list.append(k)
                 else:

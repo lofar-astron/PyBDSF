@@ -39,7 +39,7 @@ class Op_gaul2srl(Op):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gaul2Srl")
         mylogger.userinfo(mylog, 'Grouping Gaussians into sources')
         img.aperture = img.opts.aperture
-        if img.aperture != None and img.aperture <= 0.0:
+        if img.aperture is not None and img.aperture <= 0.0:
             mylog.warn('Specified aperture is <= 0. Skipping aperture fluxes.')
             img.aperture = None
 

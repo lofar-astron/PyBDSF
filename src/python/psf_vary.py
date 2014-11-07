@@ -73,7 +73,7 @@ class Op_psf_vary(Op):
             else:
                 snrcut = opts.psf_snrcut
             img.psf_snrcut = snrcut
-            if opts.psf_high_snr != None:
+            if opts.psf_high_snr is not None:
                 if opts.psf_high_snr < 10.0:
                     mylogger.userinfo(mylog, "Value of psf_high_snr too low; increasing to 10")
                     high_snrcut = 10.0
@@ -258,7 +258,7 @@ class Op_psf_vary(Op):
                     bar.stop()
 
                     # Interpolate Gaussian parameters
-                    if img.aperture == None:
+                    if img.aperture is None:
                         psf_maps = [psf_maj, psf_min, psf_pa, psfratio]
                     else:
                         psf_maps = [psf_maj, psf_min, psf_pa, psfratio, psfratio_aper]
@@ -271,15 +271,15 @@ class Op_psf_vary(Op):
                         psf_maps, itertools.repeat(psfcoords),
                         itertools.repeat(image.shape)), numcores=opts.ncores,
                         bar=bar)
-                    if img.aperture == None:
+                    if img.aperture is None:
                         psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int = map_list
                     else:
                         psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int = map_list
 
                     # Smooth if desired
-                    if img.opts.psf_smooth != None:
+                    if img.opts.psf_smooth is not None:
                         sm_scale = img.opts.psf_smooth / img.pix2beam([1.0, 1.0, 0.0])[0] / 3600.0 # pixels
-                        if img.opts.aperture == None:
+                        if img.opts.aperture is None:
                             psf_maps = [psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int]
                         else:
                             psf_maps = [psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int]
@@ -291,7 +291,7 @@ class Op_psf_vary(Op):
                             itertools.izip(itertools.repeat(self.blur_image),
                             psf_maps, itertools.repeat(sm_scale)), numcores=opts.ncores,
                             bar=bar)
-                        if img.aperture == None:
+                        if img.aperture is None:
                             psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int = map_list
                         else:
                             psf_maj_int, psf_min_int, psf_pa_int, psf_ratio_int, psf_ratio_aper_int = map_list
@@ -301,7 +301,7 @@ class Op_psf_vary(Op):
                     psf_min_int = N.array(psf_min_int)
                     psf_pa_int = N.array(psf_pa_int)
                     psf_ratio_int = N.array(psf_ratio_int)
-                    if img.aperture == None:
+                    if img.aperture is None:
                         psf_ratio_aper_int = N.zeros(psf_maj_int.shape, dtype=N.float32)
                     else:
                         psf_ratio_aper_int = N.array(psf_ratio_aper_int, dtype=N.float32)
@@ -511,7 +511,7 @@ class Op_psf_vary(Op):
         f_s = f_sclip[0]*f_sclip[1]
 
         # Add bright sources
-        if bright_snr_cut != None:
+        if bright_snr_cut is not None:
             if bright_snr_cut < 20.0:
                 bright_snr_cut = 20.0
             bright_srcs = N.where(snr >= bright_snr_cut)
@@ -890,12 +890,12 @@ class Op_psf_vary(Op):
             src_wts_aper = []
             for gt in tile_gauls:
                 src = img.sources[gt[0]]
-                if img.aperture != None:
+                if img.aperture is not None:
                     src_ratio_aper.append(src.peak_flux_max / src.aperture_flux)
                     src_wts_aper.append(src.total_flux / src.aperture_fluxE)
                 src_ratio.append(src.peak_flux_max / src.total_flux)
                 src_wts.append(src.total_flux / src.total_fluxE)
-            if img.aperture != None:
+            if img.aperture is not None:
                 psfratio_aper.append(sum(N.asarray(src_ratio_aper)*src_wts_aper)/sum(src_wts_aper))
             else:
                 psfratio_aper.append(0.0)
@@ -1048,7 +1048,7 @@ class Op_psf_vary(Op):
         from scipy.ndimage import gaussian_filter
 
         sx = n
-        if ny != None:
+        if ny is not None:
             sy = ny
         else:
             sy = n
