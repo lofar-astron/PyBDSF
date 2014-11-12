@@ -117,7 +117,7 @@ class Op_wavelet_atrous(Op):
             suffix = 'w' + `j`
             filename = img.imagename + '.atrous.' + suffix + '.fits'
             if img.opts.output_all:
-                func.write_image_to_file(img.use_io, filename, w, img, bdir)
+                func.write_image_to_file('fits', filename, w, img, bdir)
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.' + suffix + '.fits'))
 
             # now do bdsm on each wavelet image.
@@ -302,13 +302,13 @@ class Op_wavelet_atrous(Op):
           img.total_flux_gaus += total_flux
           mylogger.userinfo(mylog, "Total flux density in model on all scales" , '%.3f Jy' % img.total_flux_gaus)
           if img.opts.output_all:
-              func.write_image_to_file(img.use_io, img.imagename + '.atrous.cJ.fits',
+              func.write_image_to_file('fits', img.imagename + '.atrous.cJ.fits',
                                        im_new, img, bdir)
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.cJ.fits'))
-              func.write_image_to_file(img.use_io, img.imagename + '.resid_wavelets.fits',
+              func.write_image_to_file('fits', img.imagename + '.resid_wavelets.fits',
                                        (img.ch0_arr - img.resid_gaus_arr + img.resid_wavelets_arr), img, bdir + '/residual/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.resid_wavelets.fits'))
-              func.write_image_to_file(img.use_io, img.imagename + '.model_wavelets.fits',
+              func.write_image_to_file('fits', img.imagename + '.model_wavelets.fits',
                                        (img.resid_gaus_arr - img.resid_wavelets_arr), img, bdir + '/model/')
               mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
           img.completed_Ops.append('wavelet_atrous')
@@ -401,6 +401,9 @@ class Op_wavelet_atrous(Op):
         wimg.use_io = img.use_io
         wimg.do_cache = img.do_cache
         wimg.tempdir = img.tempdir
+        wimg.shape = img.shape
+        wimg.use_io = 'fits'
+
 
 ######################################################################################################
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
