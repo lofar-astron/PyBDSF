@@ -27,6 +27,10 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2014/11/07 - Fix to bug that caused a crash when both atrous_do = True
+        and output_all = True. Fixed a bug that caused a crash on machines
+        with only one core.
+
     2014/09/26 - Version 1.8.3
 
     2014/09/26 - Fix to bug that caused a crash when using the wavelet

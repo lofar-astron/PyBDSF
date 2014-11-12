@@ -40,7 +40,7 @@ def inp(cur_cmd=None):
     success = _set_pars_from_prompt()
     if not success:
         return
-    if cur_cmd != None:
+    if cur_cmd is not None:
         if not hasattr(cur_cmd, 'arg_list'):
             print '\033[31;1mERROR\033[0m: not a valid task'
             return
@@ -65,7 +65,7 @@ def go(cur_cmd=None):
     success = _set_pars_from_prompt()
     if not success:
         return
-    if cur_cmd == None:
+    if cur_cmd is None:
         if not hasattr(_img, '_current_cmd'):
             print '\033[31;1mERROR\033[0m: no task is set'
             return
@@ -84,7 +84,7 @@ def default(cur_cmd=None):
     given, the parameters of the current task are reset.
     """
     global _img
-    if cur_cmd == None:
+    if cur_cmd is None:
         if not hasattr(_img, '_current_cmd'):
             print '\033[31;1mERROR\033[0m: no task is set'
             return
@@ -133,7 +133,7 @@ def tget(filename=None):
     if hasattr(filename, 'arg_list'):
         filename = None
 
-    if filename == None or filename == '':
+    if filename is None or filename == '':
         if os.path.isfile('pybdsm.last'):
             filename = 'pybdsm.last'
         else:
@@ -184,7 +184,7 @@ def tput(filename=None, quiet=False):
     success = _set_pars_from_prompt()
     if not success:
         return
-    if filename == None or filename == '':
+    if filename is None or filename == '':
         filename = 'pybdsm.last'
 
     # convert opts to dictionary
@@ -248,7 +248,7 @@ def _replace_vals_in_namespace(opt_names=None):
     global _img
     f = sys._getframe(len(inspect.stack())-1)
     f_dict = f.f_locals
-    if opt_names == None:
+    if opt_names is None:
         opt_names = _img.opts.get_names()
     if isinstance(opt_names, str):
         opt_names = [opt_names]
@@ -520,7 +520,7 @@ class bdsmDocHelper(pydoc.Helper):
                 else:
                     valstr = str(default_val)
                 default_val_text = 'Default value: ' + valstr
-                if opt.group() != None and opt.group() != 'hidden':
+                if opt.group() is not None and opt.group() != 'hidden':
                     group_text = '\nBelongs to group: ' + opt.group()
                 else:
                     group_text = ''
@@ -666,7 +666,7 @@ from lofar.bdsm._version import __version__, __revision__, changelog
 import os
 aps_local_val = os.environ.get('APS_LOCAL')
 check_for_newer = True
-if aps_local_val == None and check_for_newer:
+if aps_local_val is None and check_for_newer:
     try:
         import ftplib
         from distutils.version import StrictVersion
