@@ -111,7 +111,7 @@ class Op_gausfit(Op):
                 # These dummy Gaussians all have an ID of -1. They do not
                 # appear in any of the source or island Gaussian lists except
                 # the island dgaul list.
-                if opts.src_ra_dec != None:
+                if opts.src_ra_dec is not None:
                     # Center the dummy Gaussian on the user-specified source position
                     posn_isl = (isl.shape[0]/2.0, isl.shape[1]/2.0)
                     posn_img = (isl.shape[0]/2.0 + isl.origin[0], isl.shape[1]/2.0 + isl.origin[1])
@@ -173,7 +173,7 @@ class Op_gausfit(Op):
         # Check if there are many Gaussians with deconvolved size of 0 in one
         # axis but not in the other. Don't bother to do this for wavelet images.
         fraction_1d = self.check_for_1d_gaussians(img)
-        if fraction_1d > 0.5 and img.beam != None and img.waveletimage == False:
+        if fraction_1d > 0.5 and img.beam is not None and img.waveletimage == False:
             mylog.warn('After deconvolution, more than 50% of Gaussians are '\
                            "1-D. Unless you're fitting an extended source, "\
                            "beam may be incorrect.")
@@ -189,7 +189,7 @@ class Op_gausfit(Op):
         """
         import functions as func
 
-        if opts == None:
+        if opts is None:
             opts = img.opts
         iter_ngmax  = 10
         maxsize = opts.splitisl_maxsize
@@ -261,7 +261,7 @@ class Op_gausfit(Op):
         import functions as func
         from const import fwsig
 
-        if ffimg == None:
+        if ffimg is None:
             fit_image = isl.image-isl.islmean
         else:
             fit_image = isl.image-isl.islmean-ffimg
@@ -288,12 +288,12 @@ class Op_gausfit(Op):
         gaul = []
         iter = 0
         ng1 = 0
-        if ini_gausfit == None:
+        if ini_gausfit is None:
             ini_gausfit = opts.ini_gausfit
 
         if ini_gausfit not in ['default', 'simple', 'nobeam']:
             ini_gausfit = 'default'
-        if ini_gausfit == 'simple' and ngmax == None:
+        if ini_gausfit == 'simple' and ngmax is None:
           ngmax = 25
         if ini_gausfit == 'default' or opts.fix_to_beam:
           gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr0, beam, img)
@@ -409,7 +409,7 @@ class Op_gausfit(Op):
         import functions as func
         sgaul = []; sfgaul = []
         gaul = []; fgaul = []
-        if opts == None:
+        if opts is None:
             opts = img.opts
         thresh_isl = opts.thresh_isl
         thresh_pix = opts.thresh_pix

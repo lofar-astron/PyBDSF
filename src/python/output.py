@@ -227,7 +227,7 @@ def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
     outstr_list = make_bbs_str(img, outl, outn, patl, incl_empty=incl_empty,
                                correct_proj=correct_proj)
 
-    if filename == None:
+    if filename is None:
         filename = img.imagename + '.sky_in'
     if os.path.exists(filename) and clobber == False:
         return None
@@ -260,7 +260,7 @@ def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
                                                root=srcroot, sort_by=sort_by)
     outstr_list = make_lsm_str(img, outl, outn, incl_empty=incl_empty)
 
-    if filename == None:
+    if filename is None:
         filename = img.imagename + '.lsm'
     if os.path.exists(filename) and clobber == False:
         return None
@@ -300,7 +300,7 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
                             str(dsrc.source_id))
         outn = [outn]
     outstr_list = make_ds9_str(img, outl, outn, deconvolve=deconvolve, objtype=objtype, incl_empty=incl_empty)
-    if filename == None:
+    if filename is None:
         filename = img.imagename + '.' + objtype + '.reg'
     if os.path.exists(filename) and clobber == False:
         return None
@@ -328,7 +328,7 @@ def write_ascii_list(img, filename=None, sort_by='indx', format = 'ascii',
             outl[0] += img.dsources
     outstr_list = make_ascii_str(img, outl, objtype=objtype,
                                  incl_empty=incl_empty, format=format)
-    if filename == None:
+    if filename is None:
         if objtype == 'gaul':
             filename = img.imagename + '.gaul'
         elif objtype == 'srl':
@@ -351,7 +351,7 @@ def write_casa_gaul(img, filename=None,  incl_empty=False, clobber=False):
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
     outl, outn, patl = list_and_sort_gaussians(img, patch=None)
     outstr_list = make_casa_str(img, outl)
-    if filename == None:
+    if filename is None:
         filename = img.imagename + '.box'
     if os.path.exists(filename) and clobber == False:
         return None
@@ -401,7 +401,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                 nmax = isl.shapelet_nmax
         nmax += 1
 
-    if img.opts.aperture != None:
+    if img.opts.aperture is not None:
         incl_aper = True
     else:
         incl_aper = False
@@ -442,7 +442,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         tbhdu.header['INIMAGE'] = (img.filename, 'Filename of image')
         tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
         tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
-    if filename == None:
+    if filename is None:
         filename = img.imagename + '.' + objtype + '.fits'
     if os.path.exists(filename) and clobber == False:
         return None
@@ -457,7 +457,7 @@ def write_kvis_ann(img, filename=None, sort_by='indx',
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
-    if filename == None:
+    if filename is None:
         filename = img.imagename + '.kvis.ann'
     if os.path.exists(filename) and clobber == False:
         return None
@@ -491,7 +491,7 @@ def write_star(img, filename=None, sort_by='indx',
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
-    if filename == None:
+    if filename is None:
         filename = img.imagename + '.star'
     if os.path.exists(filename) and clobber == False:
         return None
@@ -539,7 +539,7 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                                "MajorAxis, MinorAxis, Orientation, "\
                                "ReferenceFrequency='"+freq+"', "\
                                "SpectralIndex='[]'\n\n")
-    elif patchnames[0] == None:
+    elif patchnames[0] is None:
         outstr_list.append("format = Name, Type, Ra, Dec, I, Q, U, V, "\
                                "MajorAxis, MinorAxis, Orientation, "\
                                "ReferenceFrequency='"+freq+"', "\
@@ -552,11 +552,11 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
     if objtype == 'shap':
         patchname_last = ''
         for pindx, patch_name in enumerate(patchnames): # loop over patches
-          if patch_name != None and patch_name != patchname_last:
+          if patch_name is not None and patch_name != patchname_last:
               outstr_list.append(', , ' + patch_name + ', 00:00:00, +00.00.00\n')
               patchname_last = patch_name
               names_in_patch = gnames[pindx]
-              if patch_name == None:
+              if patch_name is None:
                   outstr_list.append(src_name + sep + stype + sep + sra + sep +
                                      sdec + sep + total + sep + Q_flux + sep +
                                      U_flux + sep + V_flux + sep +
@@ -571,7 +571,7 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
     else:
         patchname_last = ''
         for pindx, patch_name in enumerate(patchnames): # loop over patches
-          if patch_name != None and patch_name != patchname_last:
+          if patch_name is not None and patch_name != patchname_last:
               outstr_list.append(', , ' + patch_name + ', 00:00:00, +00.00.00\n')
               patchname_last = patch_name
           gaussians_in_patch = glist[pindx]
@@ -603,7 +603,7 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                   deconvstr = deconv1 + ', ' + deconv2 + ', ' + deconv3
                   specin = '-0.8'
                   if 'spectralindex' in img.completed_Ops:
-                      if g.spec_indx != None and N.isfinite(g.spec_indx):
+                      if g.spec_indx is not None and N.isfinite(g.spec_indx):
                           specin = str("%.3e" % (g.spec_indx))
                   sep = ', '
                   if img.opts.polarisation_do:
@@ -614,7 +614,7 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                       Q_flux = '0.0'
                       U_flux = '0.0'
                       V_flux = '0.0'
-                  if patch_name == None:
+                  if patch_name is None:
                       outstr_list.append(src_name + sep + stype + sep + sra + sep +
                                          sdec + sep + total + sep + Q_flux + sep +
                                          U_flux + sep + V_flux + sep +
@@ -717,7 +717,7 @@ def make_lsm_str(img, glist, gnames, incl_empty=False):
             deconvstr = deconv1 + ' ' + deconv2 + ' ' + deconv3
             specin = '-0.8'
             if 'spectralindex' in img.completed_Ops:
-                if g.spec_indx != None and N.isfinite(g.spec_indx):
+                if g.spec_indx is not None and N.isfinite(g.spec_indx):
                     specin = str("%.3e" % (g.spec_indx))
             sep = ' '
             if img.opts.polarisation_do:
@@ -740,7 +740,7 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
     """Makes a list of string entries for a ds9 region file."""
     outstr_list = []
     freq = "%.5e" % img.frequency
-    if img.equinox == None:
+    if img.equinox is None:
         equinox = 'fk5'
     else:
         if int(img.equinox) == 2000:
@@ -806,7 +806,7 @@ def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False)
     outstr_list.append('# Reference frequency of the detection ("ch0") image: %s Hz\n' % freq)
     outstr_list.append('# Equinox : %s \n\n' % img.equinox)
     val_list = []
-    if img.opts.aperture != None:
+    if img.opts.aperture is not None:
         incl_aper = True
     else:
         incl_aper = False
@@ -820,7 +820,7 @@ def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False)
                                                               incl_aper=incl_aper,
                                                               incl_empty=incl_empty,
                                                               nchan=img.nchan)
-        if cvals != None:
+        if cvals is not None:
             cformats[-1] += "\n"
             if format == 'ascii':
                 if i == 0:
@@ -837,7 +837,7 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False):
     import functions as func
 
     out_list = []
-    if img.opts.aperture != None:
+    if img.opts.aperture is not None:
         incl_aper = True
     else:
         incl_aper = False
@@ -849,7 +849,7 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False):
                                                       incl_aper=incl_aper,
                                                       incl_empty=incl_empty,
                                                       nmax=nmax, nchan=img.nchan)
-        if cvals != None:
+        if cvals is not None:
             out_list.append(cvals)
     out_list = func.trans_gaul(out_list)
     return out_list
@@ -948,7 +948,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
     import functions as func
 
     # Define lists
-    if root == None:
+    if root is None:
         root = img.parentname
     gauslist = []
     gausname = []
@@ -1047,7 +1047,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
                 patchindx.append(p)
 
     # Sort
-    if patch == 'single' or patch == None:
+    if patch == 'single' or patch is None:
         outlist = [list(gauslist)]
         outlist_sorted = [list(gauslist)]
         outnames = [list(gausname)]
@@ -1180,7 +1180,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                     val = obj.__getattribute__(name)
                     colname = obj.__class__.__dict__[name]._colname
                     units = obj.__class__.__dict__[name]._units
-                    if units == None:
+                    if units is None:
                         units = ' '
                     if isinstance(val, list):
                         # This is a list, so handle it differently. We assume the next
@@ -1190,7 +1190,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                         val_next = obj.__getattribute__(next_name)
                         colname_next = obj.__class__.__dict__[next_name]._colname
                         units_next = obj.__class__.__dict__[next_name]._units
-                        if units_next == None:
+                        if units_next is None:
                             units_next = ' '
                         for i in range(len(val)):
                             cvals.append(val[i])

@@ -70,7 +70,7 @@ class Image(object):
         if name.endswith("_arr"):
             if self.do_cache:
                 map_data = func.retrieve_map(self, name)
-                if map_data != None:
+                if map_data is not None:
                     return map_data
                 else:
                     return object.__getattribute__(self, name)
@@ -135,11 +135,11 @@ class Image(object):
         """Load parameter values."""
         import interface
         import os
-        if loadfile == None or loadfile == '':
+        if loadfile is None or loadfile == '':
             loadfile = self.opts.filename + '.pybdsm.sav'
         if os.path.exists(loadfile):
             timg, err = interface.load_pars(loadfile)
-            if timg != None:
+            if timg is not None:
                 orig_filename = self.opts.filename
                 self.opts = timg.opts
                 self.opts.filename = orig_filename # reset filename to original
