@@ -9,13 +9,13 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 
 """
 import numpy
-_multi=False
-_ncpus=1
+_multi = False
+_ncpus = 1
 
 try:
     # May raise ImportError
     import multiprocessing
-    _multi=True
+    _multi = True
 
     # May raise NotImplementedError
     _ncpus = min(multiprocessing.cpu_count(), 8)
@@ -55,7 +55,7 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
         vals.append(result)
 
         # update statusbar
-        if bar != None:
+        if bar is not None:
             if bar_state['started']:
                 bar.pos = bar_state['pos']
                 bar.spin_pos = bar_state['spin_pos']
@@ -146,16 +146,18 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
 
     if not _multi or size == 1:
         results = map(function, sequence)
-        if bar != None:
+        if bar is not None:
             bar.stop()
         return results
 
 
-    # Set default number of cores to use. Leave one core free for pyplot.
+    # Set default number of cores to use. Try to leave one core free for pyplot.
     if numcores is None:
         numcores = _ncpus - 1
     if numcores > _ncpus - 1:
         numcores = _ncpus - 1
+    if numcores < 1:
+        numcores = 1
 
     # Returns a started SyncManager object which can be used for sharing
     # objects between processes. The returned manager object corresponds
@@ -170,7 +172,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     err_q = manager.Queue()
     lock = manager.Lock()
     bar_state = manager.dict()
-    if bar != None:
+    if bar is not None:
         bar_state['pos'] = bar.pos
         bar_state['spin_pos'] = bar.spin_pos
         bar_state['started'] = bar.started
@@ -181,7 +183,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         numcores = size
 
     # group sequence into numcores-worth of chunks
-    if weights == None or numcores == size:
+    if weights is None or numcores == size:
         # No grouping specified (or there are as many cores as
         # processes), so divide into equal chunks
         sequence = numpy.array_split(sequence, numcores)
@@ -209,7 +211,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
 
     try:
         results = run_tasks(procs, err_q, out_q, len(sequence))
-        if bar != None:
+        if bar is not None:
             if bar.started:
                 bar.stop()
         return results

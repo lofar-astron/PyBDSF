@@ -399,7 +399,7 @@ def moment(x,mask=None):
     """
     import numpy as N
 
-    if mask == None:
+    if mask is None:
         mask=N.zeros(x.shape, dtype=bool)
     m1=N.zeros(1)
     m2=N.zeros(x.ndim)
@@ -432,7 +432,7 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
       if isinstance(sig, list): sig = N.array(sig)
       xfit=x[ind]; yfit=y[ind]; sigfit=sig[ind]
 
-      if p0 == None:
+      if p0 is None:
         if funct == poly:
            p0=N.array([0]*(order+1))
            p0[1]=(yfit[0]-yfit[-1])/(xfit[0]-xfit[-1])
@@ -461,7 +461,7 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
         sys.stdout = original_stdout  # turn STDOUT back on
 
       if do_err:
-        if cov != None:
+        if cov is not None:
           if N.sum(sig != 1.) > 0:
             err = N.array([sqrt(abs(cov[i,i])) for i in range(len(p))])
           else:
@@ -594,17 +594,17 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
     import numpy as N
     import sys
 
-    if mask != None and mask.shape != data.shape:
+    if mask is not None and mask.shape != data.shape:
         print 'Data and mask array dont have the same shape, ignoring mask'
         mask = None
-    if err != None and err.shape != data.shape:
+    if err is not None and err.shape != data.shape:
         print 'Data and error array dont have the same shape, ignoring error'
         err = None
 
-    if mask == None: mask = N.zeros(data.shape, bool)
+    if mask is None: mask = N.zeros(data.shape, bool)
     g_ind = N.where(~N.ravel(mask))[0]
 
-    if err == None:
+    if err is None:
         errorfunction = lambda p: N.ravel(gaus_2d(p, x, y) - data)[g_ind]
     else:
         errorfunction = lambda p: N.ravel((gaus_2d(p, x, y) - data)/err)[g_ind]
@@ -780,7 +780,7 @@ def get_errors(img, p, stdav, bm_pix=None):
         errors = errors + [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
       else:
         sq2 = sqrt(2.0)
-        if bm_pix == None:
+        if bm_pix is None:
             bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
         dumr = sqrt(abs(size[0] * size[1] / (4.0 * bm_pix[0] * bm_pix[1])))
         dumrr1 = 1.0 + bm_pix[0] * bm_pix[1] / (size[0] * size[0])
@@ -889,13 +889,13 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
     import numpy as N
     import sys
 
-    if mask != None and mask.shape != image.shape:
+    if mask is not None and mask.shape != image.shape:
         print 'Data and mask array dont have the same shape, ignoring mask'
         mask = None
-    if err != None and err.shape != image.shape:
+    if err is not None and err.shape != image.shape:
         print 'Data and error array dont have the same shape, ignoring error'
         err = None
-    if mask == None: mask = N.zeros(image.shape, bool)
+    if mask is None: mask = N.zeros(image.shape, bool)
 
     g_ind = N.where(~N.ravel(mask))[0]
 
@@ -906,7 +906,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
         p_ini = p_ini + g2param(g, adj)
       p_ini = N.array(p_ini)
 
-      if fitfix == None: fitfix = [0]*ngaus
+      if fitfix is None: fitfix = [0]*ngaus
       ind = N.ones(6*ngaus)                                     # 1 => fit ; 0 => fix
       for i in range(ngaus):
         if fitfix[i] == 1: ind[i*6+1:i*6+6] = 0
@@ -915,7 +915,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
       ind = N.array(ind)
       p_tofit = p_ini[N.where(ind==1)[0]]
       p_tofix = p_ini[N.where(ind==0)[0]]
-      if err == None: err = N.ones(image.shape)
+      if err is None: err = N.ones(image.shape)
 
       errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
                      N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
@@ -1006,7 +1006,7 @@ def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     from copy import deepcopy as cp
     import numpy as N
 
-    if im_pos == None:
+    if im_pos is None:
         im_pos = im
     im1 = cp(im)
     ind = N.array(N.where(~mask)).transpose()
@@ -1073,7 +1073,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     from distutils.version import StrictVersion
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
-    if indir == None or indir == './':
+    if indir is None or indir == './':
         prefix = ''
     else:
         prefix = indir + '/'
@@ -1226,7 +1226,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # entries.
     for i in range(4):
         key_val_raw = hdr.get('CUNIT' + str(i+1))
-        if key_val_raw != None:
+        if key_val_raw is not None:
             if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:
                 hdr['CUNIT' + str(i+1)] = 'm/s'
             if 'HZ' in key_val_raw or 'hZ' in key_val_raw or 'hz' in key_val_raw:
@@ -1276,7 +1276,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     img._original_naxis = data_shape
     img._original_shape = (shape_out[2], shape_out[3])
     img._xy_hdr_shift = (0, 0)
-    if img.opts.trim_box != None:
+    if img.opts.trim_box is not None:
         img.trim_box = img.opts.trim_box
         xmin, xmax, ymin, ymax = img.trim_box
         if xmin < 0: xmin = 0
@@ -1395,6 +1395,11 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         xmin = 0
         ymin = 0
 
+    if not hasattr(img, '_telescope'):
+        telescope = None
+    else:
+        telescope = img._telescope
+
     if filename == 'SAMP':
         import tempfile
         if not hasattr(img,'samp_client'):
@@ -1404,14 +1409,14 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 
         # Broadcast image to SAMP Hub
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
-            img.frequency, img.equinox, img._telescope, xmin=xmin, ymin=ymin,
+            img.frequency, img.equinox, telescope, xmin=xmin, ymin=ymin,
             is_mask=is_mask)
         tfile = tempfile.NamedTemporaryFile(delete=False)
         temp_im.writeto(tfile.name, clobber=clobber)
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
     else:
         # Write image to FITS file
-        if outdir == None:
+        if outdir is None:
             outdir = img.indir
         if not os.path.exists(outdir) and outdir != '':
             os.makedirs(outdir)
@@ -1426,7 +1431,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             else:
                 return
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
-            img.frequency, img.equinox, img._telescope, xmin=xmin, ymin=ymin,
+            img.frequency, img.equinox, telescope, xmin=xmin, ymin=ymin,
             is_mask=is_mask, shape=(img.shape[1], img.shape[0], img.shape[2],
             img.shape[3]))
         if use == 'rap':
@@ -1729,7 +1734,7 @@ def open_isl(mask, index):
     labels, n_subisl = nd.label(open, connectivity)  # get label/rank image for open. label = 0 for masked pixels
     labels, mask = assign_leftovers(mask, open, n_subisl, labels)  # add the leftover pixels to some island
 
-    if labels != None:
+    if labels is not None:
         isl_pixs = [len(N.where(labels==i)[0]) for i in range(1,n_subisl+1)]
         isl_pixs = N.array(isl_pixs)/float(N.sum(isl_pixs))
     else:
@@ -1872,10 +1877,10 @@ def isl_tosplit(isl, opts):
 
                                 # take open 3 or 5
     open3, open5 = False, False
-    if n_subisl3 > 0 and isl_pixs3 != None:                                 # open 3 breaks up island
+    if n_subisl3 > 0 and isl_pixs3 is not None:                                 # open 3 breaks up island
       max_sub3 = N.max(isl_pixs3)
       if max_sub3 < frac_bigisl3 : open3 = True       # if biggest sub island isnt too big
-    if n_subisl5 > 0 and isl_pixs5 != None:                                 # open 5 breaks up island
+    if n_subisl5 > 0 and isl_pixs5 is not None:                                 # open 5 breaks up island
       max_sub5 = N.max(isl_pixs5)                     # if biggest subisl isnt too big OR smallest extra islands add upto 10 %
       if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:len(isl_pixs5)-n_subisl3]) > size_extra5):
         open5 = True
@@ -1913,7 +1918,7 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     """
     import numpy as N
 
-    if aperture_pix == None:
+    if aperture_pix is None:
         return [0.0, 0.0]
 
     # Make ch0 and rms subimages
@@ -1968,7 +1973,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     import numpy as N
 
     xsize, ysize = mask_size
-    if aperture_pix == None:
+    if aperture_pix is None:
         return N.zeros((xsize, ysize), dtype=N.int)
 
     # Make subimages
