@@ -407,8 +407,7 @@ class Op_readimage(Op):
         img.pixel_beam = pixel_beam   # IN SIGMA UNITS in pixels
         img.pixel_beamarea = pixel_beamarea
         mylogger.userinfo(mylog, 'Beam shape (major, minor, pos angle)',
-                          '(%s, %s, %s) degrees' % (round(beam[0], 5),
-                                                    round(beam[1], 5),
+                          '(%.5e, %.5e, %s) degrees' % (beam[0], beam[1],
                                                     round(beam[2], 1)))
 
     def init_freq(self, img):
