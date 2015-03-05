@@ -583,10 +583,10 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                   if img.equinox == 1950:
                       ra, dec = B1950toJ2000([ra, dec])
                   ra = ra2hhmmss(ra)
-                  sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.3f" % (ra[2])).zfill(6)
+                  sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.6f" % (ra[2])).zfill(6)
                   dec = dec2ddmmss(dec)
                   decsign = ('-' if dec[3] < 0 else '+')
-                  sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.3f" % (dec[2])).zfill(6)
+                  sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.6f" % (dec[2])).zfill(6)
                   total = str("%.3e" % (g.total_flux))
                   if correct_proj:
                       deconv = g.deconv_size_sky
@@ -694,10 +694,10 @@ def make_lsm_str(img, glist, gnames, incl_empty=False):
             if img.equinox == 1950:
                 ra, dec = B1950toJ2000([ra, dec])
             ra = ra2hhmmss(ra)
-            sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.3f" % (ra[2])).zfill(6)
+            sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.6f" % (ra[2])).zfill(6)
             dec = dec2ddmmss(dec)
             decsign = ('-' if dec[3] < 0 else '+')
-            sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
+            sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.6f" % (dec[2])).zfill(6)
             total = str("%.3e" % (g.total_flux))
             deconv = g.deconv_size_sky
             if deconv[0] == 0.0  and deconv[1] == 0.0:
