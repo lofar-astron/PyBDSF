@@ -209,7 +209,7 @@ class Op_readimage(Op):
         def s2p(self, rd):
             rd = list(rd)
             for i in range(self.naxis-2):
-                rd.append(0)
+                rd.append(1) # For some reason, 0 gives nans with astropy in some situations
             if hasattr(self, 'wcs_world2pix'):
                 try:
                     rd_arr = N.array([rd[0:2]])
