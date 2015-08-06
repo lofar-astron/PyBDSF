@@ -1,7 +1,8 @@
-#!/bin/csh
+#!/bin/sh
 
-# Set-up the Python environment for running the PyBDSM source finder.
-use Pythonlibs
+# Disable openblas threading affinity, needed on CEP3
+export OPENBLAS_MAIN_FREE=1
+export OPENBLAS_NUM_THREADS=1
 
 # Fire off the test script.
 python tbdsm_process_image.py
