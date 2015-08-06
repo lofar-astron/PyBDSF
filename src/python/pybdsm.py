@@ -114,10 +114,11 @@ def tget(filename=None):
     Below is an example of how to edit a save file by hand:
 
       BDSM [1]: import pickle
-      BDSM [2]: savefile = open('savefile.sav', 'w')
-      BDSM [3]: pars = pickle.load(savefile)
+      BDSM [2]: with open('savefile.sav', 'r') as savefile:
+      BDSM [3]:     pars = pickle.load(savefile)
       BDSM [4]: pars['rms_box'] = (80, 20)  --> change rms_box parameter
-      BDSM [5]: pickle.dump(pars, savefile) --> save changes
+      BDSM [5]: with open('savefile.sav', 'w') as savefile:
+      BDSM [6]:     pickle.dump(pars, savefile) --> save changes
 
     """
     try:
@@ -169,10 +170,11 @@ def tput(filename=None, quiet=False):
     Below is an example of how to edit a save file by hand:
 
       BDSM [1]: import pickle
-      BDSM [2]: savefile = open('savefile.sav', 'w')
-      BDSM [3]: pars = pickle.load(savefile)
+      BDSM [2]: with open('savefile.sav', 'r') as savefile:
+      BDSM [3]:     pars = pickle.load(savefile)
       BDSM [4]: pars['rms_box'] = (80, 20)  --> change rms_box parameter
-      BDSM [5]: pickle.dump(pars, savefile) --> save changes
+      BDSM [5]: with open('savefile.sav', 'w') as savefile:
+      BDSM [6]:     pickle.dump(pars, savefile) --> save changes
 
     """
     try:
@@ -660,9 +662,10 @@ def _opts_completer(self, event):
 # asking them to update.
 from lofar.bdsm._version import __version__, __revision__, changelog
 
-# Query the STRW FTP server. Tar file must be named "PyBDSM-version#.tar.gz":
+# Query the Hamburg Observatory FTP server. Tar file must be named
+# "PyBDSM-version#.tar.gz":
 #   e.g., "PyBDSM-1.3.1.tar.gz".
-# Check whether called from the LOFAR CEPI/II. If so, skip check.
+# Check whether called from the LOFAR CEPI/II/III. If so, skip check.
 import os
 aps_local_val = os.environ.get('APS_LOCAL')
 check_for_newer = True
@@ -671,10 +674,10 @@ if aps_local_val is None and check_for_newer:
         import ftplib
         from distutils.version import StrictVersion
         f = ftplib.FTP()
-        f.connect("ftp.strw.leidenuniv.nl", timeout=2.0)
+        f.connect("ftp.hs.uni-hamburg.de", timeout=2.0)
         f.login()
         file_list = []
-        file_list = f.nlst('pub/rafferty/PyBDSM')
+        file_list = f.nlst('pub/outgoing/rafferty/PyBDSM')
         f.close()
         ftp_version = ''
         for file in file_list:
@@ -688,7 +691,7 @@ if aps_local_val is None and check_for_newer:
         elif StrictVersion(__version__) < StrictVersion(ftp_version):
             print '\n' + '*' * 72
             print "There appears to be a newer version of PyBDSM available at:"
-            print "    ftp://ftp.strw.leidenuniv.nl/pub/rafferty/PyBDSM/"
+            print "    ftp://ftp.hs.uni-hamburg.de/pub/outgoing/rafferty/PyBDSM/"
             print "Please consider updating your installation"
             print '*' * 72
     except:
@@ -728,9 +731,9 @@ _set_current_cmd(process_image)
 # greater is in common use.
 try:
     # IPython >= 0.11
-    from distutils.version import StrictVersion
+    from distutils.version import LooseVersion
     from IPython import __version__ as ipython_version
-    if StrictVersion(ipython_version) < StrictVersion('1.0.0'):
+    if LooseVersion(ipython_version) < LooseVersion('1.0.0'):
         from IPython.frontend.terminal.embed import InteractiveShellEmbed
     else:
         from IPython.terminal.embed import InteractiveShellEmbed
