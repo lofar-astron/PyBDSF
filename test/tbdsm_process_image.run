@@ -1,5 +1,9 @@
-#!/bin/csh
+#!/bin/sh
 test "$?BASH_VERSION" = "0" || eval 'setenv() { export "$1=$2"; }'
+
+# Disable openblas threading affinity, needed on CEP3.
+setenv OPENBLAS_MAIN_FREE 1
+setenv OPENBLAS_NUM_THREADS 1
 
 # Set-up the Python environment for running the PyBDSM source finder.
 setenv PYTHONPATH ${PYTHONPATH}:/opt/cep/lofar/external/lib/python/site-packages
