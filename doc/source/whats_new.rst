@@ -4,6 +4,20 @@
 What's New
 **********
 
+Version 1.8.4 (2015/08/06):
+
+    * Improved speed of wavelet module.
+
+    * Added option to use PyFFTW in wavelet module if available.
+
+    * Fix to IPython version check.
+
+    * Fix to bug that caused a failure to write shapelet models in FITS format.
+
+    * Fix to bug that caused a crash when both atrous_do = True and output_all = True.
+
+    * Fixed a bug that caused a crash on machines with only one core.
+
 Version 1.8.3 (2014/09/26):
 
     * Fix to bug that caused a crash when using the wavelet module and all Gaussians in an island were flagged.

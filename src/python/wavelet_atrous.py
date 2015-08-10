@@ -30,6 +30,13 @@ from interface import raw_input_no_history
 import multi_proc as mp
 import itertools
 import statusbar
+try:
+    import pyfftw.interfaces
+    pyfftw.interfaces.cache.enable()
+    N.fft.fftn = pyfftw.interfaces.numpy_fft.fftn
+    N.fft.ifftn = pyfftw.interfaces.numpy_fft.ifftn
+except ImportError:
+    pass
 
 jmax = Int(doc = "Maximum order of a-trous wavelet decomposition")
 lpf = String(doc = "Low pass filter used for a-trous wavelet decomposition")
@@ -626,10 +633,10 @@ def check_islands_for_overlap(img, wimg):
     """Checks for overlaps between img and wimg islands"""
     tot_flux = 0.0
     wav_rankim_bool = N.array(wimg.pyrank + 1, dtype = bool)
+    orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+    orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
+    wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
     for idx, wvisl in enumerate(wimg.islands):
-        orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
-        orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
-        wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
         wav_ids =  N.array(tuple(set(wav_islands.flatten())))
         if len(wvisl.gaul) > 0:
 
