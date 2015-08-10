@@ -5,7 +5,8 @@ test "$?BASH_VERSION" = "0" || eval 'setenv() { export "$1=$2"; }'
 setenv OPENBLAS_MAIN_FREE 1
 setenv OPENBLAS_NUM_THREADS 1
 
-# Set-up the Python environment for running the PyBDSM source finder.
+# Set-up the Python environment for running the PyBDSM source finder, needed on
+# CEP.
 setenv PYTHONPATH ${PYTHONPATH}:/opt/cep/lofar/external/lib/python/site-packages
 
 # Fire off the test script.
