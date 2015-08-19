@@ -11,7 +11,7 @@ Downloading and installing
 
 Downloading the code
 --------------------
-The latest version of the code may be obtained as a gzipped tar file from the Hamburg Observatory FTP server at ftp://ftp.hs.uni-hamburg.de/pub/outgoing/rafferty/PyBDSM (e.g., ``PyBDSM-1.8.1.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
+The latest version of the code may be obtained as a gzipped tar file from the Hamburg Observatory FTP server at ftp://ftp.hs.uni-hamburg.de/pub/outgoing/rafferty/PyBDSM (e.g., ``PyBDSM-1.8.2.tar.gz``). Once downloaded, extract the files in the directory where you would like to install PyBDSM. The files are all contained in a subdirectory named ``LOFAR``.
 
 Preparing to compile the code
 -----------------------------
@@ -32,6 +32,19 @@ Before compiling the PyBDSM source code, you need to make sure you have the requ
     $ sudo ./bootstrap.sh --with-libraries=python
     $ sudo ./b2 install
 
+.. note::
+
+    If you are using Anaconda Python, you may need to edit the ``project_config.bjam`` file before running the b2 executable by changing the line::
+
+        using python : 2.7 : /path/to/anaconda ;
+
+    to::
+
+        using python : 2.7 : /path/to/anaconda : /path/to/anaconda/include/python2.7 : /path/to/anaconda/lib ;
+
+    then run::
+
+        sudo ./b2 toolset=clang cxxflags=-stdlib=libstdc++ linkflags=-stdlib=libstdc++ -j2 install
 
 .. note::
 

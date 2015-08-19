@@ -223,7 +223,7 @@ def avspc_direct(c_list, image, rmsarr, c_wts, wtarr=None):
     shape2 = image.shape[1:]
     ch0 = N.zeros(shape2, dtype=N.float32)
     sumwts = 0.0
-    if wtarr == None:
+    if wtarr is None:
       wtarr = N.zeros(len(c_list))
       for i, ch in enumerate(c_list):
         im = image[ch]
@@ -253,7 +253,7 @@ def avspc_blanks(c_list, image, rmsarr, c_wts, wtarr=None):
     shape2 = image.shape[1:]
     ch0 = N.zeros(shape2, dtype=N.float32)
     sumwtim = N.zeros(shape2, dtype=N.float32)
-    if wtarr == None:
+    if wtarr is None:
       wtarr = N.zeros(len(c_list))
       for i, ch in enumerate(c_list):
         im = image[ch]
@@ -283,7 +283,7 @@ def avspc_blanks(c_list, image, rmsarr, c_wts, wtarr=None):
 def init_freq_collapse(img, wtarr):
     # Place appropriate, post-collapse frequency info in img
     # Calculate weighted average frequency
-    if img.opts.frequency_sp != None:
+    if img.opts.frequency_sp is not None:
         c_list = img.opts.collapse_av
         if c_list == []: c_list = N.arange(img.image_arr.shape[1])
         freqs = img.opts.frequency_sp
@@ -304,7 +304,7 @@ def init_freq_collapse(img, wtarr):
         sumwts = 0.0
         sumfrq = 0.0
         spec_indx = img.wcs_obj.wcs.spec
-        if spec_indx == -1 and img.opts.frequency_sp == None:
+        if spec_indx == -1 and img.opts.frequency_sp is None:
             raise RuntimeError("Frequency information not found in header and frequencies "\
                          "not specified by user")
         else:

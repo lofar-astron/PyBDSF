@@ -232,7 +232,7 @@ def process_image(input, **kwargs):
     # If load_pars fails (returns None), assume that input is an image file. If it's not a
     # valid image file (but is an existing file), an error will be raised
     # by img.process() during reading of the file.
-    if img == None:
+    if img is None:
         if os.path.exists(input):
             img = Image({'filename': input})
         else:

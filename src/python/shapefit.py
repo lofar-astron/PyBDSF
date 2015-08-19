@@ -18,6 +18,10 @@ Island.shapelet_basis=String(doc="Coordinate system for shapelet decomposition (
 Island.shapelet_beta=Float(doc="Value of shapelet scale beta", colname='Beta', units=None)
 Island.shapelet_nmax=Int(doc="Maximum value of shapelet order", colname='NMax', units=None)
 Island.shapelet_centre=Tuple(Float(), Float(),doc="Centre for the shapelet decomposition, starts from zero")
+Island.shapelet_posn_sky = List(Float(), doc="Posn (RA, Dec in deg) of shapelet centre",
+                               colname=['RA', 'DEC'], units=['deg', 'deg'])
+Island.shapelet_posn_skyE = List(Float(), doc="Error on sky coordinates of shapelet centre",
+                       colname=['E_RA', 'E_DEC'], units=['deg', 'deg'])
 Island.shapelet_cf=NArray(doc="Coefficient matrix of the shapelet decomposition", colname='Coeff_matrix', units=None)
 
 class Op_shapelets(Op):
@@ -56,6 +60,8 @@ class Op_shapelets(Op):
                 beta, centre, nmax, basis, cf = shap_list[id]
                 isl.shapelet_beta=beta
                 isl.shapelet_centre=centre
+                isl.shapelet_posn_sky=img.pix2sky(centre)
+                isl.shapelet_posn_skyE=[0.0, 0.0, 0.0]
                 isl.shapelet_nmax=nmax
                 isl.shapelet_basis=basis
                 isl.shapelet_cf=cf
@@ -68,7 +74,7 @@ class Op_shapelets(Op):
 
         Returns shapelet parameters.
         """
-        if opts == None:
+        if opts is None:
             opts = img.opts
         if opts.shapelet_gresid:
             shape = img.shape
