@@ -55,8 +55,7 @@ class Op_psf_vary(Op):
             psf_min = opts.psf_fwhm[1] # FWHM in deg
             psf_pa = opts.psf_fwhm[2] # PA in deg
             mylogger.userinfo(mylog, 'Using constant PSF (major, minor, pos angle)',
-                  '(%s, %s, %s) degrees' % (round(psf_maj, 5),
-                                            round(psf_maj, 5),
+                  '(%.5e, %.5e, %s) degrees' % (psf_maj, psf_maj,
                                             round(psf_pa, 1)))
         else:
             # Use did not specify a constant PSF to use, so estimate it
@@ -133,6 +132,9 @@ class Op_psf_vary(Op):
 
             # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
             flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
+            if len(flag_unresolved) == 0:
+                mylog.warning('Insufficient number of sources to determine PSF variation.\nTry changing the PSF options or specify a (constant) PSF with the "psf_fwhm" option')
+                return
 
             # see how much the SNR-weighted sizes of unresolved sources differ from the synthesized beam.
             wtsize_beam_snr = self.av_psf(g_gauls, img.beam, flag_unresolved)
@@ -374,15 +376,16 @@ class Op_psf_vary(Op):
 
 ##################################################################################################
 
-    def bindata(self, over,num): #ptpbin,nbin,ptplastbin, same as get_bins in fBDSM.
+    def bindata(self, over, num): #ptpbin,nbin,ptplastbin, same as get_bins in fBDSM.
 
         if num <= 100: ptpbin=num/5
         if num > 100: ptpbin=num/10
         if num > 1000: ptpbin=num/20
         if ptpbin % 2 == 1: ptpbin=ptpbin+1
         if num < 10: ptpbin=num
-        nbin=(num-ptpbin)/(ptpbin/over)+1
-        ptplastbin=(num-1)-(nbin-1)*ptpbin/over
+        ptpbin = float(ptpbin) # cast to float to avoid integer division errors
+        nbin=int((num-ptpbin)/(ptpbin/over)+1)
+        ptplastbin=int((num-1)-(nbin-1)*ptpbin/over)
         nbin=nbin+1
 
         return ptpbin, nbin, ptplastbin
@@ -402,23 +405,24 @@ class Op_psf_vary(Op):
             x1=x[lb:ub+1]; y1=y[lb:ub+1]
 
             # do calcmedianclip2vec.f for code=YYN
-            nout=100; niter=0
-            while nout>0 and niter<6:
-              med1=N.median(y1[:])
-              med2=10.**(N.median(N.log10(x1[:])))
-              medstd=0    # calcmedianstd.f
-              for j in y1: medstd += (j-med1)*(j-med1)
-              medstd=math.sqrt(medstd/len(y1))        #
-              av1=N.mean(y1); std1=func.std(y1)
-              av2=N.mean(x1); std2=func.std(x1)
-              # get_medianclip_vec2
-              z=N.transpose([x1, y1])
-              z1=N.transpose([n for n in z if abs(n[1]-med1)<=nsig*medstd])
-              nout=len(x1)-len(z1[0])
-              x1=z1[0]; y1=z1[1];
-              niter+=1
-            xval[i]=med2;
-            meany[i]=av1; stdy[i]=std1; mediany[i]=med1
+            if len(x1) > 0 and len(y1) > 0:
+                nout=100; niter=0
+                while nout>0 and niter<6:
+                  med1=N.median(y1[:])
+                  med2=10.**(N.median(N.log10(x1[:])))
+                  medstd=0    # calcmedianstd.f
+                  for j in y1: medstd += (j-med1)*(j-med1)
+                  medstd=math.sqrt(medstd/len(y1))        #
+                  av1=N.mean(y1); std1=func.std(y1)
+                  av2=N.mean(x1); std2=func.std(x1)
+                  # get_medianclip_vec2
+                  z=N.transpose([x1, y1])
+                  z1=N.transpose([n for n in z if abs(n[1]-med1)<=nsig*medstd])
+                  nout=len(x1)-len(z1[0])
+                  x1=z1[0]; y1=z1[1];
+                  niter+=1
+                xval[i]=med2;
+                meany[i]=av1; stdy[i]=std1; mediany[i]=med1
 
         if stdy[nbin-1]/mediany[nbin-1] > stdy[nbin-2]/mediany[nbin-2]:
            stdy[nbin-1]=stdy[nbin-2]/mediany[nbin-2]*mediany[nbin-1]
@@ -442,8 +446,9 @@ class Op_psf_vary(Op):
         (xval,meany,stdy,medy)=self.bin_and_stats_ny(x,y,over,ptpbin,nbin,ptplastbin,nsig)
         yfit=stdy/medy
         err=N.array([1.]*nbin)
-        err[nbin-2]=err[0]*math.sqrt(1.0*ptpbin/ptplastbin)
-        err[nbin-1]=err[0]*math.sqrt(1.0*ptpbin*over/ptplastbin)
+        if ptplastbin > 0:
+            err[nbin-2]=err[0]*math.sqrt(1.0*ptpbin/ptplastbin)
+            err[nbin-1]=err[0]*math.sqrt(1.0*ptpbin*over/ptplastbin)
 
         i=0
         while i<nbin-4 and (N.all(N.sort(yfit[i:i+4])[::-1] == yfit[i:i+4]) == False):
@@ -477,6 +482,9 @@ class Op_psf_vary(Op):
         """
 
         num=len(g_gauls[0])
+        if num < 10:
+            # Too few sources to do fitting
+            return []
         b1=N.asarray(g_gauls[4])/(beam[0]*3600.)
         b2=N.asarray(g_gauls[5])/(beam[1]*3600.)
         s1=N.asarray(g_gauls[1])/N.array(g_gauls[8])
@@ -499,7 +507,10 @@ class Op_psf_vary(Op):
             z = N.transpose([xarr, yarr, s_dm[0]+s_dm[1]*N.log10(xarr)+s_dm[2]*(N.log10(xarr)**2.),  \
                 N.sqrt(s_c[0]*s_c[0]+s_c[1]*s_c[1]/(xarr*xarr)) ])
             z1 = N.transpose([n for n in z if abs(n[1]-n[2])/(n[2]*n[3])<kappa2])  # sub_size_wenss_getnum in fBDSM
-            nout = len(z1[0]); niter += 1
+            if len(z1) == 0:
+                break
+            nout = len(z1[0])
+            niter += 1
             xarr = z1[0]; yarr = z1[1];   # end of sub_size_wenss_getnum
             if noutold == nout: break
 

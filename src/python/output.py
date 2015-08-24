@@ -583,10 +583,10 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                   if img.equinox == 1950:
                       ra, dec = B1950toJ2000([ra, dec])
                   ra = ra2hhmmss(ra)
-                  sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.3f" % (ra[2])).zfill(6)
+                  sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.6f" % (ra[2])).zfill(6)
                   dec = dec2ddmmss(dec)
                   decsign = ('-' if dec[3] < 0 else '+')
-                  sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.3f" % (dec[2])).zfill(6)
+                  sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.6f" % (dec[2])).zfill(6)
                   total = str("%.3e" % (g.total_flux))
                   if correct_proj:
                       deconv = g.deconv_size_sky
@@ -648,7 +648,7 @@ def make_bbs_shapeletfiles(img):
     import numpy as N
 
     for isl in img.islands:
-        basis = isl.shapelet_basis # units?
+        basis = isl.shapelet_basis
         nmax = isl.shapelet_nmax
         cf = isl.shapelet_cf
         beta = isl.shapelet_beta
@@ -663,7 +663,7 @@ def make_bbs_shapeletfiles(img):
         ra_dec_string = sra + '  ' + sdec + ' \n'
         outstr_list = [ra_dec_string]
         outstr_list.append(str(nmax) + '   ' + str(beta) + '\n')
-        cf.transpose # traspose so that we can access array in column-major way
+        cf.transpose # transpose so that we can access array in column-major way
         for entry in cf.flatten():
             outstr_list.append(str(entry) + '\n')
 
@@ -694,10 +694,10 @@ def make_lsm_str(img, glist, gnames, incl_empty=False):
             if img.equinox == 1950:
                 ra, dec = B1950toJ2000([ra, dec])
             ra = ra2hhmmss(ra)
-            sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.3f" % (ra[2])).zfill(6)
+            sra = str(ra[0]).zfill(2)+' '+str(ra[1]).zfill(2)+' '+str("%.6f" % (ra[2])).zfill(6)
             dec = dec2ddmmss(dec)
             decsign = ('-' if dec[3] < 0 else '+')
-            sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.3f" % (dec[2])).zfill(6)
+            sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.6f" % (dec[2])).zfill(6)
             total = str("%.3e" % (g.total_flux))
             deconv = g.deconv_size_sky
             if deconv[0] == 0.0  and deconv[1] == 0.0:
@@ -1133,13 +1133,8 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'rms_isl', 'mean_isl', 'gresid_rms',
                  'gresid_mean', 'code']
     elif objtype == 'shap':
-        names = ['island_id', 'posn_sky_centroid',
-                 'posn_sky_centroidE', 'total_flux',
-                 'total_fluxE',
-                 'peak_flux_max', 'peak_flux_maxE', 'posn_sky_max', 'posn_sky_maxE',
-                 'posn_pix_centroid', 'posn_pix_centroidE', 'posn_pix_max',
-                 'posn_pix_maxE', 'rms_isl', 'mean_isl', 'shapelet_basis' ,
-                 'shapelet_beta', 'shapelet_nmax', 'shapelet_cf']
+        names = ['island_id', 'shapelet_posn_sky', 'shapelet_posn_skyE',
+                 'shapelet_basis', 'shapelet_beta', 'shapelet_nmax', 'shapelet_cf']
     else:
         print 'Object type unrecongnized.'
         return (None, None, None, None)
