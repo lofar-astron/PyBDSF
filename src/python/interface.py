@@ -996,6 +996,9 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         print '\033[91mERROR\033[0m: catalog_type must be "gaul", '\
               '"srl", or "shap"'
         return False
+    if catalog_type == 'shap' and format != 'fits':
+        print "\033[91mERROR\033[0m: Only format = 'fits' is supported with shapelet output."
+        return False
     if (len(img.sources) == 0 and not incl_empty) or (len(img.sources) == 0 and len(img.dsources) == 0 and incl_empty):
         if not force_output:
             print 'No sources were found in the image. Output file not written.'
