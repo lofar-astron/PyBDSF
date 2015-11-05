@@ -35,7 +35,7 @@ and parameters under exponents (NL_ij) are non-linear.
 #include "boost_python.h"
 #include "MGFunction.h"
    
-#if defined(GLIBCXX)
+#if defined(__GLIBCXX__)
 #include <ext/algorithm>
 #endif
 #include <num_util/num_util.h>
