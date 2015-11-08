@@ -527,9 +527,9 @@ class Op_polarisation(Op):
                  Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
 
         opts = img.opts.to_dict()
-        if img.opts.pi_thresh_isl != None:
+        if img.opts.pi_thresh_isl is not None:
             opts['thresh_isl'] = img.opts.pi_thresh_isl
-        if img.opts.pi_thresh_pix != None:
+        if img.opts.pi_thresh_pix is not None:
             opts['thresh_pix'] = img.opts.pi_thresh_pix
         opts['thresh'] = 'hard'
         opts['polarisation_do'] = False

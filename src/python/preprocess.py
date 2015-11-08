@@ -108,7 +108,7 @@ class Op_preprocess(Op):
 
         ### max/min pixel value & coordinates
         shape = image.shape[0:2]
-        if mask != None:
+        if mask is not None:
             img.blankpix = N.sum(mask)
         if img.blankpix == 0:
           max_idx = image.argmax()
@@ -143,7 +143,11 @@ class Op_preprocess(Op):
         ### if image seems confused, then take background mean as zero instead
         alpha_sourcecounts = 2.5  # approx diff src count slope. 2.2?
         if opts.bmpersrc_th is None:
-          n = (image >= 5.*crms).sum()
+          if mask is not None:
+              unmasked = N.where(~img.mask_arr)
+              n = (image[unmasked] >= 5.*crms).sum()
+          else:
+              n = (image >= 5.*crms).sum()
           if n <= 0:
             n = 1
             mylog.info('No pixels in image > 5-sigma.')

@@ -151,7 +151,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         else:
             src_list = img.sources
             sed_src = get_src(src_list, 0)
-            if sed_src == None:
+            if sed_src is None:
                 print 'No sources found. Skipping source SED plots.'
             else:
                 images.append('seds')
@@ -201,7 +201,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 
     im_mean = img.clipped_mean
     im_rms = img.clipped_rms
-    if img.resid_gaus == None:
+    if img.resid_gaus is None:
         low = 1.1*abs(img.min_value)
     else:
         low = N.max([1.1*abs(img.min_value),1.1*abs(N.nanmin(img.resid_gaus))])
@@ -411,10 +411,10 @@ def on_pick(event):
                 str(round(pflux,4)) + ' Jy/beam'
 
         # Transmit src_id, gaus_id, and coordinates to SAMP Hub (if we are connected)
-        if do_broadcast and samp_key != None:
-            if samp_gaul_table_url != None:
+        if do_broadcast and samp_key is not None:
+            if samp_gaul_table_url is not None:
                 func.send_highlight_row(samp_client, samp_key, samp_gaul_table_url, gaus_id)
-            if samp_srl_table_url != None:
+            if samp_srl_table_url is not None:
                 func.send_highlight_row(samp_client, samp_key, samp_srl_table_url, src_id)
             func.send_coords(samp_client, samp_key, g.centre_sky)
 
@@ -537,7 +537,7 @@ def on_press(event):
                     return
         ax_indx = images.index('seds')
         sed_src = get_src(src_list, srcid)
-        if sed_src == None:
+        if sed_src is None:
             print 'Source not found!'
             return
         srcid_cur = srcid
@@ -572,7 +572,7 @@ def on_press(event):
         num_pix_unmasked = float(N.size(N.where(mask == False), 1))
         mean_rms = N.nansum(img_rms[xmin:xmax, ymin:ymax])/num_pix_unmasked
         mean_map_flux = N.nansum(img_mean[xmin:xmax, ymin:ymax])/pixels_per_beam
-        if img_gaus_mod == None:
+        if img_gaus_mod is None:
             gaus_mod_flux = 0.0
         else:
             gaus_mod_flux = N.nansum(img_gaus_mod[xmin:xmax, ymin:ymax])/pixels_per_beam
@@ -583,7 +583,7 @@ def on_press(event):
             % (mean_map_flux,)
         print '  Gaussian model flux density ........... : %f Jy'\
             % (gaus_mod_flux,)
-        if img_shap_mod != None:
+        if img_shap_mod is not None:
             shap_mod_flux = N.nansum(img_shap_mod[xmin:xmax, ymin:ymax])/pixels_per_beam
             print '  Shapelet model flux density ........... : %f Jy'\
                 % (shap_mod_flux,)
