@@ -332,7 +332,11 @@ class Op_spectralindex(Op):
 
         nchan = image.shape[0]
         rms_map = img.use_rms_map
-        map_opts = (img.opts.kappa_clip, img.rms_box, img.opts.spline_rank)
+        if img.opts.kappa_clip is None:
+            kappa = -img.pixel_beamarea()
+        else:
+            kappa = img.opts.kappa_clip
+        map_opts = (kappa, img.rms_box, img.opts.spline_rank)
 
         if rms_map:
             rms_spec = N.zeros(image.shape, dtype=N.float32)
