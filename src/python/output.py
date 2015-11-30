@@ -1224,7 +1224,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
             if isinstance(v, int):
                 cformats.append('%4d')
             if isinstance(v, float):
-                cformats.append('%10f')
+                cformats.append('%.14f')
             if isinstance(v, str):
                 cformats.append('%4s')
 

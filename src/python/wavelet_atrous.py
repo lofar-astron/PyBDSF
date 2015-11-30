@@ -16,6 +16,7 @@ from copy import deepcopy as cp
 import functions as func
 import gc
 from numpy import array, product
+import scipy.signal
 from scipy.signal.signaltools import _centered
 from readimage import Op_readimage
 from preprocess import Op_preprocess
@@ -35,6 +36,8 @@ try:
     pyfftw.interfaces.cache.enable()
     N.fft.fftn = pyfftw.interfaces.numpy_fft.fftn
     N.fft.ifftn = pyfftw.interfaces.numpy_fft.ifftn
+    scipy.signal.signaltools.fftn = pyfftw.interfaces.scipy_fftpack.fftn
+    scipy.signal.signaltools.ifftn = pyfftw.interfaces.scipy_fftpack.ifftn
 except ImportError:
     pass
 
@@ -112,9 +115,13 @@ class Op_wavelet_atrous(Op):
           stop_wav = False
           pix_masked = N.where(N.isnan(resid) == True)
           jmin = 1
+          if img.opts.ncores is None:
+              numcores = 1
+          else:
+              numcores = img.opts.ncores
           for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
             mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
-            im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j)
+            im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores, use_scipy_fft=img.opts.use_scipy_fft)
             im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
             if img.opts.atrous_sum:
                 w = im_new
@@ -322,7 +329,7 @@ class Op_wavelet_atrous(Op):
 
 
 #######################################################################################################
-    def atrous(self, image, filtvec, lpf, j):
+    def atrous(self, image, filtvec, lpf, j, numcores=1, use_scipy_fft=True):
 
         ff = filtvec[:]
         for i in range(1, len(filtvec)):
@@ -330,7 +337,10 @@ class Op_wavelet_atrous(Op):
           ff[ii:ii] = [0] * (2 ** (j - 1) - 1)
         kern = N.outer(ff, ff)
         unmasked = N.nan_to_num(image)
-        im_new = fftconvolve(unmasked, kern, mode = 'same', pad_to_power_of_two=False)
+        if use_scipy_fft:
+            im_new = scipy.signal.fftconvolve(unmasked, kern, mode = 'same')
+        else:
+            im_new = fftconvolve(unmasked, kern, mode = 'same', pad_to_power_of_two=False, numcores=numcores)
         if im_new.shape != image.shape:
             im_new = im_new[0:image.shape[0], 0:image.shape[1]]
 
@@ -358,6 +368,7 @@ class Op_wavelet_atrous(Op):
         opts['aperture'] = None
         opts['group_by_isl'] = img.opts.group_by_isl
         opts['quiet'] = img.opts.quiet
+        opts['ncores'] = img.opts.ncores
 
         opts['flag_smallsrc'] = False
         opts['flag_minsnr'] = 0.2
@@ -520,7 +531,7 @@ class Pyramid_source(object):
 
 Image.pyrsrcs = List(tInstance(Pyramid_source), doc = "List of Pyramidal sources")
 
-def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True):
+def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
     """Convolve two N-dimensional arrays using FFT. See convolve.
 
     """
@@ -536,10 +547,16 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True):
     else:
         # Padding to a power of two might degrade performance, too
         fsize = size
-    IN1 = N.fft.fftn(in1, fsize)
-    IN1 *= N.fft.fftn(in2, fsize)
-    fslice = tuple([slice(0, int(sz)) for sz in size])
-    ret = N.fft.ifftn(IN1)[fslice].copy()
+    if has_pyfftw:
+        IN1 = N.fft.fftn(in1, fsize, threads=numcores)
+        IN1 *= N.fft.fftn(in2, fsize, threads=numcores)
+        fslice = tuple([slice(0, int(sz)) for sz in size])
+        ret = N.fft.ifftn(IN1, threads=numcores)[fslice].copy()
+    else:
+        IN1 = N.fft.fftn(in1, fsize)
+        IN1 *= N.fft.fftn(in2, fsize)
+        fslice = tuple([slice(0, int(sz)) for sz in size])
+        ret = N.fft.ifftn(IN1)[fslice].copy()
     del IN1
     if not complex_result:
         ret = ret.real
@@ -632,8 +649,12 @@ def renumber_islands(img):
 def check_islands_for_overlap(img, wimg):
     """Checks for overlaps between img and wimg islands"""
     tot_flux = 0.0
+
+    # Make masks for regions that have islands
     wav_rankim_bool = N.array(wimg.pyrank + 1, dtype = bool)
     orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+
+    # Make "images" of island ids for overlaping regions
     orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
     wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
     for idx, wvisl in enumerate(wimg.islands):
@@ -656,6 +677,11 @@ def check_islands_for_overlap(img, wimg):
                         merge_islands(img, img.islands[orig_idx[0]], img.islands[oidx])
                     img.islands = [x for x in img.islands if x.island_id not in orig_idx[1:]]
                     renumber_islands(img)
+
+                # Now recalculate the overlap images, since the islands have changed
+                orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+                orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
+                wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
             else:
                 isl_id = img.islands[-1].island_id + 1
                 new_isl = wvisl.copy(img.pixel_beamarea(), image=img.ch0_arr[wvisl.bbox], mean=img.mean_arr[wvisl.bbox], rms=img.rms_arr[wvisl.bbox])
