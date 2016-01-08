@@ -106,7 +106,7 @@ void MGFunction::py_remove_gaussian(int idx)
 //
 // Get gaussian parameters by index
 //
-tuple MGFunction::py_get_gaussian(int idx)
+boost::python::tuple MGFunction::py_get_gaussian(int idx)
 {
   if (idx < 0)
     idx += m_gaul.size();
@@ -116,7 +116,7 @@ tuple MGFunction::py_get_gaussian(int idx)
 
   vector<double> &p = m_parameters[idx];
 
-  return make_tuple(p[0], p[1], p[2], p[3], p[4], p[5]);
+  return boost::python::make_tuple(p[0], p[1], p[2], p[3], p[4], p[5]);
 }
 
 //
@@ -171,7 +171,7 @@ list MGFunction::py_get_errors()
 
   for (unsigned i = 0; i < m_gaul.size(); ++i) {
     vector<double> &e = m_errors[i];
-    res.append(make_tuple(e[0], e[1], e[2], e[3], e[4], e[5]));
+    res.append(boost::python::make_tuple(e[0], e[1], e[2], e[3], e[4], e[5]));
   }
 
   return res;
@@ -180,7 +180,7 @@ list MGFunction::py_get_errors()
 //
 // Find highest peak in the data-MGFunction residual
 //
-tuple MGFunction::py_find_peak()
+boost::python::tuple MGFunction::py_find_peak()
 {
   vector<double> buf(data_size());
   fcn_diff(&buf.front());
@@ -197,7 +197,7 @@ tuple MGFunction::py_find_peak()
   int x1 = mm_data[pidx].x1;
   int x2 = mm_data[pidx].x2;
 
-  return make_tuple(peak, make_tuple(x1, x2));
+  return boost::python::make_tuple(peak, boost::python::make_tuple(x1, x2));
 }
 
 
