@@ -62,7 +62,7 @@ void MGFunction::get_parameters(double *buf) const
 {
   double *chk = buf;
   for (unsigned i = 0; i < m_gaul.size(); ++i) {
-    std::copy_n(m_parameters[i].begin(), m_gaul[i], buf);
+    copy_n(m_parameters[i].begin(), m_gaul[i], buf);
     buf += m_gaul[i];
   }
   assert(buf - chk == (int)m_npar);
@@ -76,7 +76,7 @@ void MGFunction::set_parameters(const double *buf)
 {
   const double *chk = buf;
   for(unsigned i = 0; i < m_gaul.size(); ++i) {
-    std::copy_n(buf, m_gaul[i], m_parameters[i].begin());
+    copy_n(buf, m_gaul[i], m_parameters[i].begin());
     buf += m_gaul[i];
   }
   assert(buf - chk == (int)m_npar);
@@ -90,7 +90,7 @@ void MGFunction::get_nlin_parameters(double *buf) const
 {
   double *chk = buf;
   for (unsigned i = 0; i < m_gaul.size(); ++i) {
-    std::copy_n(m_parameters[i].begin() + 1, m_gaul[i] - 1, buf);
+    copy_n(m_parameters[i].begin() + 1, m_gaul[i] - 1, buf);
     buf += m_gaul[i] - 1;
   }
   assert(buf - chk == (int)(m_npar - m_gaul.size()));
@@ -104,7 +104,7 @@ void MGFunction::set_nlin_parameters(const double *buf)
 {
   const double *chk = buf;
   for(unsigned i = 0; i < m_gaul.size(); ++i) {
-    std::copy_n(buf, m_gaul[i] - 1, m_parameters[i].begin() + 1);
+    copy_n(buf, m_gaul[i] - 1, m_parameters[i].begin() + 1);
     buf += m_gaul[i] - 1 ;
   }
   assert(buf - chk == (int)(m_npar - m_gaul.size()));
