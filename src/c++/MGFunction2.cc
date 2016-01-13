@@ -41,7 +41,7 @@ and parameters under exponents (NL_ij) are non-linear.
 #include <num_util/num_util.h>
 #include <cfloat>
 
-#if not(defined(_LIBCPP_VERSION))
+#if not(defined(_LIBCPP_VERSION)) and __cplusplus <= 199711L
 using namespace __gnu_cxx;
 #endif
 using namespace std;
