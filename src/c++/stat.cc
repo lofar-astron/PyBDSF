@@ -229,7 +229,7 @@ static object _bstat(numeric::array arr, object mask, double kappa)
  /* py_assert(res.second == dev.back(),
 	    PyExc_RuntimeError, "clipped rRMS calculation does not converge"); */
 
-  return make_tuple(mean[1], dev[1], mean.back(), dev.back(), cnt);
+  return boost::python::make_tuple(mean[1], dev[1], mean.back(), dev.back(), cnt);
 }
 
 object bstat(numeric::array arr, object mask, double kappa)
@@ -264,5 +264,5 @@ object bstat(numeric::array arr, object mask, double kappa)
  fail:
   py_assert(false, 
 	    PyExc_RuntimeError, "bstat dispatch failed: not implemented for this datatype/layout");
-  return tuple(); // this is fake return-statement to silence the compiler
+  return boost::python::tuple(); // this is fake return-statement to silence the compiler
 }

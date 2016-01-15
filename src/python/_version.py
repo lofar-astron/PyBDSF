@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.8.4'
+__version__ = '1.8.5'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,6 +26,25 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
+    2015/08/06 - Version 1.8.4
+
+    2015/10/06 - Version 1.8.5
+
+    2015/11/25 - Fix to bug in export_image that resulted in incorrect
+        output image when both trim_box and pad_image were used.
+
+    2015/11/20 - Fix to bug in wavelet module related to merging of islands.
+
+    2015/11/20 - Fix to bug in polarization module related to numbering of
+        new islands.
+
+    2015/11/20 - Added option to use much faster (but also much more memory
+        intensive) SciPy fftconvolve function instead of custom PyBDSM one.
+        The option (use_scipy_fft) defaults to True.
+
+    2015/11/20 - Increased number of digits for values in output text
+        catalogs
+
     2015/08/06 - Version 1.8.4
 
     2015/08/06 - Improved speed of wavelet module.

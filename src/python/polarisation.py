@@ -221,6 +221,7 @@ class Op_polarisation(Op):
               img.sources += new_src
               img.gaussians += new_gaus
               img.nsrc += n_new_src
+              renumber_islands(img)
 
           bar = statusbar.StatusBar('Calculating polarisation properties ....  : ', 0, img.nsrc)
           if img.opts.quiet == False:
@@ -607,3 +608,23 @@ class Op_polarisation(Op):
             bbox_width = (bbox.stop - bbox.start)/2.0
             return slice(max(0, bbox.start - bbox_width), min(shape, bbox.stop + bbox_width))
         return map(expand, bbox, shape)
+
+
+def renumber_islands(img):
+    """Renumbers island_ids (after, e.g., removing one)
+
+    Also renumbers the pyrank image.
+    """
+    for i, isl in enumerate(img.islands):
+        isl.island_id = i
+        for g in isl.gaul:
+            g.island_id = i
+        for dg in isl.dgaul:
+            dg.island_id = i
+        if i == 0:
+            img.pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
+        else:
+            img.pyrank[isl.bbox] = N.invert(isl.mask_active) * isl.island_id - isl.mask_active
+    gaussian_list = [g for isl in img.islands for g in isl.gaul]
+    img.gaussians = gaussian_list
+

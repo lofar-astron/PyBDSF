@@ -1376,7 +1376,7 @@ def convert_pyrap_header(pyrap_image, tmpdir):
 
 def write_image_to_file(use, filename, image, img, outdir=None,
                         pad_image=False, clobber=True, is_mask=False):
-    """ Writes image array to dir/filename"""
+    """ Writes image array to outdir/filename"""
     import numpy as N
     import os
     import mylogger
@@ -1432,8 +1432,8 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                 return
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
             img.frequency, img.equinox, telescope, xmin=xmin, ymin=ymin,
-            is_mask=is_mask, shape=(img.shape[1], img.shape[0], img.shape[2],
-            img.shape[3]))
+            is_mask=is_mask, shape=(img.shape[1], img.shape[0], image.shape[0],
+            image.shape[1]))
         if use == 'rap':
             outfile = outdir + filename + '.fits'
         else:

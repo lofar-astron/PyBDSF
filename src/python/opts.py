@@ -668,6 +668,12 @@ class Opts(object):
                                  "fitting is done on only the wavelet scale under "\
                                  "consideration.",
                              group = "atrous_do")
+    use_scipy_fft = Bool(True,
+                             doc = "Use fast SciPy FFT for convolution\n"\
+                                 "If True, the SciPy FFT function will be used instead "\
+                                 "of the custom version. The SciPy version is much "\
+                                 "faster but also uses much more memory.",
+                             group = "atrous_do")
 
     #--------------------------------FLAGGING OPTIONS--------------------------------
     flag_smallsrc = Bool(False,
