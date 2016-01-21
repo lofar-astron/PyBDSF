@@ -300,16 +300,16 @@ class Op_wavelet_atrous(Op):
               if stop_wav == True:
                   break
 
+          pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
           for i, isl in enumerate(img.islands):
               isl.island_id = i
               for g in isl.gaul:
                   g.island_id = i
               for dg in isl.dgaul:
                   dg.island_id = i
-              if i == 0:
-                  img.pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
-              else:
-                  img.pyrank[isl.bbox] = N.invert(isl.mask_active) * isl.island_id - isl.mask_active
+              pyrank[isl.bbox] += N.invert(isl.mask_active) * (i + 1)
+          pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
+          img.pyrank = pyrank
 
           pdir = img.basedir + '/misc/'
           img.ngaus += ntot_wvgaus
@@ -632,16 +632,16 @@ def renumber_islands(img):
 
     Also renumbers the pyrank image.
     """
+    pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
     for i, isl in enumerate(img.islands):
         isl.island_id = i
         for g in isl.gaul:
             g.island_id = i
         for dg in isl.dgaul:
             dg.island_id = i
-        if i == 0:
-            img.pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
-        else:
-            img.pyrank[isl.bbox] = N.invert(isl.mask_active) * isl.island_id - isl.mask_active
+            pyrank[isl.bbox] += N.invert(isl.mask_active) * (i + 1)
+    pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
+    img.pyrank = pyrank
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
     img.gaussians = gaussian_list
 
