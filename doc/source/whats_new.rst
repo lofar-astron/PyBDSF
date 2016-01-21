@@ -4,6 +4,25 @@
 What's New
 **********
 
+Version 1.8.6 (2016/01/20)
+
+    * Fix to bug that caused incorrect island mask when two islands are very close together.
+
+    * Fix to bug that caused crash when image is masked and the ``src_ra_dec`` option is used.
+
+
+Version 1.8.5 (2015/11/30):
+
+    * Fix to bug in ``export_image`` that resulted in incorrect output image when both ``trim_box`` and ``pad_image`` were used.
+
+    * Fix to bug in wavelet module related to merging of islands.
+
+    * Fix to bug in polarization module related to numbering of new islands.
+
+    * Added option to use much faster (but also much more memory intensive) SciPy ``fftconvolve`` function instead of custom PyBDSM one. The option (``use_scipy_fft``) defaults to ``True``.
+
+    * Increased number of digits for values in output text catalogs
+
 Version 1.8.4 (2015/08/06):
 
     * Improved speed of wavelet module.
@@ -14,7 +33,7 @@ Version 1.8.4 (2015/08/06):
 
     * Fix to bug that caused a failure to write shapelet models in FITS format.
 
-    * Fix to bug that caused a crash when both atrous_do = True and output_all = True.
+    * Fix to bug that caused a crash when both ``atrous_do = True`` and ``output_all = True``.
 
     * Fixed a bug that caused a crash on machines with only one core.
 
@@ -36,7 +55,7 @@ Version 1.8.1 (2014/01/14):
 
     * Added option (``bbs_patches = 'mask'``) to allow patches in an output BBS sky model to be defined using a mask image (set with the ``bbs_patches_mask`` option).
 
-    * Fix to bug that caused the ``incl_empty`` option to be ignored when ``format='fits'`` in the ``write_catalog`` task.
+    * Fix to bug that caused the ``incl_empty`` option to be ignored when ``format = 'fits'`` in the ``write_catalog`` task.
 
     * Enabled output of images in CASA format in the ``export_image`` task (``img_format = 'casa'``).
 
