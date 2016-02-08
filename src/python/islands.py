@@ -110,13 +110,11 @@ class Op_islands(Op):
 
             ch0_map = img.ch0_arr
             ch0_shape = ch0_map.shape
-            pyrank = N.zeros(ch0_shape, dtype=N.int32) - 1
+            pyrank = N.zeros(ch0_shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
-                if i == 0:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
-                else:
-                    pyrank[isl.bbox] = N.invert(isl.mask_active) * i - isl.mask_active
+                pyrank[isl.bbox] += N.invert(isl.mask_active) * (i + 1)
+            pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
 
             if opts.output_all: write_islands(img)
             if opts.savefits_rankim:
@@ -219,7 +217,7 @@ class Op_islands(Op):
             labels = func.make_src_mask(image.shape,
                         isl_posn_pix, isl_radius_pix)
             if img.masked:
-                aper_mask = N.where(labels.astype(bool) & ~img.mask)
+                aper_mask = N.where(labels.astype(bool) & ~mask)
             else:
                 aper_mask = N.where(labels.astype(bool))
             if N.size(aper_mask) > img.minpix_isl:
