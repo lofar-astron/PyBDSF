@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.8.5'
+__version__ = '1.8.6'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -26,9 +26,16 @@ def changelog():
     """
     PyBDSM Changelog.
     -----------------------------------------------------------------------
-    2015/08/06 - Version 1.8.4
 
-    2015/10/06 - Version 1.8.5
+    2016/01/20 - Version 1.8.6
+
+    2016/01/15 - Fix to bug that caused incorrect island mask when two
+        islands are very close together.
+
+    2015/12/07 - Fix to bug that caused crash when image is masked and
+        the src_ra_dec option is used.
+
+    2015/11/30 - Version 1.8.5
 
     2015/11/25 - Fix to bug in export_image that resulted in incorrect
         output image when both trim_box and pad_image were used.
@@ -37,6 +44,9 @@ def changelog():
 
     2015/11/20 - Fix to bug in polarization module related to numbering of
         new islands.
+
+    2015/11/20 - Fix to bug in spectral index module related to rms map
+        calculation.
 
     2015/11/20 - Added option to use much faster (but also much more memory
         intensive) SciPy fftconvolve function instead of custom PyBDSM one.

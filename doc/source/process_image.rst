@@ -906,6 +906,7 @@ The options for this module are as follows:
                                    original image
       :term:`atrous_sum` .......... True : Fit to the sum of images of the remaining wavelet
                                    scales
+      :term:`use_scipy_fft` ....... True : Use fast SciPy FFT for convolution
 
 .. glossary::
 
@@ -938,6 +939,9 @@ The options for this module are as follows:
     atrous_sum
         This parameter is a Boolean (default is ``True``). If ``True``, fitting is done on an image that is the sum of the remaining wavelet scales. Using the sum will generally result in improved signal.
         If ``False``, fitting is done on only the wavelet scale under consideration.
+
+    use_scipy_fft
+        This parameter is a Boolean (default is ``True``). If ``True``, the SciPy FFT function will be used instead of the custom version. The SciPy version is much faster but also uses much more memory.
 
 .. _psf_vary_do:
 
