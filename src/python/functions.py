@@ -1432,8 +1432,8 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                 return
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
             img.frequency, img.equinox, telescope, xmin=xmin, ymin=ymin,
-            is_mask=is_mask, shape=(img.shape[1], img.shape[0], image.shape[0],
-            image.shape[1]))
+            is_mask=is_mask, shape=(img.shape[1], img.shape[0], image.shape[1],
+            image.shape[0]))
         if use == 'rap':
             outfile = outdir + filename + '.fits'
         else:
