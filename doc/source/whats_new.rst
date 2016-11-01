@@ -4,12 +4,15 @@
 What's New
 **********
 
+Version 1.8.7 (2016/06/10)
+
+    * Fix to bug that caused incorrect output images when input image was not square.
+
 Version 1.8.6 (2016/01/20)
 
     * Fix to bug that caused incorrect island mask when two islands are very close together.
 
     * Fix to bug that caused crash when image is masked and the ``src_ra_dec`` option is used.
-
 
 Version 1.8.5 (2015/11/30):
 
