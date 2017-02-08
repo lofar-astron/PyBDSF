@@ -197,7 +197,7 @@ boost::python::tuple MGFunction::py_find_peak()
   int x1 = mm_data[pidx].x1;
   int x2 = mm_data[pidx].x2;
 
-  return boost::python::make_tuple(peak, make_tuple(x1, x2));
+  return boost::python::make_tuple(peak, boost::python::make_tuple(x1, x2));
 }
 
 
