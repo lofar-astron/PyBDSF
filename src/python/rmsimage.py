@@ -951,7 +951,7 @@ class Op_rmsimage(Op):
             i1 = arr[i]
             i2 = arr[i+1]
             t = N.arange(ceil(i1), floor(i2)+1, dtype=float)
-            res[ceil(i1):floor(i2)+1] = i + (t-i1)/(i2-i1)
+            res[int(ceil(i1)):int(floor(i2))+1] = i + (t-i1)/(i2-i1)
 
         return res
 
