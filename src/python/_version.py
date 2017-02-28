@@ -27,6 +27,8 @@ def changelog():
     PyBDSM Changelog.
     -----------------------------------------------------------------------
 
+    2017/02/28 - Fix to issues related to numpy >= 1.12 and astropy >= 1.3
+
     2016/06/10 - Version 1.8.7
 
     2016/06/10 - Fix to bug that caused incorrect output images when input

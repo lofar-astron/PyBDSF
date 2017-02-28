@@ -4,11 +4,13 @@
 What's New
 **********
 
-Version 1.8.7 (2016/06/10)
+    * Fix to issues related to numpy versions >= 1.12.0
+
+Version 1.8.7 (2016/06/10):
 
     * Fix to bug that caused incorrect output images when input image was not square.
 
-Version 1.8.6 (2016/01/20)
+Version 1.8.6 (2016/01/20):
 
     * Fix to bug that caused incorrect island mask when two islands are very close together.
 

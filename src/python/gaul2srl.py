@@ -324,7 +324,7 @@ class Op_gaul2srl(Op):
         maxv = N.max(subim_src)
         maxx, maxy = N.unravel_index(N.argmax(subim_src), subim_src.shape)
                                         # fit gaussian around this posn
-        blc = N.zeros(2); trc = N.zeros(2)
+        blc = N.zeros(2,dtype=N.int); trc = N.zeros(2,dtype=N.int)
         n, m = subim_src.shape[0:2]
         bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
         ssubimsize = max(N.int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
