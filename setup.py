@@ -92,6 +92,7 @@ meta = dict(name='bdsm',
                 'Topic :: Scientific/Engineering :: Astronomy'
                 ],
             ext_modules=extensions,
+            scripts = ['bdsm/pybdsm']
             )
 
 setup(**meta)

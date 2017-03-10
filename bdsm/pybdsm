@@ -4,8 +4,8 @@ This module initializes the interactive PyBDSM shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
 "pybdsm" shell script or as "python pybdsm.py".
 """
-import lofar.bdsm
-from lofar.bdsm.image import Image
+import bdsm
+from bdsm.image import Image
 import pydoc
 import sys
 import inspect
@@ -49,7 +49,7 @@ def inp(cur_cmd=None):
         if not hasattr(_img, '_current_cmd'):
             print '\033[31;1mERROR\033[0m: no task is set'
             return
-    lofar.bdsm.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
+    bdsm.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
                              banner=_img._current_cmd_desc,
                              use_groups=_img._current_cmd_use_groups)
 
@@ -526,7 +526,7 @@ class bdsmDocHelper(pydoc.Helper):
                     group_text = '\nBelongs to group: ' + opt.group()
                 else:
                     group_text = ''
-                desc_text = lofar.bdsm.interface.wrap(desc, 72)
+                desc_text = bdsm.interface.wrap(desc, 72)
                 desc_text = '\n'.join(desc_text)
                 pydoc.pager(topbar + 'Help on the ' + pydoc.text.bold(request)
                             + ' parameter:\n\n' + default_val_text
@@ -548,7 +548,7 @@ def _opts_completer(self, event):
     """ Returns a list of strings with possible completions."""
     import os
     import glob
-    from lofar.bdsm.image import Image
+    from bdsm.image import Image
     img = Image({'filename':''})
     opts = img.opts.get_names()
 
@@ -576,7 +576,7 @@ def _opts_completer(self, event):
             cmd3 = cmd1.split('=')[1]
             cmd1 = cmd1.split('=')[0]
         if cmd1 in opts:
-            from lofar.bdsm.tc import tcEnum, tcOption
+            from bdsm.tc import tcEnum, tcOption
             v = img.opts.__class__.__dict__[cmd1]
             partype = v._type
             if isinstance(partype, tcOption):
@@ -660,7 +660,7 @@ def _opts_completer(self, event):
 # Define the welcome banner to print on startup. Also check if there is a newer
 # version on the STRW ftp server. If there is, print a message to the user
 # asking them to update.
-from lofar.bdsm._version import __version__, __revision__, changelog
+from bdsm._version import __version__, __revision__, changelog
 
 # Query the Hamburg Observatory FTP server. Tar file must be named
 # "PyBDSM-version#.tar.gz":
