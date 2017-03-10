@@ -82,7 +82,7 @@ meta = dict(name='bdsf',
             description='Blob Detection and Source Finder',
             long_description=open('README.md', 'rt').read(),
             platforms='Linux, Mac OS X',
-            packages=['bdsf', 'bdsf.nat'],
+            packages=['bdsf', 'bdsf.nat', 'bdsm'],
             package_dir = {'bdsf.nat': join('bdsf', 'nat')},
             classifiers=[
                 'Intended Audience :: Science/Research',
@@ -92,7 +92,7 @@ meta = dict(name='bdsf',
                 'Topic :: Scientific/Engineering :: Astronomy'
                 ],
             ext_modules=extensions,
-            scripts = ['bdsf/pybdsf'],
+            scripts = ['bdsf/pybdsf', 'bdsf/pybdsm'],
             zip_safe = False
             )
 
