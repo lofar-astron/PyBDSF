@@ -243,7 +243,7 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
     # catalogs and residual and model images for each input image. Call it
     # with "python pybdsm_example.py"
 
-    from lofar import bdsm
+    import bdsm
 
     # Define the list of images to process and the parameter save file
     input_images = ['a2597.fits', 'a2256_1.fits', 'a2256_2.fits',

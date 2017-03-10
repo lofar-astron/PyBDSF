@@ -6,7 +6,7 @@ Scripting PyBDSM
 
 Because PyBDSM is written in Python, it is straightforward to use PyBDSM non-interactively within Python scripts (for example, to automate source detection in a large number of images for which the optimal analysis parameters are known). To use PyBDSM in a Python script, import it by calling::
 
-    from lofar import bdsm
+    import bdsm
 
 inside your script.
 
