@@ -2,7 +2,7 @@
 
 The interface module handles all functions typically needed by the user in an
 interactive environment such as IPython. Many are also used by the
-custom IPython shell defined in pybdsm.py.
+custom IPython shell defined in pybdsf.
 
 """
 
@@ -10,7 +10,7 @@ def process(img, **kwargs):
     """Find and measure sources in an image.
 
     This function is used by process_image in __init__.py and by process_image
-    in pybdsm.py. It is also used as a method of the Image object in image.py
+    in pybdsf. It is also used as a method of the Image object in image.py
     to allow reprocessing of existing Image objects with the command
     img.process().
 
@@ -23,12 +23,12 @@ def process(img, **kwargs):
 
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
-    log = img.opts.filename + '.pybdsm.log'
+    log = img.opts.filename + '.pybdsf.log'
     img.log = ''
     mylogger.init_logger(log, quiet=img.opts.quiet,
                          debug=img.opts.debug)
     add_break_to_logfile(log)
-    mylog = mylogger.logging.getLogger("PyBDSM.Process")
+    mylog = mylogger.logging.getLogger("PyBDSF.Process")
     mylog.info("Processing "+img.opts.filename)
 
     try:
@@ -371,7 +371,7 @@ def save_pars(img, savefile=None, quiet=False):
     import sys
 
     if savefile is None or savefile == '':
-        savefile = img.opts.filename + '.pybdsm.sav'
+        savefile = img.opts.filename + '.pybdsf.sav'
 
     # convert opts to dictionary
     pars = img.opts.to_dict()
@@ -778,7 +778,7 @@ def export_image(img, outfile=None, img_format='fits', pad_image = False,
     from const import fwsig
     import mylogger
 
-    mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"ExportImage")
+    mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"ExportImage")
 
     # First some checking:
     if not 'gausfit' in img.completed_Ops and 'gaus' in img_type:
@@ -1021,7 +1021,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         filename = output.write_fits_list(img, filename=tfile.name,
                                              incl_chan=incl_chan, incl_empty=incl_empty,
                                              clobber=True, objtype=catalog_type)
-        table_name = 'PyBDSM '+ catalog_type + ' table'
+        table_name = 'PyBDSF '+ catalog_type + ' table'
         if catalog_type == 'srl':
             img.samp_srl_table_url = 'file://' + os.path.abspath(tfile.name)
         if catalog_type == 'gaul':

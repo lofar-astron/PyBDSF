@@ -1,14 +1,14 @@
 """Module image.
 
-Instances of class Image are a primary data-holders for all PyBDSM
+Instances of class Image are a primary data-holders for all PyBDSF
 operations. They store the image itself together with some meta-information
 (such as headers), options for processing modules and all data generated during
 processing. A few convenience methods are also defined here for interactive
 use: to allow viewing and output of the most important data, to allow listing
 and setting of options, and to allow re-processing of Images (these methods are
-used by the interactive IPython shell made by pybdsm.py).
+used by the interactive IPython shell made by pybdsf).
 
-This module also defines class Op, which is used as a base class for all PyBDSM
+This module also defines class Op, which is used as a base class for all PyBDSF
 operations.
 """
 
@@ -16,7 +16,7 @@ import numpy as N
 from opts import *
 
 class Image(object):
-    """Image is a primary data container for PyBDSM.
+    """Image is a primary data container for PyBDSF.
 
     All the run-time data (such as image data, mask, etc.)
     is stored here. A number of type-checked properties
@@ -34,14 +34,14 @@ class Image(object):
     right here as it will introduce unneeded dependencies
     between modules, thus most other attributes (like island lists,
     gaussian lists, etc) are inserted at run-time by the specific
-    PyBDSM modules.
+    PyBDSF modules.
     """
     opts   = Instance(Opts, doc="User options")
     header = Any(doc="Image header")
     masked = Bool(False, doc="Flag if mask is present")
     basedir = String('DUMMY', doc="Base directory for output files")
     completed_Ops = List(String(), doc="List of completed operations")
-    _is_interactive_shell = Bool(False, doc="PyBDSM is being used in the interactive shell")
+    _is_interactive_shell = Bool(False, doc="PyBDSF is being used in the interactive shell")
     waveletimage = Bool(False, doc="Image is a wavelet transform image")
     _pi = Bool(False, doc="Image is a polarized intensity image")
     do_cache = Bool(False, doc="Cache images to disk")
@@ -136,7 +136,7 @@ class Image(object):
         import interface
         import os
         if loadfile is None or loadfile == '':
-            loadfile = self.opts.filename + '.pybdsm.sav'
+            loadfile = self.opts.filename + '.pybdsf.sav'
         if os.path.exists(loadfile):
             timg, err = interface.load_pars(loadfile)
             if timg is not None:
@@ -191,7 +191,7 @@ class Image(object):
 
 
 class Op(object):
-    """Common base class for all PyBDSM operations.
+    """Common base class for all PyBDSF operations.
 
     At the moment this class is empty and only defines placeholder
     for method __call__, which should be redefined in all derived

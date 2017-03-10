@@ -6,7 +6,7 @@
 
 A standard analysis is performed using the ``process_image`` task. This task reads in the input image, calculates background rms and mean images, finds islands of emission, fits Gaussians to the islands, and groups the Gaussians into sources. Furthermore, the ``process_image`` task encompases a number of modules that allow decomposing an image into shapelets, calculating source spectral indices, deriving source polarization properties, and correcting for PSF variations across the image.
 
-When process_image is executed, PyBDSM performs the following steps in
+When process_image is executed, PyBDSF performs the following steps in
 order:
 
 #. Reads in the image and collapses specific frequency channels with weights (see :ref:`multichan_opts`) and produces a 'continuum' image (the ch0 image) for all polarisations with which source detection is done.
@@ -140,13 +140,13 @@ Each of the parameters is described in detail below.
         This parameter is a Boolean (default is ``False``). If ``True``, wavelet decomposition will be performed. See :ref:`atrous_do` for details of the options.
 
     beam
-        This parameter is a tuple (default is ``None``) that defines the FWHM of restoring beam. Specify as (maj, min, pos ang E of N) in degrees. E.g., ``beam = (0.06, 0.02, 13.3)``. For more than one channel, use the ``beam_spectrum`` parameter. If the beam is not given by the user, then it is looked for in the image header. If not found, then an error is raised. PyBDSM will not work without knowledge of the restoring beam.
+        This parameter is a tuple (default is ``None``) that defines the FWHM of restoring beam. Specify as (maj, min, pos ang E of N) in degrees. E.g., ``beam = (0.06, 0.02, 13.3)``. For more than one channel, use the ``beam_spectrum`` parameter. If the beam is not given by the user, then it is looked for in the image header. If not found, then an error is raised. PyBDSF will not work without knowledge of the restoring beam.
 
     flagging_opts
         This parameter is a Boolean (default is ``False``). If ``True``, the Gaussian flagging options will be listed. See :ref:`flagging_opts` for details of the options.
 
     frequency
-        This parameter is a float (default is ``None``) that defines the frequency in Hz of the input image. E.g., ``frequency = 74e6``. For more than one channel, use the :term:`frequency_sp` parameter. If the frequency is not given by the user, then it is looked for in the image header. If not found, then an error is raised. PyBDSM will not work without knowledge of the frequency.
+        This parameter is a float (default is ``None``) that defines the frequency in Hz of the input image. E.g., ``frequency = 74e6``. For more than one channel, use the :term:`frequency_sp` parameter. If the frequency is not given by the user, then it is looked for in the image header. If not found, then an error is raised. PyBDSF will not work without knowledge of the frequency.
 
     interactive
         This parameter is a Boolean (default is ``False``). If ``True``, interactive mode is used. In interactive mode, plots are displayed at various stages of the processing so that the user may check the progress of the fit.
@@ -170,7 +170,7 @@ Each of the parameters is described in detail below.
         resulting mean map is largely determined by the value of the ``rms_box``
         parameter (see the ``rms_box`` parameter for more information).
 
-        If ``'default'``\, then PyBDSM will attempt to determine automatically
+        If ``'default'``\, then PyBDSF will attempt to determine automatically
         whether to use a 2-dimensional map or a constant one as follows. First,
         the image is assumed to be confused if ``bmpersrc_th`` < 25 or the ratio of
         the clipped mean to rms (clipped mean/clipped rms) is > 0.1, else the
@@ -197,7 +197,7 @@ Each of the parameters is described in detail below.
 
     rms_box
         This parameter is a tuple (default is ``None``) of two integers and is probably the most important input
-        parameter for PyBDSM. The first integer, boxsize, is the size of the 2-D
+        parameter for PyBDSF. The first integer, boxsize, is the size of the 2-D
         sliding box for calculating the rms and mean over the entire image. The
         second, stepsize, is the number of pixels by which this box is moved for
         the next measurement. If ``None``\, then suitable values are calculated
@@ -550,7 +550,7 @@ The advanced options are:
         used (one core is reserved for plotting).
 
     peak_fit
-        This parameter is a Boolean (default is ``True``). When True, PyBDSM
+        This parameter is a Boolean (default is ``True``). When True, PyBDSF
         will identify and fit peaks of emission in large islands iteratively
         (the size of islands for which peak fitting is done is controlled with
         the peak_maxsize option), using a maximum of 10 Gaussians per iteration.
@@ -698,7 +698,7 @@ The options for flagging of Gaussians are:
 
 Output options
 ==============
-If ``output_opts = True``, options to control the output generated by ``process_image`` are listed. By default, only a log file is generated and output is controlled with the ``export_image`` (see :ref:`export_image`) and ``write_catalog`` (see :ref:`write_catalog`) tasks. However, the user can specify that a number of optional output files be made automatically whenever ``process_image`` is run. These options are most useful for debugging or when running PyBDSM non-interactively in a Python script (see :ref:`scripting`).
+If ``output_opts = True``, options to control the output generated by ``process_image`` are listed. By default, only a log file is generated and output is controlled with the ``export_image`` (see :ref:`export_image`) and ``write_catalog`` (see :ref:`write_catalog`) tasks. However, the user can specify that a number of optional output files be made automatically whenever ``process_image`` is run. These options are most useful for debugging or when running PyBDSF non-interactively in a Python script (see :ref:`scripting`).
 
 The output options are:
 
@@ -718,7 +718,7 @@ The output options are:
       :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
                                    delete existing files or append a new directory
       :term:`output_all` ......... False : Write out all files automatically to directory
-                                   'filename_pybdsm'
+                                   'filename_pybdsf'
       :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end
       :term:`plot_islands` ....... False : Make separate plots of each island during fitting
                                    (for large images, this may take a long time and a
@@ -755,7 +755,7 @@ The output options are:
         This parameter is a string (default is ``'overwrite'``) that determines whether existing output files are overwritten or not.
 
     output_all
-        This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'filename_pybdsm'``.
+        This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'filename_pybdsf'``.
 
     plot_allgaus
         This parameter is a Boolean (default is ``False``). If ``True``\, make a plot of all Gaussians at the end.
@@ -800,7 +800,7 @@ The output options are:
 
 Multichannel options
 ====================
-If ``multichan_opts = True``, the options used to control the way PyBDSM handles images with more than one frequency channel are listed. In particular, these options control how the multichannel image is collapsed to form the ``ch0`` image on which source detection is done.
+If ``multichan_opts = True``, the options used to control the way PyBDSF handles images with more than one frequency channel are listed. In particular, these options control how the multichannel image is collapsed to form the ``ch0`` image on which source detection is done.
 
 The options concerning multichannel images are:
 
@@ -871,7 +871,7 @@ The options concerning multichannel images are:
         This parameter is a list of floats (default is ``None``) that sets the frequency in Hz of channels in input image when more than one channel is present. E.g., ``frequency_sp = [74e6, 153e6]``.
 
         If the frequency is not given by the user, then it is looked for in the
-        image header. If not found, then an error is raised. PyBDSM will not
+        image header. If not found, then an error is raised. PyBDSF will not
         work without the knowledge of the frequency.
 
 
@@ -911,7 +911,7 @@ The options for this module are as follows:
 .. glossary::
 
     atrous_bdsm_do
-        This parameter is a Boolean (default is ``False``). If ``True``, PyBDSM performs source extraction on each wavelet scale.
+        This parameter is a Boolean (default is ``False``). If ``True``, PyBDSF performs source extraction on each wavelet scale.
 
     atrous_jmax
         This parameter is an integer (default is 0) which is the maximum order of the *à trous* wavelet
@@ -947,7 +947,7 @@ The options for this module are as follows:
 
 PSF variation module
 --------------------
-If ``psf_vary_do = True``, then the spatial variations in the PSF are estimated and their effects corrected for. To this end, PyBDSM performs the following steps:
+If ``psf_vary_do = True``, then the spatial variations in the PSF are estimated and their effects corrected for. To this end, PyBDSF performs the following steps:
 
 * A list of sources that are likely to be unresolved is constructed. This is done by first selecting only type 'S' sources by default (see :ref:`output_cols` for details of source types), but this restriction can be overridden using the ``psf_stype_only`` option) and sources with SNRs that exceed ``psf_snrcut``. Next, a function is fit to determine how the size of sources (normalized by the median size) varies with the SNR. The function used is defined as :math:`\sigma / median = \sqrt(c_1^2 + c_2^2/SNR^2)`, where :math:`\sigma` is the size of the Gaussian and :math:`c_1` and :math:`c_2` are free parameters. Clipping of outliers is done during this fitting, controlled by the ``psf_nsig`` parameter. Lastly, unresolved sources are selected by choosing sources that lie within ``psf_kappa2`` times the rms of this best-fit sigma-SNR relation. As this last step can be unreliable for high-SNR sources, an additional selection can be made for the highest SNR sources using the ``psf_high_snr`` parameter. All sources with SNRs above ``psf_high_snr`` will be taken as unresolved.
 
@@ -1139,7 +1139,7 @@ The options for this module are as follows:
 
 Shapelet decomposition module
 -----------------------------
-If ``shapelet_do = True``, then islands are decomposed into shapelets. Shapelets are a set of 2-D basis functions (for details, see Refregier 2003 [#f5]_) that can be used to completely model any source, typically with far fewer parameters than pixels in the source. Shapelets are useful in particular for modeling complex islands that are not well modeled by Gaussians alone. PyBDSM can currently fit cartesian shapelets to an image. The shapelet parameters can be written to a catalog using ``write_catalog`` (see :ref:`write_catalog`).
+If ``shapelet_do = True``, then islands are decomposed into shapelets. Shapelets are a set of 2-D basis functions (for details, see Refregier 2003 [#f5]_) that can be used to completely model any source, typically with far fewer parameters than pixels in the source. Shapelets are useful in particular for modeling complex islands that are not well modeled by Gaussians alone. PyBDSF can currently fit cartesian shapelets to an image. The shapelet parameters can be written to a catalog using ``write_catalog`` (see :ref:`write_catalog`).
 
 For each island of emission, a shapelet decomposition is done after estimating the best values of the
 center, the scale :math:`\beta`, and nmax in the following way. First, an initial guess of :math:`\beta` is taken as :math:`2\sqrt{[m2(x)m2(y)]}`,

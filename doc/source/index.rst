@@ -1,13 +1,13 @@
-.. PyBDSM documentation master file, created by
+.. PyBDSF documentation master file, created by
    sphinx-quickstart on Thu Jan 19 13:27:03 2012.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 ====================
-PyBDSM Documentation
+PyBDSF Documentation
 ====================
 
-PyBDSM (the **Py**\thon **B**\lob **D**\etection and **S**\ource **M**\easurement software) is a tool designed to decompose radio interferometry images into sources and make available their properties for further use. PyBDSM can decompose an image into a set of Gaussians, shapelets, or wavelets as well as calculate spectral indices and polarization properties of sources and measure the psf variation across an image. PyBDSM uses an interactive environment based on CASA [#f1]_ that will be familiar to most radio astronomers. Additionally, PyBDSM may also be used in Python scripts.
+PyBDSF (the **Py**\thon **B**\lob **D**\etection and **S**\ource **F**\inder, formerly PyBDSM) is a tool designed to decompose radio interferometry images into sources and make available their properties for further use. PyBDSF can decompose an image into a set of Gaussians, shapelets, or wavelets as well as calculate spectral indices and polarization properties of sources and measure the psf variation across an image. PyBDSF uses an interactive environment based on CASA [#f1]_ that will be familiar to most radio astronomers. Additionally, PyBDSF may also be used in Python scripts.
 
 .. .. image:: overview_image.png
 ..    :align: center
@@ -23,7 +23,7 @@ Introduction
    capabilities
 
 
-Obtaining PyBDSM
+Obtaining PyBDSF
 ================
 
 .. toctree::

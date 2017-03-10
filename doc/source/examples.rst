@@ -2,15 +2,15 @@
 
 Simple image with point sources
 -------------------------------
-Below is an example of running PyBDSM on an image composed primarily of point sources (a VLSS image).
+Below is an example of running PyBDSF on an image composed primarily of point sources (a VLSS image).
 
 ::
 
-    $ pybdsm
+    $ pybdsf
 
-    PyBDSM version 1.7.0 (LOFAR revision 20883)
+    PyBDSF version 1.7.0 (LOFAR revision 20883)
     ========================================================================
-    PyBDSM commands
+    PyBDSF commands
       inp task ............ : Set current task and list parameters
       par = val ........... : Set a parameter (par = '' sets it to default)
                               Autocomplete (with TAB) works for par and val
@@ -18,12 +18,12 @@ Below is an example of running PyBDSM on an image composed primarily of point so
       default ............. : Set current task parameters to default values
       tput ................ : Save parameter values
       tget ................ : Load parameter values
-    PyBDSM tasks
+    PyBDSF tasks
       process_image ....... : Process an image: find sources, etc.
       show_fit ............ : Show the results of a fit
       write_catalog ....... : Write out list of sources to a file
       export_image ........ : Write residual/model/rms/mean image to a file
-    PyBDSM help
+    PyBDSF help
       help command/task ... : Get help on a command or task
                               (e.g., help process_image)
       help 'par' .......... : Get help on a parameter (e.g., help 'rms_box')
@@ -31,15 +31,15 @@ Below is an example of running PyBDSM on an image composed primarily of point so
     ________________________________________________________________________
 
 
-    BDSM [1]: filename='VLSS.fits'
+    BDSF [1]: filename='VLSS.fits'
 
 .. note::
 
-    When PyBDSM starts up, the ``process_image`` task is automatically set to be the current task, so one does not need to set it with ``inp process_image``.
+    When PyBDSF starts up, the ``process_image`` task is automatically set to be the current task, so one does not need to set it with ``inp process_image``.
 
 ::
 
-    BDSM [2]: frequency=74e6
+    BDSF [2]: frequency=74e6
 
 .. note::
 
@@ -47,15 +47,15 @@ Below is an example of running PyBDSM on an image composed primarily of point so
 
 ::
 
-    BDSM [3]: interactive=T
+    BDSF [3]: interactive=T
 
 .. note::
 
-    It is often advisable to use the interactive mode when processing an image for the first time. This mode will display the islands that PyBDSM has found before proceeding to fitting, allowing the user to check that they are reasonable.
+    It is often advisable to use the interactive mode when processing an image for the first time. This mode will display the islands that PyBDSF has found before proceeding to fitting, allowing the user to check that they are reasonable.
 
 ::
 
-    BDSM [4]: go
+    BDSF [4]: go
     ---------> go()
     --> Opened 'VLSS.fits'
     Image size .............................. : (1024, 1024) pixels
@@ -91,7 +91,7 @@ Below is an example of running PyBDSM on an image composed primarily of point so
 
 .. note::
 
-    At this point, because ``interactive=True``, PyBDSM plots the islands. Once the plot window is closed, PyBDSM prompts the user to continue or to quit fitting:
+    At this point, because ``interactive=True``, PyBDSF plots the islands. Once the plot window is closed, PyBDSF prompts the user to continue or to quit fitting:
 
 ::
 
@@ -102,11 +102,11 @@ Below is an example of running PyBDSM on an image composed primarily of point so
     Number of sources formed from Gaussians   : 117
 
 
-The ``process_image`` task has now finished. PyBDSM estimated a reasonable value for the ``rms_box`` parameter and determined that 2-D rms and mean maps were required to model the background of the image. Straightforward island thresholding at the 5-sigma level was used, and the minimum island size was set at 5 pixels. In total 115 islands were found, and 147 Gaussians were fit to these islands. These 147 Gaussians were then grouped into 117 sources. To check the fit, call the ``show_fit`` task:
+The ``process_image`` task has now finished. PyBDSF estimated a reasonable value for the ``rms_box`` parameter and determined that 2-D rms and mean maps were required to model the background of the image. Straightforward island thresholding at the 5-sigma level was used, and the minimum island size was set at 5 pixels. In total 115 islands were found, and 147 Gaussians were fit to these islands. These 147 Gaussians were then grouped into 117 sources. To check the fit, call the ``show_fit`` task:
 
 ::
 
-    BDSM [5]: show_fit
+    BDSF [5]: show_fit
     ---------> show_fit()
     ========================================================================
     NOTE -- With the mouse pointer in plot window:
@@ -134,7 +134,7 @@ Lastly, the plot window is closed, and the source catalog is written out to an A
 
 ::
 
-    BDSM [6]: inp write_catalog
+    BDSF [6]: inp write_catalog
     --------> inp(write_catalog)
     WRITE_CATALOG: Write the Gaussian, source, or shapelet list to a file.
     ================================================================================
@@ -163,17 +163,17 @@ Lastly, the plot window is closed, and the source catalog is written out to an A
     srcroot ............... None : Root name for entries in the output catalog. None
                                    => use image file name
 
-    BDSM [7]: format='ascii'
+    BDSF [7]: format='ascii'
 
-    BDSM [8]: go
+    BDSF [8]: go
     ---------> go()
-    --> Wrote ASCII file 'VLSS.fits.pybdsm.srl'
+    --> Wrote ASCII file 'VLSS.fits.pybdsf.srl'
 
 
 
 Image with artifacts
 --------------------
-Occasionally, an analysis run with the default parameters does not produce good results. For example, if there are significant deconvolution artifacts in the image, the ``thresh_isl``, ``thresh_pix``, or ``rms_box`` parameters might need to be changed to prevent PyBDSM from fitting Gaussians to such artifacts. An example of running PyBDSM with the default parameters on such an image is shown in the figures below.
+Occasionally, an analysis run with the default parameters does not produce good results. For example, if there are significant deconvolution artifacts in the image, the ``thresh_isl``, ``thresh_pix``, or ``rms_box`` parameters might need to be changed to prevent PyBDSF from fitting Gaussians to such artifacts. An example of running PyBDSF with the default parameters on such an image is shown in the figures below.
 
 .. figure:: art_fit_def.png
    :scale: 50 %
@@ -191,7 +191,7 @@ Occasionally, an analysis run with the default parameters does not produce good 
 
    The background rms map for the same region (produced using ``show_fit``) is shown in the lower panel: the rms varies fairly slowly across the image, whereas ideally it would increase strongly near the bright sources (reflecting the increased rms in those regions due to the artifacts).
 
-It is clear that a number of spurious sources are being detected. Simply raising the threshold for island detection (using the ``thresh_pix`` parameter) would remove these sources but would also remove many real but faint sources in regions of low rms. Instead, by setting the ``rms_box`` parameter to better match the typical scale over which the artifacts vary significantly, one obtains much better results. In this example, the scale of the regions affected by artifacts is approximately 20 pixels, whereas PyBDSM used a ``rms_box`` of 63 pixels when run with the default parameters, resulting in an rms map that is over-smoothed. Therefore, one should set ``rms_box=(20,10)`` so that the rms map is computed using a box of 20 pixels in size with a step size of 10 pixels (i.e., the box is moved across the image in 10-pixel steps). See the figures below for a summary of the results of this call.
+It is clear that a number of spurious sources are being detected. Simply raising the threshold for island detection (using the ``thresh_pix`` parameter) would remove these sources but would also remove many real but faint sources in regions of low rms. Instead, by setting the ``rms_box`` parameter to better match the typical scale over which the artifacts vary significantly, one obtains much better results. In this example, the scale of the regions affected by artifacts is approximately 20 pixels, whereas PyBDSF used a ``rms_box`` of 63 pixels when run with the default parameters, resulting in an rms map that is over-smoothed. Therefore, one should set ``rms_box=(20,10)`` so that the rms map is computed using a box of 20 pixels in size with a step size of 10 pixels (i.e., the box is moved across the image in 10-pixel steps). See the figures below for a summary of the results of this call.
 
 .. figure:: art_fit_alt.png
    :scale: 50 %
@@ -212,7 +212,7 @@ It is clear that a number of spurious sources are being detected. Simply raising
 
 Image with extended emission
 ----------------------------
-If there is extended emission that fills a significant portion of the image, the background rms map will likely be biased high in regions where extended emission is present, affecting the island determination (this can be checked during a run by setting ``interactive=True``). Setting ``rms_map=False`` and ``mean_map='const'`` or ``'zero'`` will force PyBDSM to use a constant mean and rms value across the whole image. Additionally, setting ``flag_maxsize_bm`` to a large value (50 to 100) will allow large Gaussians to be fit, and setting ``atrous_do=True`` will fit Gaussians of various scales to the residual image to recover extended emission missed in the standard fitting. Depending on the source structure, the ``thresh_isl`` and ``thresh_pix`` parameters may also have to be adjusted as well to ensure that PyBDSM finds and fits islands of emission properly. An example analysis of an image with significant extended emission is shown below. Note that large, complex sources can require a long time to fit (on the order of hours).
+If there is extended emission that fills a significant portion of the image, the background rms map will likely be biased high in regions where extended emission is present, affecting the island determination (this can be checked during a run by setting ``interactive=True``). Setting ``rms_map=False`` and ``mean_map='const'`` or ``'zero'`` will force PyBDSF to use a constant mean and rms value across the whole image. Additionally, setting ``flag_maxsize_bm`` to a large value (50 to 100) will allow large Gaussians to be fit, and setting ``atrous_do=True`` will fit Gaussians of various scales to the residual image to recover extended emission missed in the standard fitting. Depending on the source structure, the ``thresh_isl`` and ``thresh_pix`` parameters may also have to be adjusted as well to ensure that PyBDSF finds and fits islands of emission properly. An example analysis of an image with significant extended emission is shown below. Note that large, complex sources can require a long time to fit (on the order of hours).
 
 .. figure:: HydraA_74MHz_fit.png
    :scale: 40 %
@@ -227,7 +227,7 @@ If there is extended emission that fills a significant portion of the image, the
 
 Scripting example
 -----------------
-You can use the complete functionality of PyBDSM within Python scripts (see :ref:`scripting` for details). Scripting can be useful, for example, if you have a large number of images or if PyBDSM needs to be called as part of an automated reduction. Below is a short example of using PyBDSM to find sources in a number of images automatically. In this example, the best reduction parameters were determined beforehand for a representative image and saved to a PyBDSM save file using the ``tput`` command (see :ref:`commands` for details).
+You can use the complete functionality of PyBDSF within Python scripts (see :ref:`scripting` for details). Scripting can be useful, for example, if you have a large number of images or if PyBDSF needs to be called as part of an automated reduction. Below is a short example of using PyBDSF to find sources in a number of images automatically. In this example, the best reduction parameters were determined beforehand for a representative image and saved to a PyBDSF save file using the ``tput`` command (see :ref:`commands` for details).
 
 .. note::
 
@@ -237,13 +237,13 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
 
 ::
 
-    # pybdsm_example.py
+    # pybdsf_example.py
     #
     # This script fits a number of images automatically, writing out source
     # catalogs and residual and model images for each input image. Call it
-    # with "python pybdsm_example.py"
+    # with "python pybdsf_example.py"
 
-    import bdsm
+    import bdsf
 
     # Define the list of images to process and the parameter save file
     input_images = ['a2597.fits', 'a2256_1.fits', 'a2256_2.fits',
@@ -257,7 +257,7 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
             # For this one image, run with different parameters.
             # Note that the image name is the first argument to
             # process_image:
-            img = bdsm.process_image(input_image, rms_box=(100,20))
+            img = bdsf.process_image(input_image, rms_box=(100,20))
 
         else:
             # For the other images, use the 'a2256.sav` parameter save file.
@@ -265,7 +265,7 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
             # (it still goes to the log file).
             # Note: when a save file is used, it must be given first in the
             # call to process_image:
-            img = bdsm.process_image(save_file, filename=input_image, quiet=True)
+            img = bdsf.process_image(save_file, filename=input_image, quiet=True)
 
         # Write the source list catalog. File is named automatically.
         img.write_catalog(format='fits', catalog_type='srl')
@@ -281,22 +281,22 @@ You can use the complete functionality of PyBDSM within Python scripts (see :ref
 
 Using SAMP interoperability
 ---------------------------
-PyBDSM supports SAMP (Simple Application Messaging Protocol) to provide interoperability to other applications, such as TOPCAT [#f1]_, ds9 [#f2]_, and Aladin [#f3]_. To use this functionality, a SAMP hub must be running (both TOPCAT and Aladin come with SAMP hubs). Below is an example of using PyBDSM with TOPCAT. In this example, it is assumed that an image has already been processed with ``process_image``.
+PyBDSF supports SAMP (Simple Application Messaging Protocol) to provide interoperability to other applications, such as TOPCAT [#f1]_, ds9 [#f2]_, and Aladin [#f3]_. To use this functionality, a SAMP hub must be running (both TOPCAT and Aladin come with SAMP hubs). Below is an example of using PyBDSF with TOPCAT. In this example, it is assumed that an image has already been processed with ``process_image``.
 
 ::
 
-    BDSM [1]: process_image('VLSS.fits')
+    BDSF [1]: process_image('VLSS.fits')
     ...
 
-At this point, make sure that TOPCAT is started and its SAMP hub is running (activated by clicking the "Attempt to connect to SAMP hub" icon in the lower right-hand corner and selecting "Start internal hub"). Next, we send the PyBDSM source list to TOPCAT with ``write_catalog``:
+At this point, make sure that TOPCAT is started and its SAMP hub is running (activated by clicking the "Attempt to connect to SAMP hub" icon in the lower right-hand corner and selecting "Start internal hub"). Next, we send the PyBDSF source list to TOPCAT with ``write_catalog``:
 
 ::
 
-    BDSM [2]: inp write_catalog
+    BDSF [2]: inp write_catalog
 
-    BDSM [3]: outfile='SAMP'
+    BDSF [3]: outfile='SAMP'
 
-    BDSM [4]: go
+    BDSF [4]: go
     ---------> go()
     --> Table sent to SAMP hub.
 
@@ -304,7 +304,7 @@ TOPCAT should automatically load the table. Double-click on the table name in TO
 
 ::
 
-    BDSM [6]: show_fit(broadcast=T)
+    BDSF [6]: show_fit(broadcast=T)
     ========================================================================
     NOTE -- With the mouse pointer in plot window:
       Press "i" ........ : Get integrated flux densities and mean rms
