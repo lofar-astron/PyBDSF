@@ -1,34 +1,34 @@
 .. _basics:
 
 *************
-PyBDSM Basics
+PyBDSF Basics
 *************
-PyBDSM has been designed to share many similarities with the CASA interactive environment (known as ``casapy`` [#f1]_ ), which is in turn based on AIPS. Therefore, the commands used in PyBDSM should be familiar to anyone who has used these software packages.
+PyBDSF has been designed to share many similarities with the CASA interactive environment (known as ``casapy`` [#f1]_ ), which is in turn based on AIPS. Therefore, the commands used in PyBDSF should be familiar to anyone who has used these software packages.
 
-Starting PyBDSM
+Starting PyBDSF
 ---------------
-After installing (see :ref:`installing`) you can start PyBDSM by simply opening a terminal and typing::
+After installing (see :ref:`installing`) you can start PyBDSF by simply opening a terminal and typing::
 
-    $ pybdsm
+    $ pybdsf
 
 at the terminal prompt.
 
 .. note::
 
-    If the above command does not work, make sure you environment is initialized correctly for PyBDSM (see :ref:`add_to_path`).
+    If the above command does not work, make sure you environment is initialized correctly for PyBDSF (see :ref:`add_to_path`).
 
-The interactive environment will then load, and a welcome screen listing common commands and tasks will be shown. You will then be at the PyBDSM prompt, which looks like this::
+The interactive environment will then load, and a welcome screen listing common commands and tasks will be shown. You will then be at the PyBDSF prompt, which looks like this::
 
-    BDSM [1]:
+    BDSF [1]:
 
-Quitting PyBDSM
+Quitting PyBDSF
 ---------------
-To quit PyBDSM, type ``quit`` or enter ``CNTL-D`` at the prompt.
+To quit PyBDSF, type ``quit`` or enter ``CNTL-D`` at the prompt.
 
 
 Getting help
 ------------
-PyBDSM has an extensive built-in help system. To get help on a command or task, type::
+PyBDSF has an extensive built-in help system. To get help on a command or task, type::
 
     help <command or task name>
 
@@ -55,7 +55,7 @@ Logging of all task output is done automatically to a log file. Logs for subsequ
 
 Commands
 --------
-As in CASA, PyBDSM uses a number of commands to list input parameters for tasks, to execute the tasks, etc. The PyBDSM commands are as follows:
+As in CASA, PyBDSF uses a number of commands to list input parameters for tasks, to execute the tasks, etc. The PyBDSF commands are as follows:
 
 .. parsed-literal::
 
@@ -88,11 +88,11 @@ As in CASA, PyBDSM uses a number of commands to list input parameters for tasks,
 
         .. note::
 
-            After the successful completion of a task, the current parameters are saved to the file 'pybdsm.last'.
+            After the successful completion of a task, the current parameters are saved to the file 'pybdsf.last'.
 
         A file name may be given (e.g., ``tput 'savefile.sav'``), in which case the
         parameters are saved to the file specified. If no file name is given, the
-        parameters are saved to the file 'pybdsm.last'. The saved parameters can be
+        parameters are saved to the file 'pybdsf.last'. The saved parameters can be
         loaded using the :term:`tget` command.
 
     tget
@@ -100,13 +100,13 @@ As in CASA, PyBDSM uses a number of commands to list input parameters for tasks,
 
         A file name may be given (e.g., ``tget 'savefile.sav'``), in which case the
         parameters are loaded from the file specified. If no file name is given,
-        the parameters are loaded from the file 'pybdsm.last' if it exists.
+        the parameters are loaded from the file 'pybdsf.last' if it exists.
 
         Normally, the save file is created by the :term:`tput` command.
 
 Tasks
 -----
-The following tasks are available in PyBDSM:
+The following tasks are available in PyBDSF:
 
 .. parsed-literal::
 
@@ -131,9 +131,9 @@ The following tasks are available in PyBDSM:
 
 Hierarchy of an astronomical image
 ----------------------------------
-The following figure shows the basic hierarchy of an image adopted by PyBDSM. Islands of emission are identified and decomposed into Gaussians. The Gaussians are then grouped into sources.
+The following figure shows the basic hierarchy of an image adopted by PyBDSF. Islands of emission are identified and decomposed into Gaussians. The Gaussians are then grouped into sources.
 
-.. figure:: pybdsm_manual_dia.png
+.. figure:: pybdsf_manual_dia.png
    :scale: 100 %
    :figwidth: 75 %
    :align: center
@@ -146,12 +146,12 @@ The following figure shows the basic hierarchy of an image adopted by PyBDSM. Is
 
 Quick-start example
 -------------------
-Below is an example of using PyBDSM to find and measure sources in an image::
+Below is an example of using PyBDSF to find and measure sources in an image::
 
-    $ pybdsm
-    PyBDSM version 1.1 (LOFAR revision 20883)
+    $ pybdsf
+    PyBDSF version 1.1 (LOFAR revision 20883)
     ========================================================================
-    PyBDSM commands
+    PyBDSF commands
       inp task ............ : Set current task and list parameters
       par = val ........... : Set a parameter (par = '' sets it to default)
                               Autocomplete (with TAB) works for par and val
@@ -159,19 +159,19 @@ Below is an example of using PyBDSM to find and measure sources in an image::
       default ............. : Set current task parameters to default values
       tput ................ : Save parameter values
       tget ................ : Load parameter values
-    PyBDSM tasks
+    PyBDSF tasks
       process_image ....... : Process an image: find sources, etc.
       show_fit ............ : Show the results of a fit
       write_catalog ....... : Write out list of sources to a file
       export_image ........ : Write residual/model/rms/mean image to a file
-    PyBDSM help
+    PyBDSF help
       help command/task ... : Get help on a command or task
                               (e.g., help process_image)
       help 'par' .......... : Get help on a parameter (e.g., help 'rms_box')
       help changelog ...... : See list of recent changes
     ________________________________________________________________________
 
-    BDSM [1]: inp process_image
+    BDSF [1]: inp process_image
     --------> inp(process_image)
     PROCESS_IMAGE: Find and measure sources in an image.
     =================================================================================
@@ -217,8 +217,8 @@ Below is an example of using PyBDSM to find and measure sources in an image::
                                    value is ignored and thresh_pix is calculated
                                    inside the program
 
-    BDSM [2]: filename = 'sb48.fits'
-    BDSM [3]: go
+    BDSF [2]: filename = 'sb48.fits'
+    BDSF [3]: go
     --------> go()
     --> Opened 'sb48.fits'
     Image size .............................. : (256, 256) pixels
@@ -242,14 +242,14 @@ Below is an example of using PyBDSM to find and measure sources in an image::
     Total flux in model ..................... : 27.336 Jy
     Number of sources formed from Gaussians   : 6
 
-    BDSM [4]: show_fit
+    BDSF [4]: show_fit
     --------> show_fit()
 
-The figure made by ``show_fit`` is shown in the figure below. In the plot window, one can zoom in, save the plot to a file, etc. The list of best-fit Gaussians found by PyBDSM may be written to a file for use in other programs as follows::
+The figure made by ``show_fit`` is shown in the figure below. In the plot window, one can zoom in, save the plot to a file, etc. The list of best-fit Gaussians found by PyBDSF may be written to a file for use in other programs as follows::
 
-    BDSM [5]: write_catalog
+    BDSF [5]: write_catalog
     --------> write_catalog()
-    --> Wrote FITS file 'sb48.pybdsm.srl.fits'
+    --> Wrote FITS file 'sb48.pybdsf.srl.fits'
 
 The output Gaussian or source list contains source positions, fluxes, etc.
 
@@ -259,7 +259,7 @@ The output Gaussian or source list contains source positions, fluxes, etc.
    :align: center
    :alt: show_fit example output
 
-   Output of ``show_fit``, showing the original image with and without sources, the model image, and the residual (original minus model) image. Boundaries of the islands of emission found by PyBDSM are shown in light blue. The fitted Gaussians are shown for each island as ellipses (the sizes of which correspond to the FWHMs of the Gaussians). Gaussians that have been grouped together into a source are shown with the same color. For example, the two red Gaussians of island #1 have been grouped together into one source, and the nine Gaussians of island #0 have been grouped into 4 separate sources.
+   Output of ``show_fit``, showing the original image with and without sources, the model image, and the residual (original minus model) image. Boundaries of the islands of emission found by PyBDSF are shown in light blue. The fitted Gaussians are shown for each island as ellipses (the sizes of which correspond to the FWHMs of the Gaussians). Gaussians that have been grouped together into a source are shown with the same color. For example, the two red Gaussians of island #1 have been grouped together into one source, and the nine Gaussians of island #0 have been grouped into 4 separate sources.
 
 .. rubric:: Footnotes
 .. [#f1] http://casa.nrao.edu

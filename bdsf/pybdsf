@@ -1,11 +1,11 @@
-"""Interactive PyBDSM shell.
+"""Interactive PyBDSF shell.
 
-This module initializes the interactive PyBDSM shell, which is a customized
+This module initializes the interactive PyBDSF shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
-"pybdsm" shell script or as "python pybdsm.py".
+"pybdsf".
 """
-import bdsm
-from bdsm.image import Image
+import bdsf
+from bdsf.image import Image
 import pydoc
 import sys
 import inspect
@@ -49,7 +49,7 @@ def inp(cur_cmd=None):
         if not hasattr(_img, '_current_cmd'):
             print '\033[31;1mERROR\033[0m: no task is set'
             return
-    bdsm.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
+    bdsf.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
                              banner=_img._current_cmd_desc,
                              use_groups=_img._current_cmd_use_groups)
 
@@ -104,7 +104,7 @@ def tget(filename=None):
 
     A file name may be given (e.g., "tget 'savefile.sav'"), in which case the
     parameters are loaded from the file specified. If no file name is given,
-    the parameters are loaded from the file 'pybdsm.last' if it exists.
+    the parameters are loaded from the file 'pybdsf.last' if it exists.
 
     Normally, the save file is created by the tput command (try "help tput"
     for more info).
@@ -113,12 +113,12 @@ def tget(filename=None):
     python and edited by hand. See the pickle module for more information.
     Below is an example of how to edit a save file by hand:
 
-      BDSM [1]: import pickle
-      BDSM [2]: with open('savefile.sav', 'r') as savefile:
-      BDSM [3]:     pars = pickle.load(savefile)
-      BDSM [4]: pars['rms_box'] = (80, 20)  --> change rms_box parameter
-      BDSM [5]: with open('savefile.sav', 'w') as savefile:
-      BDSM [6]:     pickle.dump(pars, savefile) --> save changes
+      BDSF [1]: import pickle
+      BDSF [2]: with open('savefile.sav', 'r') as savefile:
+      BDSF [3]:     pars = pickle.load(savefile)
+      BDSF [4]: pars['rms_box'] = (80, 20)  --> change rms_box parameter
+      BDSF [5]: with open('savefile.sav', 'w') as savefile:
+      BDSF [6]:     pickle.dump(pars, savefile) --> save changes
 
     """
     try:
@@ -135,11 +135,11 @@ def tget(filename=None):
         filename = None
 
     if filename is None or filename == '':
-        if os.path.isfile('pybdsm.last'):
-            filename = 'pybdsm.last'
+        if os.path.isfile('pybdsf.last'):
+            filename = 'pybdsf.last'
         else:
             print '\033[31;1mERROR\033[0m: No file name given and '\
-                  '"pybdsm.last" not found.\nPlease specify a file to load.'
+                  '"pybdsf.last" not found.\nPlease specify a file to load.'
             return
 
     if os.path.isfile(filename):
@@ -162,19 +162,19 @@ def tput(filename=None, quiet=False):
 
     A file name may be given (e.g., "tput 'savefile.sav'"), in which case the
     parameters are saved to the file specified. If no file name is given, the
-    parameters are saved to the file 'pybdsm.last'. The saved parameters can
+    parameters are saved to the file 'pybdsf.last'. The saved parameters can
     be loaded using the tget command (try "help tget" for more info).
 
     The save file is a "pickled" python dictionary which can be loaded into
     python and edited by hand. See the pickle module for more information.
     Below is an example of how to edit a save file by hand:
 
-      BDSM [1]: import pickle
-      BDSM [2]: with open('savefile.sav', 'r') as savefile:
-      BDSM [3]:     pars = pickle.load(savefile)
-      BDSM [4]: pars['rms_box'] = (80, 20)  --> change rms_box parameter
-      BDSM [5]: with open('savefile.sav', 'w') as savefile:
-      BDSM [6]:     pickle.dump(pars, savefile) --> save changes
+      BDSF [1]: import pickle
+      BDSF [2]: with open('savefile.sav', 'r') as savefile:
+      BDSF [3]:     pars = pickle.load(savefile)
+      BDSF [4]: pars['rms_box'] = (80, 20)  --> change rms_box parameter
+      BDSF [5]: with open('savefile.sav', 'w') as savefile:
+      BDSF [6]:     pickle.dump(pars, savefile) --> save changes
 
     """
     try:
@@ -187,7 +187,7 @@ def tput(filename=None, quiet=False):
     if not success:
         return
     if filename is None or filename == '':
-        filename = 'pybdsm.last'
+        filename = 'pybdsf.last'
 
     # convert opts to dictionary
     pars = _img.opts.to_dict()
@@ -294,7 +294,7 @@ def process_image(**kwargs):
 
     > help 'rms_box'
 
-    When process_image is executed, PyBDSM performs the following steps in
+    When process_image is executed, PyBDSF performs the following steps in
     order:
 
     1. Reads in the image.
@@ -362,7 +362,7 @@ def process_image(**kwargs):
     # we do for the other tasks.
     success = _img.process(**kwargs)
 
-    # Now restore parameters and save to pybdsm.last
+    # Now restore parameters and save to pybdsf.last
     if success:
         _set_current_cmd(cur_cmd)
         tput(quiet=True)
@@ -500,7 +500,7 @@ def _get_task_kwargs(task):
 
 
 ###############################################################################
-# Customize the help system for PyBDSM. The user can type "help task" to get
+# Customize the help system for PyBDSF. The user can type "help task" to get
 # help on a task (it prints the doc string) or "help 'opt'" to get help on
 # a option (it prints the doc string defined in opts.py).
 class bdsmDocHelper(pydoc.Helper):
@@ -526,7 +526,7 @@ class bdsmDocHelper(pydoc.Helper):
                     group_text = '\nBelongs to group: ' + opt.group()
                 else:
                     group_text = ''
-                desc_text = bdsm.interface.wrap(desc, 72)
+                desc_text = bdsf.interface.wrap(desc, 72)
                 desc_text = '\n'.join(desc_text)
                 pydoc.pager(topbar + 'Help on the ' + pydoc.text.bold(request)
                             + ' parameter:\n\n' + default_val_text
@@ -548,7 +548,7 @@ def _opts_completer(self, event):
     """ Returns a list of strings with possible completions."""
     import os
     import glob
-    from bdsm.image import Image
+    from bdsf.image import Image
     img = Image({'filename':''})
     opts = img.opts.get_names()
 
@@ -576,7 +576,7 @@ def _opts_completer(self, event):
             cmd3 = cmd1.split('=')[1]
             cmd1 = cmd1.split('=')[0]
         if cmd1 in opts:
-            from bdsm.tc import tcEnum, tcOption
+            from bdsf.tc import tcEnum, tcOption
             v = img.opts.__class__.__dict__[cmd1]
             partype = v._type
             if isinstance(partype, tcOption):
@@ -660,7 +660,7 @@ def _opts_completer(self, event):
 # Define the welcome banner to print on startup. Also check if there is a newer
 # version on the STRW ftp server. If there is, print a message to the user
 # asking them to update.
-from bdsm._version import __version__, __revision__, changelog
+from bdsf._version import __version__, __revision__, changelog
 
 # Query the Hamburg Observatory FTP server. Tar file must be named
 # "PyBDSM-version#.tar.gz":
@@ -699,9 +699,9 @@ if aps_local_val is None and check_for_newer:
 
 divider1 = '=' * 72 + '\n'
 divider2 = '_' * 72 + '\n'
-banner = '\nPyBDSM version ' + __version__ + ' (LOFAR revision ' + \
+banner = '\nPyBDSF version ' + __version__ + ' (LOFAR revision ' + \
          __revision__ + ')\n'\
-+ divider1 + 'PyBDSM commands\n'\
++ divider1 + 'PyBDSF commands\n'\
 '  inp task ............ : Set current task and list parameters\n'\
 "  par = val ........... : Set a parameter (par = '' sets it to default)\n"\
 '                          Autocomplete (with TAB) works for par and val\n'\
@@ -709,12 +709,12 @@ banner = '\nPyBDSM version ' + __version__ + ' (LOFAR revision ' + \
 '  default ............. : Set current task parameters to default values\n'\
 "  tput ................ : Save parameter values\n"\
 "  tget ................ : Load parameter values\n"\
-'PyBDSM tasks\n'\
+'PyBDSF tasks\n'\
 '  process_image ....... : Process an image: find sources, etc.\n'\
 '  show_fit ............ : Show the results of a fit\n'\
 '  write_catalog ....... : Write out list of sources to a file\n'\
 '  export_image ........ : Write residual/model/rms/mean image to a file\n'\
-'PyBDSM help\n'\
+'PyBDSF help\n'\
 '  help command/task ... : Get help on a command or task\n'\
 '                          (e.g., help process_image)\n'\
 "  help 'par' .......... : Get help on a parameter (e.g., help 'rms_box')\n"\
@@ -741,9 +741,9 @@ try:
     cfg = Config()
     prompt_config = cfg.PromptManager
     if ipython_version == '0.11':
-        cfg.InteractiveShellEmbed.prompt_in1 = "BDSM [\#]: "
+        cfg.InteractiveShellEmbed.prompt_in1 = "BDSF [\#]: "
     else:
-        prompt_config.in_template = "BDSM [\#]: "
+        prompt_config.in_template = "BDSF [\#]: "
     cfg.InteractiveShellEmbed.autocall = 2
     ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
                                     user_ns=locals())
@@ -751,7 +751,7 @@ try:
 except ImportError:
     # IPython < 0.11
     from IPython.Shell import IPShellEmbed
-    argv = ['-prompt_in1','BDSM [\#]: ','-autocall','2']
+    argv = ['-prompt_in1','BDSF [\#]: ','-autocall','2']
     ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
     ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
 ipshell()

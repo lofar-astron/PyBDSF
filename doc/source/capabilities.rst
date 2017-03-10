@@ -1,10 +1,10 @@
 **********************
-Capabilities of PyBDSM
+Capabilities of PyBDSF
 **********************
 
-PyBDSM can be run on FITS images (using PyFITS [#f1]_) or CASA images (using pyrap [#f2]_), including 3-D and 4-D cubes, and can handle blanked image pixels. If a spectral cube is given, then all source extraction as well as other computation (psf variation, wavelet decomposition, etc.) are done on a collapsed 2-D stokes I image. Once sources have been identified, their spectral and polarisation properties are then extracted from the full cubes. If you need a full 3-D Gaussian decomposition, then DUCHAMP [#f3]_ is what you need.
+PyBDSF can be run on FITS images (using PyFITS [#f1]_) or CASA images (using pyrap [#f2]_), including 3-D and 4-D cubes, and can handle blanked image pixels. If a spectral cube is given, then all source extraction as well as other computation (psf variation, wavelet decomposition, etc.) are done on a collapsed 2-D stokes I image. Once sources have been identified, their spectral and polarisation properties are then extracted from the full cubes. If you need a full 3-D Gaussian decomposition, then DUCHAMP [#f3]_ is what you need.
 
-PyBDSM performs the following tasks:
+PyBDSF performs the following tasks:
 
     * Reads in the image, collapses specific frequency channels, with weights, and produces a 'continuum' image (the 'ch0' image) for all polarisations. The Stokes I ch0 image is used for all further computation.
     
@@ -30,7 +30,7 @@ PyBDSM performs the following tasks:
     
     * The residual ch0 image, after subtracting fitted Gaussians, is processed using the *à trous* wavelet transform to generate images at various scales. Islands are identified in each of these wavelet images and fitted with Gaussians, all of which are then grouped to form pyramidal sources. These can be used further by the user as a starting point for morphological filters.
     
-    * Since the ionosphere affects low frequencies significantly, PyBDSM can also estimate the spatial variation of the PSF across the image, which can be used to correct various source parameters.
+    * Since the ionosphere affects low frequencies significantly, PyBDSF can also estimate the spatial variation of the PSF across the image, which can be used to correct various source parameters.
 
 .. rubric:: Footnotes
 .. [#f1] http://www.stsci.edu/resources/software_hardware/pyfits/

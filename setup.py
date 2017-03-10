@@ -45,7 +45,7 @@ subprocess.check_output("ar -cq libport3.a *.o", cwd=join(srcpath, "port3"), she
 extensions=[]
 
 fext=Extension(
-    name="bdsm._pytesselate",
+    name="bdsf._pytesselate",
     sources=["src/fortran/pytess_simple.f",
              "src/fortran/pytess_roundness.f"]
     );
@@ -53,7 +53,7 @@ fext.f2py_options=[""]
 extensions.append(fext)
 
 extensions.append(Extension(
-    name="bdsm._cbdsm",
+    name="bdsf._cbdsm",
     sources=["src/c++/Fitter_dn2g.cc",
              "src/c++/Fitter_dnsg.cc",
              "src/c++/Fitter_lmder.cc",
@@ -68,13 +68,13 @@ extensions.append(Extension(
      ))
 
 extensions.append(Extension(
-    name="bdsm.nat.natgridmodule",
+    name="bdsf.nat.natgridmodule",
     sources=glob.glob("natgrid/Src/*.c"),
     include_dirs = ["natgrid/Include"]
     ))
 
 
-meta = dict(name='bdsm',
+meta = dict(name='bdsf',
             version=0.1,
             author='David Rafferty',
             author_email='drafferty@hs.uni-hamburg.de',
@@ -82,8 +82,8 @@ meta = dict(name='bdsm',
             description='Blob Detection and Source Finder',
             long_description=open('README.md', 'rt').read(),
             platforms='Linux, Mac OS X',
-            packages=['bdsm', 'bdsm.nat'],
-            package_dir = {'bdsm.nat': join('bdsm', 'nat')},
+            packages=['bdsf', 'bdsf.nat'],
+            package_dir = {'bdsf.nat': join('bdsf', 'nat')},
             classifiers=[
                 'Intended Audience :: Science/Research',
                 'Programming Language :: C++',
@@ -92,7 +92,7 @@ meta = dict(name='bdsm',
                 'Topic :: Scientific/Engineering :: Astronomy'
                 ],
             ext_modules=extensions,
-            scripts = ['bdsm/pybdsm'],
+            scripts = ['bdsf/pybdsf'],
             zip_safe = False
             )
 

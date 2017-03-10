@@ -4,6 +4,12 @@
 What's New
 **********
 
+    * Rename to PyBDSF
+
+    * Move to python setuptools
+
+    * Move out of the LOFAR tree to github
+
     * Fix to issues related to numpy versions >= 1.12.0
 
 Version 1.8.7 (2016/06/10):

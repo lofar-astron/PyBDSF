@@ -1,6 +1,6 @@
-"""PyBDSM options
+"""PyBDSF options
 
-Options are essentially user-controllable parameters passed into PyBDSM
+Options are essentially user-controllable parameters passed into PyBDSF
 operations, and allow for end-users to control the exact details of how
 calculations are done.
 
@@ -15,7 +15,7 @@ option can still be set as normal).
 
 In general it's better to specify newly added options directly in this file, so
 one can oversee them all. But it's also possible to extend it at run-time, and
-under some circumstances (e.g. pybdsm installed system-wide, and there is no
+under some circumstances (e.g. pybdsf installed system-wide, and there is no
 way to modify this file) this might be the only option to do so. An example of
 such extension follows:
 
@@ -59,7 +59,7 @@ class Opts(object):
                                  "If the beam is not given "\
                                  "by the user, then it is looked for in the "\
                                  "image header. If not found, then an error "\
-                                 "is raised. PyBDSM will not work without "\
+                                 "is raised. PyBDSF will not work without "\
                                  "knowledge of the restoring beam.")
     filename = String(doc = "Input image file name\n"\
                                  "The input image can be a FITS or CASA 2-, "\
@@ -88,7 +88,7 @@ class Opts(object):
                                  "parameter. If the frequency is not given "\
                                  "by the user, then it is looked for in the "\
                                  "image header. If not found, then an error "\
-                                 "is raised. PyBDSM will not work without "\
+                                 "is raised. PyBDSF will not work without "\
                                  "knowledge of the frequency.")
     interactive = Bool(False,
                              doc = "Use interactive mode\n"\
@@ -120,7 +120,7 @@ class Opts(object):
                                  "The resulting mean map is largely determined by "\
                                  "the value of the rms_box parameter (see the "\
                                  "rms_box parameter for more information).\nIf "\
-                                 "'default', then PyBDSM will attempt to "\
+                                 "'default', then PyBDSF will attempt to "\
                                  "determine automatically whether to use "\
                                  "a 2-dimensional map or a constant one as "\
                                  "follows. First, "\
@@ -180,7 +180,7 @@ class Opts(object):
                                  "of 40x40 pixels, step of 10 pixels. "\
                                  "None => calculate inside program\n"\
                                  "This is a tuple of two integers and is probably the "\
-                                 "most important input parameter for PyBDSM. The first "\
+                                 "most important input parameter for PyBDSF. The first "\
                                  "integer, boxsize, is the size of the 2-D sliding box "\
                                  "for calculating the rms and mean over the entire image. "\
                                  "The second, stepsize, is the number of pixels by which "\
@@ -324,7 +324,7 @@ class Opts(object):
                              group = 'hidden')
     peak_fit = Bool(True,
                              doc = "Find and fit peaks of large islands iteratively\n"\
-                                 "When enabled, PyBDSM will identify and "\
+                                 "When enabled, PyBDSF will identify and "\
                                  "fit peaks of emission in "\
                                  "large islands iteratively (the size of islands for which "\
                                  "peak fitting is done is controlled with the "\
@@ -772,7 +772,7 @@ class Opts(object):
                                  "If the frequency is not given "\
                                  "by the user, then it is looked for in the "\
                                  "image header. If not found, then an error "\
-                                 "is raised. PyBDSM will not work without the "\
+                                 "is raised. PyBDSF will not work without the "\
                                  "knowledge of the frequency.",
                              group = "multichan_opts")
     beam_sp_derive = Bool(False,

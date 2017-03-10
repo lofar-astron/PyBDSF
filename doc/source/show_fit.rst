@@ -4,7 +4,7 @@
 ``show_fit``: visualizing the fit results
 **************************************************
 
-PyBDSM includes a task named ``show_fit`` that allows the user to quickly check the results of the ``process_image`` task. Use ``inp show_fit`` to list the parameters:
+PyBDSF includes a task named ``show_fit`` that allows the user to quickly check the results of the ``process_image`` task. Use ``inp show_fit`` to list the parameters:
 
 .. parsed-literal::
 

@@ -1,4 +1,4 @@
-"""Initialize PyBDSM namespace.
+"""Initialize PyBDSF namespace.
 
 Import all standard operations, define default chain of
 operations and provide function 'execute', which can
@@ -68,9 +68,9 @@ def execute(chain, opts):
         debug = opts['debug']
     else:
         debug = False
-    log_filename = opts["filename"] + '.pybdsm.log'
+    log_filename = opts["filename"] + '.pybdsf.log'
     mylogger.init_logger(log_filename, quiet=quiet, debug=debug)
-    mylog = mylogger.logging.getLogger("PyBDSM.Init")
+    mylog = mylogger.logging.getLogger("PyBDSF.Init")
     mylog.info("Processing "+opts["filename"])
 
     try:
@@ -112,8 +112,8 @@ def _run_op_list(img, chain):
         if stopat == 'isl' and isinstance(op, Op_islands): break
 
     # Log all non-default parameters
-    mylog = mylogger.logging.getLogger("PyBDSM.Init")
-    mylog.info("PyBDSM version %s (LUS revision %s)"
+    mylog = mylogger.logging.getLogger("PyBDSF.Init")
+    mylog.info("PyBDSF version %s (LUS revision %s)"
                              % (__version__, __revision__))
     par_msg = "Non-default input parameters:\n"
     user_opts = img.opts.to_list()
@@ -186,7 +186,7 @@ def _run_op_list(img, chain):
                              (chain[indx_stop].__stop_time - chain[0].__start_time))
 
     # Log all internally derived parameters
-    mylog = mylogger.logging.getLogger("PyBDSM.Final")
+    mylog = mylogger.logging.getLogger("PyBDSF.Final")
     par_msg = "Internally derived parameters:\n"
     import inspect
     import types
@@ -208,17 +208,17 @@ def _run_op_list(img, chain):
 def process_image(input, **kwargs):
     """Run a standard analysis and returns the associated Image object.
 
-    The input can be a FITS or CASA image, a PyBDSM parameter save
+    The input can be a FITS or CASA image, a PyBDSF parameter save
     file, or a dictionary of options. Partial names are allowed for the
     parameters as long as they are unique. Parameters are set to default
     values if par = ''.
 
     Examples:
-        > img = bdsm.process_image('example.fits', thresh_isl=4)
+        > img = bdsf.process_image('example.fits', thresh_isl=4)
           --> process FITS image names 'example.fits'
-        > img_3C196 = bdsm.process_image('3C196.image', mea='map')
+        > img_3C196 = bdsf.process_image('3C196.image', mea='map')
           --> process CASA image, 'mean_map' parameter is abbreviated
-        > img_VirA = bdsm.process_image('VirA_im.pybdsm.sav')
+        > img_VirA = bdsf.process_image('VirA_im.pybdsf.sav')
           --> load parameter save file and process
     """
     from interface import load_pars
