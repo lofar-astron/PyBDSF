@@ -69,7 +69,7 @@ p28
 ccopy_reg
 _reconstructor
 p29
-(clofar.bdsm.tc
+(cbdsm.tc
 tcListObject
 p30
 c__builtin__
@@ -86,7 +86,7 @@ tp36
 sS'type'
 p37
 g29
-(clofar.bdsm.tc
+(cbdsm.tc
 tcAny
 p38
 c__builtin__
@@ -96,7 +96,7 @@ NtRp40
 sS'list_handler'
 p41
 g29
-(clofar.bdsm.tc
+(cbdsm.tc
 tcList
 p42
 g39
