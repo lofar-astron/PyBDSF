@@ -68,7 +68,7 @@ extensions.append(Extension(
      ))
 
 extensions.append(Extension(
-    name="natgridmodule",
+    name="bdsm.nat.natgridmodule",
     sources=glob.glob("natgrid/Src/*.c"),
     include_dirs = ["natgrid/Include"]
     ))
@@ -92,7 +92,8 @@ meta = dict(name='bdsm',
                 'Topic :: Scientific/Engineering :: Astronomy'
                 ],
             ext_modules=extensions,
-            scripts = ['bdsm/pybdsm']
+            scripts = ['bdsm/pybdsm'],
+            zip_safe = False
             )
 
 setup(**meta)
