@@ -1,4 +1,4 @@
-import lofar.bdsm as bdsm
+import bdsm as bdsm
 import sys
 
 # Process the image
