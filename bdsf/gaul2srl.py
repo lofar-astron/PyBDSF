@@ -216,7 +216,7 @@ class Op_gaul2srl(Op):
             pix1 = N.array(g1.centre_pix)
             pix2 = N.array(g2.centre_pix)
 
-            x1, y1 = N.floor(pix1)-delc; x2, y2 = N.floor(pix2)-delc
+            x1, y1 = map(int, N.floor(pix1)-delc); x2, y2 = map(int, N.floor(pix2)-delc)
             pix1 = N.array(N.unravel_index(N.argmax(subim[x1:x1+2,y1:y1+2]), (2,2)))+[x1,y1]
             pix2 = N.array(N.unravel_index(N.argmax(subim[x2:x2+2,y2:y2+2]), (2,2)))+[x2,y2]
             if pix1[1] >= subn: pix1[1] = pix1[1]-1
