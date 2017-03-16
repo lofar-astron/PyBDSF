@@ -1,9 +1,9 @@
 
 import matplotlib.cm as cm
 import scipy.ndimage as nd
-from bdsm.const import fwsig
-from bdsm.gausfit import Op_gausfit as gg
-import bdsm.functions as func
+from bdsf.const import fwsig
+from bdsf.gausfit import Op_gausfit as gg
+import bdsf.functions as func
 from _cbdsm import MGFunction
 from _cbdsm import lmder_fit, dn2g_fit, dnsg_fit
 import numpy as N
@@ -72,9 +72,9 @@ for isl in img.islands:
 import matplotlib.cm as cm
 import scipy.ndimage as nd
 import numpy as N
-from bdsm.const import fwsig
-from bdsm.gausfit import Op_gausfit as gg
-import bdsm.functions as func
+from bdsf.const import fwsig
+from bdsf.gausfit import Op_gausfit as gg
+import bdsf.functions as func
 from _cbdsm import MGFunction
 from _cbdsm import lmder_fit, dn2g_fit, dnsg_fit
 image = N.zeros((100,100))

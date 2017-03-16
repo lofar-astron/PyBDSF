@@ -69,7 +69,7 @@ p28
 ccopy_reg
 _reconstructor
 p29
-(cbdsm.tc
+(cbdsf.tc
 tcListObject
 p30
 c__builtin__
@@ -86,7 +86,7 @@ tp36
 sS'type'
 p37
 g29
-(cbdsm.tc
+(cbdsf.tc
 tcAny
 p38
 c__builtin__
@@ -96,7 +96,7 @@ NtRp40
 sS'list_handler'
 p41
 g29
-(cbdsm.tc
+(cbdsf.tc
 tcList
 p42
 g39
@@ -317,7 +317,7 @@ p120
 I00
 sS'filename'
 p121
-S'tbdsm_process_image.in_fits'
+S'tbdsf_process_image.in_fits'
 p122
 sS'psf_gencode'
 p123

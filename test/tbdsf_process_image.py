@@ -1,13 +1,13 @@
-import bdsm as bdsm
+import bdsf
 import sys
 
 # Process the image
-img = bdsm.process_image('tbdsm_process_image.in')
+img = bdsf.process_image('tbdsf_process_image.in')
 
 # List of operations that must have been done on `img`.
 operations = [
-    'readimage', 'collapse', 'preprocess', 'rmsimage', 'threshold', 
-    'islands', 'gausfit', 'gaul2srl', 'make_residimage', 'wavelet_atrous', 
+    'readimage', 'collapse', 'preprocess', 'rmsimage', 'threshold',
+    'islands', 'gausfit', 'gaul2srl', 'make_residimage', 'wavelet_atrous',
     'shapelets', 'spectralindex', 'polarisation', 'psf_vary', 'cleanup'
 ]
 
