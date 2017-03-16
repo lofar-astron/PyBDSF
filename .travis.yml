@@ -1,0 +1,9 @@
+language: python
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libboost-python-dev gfortran
+  - pip install setuptools numpy scipy pyfits pywcs
+
+install: "python setup.py install"
+
+script: "cd test && python tbdsf_process_image.py"
