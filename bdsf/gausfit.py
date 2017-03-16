@@ -764,13 +764,13 @@ class Op_gausfit(Op):
             if borx1_1 < 0: borx1_1 = 0
             borx1_2 = x1 + border + 1
             if borx1_2 > shape[0]: borx1_2 = shape[0]
-            if N.any(mask[int(borx1_1):int(borx1_2), x2]):
+            if N.any(mask[int(borx1_1):int(borx1_2), int(x2)]):
                 flag += 4
             borx2_1 = x2 - border
             if borx2_1 < 0: borx2_1 = 0
             borx2_2 = x2 + border + 1
             if borx2_2 > shape[1]: borx2_2 = shape[1]
-            if N.any(mask[x1, int(borx2_1):int(borx2_2)]):
+            if N.any(mask[int(x1), int(borx2_1):int(borx2_2)]):
                 flag += 8
         if xbox > opts.flag_maxsize_isl*shape[0]: flag += 16
         if ybox > opts.flag_maxsize_isl*shape[1]: flag += 32
