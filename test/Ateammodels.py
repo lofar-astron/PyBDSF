@@ -1,19 +1,19 @@
 
 import pylab as pl
-import bdsm, pyfits
+import bdsf, pyfits
 import numpy as N
 import os, subprocess
 
-from bdsm.FITS import Op_loadFITS
-from bdsm.collapse import Op_collapse
-from bdsm.preprocess import Op_preprocess
-from bdsm.rmsimage import Op_rmsimage
-from bdsm.threshold import Op_threshold
-from bdsm.islands import Op_islands
-import bdsm.functions as func
-from bdsm.analysis import plotresults
+from bdsf.FITS import Op_loadFITS
+from bdsf.collapse import Op_collapse
+from bdsf.preprocess import Op_preprocess
+from bdsf.rmsimage import Op_rmsimage
+from bdsf.threshold import Op_threshold
+from bdsf.islands import Op_islands
+import bdsf.functions as func
+from bdsf.analysis import plotresults
 
-""" Try blindly running bdsm to see if boxsize is ok, so fitting doesnt hang. Then try various segmenting algorithms which dont
+""" Try blindly running bdsf to see if boxsize is ok, so fitting doesnt hang. Then try various segmenting algorithms which dont
 depend on rms ? """
 
 dir = "A-team/"
@@ -30,7 +30,7 @@ for ifile, file in enumerate(ls):
   op = subprocess.Popen(["file",dir+file], stdout=subprocess.PIPE).communicate()[0]
   if "FITS image data" in op:
     print 'Processing ', file
-    img = bdsm.execute(chain, {'fits_name': file, 'thresh':"hard", 'solnname' : 'new', 'beam' : bms[ifile]}), 'indir' : dir})
+    img = bdsf.execute(chain, {'fits_name': file, 'thresh':"hard", 'solnname' : 'new', 'beam' : bms[ifile]}), 'indir' : dir})
     files.append(file)
     rmsbox.append(img.opts.rms_box)
 
