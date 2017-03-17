@@ -18,3 +18,8 @@ Installation
 Installation is done through ``python setup.py``. External requirements include the ubuntu packages ``gfortran``, ``libboost-python-dev``, ``python-setuptools`` (or similar packages in another Linux distribution). Also, a working ``numpy`` installation is required. At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore``.
 
 If you install as a user, use ``python setup.py --user``. In this case, the script ``pybdsf`` is installed in ``~/.local/bin``, so you might want to add that to your ``$PATH``.
+
+Installation on MacOS / OSX is more involved, you will need the packages mentioned above, for example installed with Homebrew. You will need to tell `setup.py` to use the same compiler for fortran as for C++.
+
+.. image:: https://travis-ci.org/lofar-astron/PyBDSF.svg?branch=master
+    :target: https://travis-ci.org/lofar-astron/PyBDSF
