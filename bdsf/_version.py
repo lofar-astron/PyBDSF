@@ -9,7 +9,7 @@ adding to the changelog will naturally do this.
 """
 
 # Version number
-__version__ = '1.8.7'
+__version__ = '1.8.8'
 
 # Store svn Revision number. For this to work, one also needs to do:
 #
@@ -24,8 +24,11 @@ __revision__ = filter(str.isdigit, "$Revision$")
 # Changelog
 def changelog():
     """
-    PyBDSM Changelog.
+    PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2017/03/17 - Version 1.8.8
+
+    2017/03/17 - Rename to PyBDSF, move to github, add setup.py installer
 
     2017/02/28 - Fix to issues related to numpy >= 1.12 and astropy >= 1.3
 

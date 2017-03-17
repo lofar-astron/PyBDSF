@@ -4,6 +4,8 @@
 What's New
 **********
 
+Version 1.8.8 (2017/03/17):
+
     * Rename to PyBDSF
 
     * Move to python setuptools
