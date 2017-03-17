@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from __future__ import print_function
 
 import platform
@@ -75,7 +77,7 @@ extensions.append(Extension(
 
 
 meta = dict(name='bdsf',
-            version=1.8.8,
+            version='1.8.8',
             author='David Rafferty',
             author_email='drafferty@hs.uni-hamburg.de',
             url='https://github.com/lofar-astron/PyBDSF',
