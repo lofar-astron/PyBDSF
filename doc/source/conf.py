@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# PyBDSM documentation build configuration file, created by
+# PyBDSF documentation build configuration file, created by
 # sphinx-quickstart on Thu Jan 19 13:27:03 2012.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,7 +40,7 @@ source_encoding = 'utf-8-sig'
 master_doc = 'index'
 
 # General information about the project.
-project = u'PyBDSM'
+project = u'PyBDSF'
 copyright = u'2016, David Rafferty and Niruj Mohan'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'PyBDSMdoc'
+htmlhelp_basename = 'PyBDSFdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'PyBDSM.tex', u'PyBDSM Documentation',
+  ('index', 'PyBDSF.tex', u'PyBDSF Documentation',
    u'David Rafferty and Niruj Mohan', 'manual'),
 ]
 
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pybdsm', u'PyBDSM Documentation',
+    ('index', 'pybdsf', u'PyBDSF Documentation',
      [u'David Rafferty and Niruj Mohan'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'PyBDSM', u'PyBDSM Documentation',
-   u'David Rafferty and Niruj Mohan', 'PyBDSM', 'One line description of project.',
+  ('index', 'PyBDSF', u'PyBDSF Documentation',
+   u'David Rafferty and Niruj Mohan', 'PyBDSF', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -245,7 +245,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'PyBDSM'
+epub_title = u'PyBDSF'
 epub_author = u'David Rafferty and Niruj Mohan'
 epub_publisher = u'David Rafferty and Niruj Mohan'
 epub_copyright = u'2016, David Rafferty and Niruj Mohan'
