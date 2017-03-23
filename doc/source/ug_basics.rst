@@ -149,7 +149,7 @@ Quick-start example
 Below is an example of using PyBDSF to find and measure sources in an image::
 
     $ pybdsf
-    PyBDSF version 1.1 (LOFAR revision 20883)
+    PyBDSF version 1.1
     ========================================================================
     PyBDSF commands
       inp task ............ : Set current task and list parameters

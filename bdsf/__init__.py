@@ -29,7 +29,7 @@ from polarisation import Op_polarisation
 from wavelet_atrous import Op_wavelet_atrous
 from psf_vary import Op_psf_vary
 from cleanup import Op_cleanup
-from _version import __version__, __revision__
+from _version import __version__
 import gc
 
 default_chain = [Op_readimage(),
@@ -113,8 +113,8 @@ def _run_op_list(img, chain):
 
     # Log all non-default parameters
     mylog = mylogger.logging.getLogger("PyBDSF.Init")
-    mylog.info("PyBDSF version %s (LUS revision %s)"
-                             % (__version__, __revision__))
+    mylog.info("PyBDSF version %s"
+                             % (__version__, ))
     par_msg = "Non-default input parameters:\n"
     user_opts = img.opts.to_list()
     for user_opt in user_opts:

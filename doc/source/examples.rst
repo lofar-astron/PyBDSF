@@ -8,7 +8,7 @@ Below is an example of running PyBDSF on an image composed primarily of point so
 
     $ pybdsf
 
-    PyBDSF version 1.7.0 (LOFAR revision 20883)
+    PyBDSF version 1.7.0
     ========================================================================
     PyBDSF commands
       inp task ............ : Set current task and list parameters
