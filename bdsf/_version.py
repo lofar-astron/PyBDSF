@@ -1,24 +1,10 @@
 """Version module.
 
-This module simply stores the version and svn revision numbers, as well
-as a changelog. The svn revision number will be updated automatically
-whenever there is a change to this file. However, if no change is made
-to this file, the revision number will get out of sync. Therefore, one
-must update this file with each (significant) update of the code:
-adding to the changelog will naturally do this.
+This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
 __version__ = '1.8.8'
-
-# Store svn Revision number. For this to work, one also needs to do:
-#
-# "svn propset svn:keywords Revision CEP/PyBDSM/src/python/_version.py"
-#
-# from the LOFAR directory. Then, the revision number is
-# added automatically with each update to this file. The line below does not
-# need to be edited by hand.
-__revision__ = filter(str.isdigit, "$Revision$")
 
 
 # Changelog
