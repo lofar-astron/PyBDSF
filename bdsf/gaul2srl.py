@@ -221,6 +221,8 @@ class Op_gaul2srl(Op):
             pix2 = N.array(N.unravel_index(N.argmax(subim[x2:x2+2,y2:y2+2]), (2,2)))+[x2,y2]
             if pix1[1] >= subn: pix1[1] = pix1[1]-1
             if pix2[1] >= subm: pix2[1] = pix2[1]-1
+            pix1 = N.array(map(float, pix1))
+            pix2 = N.array(map(float, pix2))
 
             maxline = int(round(N.max(N.abs(pix1-pix2)+1)))
             flux1 = g1.peak_flux
@@ -247,7 +249,7 @@ class Op_gaul2srl(Op):
               ybig = N.where(yline >= N.size(subim,1))
               yline[ybig] = N.size(subim,1) - 1
               for i in range(maxline):
-                pixval = subim[xline[i],yline[i]]
+                pixval = subim[int(xline[i]), int(yline[i])]
                 rpixval[i] = pixval
               min_pixval = N.min(rpixval)
               minind_p = N.argmin(rpixval)
