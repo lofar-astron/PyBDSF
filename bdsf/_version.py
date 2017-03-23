@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.8.8'
+__version__ = '1.8.9'
 
 
 # Changelog
@@ -12,8 +12,10 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2017/03/23 - Version 1.8.9
+
     2017/03/23 - Fix to bug that causes an error when grouping Gaussians
-        into sources in the wavelet module
+        into sources
 
     2017/03/17 - Version 1.8.8
 

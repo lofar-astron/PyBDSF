@@ -4,6 +4,10 @@
 What's New
 **********
 
+Version 1.8.9 (2017/03/23):
+
+    * Fix to bug that causes an error when grouping Gaussians into sources
+
 Version 1.8.8 (2017/03/17):
 
     * Rename to PyBDSF
