@@ -75,6 +75,10 @@ extensions.append(Extension(
     include_dirs = ["natgrid/Include"]
     ))
 
+# HACK for supporting older versions of NumPy
+for ext in extensions:
+    ext.extra_f77_compile_args = []
+    ext.extra_f90_compile_args = []
 
 meta = dict(name='bdsf',
             version='1.8.8',
