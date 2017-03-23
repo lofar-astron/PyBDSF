@@ -26,6 +26,9 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2017/03/23 - Fix to bug that causes an error when grouping Gaussians
+        into sources in the wavelet module
+
     2017/03/17 - Version 1.8.8
 
     2017/03/17 - Rename to PyBDSF, move to github, add setup.py installer
