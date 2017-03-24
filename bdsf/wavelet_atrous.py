@@ -571,6 +571,30 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
     elif mode == "valid":
         return _centered(ret, abs(s2 - s1) + 1)
 
+
+def rebase_bbox(box,minv):
+    # return a new bounding box tuple where minv is subtracted from
+    # all the co-ordinate values
+    nbox=[]
+    for i,sl in enumerate(box):
+        nbox.append(slice(sl.start-minv[i],sl.stop-minv[i],None))
+    return tuple(nbox)
+
+def merge_bbox(box1,box2):
+    # For two bounding box tuples find the minimal n-dimensional space
+    # that encompasses both structures and make new bounding boxes in
+    # this co-ordinate system
+    minv=[]
+    maxv=[]
+    for sl1,sl2 in zip(box1,box2):
+        minv.append(min(sl1.start,sl2.start))
+        maxv.append(max(sl1.stop,sl2.stop))
+    nbox1=rebase_bbox(box1,minv)
+    nbox2=rebase_bbox(box2,minv)
+    dims=[y-x for x,y in zip(minv,maxv)]
+    fullbox=[slice(x,y,None) for x,y in zip(minv,maxv)]
+    return dims,nbox1,nbox2,N.array(minv),fullbox
+
 def merge_islands(img, isl1, isl2):
     """Merge two islands into one
 
@@ -583,13 +607,14 @@ def merge_islands(img, isl1, isl2):
     from islands import Island
     import scipy.ndimage as nd
 
-    mask1 = N.zeros(img.ch0_arr.shape, dtype=bool)
-    mask1[isl1.bbox] = ~isl1.mask_active
-    mask2 = N.zeros(img.ch0_arr.shape, dtype=bool)
-    mask2[isl2.bbox] = ~isl2.mask_active
-    full_mask = N.logical_or(mask1, mask2)
+    shape,nbox1,nbox2,origin,fullbox=merge_bbox(isl1.bbox,isl2.bbox)
+    mask1 = N.zeros(shape, dtype=bool)
+    mask1[nbox1] = ~isl1.mask_active
+    mask2 = N.zeros(shape, dtype=bool)
+    mask2[nbox2] = ~isl2.mask_active
     overlap_mask = N.logical_and(mask1, mask2)
     if N.any(overlap_mask):
+        full_mask = N.logical_or(mask1, mask2)
         image = img.ch0_arr
         mask = img.mask_arr
         rms = img.rms_arr
@@ -599,9 +624,16 @@ def merge_islands(img, isl1, isl2):
         labels, count = nd.label(full_mask, connectivity)
         slices = nd.find_objects(labels)
         bbox = slices[0]
+        new_bbox = rebase_bbox(bbox,-origin)
         idx = isl1.island_id
+        # labels array passed to Island must be capable of being
+        # indexed by new bounding box, so convert. Do the subtraction
+        # first to avoid an expensive operation over the whole array
+        labels = labels-1+idx
+        new_labels = N.zeros(image.shape)
+        new_labels[fullbox]=labels
         beamarea = img.pixel_beamarea()
-        merged_isl = Island(image, mask, mean, rms, labels-1+idx, bbox, idx, beamarea)
+        merged_isl = Island(image, mask, mean, rms, new_labels, new_bbox, idx, beamarea)
 
         # Add all the Gaussians to the merged island
         merged_isl.gaul = isl1.gaul
@@ -645,30 +677,38 @@ def renumber_islands(img):
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
     img.gaussians = gaussian_list
 
-
 def check_islands_for_overlap(img, wimg):
-    """Checks for overlaps between img and wimg islands"""
-    tot_flux = 0.0
 
+    """Checks for overlaps between img and wimg islands"""
+
+    have_numexpr=True
+    try:
+        import numexpr as ne
+    except:
+        have_numexpr=False
+
+    tot_flux = 0.0
+    bar = statusbar.StatusBar('Checking islands for overlap ............ : ', 0, len(wimg.islands))
     # Make masks for regions that have islands
-    wav_rankim_bool = N.array(wimg.pyrank + 1, dtype = bool)
-    orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
+    wpp=wimg.pyrank+1 # does not change, store for later
+    wav_rankim_bool = wpp>0 # boolean
+    orig_rankim_bool = img.pyrank>-1
 
     # Make "images" of island ids for overlaping regions
     orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
-    wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
+    bar.start()
     for idx, wvisl in enumerate(wimg.islands):
-        wav_ids =  N.array(tuple(set(wav_islands.flatten())))
         if len(wvisl.gaul) > 0:
-
             # Get unique island IDs. If an island overlaps with one
             # in the original ch0 image, merge them together. If not,
             # add the island as a new one.
+            wav_islands = orig_rankim_bool[wvisl.bbox] * wpp[wvisl.bbox] - 1
+            wav_ids = N.unique(wav_islands) # saves conversion to set and back
             for wvg in wvisl.gaul:
                 tot_flux += wvg.total_flux
                 wvg.valid = True
             if idx in wav_ids:
-                orig_idx = list(set(orig_islands[N.where(wav_islands == idx)]))
+                orig_idx=N.unique(orig_islands[wvisl.bbox][wav_islands == idx])
                 if len(orig_idx) == 1:
                     merge_islands(img, img.islands[orig_idx[0]], wvisl)
                 else:
@@ -677,11 +717,12 @@ def check_islands_for_overlap(img, wimg):
                         merge_islands(img, img.islands[orig_idx[0]], img.islands[oidx])
                     img.islands = [x for x in img.islands if x.island_id not in orig_idx[1:]]
                     renumber_islands(img)
-
                 # Now recalculate the overlap images, since the islands have changed
-                orig_rankim_bool = N.array(img.pyrank + 1, dtype = bool)
-                orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
-                wav_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
+                ipp=img.pyrank+1
+                if have_numexpr:
+                    orig_islands = ne.evaluate('wav_rankim_bool * ipp - 1')
+                else:
+                    orig_islands = wav_rankim_bool * ipp - 1
             else:
                 isl_id = img.islands[-1].island_id + 1
                 new_isl = wvisl.copy(img.pixel_beamarea(), image=img.ch0_arr[wvisl.bbox], mean=img.mean_arr[wvisl.bbox], rms=img.rms_arr[wvisl.bbox])
@@ -690,4 +731,7 @@ def check_islands_for_overlap(img, wimg):
                 new_isl.island_id = isl_id
                 img.islands.append(new_isl)
                 copy_gaussians(img, new_isl, wvisl)
+        bar.increment()
+    bar.stop()
+
     return tot_flux
