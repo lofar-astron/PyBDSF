@@ -377,7 +377,7 @@ class Op_readimage(Op):
                 found = True
             except:
                 ### try see if AIPS as put the beam in HISTORY as usual
-               for h in hdr.get_history():
+               for h in hdr['HISTORY']:
                   # Check if h is a string or a FITS Card object (long headers are
                   # split into Cards as of PyFITS 3.0.4)
                   if not isinstance(h, str):
