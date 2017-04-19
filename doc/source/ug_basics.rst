@@ -13,10 +13,6 @@ After installing (see :ref:`installing`) you can start PyBDSF by simply opening 
 
 at the terminal prompt.
 
-.. note::
-
-    If the above command does not work, make sure you environment is initialized correctly for PyBDSF (see :ref:`add_to_path`).
-
 The interactive environment will then load, and a welcome screen listing common commands and tasks will be shown. You will then be at the PyBDSF prompt, which looks like this::
 
     BDSF [1]:
