@@ -8,6 +8,9 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 (http://www.astropython.org/snippet/2010/3/Parallel-map-using-multiprocessing).
 
 """
+import traceback
+import sys
+
 import numpy
 _multi = False
 _ncpus = 1
@@ -49,6 +52,12 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
         try:
             result = f(val)
         except Exception, e:
+            etype,val,tbk=sys.exc_info()
+            print 'Thread raised exception',e
+            print 'Traceback of thread is:'
+            print '-------------------------'
+            traceback.print_tb(tbk)
+            print '-------------------------'
             err_q.put(e)
             return
 

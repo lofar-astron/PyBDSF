@@ -1032,10 +1032,10 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
       #import matplotlib.pyplot as pl
       #import pylab as pl
 
-      if thr==None: thr = -1e9
-      if mask==None: mask = N.zeros(image.shape, bool)
-      if beam==None: beam = (2.0, 2.0, 0.0)
-      if markers==None:
+      if thr is None: thr = -1e9
+      if mask is None: mask = N.zeros(image.shape, bool)
+      if beam is None: beam = (2.0, 2.0, 0.0)
+      if markers is None:
         inipeak, iniposn, im1 = get_maxima(image, mask, thr, image.shape, beam)
         ng = len(iniposn); markers = N.zeros(image.shape, int)
         for i in range(ng): markers[iniposn[i]] = i+2
