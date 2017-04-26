@@ -572,8 +572,8 @@ class Op_gausfit(Op):
            for i in range(len(compact)):
              if not compact[i]:                         # make them all compact
                newmask = N.zeros(imm.shape, bool)
-               newmask[max(0,xm[i+1]-avsize/2):min(im.shape[0],xm[i+1]+avsize/2), \
-                       max(0,ym[i+1]-avsize/2):min(im.shape[1],ym[i+1]+avsize/2)] = True
+               newmask[max(0,int(xm[i+1]-avsize/2)):min(im.shape[0],int(xm[i+1]+avsize/2)), \
+                       max(0,int(ym[i+1]-avsize/2)):min(im.shape[1],int(ym[i+1]+avsize/2))] = True
                invmask[i] = invmask[i]*newmask
           resid = N.zeros(im.shape, dtype=N.float32)                    # approx fit all compact ones
           for i in range(nshed):
