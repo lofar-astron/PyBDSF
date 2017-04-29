@@ -471,6 +471,8 @@ class Op_rmsimage(Op):
                             map_opts = (kappa, img.rms_box_bright, 1)
                         else:
                             map_opts = (kappa, img.rms_box, 1)
+                    else:
+                        raise RuntimeError('RMS map has negative values')
             else:
                 rms_ok = True
 
