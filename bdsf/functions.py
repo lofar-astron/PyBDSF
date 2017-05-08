@@ -1277,7 +1277,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     img._original_shape = (shape_out[2], shape_out[3])
     img._xy_hdr_shift = (0, 0)
     if img.opts.trim_box is not None:
-        img.trim_box = img.opts.trim_box
+        img.trim_box = [int(b) for b in img.opts.trim_box]
         xmin, xmax, ymin, ymax = img.trim_box
         if xmin < 0: xmin = 0
         if ymin < 0: ymin = 0

@@ -400,8 +400,8 @@ class Op_psf_vary(Op):
         xval=N.zeros(nbin)
         meany=N.zeros(nbin); stdy=N.zeros(nbin); mediany=N.zeros(nbin)
         for i in range(nbin):
-            lb=round(1+(n1[i]-1)*n3[i]/over+(1-1))-1 # -1 for python indexing
-            ub=round(1+(n1[i]-1)*n3[i]/over+(n2[i]-1))-1 # -1 for python indexing
+            lb=int(round(1+(n1[i]-1)*n3[i]/over+(1-1))-1) # -1 for python indexing
+            ub=int(round(1+(n1[i]-1)*n3[i]/over+(n2[i]-1))-1) # -1 for python indexing
             x1=x[lb:ub+1]; y1=y[lb:ub+1]
 
             # do calcmedianclip2vec.f for code=YYN
