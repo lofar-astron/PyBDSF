@@ -791,7 +791,10 @@ class Op_gausfit(Op):
             pt4 = [ellx[N.argmin(elly)], N.min(elly)]
             extremes = [pt1, pt2, pt3, pt4]
             for pt in extremes:
-                if pt[0] < 0 or pt[0] >= shape[0] or pt[1] < 0 or pt[1] >= shape[1]:
+                if N.any(N.isnan(pt)):
+                    flag += 256
+                    break
+                elif pt[0] < 0 or pt[0] >= shape[0] or pt[1] < 0 or pt[1] >= shape[1]:
                     flag += 256
                     break
                 elif mask[int(pt[0]),int(pt[1])]:
