@@ -483,9 +483,9 @@ The advanced options are:
 
     group_method
         This parameter is a string (default is ``'intensity'``). Gaussians are
-        deemed to be a part of the same source if: 1. no pixel on the line
+        deemed to be a part of the same source if: (1) no pixel on the line
         joining the centers of any pair of Gaussians has a
-        (Gaussian-reconstructed) value less than the island threshold, and 2.
+        (Gaussian-reconstructed) value less than the island threshold, and (2)
         the centers are separated by a distance less than half the sum of their
         FWHMs along the line joining them. If ``'curvature'``, the above
         comparisons are done on the curature map (see Hancock et al. 2012). If
@@ -496,8 +496,8 @@ The advanced options are:
         grouping of Gaussians into sources: larger values will result in larger
         sources. Sources are created by grouping nearby Gaussians as follows:
         (1) If the minimum value between two Gaussians in an island is more than
-        ``group_tol * thresh_isl * rms_clip``\, and (2) if the centres are
-        seperated by a distance less than 0.5*``group_tol`` of the sum of their
+        ``group_tol * thresh_isl * rms_clip``\, and (2) if the centers are
+        separated by a distance less than ``0.5 * group_tol`` of the sum of their
         FWHMs along the PA of the line joining them, they belong to the same
         island.
 
