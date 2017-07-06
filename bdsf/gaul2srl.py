@@ -368,8 +368,15 @@ class Op_gaul2srl(Op):
             mylog.debug('Mask = '+repr(mask[xind, yind])+'xind, yind, x1, y1 = '+repr(xind)+' '+repr(yind)+' '+repr(x1)+' '+repr(y1))
         t=(mompara[1]-x1)/(x1+1-x1)  # in case u change it later
         u=(mompara[2]-y1)/(y1+1-y1)
-        s_peak=(1.0-t)*(1.0-u)*subim_src[x1,y1]+t*(1.0-u)*subim_src[x1+1,y1]+ \
-               t*u*subim_src[x1+1,y1+1]+(1.0-t)*u*subim_src[x1,y1+1]
+        try:
+            s_peak=((1.0-t)*(1.0-u)*subim_src[x1,y1]+
+                    t*(1.0-u)*subim_src[x1+1,y1]+
+                    t*u*subim_src[x1+1,y1+1]+
+                    (1.0-t)*u*subim_src[x1,y1+1])
+        except IndexError:
+            # interpolation failed because source is too small
+            # probably pathological, take a guess..
+            s_peak=subim_src[x1,y1]
         if (not img.opts.flag_smallsrc) and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Speak '+repr(s_peak)+'Mompara = '+repr(mompara))
             mylog.debug('x1, y1 : '+repr(x1)+', '+repr(y1))
