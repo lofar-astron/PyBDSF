@@ -81,7 +81,7 @@ for ext in extensions:
     ext.extra_f90_compile_args = []
 
 meta = dict(name='bdsf',
-            version='1.8.9',
+            version='1.8.11',
             author='David Rafferty',
             author_email='drafferty@hs.uni-hamburg.de',
             url='https://github.com/lofar-astron/PyBDSF',
@@ -98,6 +98,8 @@ meta = dict(name='bdsf',
                 'Topic :: Scientific/Engineering :: Astronomy'
                 ],
             ext_modules=extensions,
+            install_requires=['backports.shutil_get_terminal_size',
+                              'numpy', 'scipy'],
             scripts = ['bdsf/pybdsf', 'bdsf/pybdsm'],
             zip_safe = False
             )

@@ -3,6 +3,12 @@
 **********
 What's New
 **********
+Version 1.8.11 (2017/06/01):
+    * Fix for interactive shell problem
+
+Version 1.8.10 (2017/05/31):
+
+    * Fixes for various installation and runtime issues on modern systems.
 
 Version 1.8.9 (2017/03/23):
 

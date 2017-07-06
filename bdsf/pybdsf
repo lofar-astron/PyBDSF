@@ -1,8 +1,10 @@
+#!/usr/bin/env python
+
 """Interactive PyBDSF shell.
 
 This module initializes the interactive PyBDSF shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
-"pybdsf".
+command "pybdsf".
 """
 import bdsf
 from bdsf.image import Image
@@ -701,13 +703,38 @@ try:
         from IPython.frontend.terminal.embed import InteractiveShellEmbed
     else:
         from IPython.terminal.embed import InteractiveShellEmbed
-    from IPython.config.loader import Config
-    cfg = Config()
-    prompt_config = cfg.PromptManager
-    if ipython_version == '0.11':
-        cfg.InteractiveShellEmbed.prompt_in1 = "BDSF [\#]: "
-    else:
-        prompt_config.in_template = "BDSF [\#]: "
+    try:
+        # Use the traitlets config
+        from traitlets.config.loader import Config
+        from IPython.terminal.prompts import Prompts, Token
+        cfg = Config()
+
+        class CustomPrompt(Prompts):
+
+            def in_prompt_tokens(self, cli=None):
+
+               return [
+                    (Token.Prompt, 'BDSF ['),
+                    (Token.PromptNum, str(self.shell.execution_count)),
+                    (Token.Prompt, ']: '),
+                    ]
+
+            def out_prompt_tokens(self):
+               return [
+                    (Token.OutPrompt, ''),
+                ]
+
+        cfg.TerminalInteractiveShell.prompts_class = CustomPrompt
+    except ImportError:
+        # fall back to old config
+        from IPython.config.loader import Config
+        cfg = Config()
+        prompt_config = cfg.PromptManager
+        if ipython_version == '0.11':
+            cfg.InteractiveShellEmbed.prompt_in1 = "BDSF [\#]: "
+        else:
+            prompt_config.in_template = "BDSF [\#]: "
+
     cfg.InteractiveShellEmbed.autocall = 2
     ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
                                     user_ns=locals())
