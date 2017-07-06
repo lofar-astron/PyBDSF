@@ -407,7 +407,7 @@ class Island(object):
     def get_border(self):
         """ From all valid island pixels, generate the border."""
         mask = ~self.mask_active
-        border = N.transpose(N.asarray(N.where(mask - nd.binary_erosion(mask)))) + self.origin
+        border = N.transpose(N.asarray(N.where(mask ^ nd.binary_erosion(mask)))) + self.origin
 
         return N.transpose(N.array(border))
 
