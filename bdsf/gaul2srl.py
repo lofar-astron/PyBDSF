@@ -380,10 +380,14 @@ class Op_gaul2srl(Op):
         if (not img.opts.flag_smallsrc) and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Speak '+repr(s_peak)+'Mompara = '+repr(mompara))
             mylog.debug('x1, y1 : '+repr(x1)+', '+repr(y1))
-            # import pylab as pl
-            # pl.imshow(N.transpose(subim_src), origin='lower', interpolation='nearest')
-            # pl.suptitle('Image of bad M source '+str(isl.island_id))
-                                        # convert pixels to coords
+
+        # Don't let s_peak fall too far below the normalized peak (this can
+        # happen when, e.g., the centroid falls outside of the source)
+        norm_peak = mompara[0]*bmar_p/(mompara[3]*mompara[4])
+        if s_peak < norm_peak/2.0:
+            s_peak = norm_peak/2.0
+
+        # convert pixels to coords
         try:
             sra, sdec = img.pix2sky([mompara[1]+delc[0], mompara[2]+delc[1]])
             mra, mdec = img.pix2sky(posn)
