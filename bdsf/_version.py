@@ -12,6 +12,14 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2017/09/01 - Version 1.8.12
+
+    2017/09/01 - Fix crash with tiny regions
+
+    2017/09/01 - Fix very low centroid peak fluxes
+
+    2017/09/01 - Fix compile error with numpy 1.13
+
     2017/06/01 - Version 1.8.11
 
     2017/06/01 - Fix for interactive shell problem

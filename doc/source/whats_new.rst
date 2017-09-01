@@ -3,7 +3,16 @@
 **********
 What's New
 **********
+Version 1.8.12 (2017/09/01):
+
+    * Fix crash with tiny regions
+
+    * Fix very low centroid peak fluxes
+
+    * Fix compile error with numpy 1.13
+
 Version 1.8.11 (2017/06/01):
+
     * Fix for interactive shell problem
 
 Version 1.8.10 (2017/05/31):
