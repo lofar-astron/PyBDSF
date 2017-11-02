@@ -1708,7 +1708,7 @@ def convexhull_deficiency(isl):
         return N.asarray(pts)
 
     mask = ~isl.mask_active
-    points = N.asarray(N.where(mask - nd.binary_erosion(mask)))
+    points = N.asarray(N.where(mask ^ nd.binary_erosion(mask)))
     hull_pts = list(convex_hull(points))   # these are already in angle-sorted order
 
     hull_pts.append(hull_pts[0])
@@ -1771,7 +1771,7 @@ def assign_leftovers(mask, open, nisl, labels):
     from copy import deepcopy as cp
 
     n, m = mask.shape
-    leftout = ~mask - open
+    leftout = ~mask ^ open
 
     connectivity = nd.generate_binary_structure(2,2)
     mlabels, count = nd.label(leftout, connectivity)
@@ -2215,7 +2215,6 @@ def bstat(indata, mask, kappa_npixbeam):
     median = numpy.median(skpix)
     sigma = numpy.std(skpix, ddof=1)
     mode = 2.5*median - 1.5*mean
-
     if sigma > 0.0:
         skew_par = abs(mean - median)/sigma
     else:
