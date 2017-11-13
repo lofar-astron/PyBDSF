@@ -226,7 +226,7 @@ class Op_rmsimage(Op):
             img.use_rms_map = False
             img.mean_map_type = 'const'
           else:
-            if opts.rmsmean_map_filename is not None and opts.rmsmean_map_filename is not []:
+            if opts.rmsmean_map_filename is not None and len(opts.rmsmean_map_filename)!=0:
                 from astropy.io import fits as pyfits
                 def CheckShape(A):
                     if len(A.shape)!=4:
