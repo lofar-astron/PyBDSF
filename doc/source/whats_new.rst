@@ -3,6 +3,10 @@
 **********
 What's New
 **********
+Version 1.8.13 (2017/11/17):
+
+    * Remove deprecated boolean operators
+
 Version 1.8.12 (2017/09/01):
 
     * Fix crash with tiny regions
