@@ -19,6 +19,7 @@ import functions as func
 import scipy.ndimage as nd
 import multi_proc as mp
 import itertools
+from functions import read_image_from_file
 
 
 class Op_rmsimage(Op):
@@ -227,7 +228,7 @@ class Op_rmsimage(Op):
             img.mean_map_type = 'const'
           else:
             if opts.rmsmean_map_filename is not None and len(opts.rmsmean_map_filename)!=0:
-                from astropy.io import fits as pyfits
+                # from astropy.io import fits as pyfits
                 def CheckShape(A):
                     if len(A.shape)!=4:
                         raise RuntimeError("Array shape should be len 4 (nch,npol,nx,ny)")
@@ -240,11 +241,11 @@ class Op_rmsimage(Op):
 
                 mylogger.userinfo(mylog, "Skipping mean and rms image computation")
                 mylogger.userinfo(mylog, "   Openning mean image: %s"%mean_fits_name)
-                #mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
+                # mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
                 mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
                 CheckShape(mean); mean = mean[0,0]
                 mylogger.userinfo(mylog, "   Openning rms image: %s"%rms_fits_name)
-                #rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
+                # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
                 rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
                 CheckShape(rms); rms = rms[0,0]
 
