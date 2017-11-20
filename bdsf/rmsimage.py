@@ -240,10 +240,12 @@ class Op_rmsimage(Op):
 
                 mylogger.userinfo(mylog, "Skipping mean and rms image computation")
                 mylogger.userinfo(mylog, "   Openning mean image: %s"%mean_fits_name)
-                mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
+                #mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
+                mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
                 CheckShape(mean); mean = mean[0,0]
                 mylogger.userinfo(mylog, "   Openning rms image: %s"%rms_fits_name)
-                rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
+                #rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
+                rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
                 CheckShape(rms); rms = rms[0,0]
 
             elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
