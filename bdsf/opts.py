@@ -215,7 +215,8 @@ class Opts(object):
                                  "it is often necessary to force the use of a "\
                                  "constant rms map by setting rms_map = False.")
 
-    rmsmean_map_filename = List(None,doc = "Name of the fits file for the mean and rms maps. Should be a list [<mean_map.fits>,<rms_map.fits>]")
+    rmsmean_map_filename = List(None,doc = "Name of the fits file for the mean and rms maps. Should be a list [<mean_map.fits>,<rms_map.fits>]",
+                             group = 'advanced_opts')
 
     shapelet_do = Bool(False,
                              doc = "Decompose islands into shapelets\n"\
