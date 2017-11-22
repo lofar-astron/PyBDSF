@@ -19,6 +19,7 @@ import functions as func
 import scipy.ndimage as nd
 import multi_proc as mp
 import itertools
+from functions import read_image_from_file
 
 
 class Op_rmsimage(Op):
@@ -226,7 +227,29 @@ class Op_rmsimage(Op):
             img.use_rms_map = False
             img.mean_map_type = 'const'
           else:
-            if (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
+            if opts.rmsmean_map_filename is not None and len(opts.rmsmean_map_filename)!=0:
+                # from astropy.io import fits as pyfits
+                def CheckShape(A):
+                    if len(A.shape)!=4:
+                        raise RuntimeError("Array shape should be len 4 (nch,npol,nx,ny)")
+                    if A.shape[0]!=1:
+                        raise RuntimeError("Array should be single channel")
+                    if A.shape[1]!=1:
+                        raise RuntimeError("Array should be single pol")
+
+                mean_fits_name,rms_fits_name=opts.rmsmean_map_filename
+
+                mylogger.userinfo(mylog, "Skipping mean and rms image computation")
+                mylogger.userinfo(mylog, "   Openning mean image: %s"%mean_fits_name)
+                # mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
+                mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
+                CheckShape(mean); mean = mean[0,0]
+                mylogger.userinfo(mylog, "   Openning rms image: %s"%rms_fits_name)
+                # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
+                rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
+                CheckShape(rms); rms = rms[0,0]
+
+            elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
               if len(data.shape) == 2:   ## 2d case
                 mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
                                 bright_pt_coords=isl_pos, rms_box2=img.rms_box,
