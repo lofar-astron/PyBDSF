@@ -1968,7 +1968,7 @@ def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
     return mask
 
 def make_src_mask(mask_size, posn_pix, aperture_pix):
-    """Makes an island mask (1 = inside aperture)f or a given source position.
+    """Makes an island mask (1 = inside aperture) for a given source position.
     """
     import numpy as N
 
@@ -1977,16 +1977,16 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
         return N.zeros((xsize, ysize), dtype=N.int)
 
     # Make subimages
-    xlo = posn_pix[0]-int(aperture_pix)-1
+    xlo = int(posn_pix[0]-int(aperture_pix)-1)
     if xlo < 0:
         xlo = 0
-    xhi = posn_pix[0]+int(aperture_pix)+1
+    xhi = int(posn_pix[0]+int(aperture_pix)+1)
     if xhi > xsize:
         xhi = xsize
-    ylo = posn_pix[1]-int(aperture_pix)-1
+    ylo = int(posn_pix[1]-int(aperture_pix)-1)
     if ylo < 0:
         ylo = 0
-    yhi = posn_pix[1]+int(aperture_pix)+1
+    yhi = int(posn_pix[1]+int(aperture_pix)+1)
     if yhi > ysize:
         yhi = ysize
 
