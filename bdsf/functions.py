@@ -797,7 +797,7 @@ def get_errors(img, p, stdav, bm_pix=None):
             e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
             e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
             e_pa = e_pa * 180.0/pi
-            e_tot = pp[0] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) * (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
+            e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) * (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
         except:
             e_peak = 0.0
             e_x0 = 0.0
