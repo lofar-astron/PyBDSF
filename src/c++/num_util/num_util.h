@@ -103,8 +103,7 @@ namespace num_util{
    *@param arr a Boost/Python numeric array.
    *@return a numeric array referencing the input array.
    */
-  pyndarray makeNum(const 
-					pyndarray& arr);
+  pyndarray makeNum(const pyndarray& arr);
 
   /** 
    *A free function that retrieves the numpy type of a numpy array.
@@ -285,14 +284,14 @@ namespace num_util{
    */
   char type2char(PyArray_TYPES t_type);
   
-  #if BOOST_VERSION >= 106500
   /** 
    *Converts single character typecode of PyArray_TYPE
    *to its corresponding numpy dtype.
    *@param t  single character typecode of PyArray_TYPES.
    *@return the corresponding numpy dtype.
    */
-  np::dtype type2dtype(char t);
+  #if BOOST_VERSION >= 106500
+  boost::python::numpy::dtype type2dtype(char t);
   #endif
 
   /** 

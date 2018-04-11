@@ -362,15 +362,13 @@ pyndarray clone(pyndarray arr){
 
 
 //Return a clone of this array with a new type
-#if BOOST_VERSION < 106500
 pyndarray astype(pyndarray arr, PyArray_TYPES t){
-  return (pyndarray) arr.astype(type2char(t));
+  #if BOOST_VERSION < 106500
+    return (pyndarray) arr.astype(type2char(t));
+  #else
+    return (pyndarray) arr.astype(type2dtype(type2char(t)));
+  #endif
 }
-#else
-pyndarray astype(pyndarray arr, PyArray_TYPES t){
-  return (pyndarray) arr.astype(type2dtype(type2char(t)));
-}
-#endif
 
 std::vector<int> strides(pyndarray arr){
   std::vector<int> out_strides;
@@ -412,29 +410,29 @@ char type2char(PyArray_TYPES t_type){
 }
 
 #if BOOST_VERSION >= 106500
-np::dtype type2dtype(char t){
+boost::python::numpy::dtype type2dtype(char t){
 
   switch(t) {
     case 'B':
-      return np::dtype::get_builtin<unsigned char>();
+      return boost::python::numpy::dtype::get_builtin<unsigned char>();
     case 'b':
-      return np::dtype::get_builtin<signed char>();
+      return boost::python::numpy::dtype::get_builtin<signed char>();
     case 'h':
-      return np::dtype::get_builtin<short>();
+      return boost::python::numpy::dtype::get_builtin<short>();
     case 'i':
-      return np::dtype::get_builtin<int>();
+      return boost::python::numpy::dtype::get_builtin<int>();
     case 'l':
-      return np::dtype::get_builtin<long int>();
+      return boost::python::numpy::dtype::get_builtin<long int>();
     case 'f':
-      return np::dtype::get_builtin<float>();
+      return boost::python::numpy::dtype::get_builtin<float>();
     case 'd':
-      return np::dtype::get_builtin<double>();
+      return boost::python::numpy::dtype::get_builtin<double>();
     case 'F':
-      return np::dtype::get_builtin<std::complex<float>>();
+      return boost::python::numpy::dtype::get_builtin<std::complex<float>>();
     case 'D':
-      return np::dtype::get_builtin<std::complex<double>>();
+      return boost::python::numpy::dtype::get_builtin<std::complex<double>>();
     default:
-      std::cout << "nvalid character code!" << std::endl;
+      std::cout << "Invalid character code!" << std::endl;
       break;
   }
 }
