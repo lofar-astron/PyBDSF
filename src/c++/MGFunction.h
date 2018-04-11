@@ -5,14 +5,9 @@
 #include <vector>
 #include <utility>
 #include <boost/python.hpp>
+#include <pyndarray.h>
 
 using namespace boost::python;
-#if BOOST_VERSION < 106500
-  typedef typename pyndarray pyndarray;
-#else
-  #include <boost/python/numpy.hpp>
-  typedef typename numpy::ndarray pyndarray;
-#endif
 
 /*!
   \class MGFunction
