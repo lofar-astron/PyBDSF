@@ -452,7 +452,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
 
     for key in img.header.keys():
-        if key=="HISTORY": continue
+        if key in ['HISTORY','COMMENT','']: continue
         tbhdu.header['I_%s'%key]=img.header[key]
 
     if filename is None:
