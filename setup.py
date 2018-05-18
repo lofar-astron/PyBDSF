@@ -135,7 +135,7 @@ def main():
         ext.extra_f90_compile_args = []
     
     meta = dict(name='bdsf',
-                version='1.8.13',
+                version='1.8.14',
                 author='David Rafferty',
                 author_email='drafferty@hs.uni-hamburg.de',
                 url='https://github.com/lofar-astron/PyBDSF',
