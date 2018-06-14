@@ -30,7 +30,7 @@ for ifile, filename in enumerate(ls):
   op = subprocess.Popen(["file",directory+filename], stdout=subprocess.PIPE).communicate()[0]
   if "FITS image data" in op:
     print 'Processing ', filename
-    img = bdsf.execute(chain, {'fits_name': filename, 'thresh':"hard", 'solnname' : 'new', 'beam' : bms[ifile]}), 'indir' : directory})
+    img = bdsf.execute(chain, {'fits_name': filename, 'thresh':"hard", 'solnname' : 'new', 'beam' : bms[ifile]), 'indir' : directory})
     files.append(filename)
     rmsbox.append(img.opts.rms_box)
 
