@@ -15,7 +15,9 @@ The documentation is currently hosted at http://www.astron.nl/citt/pybdsf
 
 Installation
 ------------
-Installation is done through ``python setup.py``.
+Installation is done through ``pip``, e.g. ``pip install .`` if you cloned the reposiory
+or ``pip install https://github.com/lofar-astron/PyBDSF/archive/v1.8.14.tar.gz`` to install the latest release.
+
 External requirements include the ubuntu packages (or similar packages in another Linux distribution):
 
 * ``gfortran``
@@ -26,7 +28,7 @@ External requirements include the ubuntu packages (or similar packages in anothe
 Also, a working ``numpy`` installation is required.
 At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore`` or ``astropy``.
 
-If you install as a user, use ``python setup.py install --user``.
+If you install as a user not using conda, use ``pip install --user``.
 In this case, the script ``pybdsf`` is installed in ``~/.local/bin``, so you might want to add that to your ``$PATH``.
 
 Installation on MacOS / OSX is more involved, you will need the packages mentioned above, for example installed with Homebrew.
