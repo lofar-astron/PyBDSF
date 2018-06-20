@@ -15,11 +15,22 @@ The documentation is currently hosted at http://www.astron.nl/citt/pybdsf
 
 Installation
 ------------
-Installation is done through ``python setup.py``. External requirements include the ubuntu packages ``gfortran``, ``libboost-python-dev``, ``python-setuptools`` (or similar packages in another Linux distribution). Also, a working ``numpy`` installation is required. At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore``.
+Installation is done through ``python setup.py``.
+External requirements include the ubuntu packages (or similar packages in another Linux distribution):
 
-If you install as a user, use ``python setup.py install --user``. In this case, the script ``pybdsf`` is installed in ``~/.local/bin``, so you might want to add that to your ``$PATH``.
+* ``gfortran``
+* ``libboost-python-dev``
+* ``libboost-numpy-dev``
+* ``python-setuptools``.
+  
+Also, a working ``numpy`` installation is required.
+At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore`` or ``astropy``.
 
-Installation on MacOS / OSX is more involved, you will need the packages mentioned above, for example installed with Homebrew. You will need to tell `setup.py` to use the same compiler for fortran as for C++.
+If you install as a user, use ``python setup.py install --user``.
+In this case, the script ``pybdsf`` is installed in ``~/.local/bin``, so you might want to add that to your ``$PATH``.
+
+Installation on MacOS / OSX is more involved, you will need the packages mentioned above, for example installed with Homebrew.
+You will need to tell `setup.py` to use the same compiler for fortran as for C++.
 
 .. image:: https://travis-ci.org/lofar-astron/PyBDSF.svg?branch=master
     :target: https://travis-ci.org/lofar-astron/PyBDSF
