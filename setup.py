@@ -18,8 +18,8 @@ from distutils.command.clean import clean as distutils_clean
 
 
 minpack_src = ["lmder.f", "lmpar.f", "qrfac.f", "qrsolv.f", "enorm.f", "dpmpar.f"]
-port3_src = ["dnsg.f", "dn2g.f", "drnsg.f", "drn2g.f", "d1mach.f", "da7sst.f", 
-             "dc7vfn.f", "dd7tpr.f", "dd7upd.f", "df7hes.f", "dg7lit.f", "dg7qts.f", 
+port3_src = ["dnsg.f", "dn2g.f", "drnsg.f", "drn2g.f", "d1mach.f", "da7sst.f",
+             "dc7vfn.f", "dd7tpr.f", "dd7upd.f", "df7hes.f", "dg7lit.f", "dg7qts.f",
              "ditsum.f", "divset.f", "dl7itv.f", "dl7ivm.f", "dl7mst.f", "dl7nvr.f",
              "dl7sqr.f", "dl7srt.f", "dl7svn.f", "dl7svx.f", "dl7tsq.f", "dl7tvm.f",
              "dl7vml.f", "dn2cvp.f", "dn2lrd.f", "dn2rdp.f", "do7prd.f", "dparck.f",
@@ -32,16 +32,16 @@ srcpath = join(dirname(realpath(__file__)),"src")
 
 class CleanStatic(distutils.cmd.Command):
     """Custom command to remove static libraries and their intermediate files."""
-    
+
     description = "remove static libs"
     user_options = []
-    
+
     def initialize_options(self):
         pass
-    
+
     def finalize_options(self):
         pass
-    
+
     def run(self):
         for lib in ["minpack", "port3"]:
             self.announce("Removing lib{}.a and object files".format(lib), level=distutils.log.INFO)
@@ -50,10 +50,10 @@ class CleanStatic(distutils.cmd.Command):
 
 class BuildStatic(CleanStatic):
     """Custom command to build static libraries."""
-    
+
     # Compile minpack and port3, TODO: handle this with f2py
     description = "build static libs"
-    
+
     def run(self):
         for lib, src_files  in [["minpack", minpack_src], ["port3", port3_src]]:
             self.announce("Building lib{}".format(lib), level=distutils.log.INFO)
@@ -64,7 +64,7 @@ class BuildStatic(CleanStatic):
 
 class BuildExt(numpy_build_ext):
     """Custom build_ext command that calls mbuild to build static libs"""
-    
+
     def run(self):
         self.run_command("mbuild")
         numpy_build_ext.run(self)
@@ -72,7 +72,7 @@ class BuildExt(numpy_build_ext):
 
 class Clean(distutils_clean):
     """Custom clean command that calls mclean to clean static libs"""
-    
+
     def run(self):
         self.run_command("mclean")
         distutils_clean.run(self)
@@ -95,11 +95,11 @@ def find_boost():
 
 
 def main():
-    
+
     boost_python = find_boost()
-    
+
     extensions=[]
-    
+
     fext=Extension(
         name="bdsf._pytesselate",
         sources=["src/fortran/pytess_simple.f",
@@ -107,7 +107,7 @@ def main():
         );
     fext.f2py_options=[""]
     extensions.append(fext)
-    
+
     extensions.append(Extension(
         name="bdsf._cbdsm",
         sources=["src/c++/Fitter_dn2g.cc",
@@ -118,22 +118,25 @@ def main():
                  "src/c++/cbdsm_main.cc",
                  "src/c++/stat.cc",
                  "src/c++/num_util/num_util.cpp"],
-         libraries=['minpack', 'port3', 'gfortran', boost_python],
+         libraries=[
+             'minpack', 'port3', 'gfortran',
+             boost_python, boost_python.replace('python', 'numpy')
+         ],
          include_dirs=["src/c++"],
          library_dirs=[join(srcpath,"minpack"), join(srcpath,"port3")]
          ))
-    
+
     extensions.append(Extension(
         name="bdsf.nat.natgridmodule",
         sources=glob.glob("natgrid/Src/*.c"),
         include_dirs = ["natgrid/Include"]
         ))
-    
+
     # HACK for supporting older versions of NumPy
     for ext in extensions:
         ext.extra_f77_compile_args = []
         ext.extra_f90_compile_args = []
-    
+
     meta = dict(name='bdsf',
                 version='1.8.14',
                 author='David Rafferty',
@@ -163,7 +166,7 @@ def main():
                     'clean': Clean
                     }
                 )
-    
+
     setup(**meta)
 
 
