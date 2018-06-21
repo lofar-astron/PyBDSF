@@ -22,7 +22,7 @@ External requirements include the ubuntu packages (or similar packages in anothe
 
 * ``gfortran``
 * ``libboost-python-dev``
-* ``libboost-numpy-dev``
+* ``libboost-numpy-dev`` (Only if boost > 1.63)
 * ``python-setuptools``.
   
 Also, a working ``numpy`` installation is required.

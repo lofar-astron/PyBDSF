@@ -107,6 +107,35 @@ def find_boost():
     return boost_python
 
 
+def find_boost_numpy():
+    # Find correct boost-python library.
+    system = platform.system()
+    major = sys.version_info.major
+    minor = sys.version_info.minor
+
+    if system == 'Linux':
+        # Use version suffix if present
+        if major == 3:
+            boost_numpy = 'boost_numpy3-py%s%s' % (major, minor)
+        else:
+            boost_numpy = 'boost_numpy-py%s%s' % (major, minor)
+
+        if not find_library(boost_numpy):
+            return None
+        return boost_numpy
+
+    elif system == 'Darwin':
+        if sys.version_info[0] == 2:
+            boost_python = "boost_numpy-mt"
+        else:
+            boost_python = "boost_numpy3-mt"
+
+        if not find_library(boost_numpy):
+            return None
+
+    return boost_python
+
+
 def main():
 
     boost_python = find_boost()
@@ -123,6 +152,15 @@ def main():
     fext.f2py_options = [""]
     extensions.append(fext)
 
+    libraries = [
+        'minpack', 'port3', 'gfortran',
+        boost_python,
+    ]
+
+    boost_numpy = find_boost_numpy()
+    if boost_numpy is not None:
+        libraries.append(boost_numpy)
+
     extensions.append(Extension(
         name="bdsf._cbdsm",
         sources=[
@@ -135,10 +173,7 @@ def main():
             "src/c++/stat.cc",
             "src/c++/num_util/num_util.cpp"
         ],
-        libraries=[
-            'minpack', 'port3', 'gfortran',
-            boost_python, boost_python.replace('python', 'numpy')
-        ],
+        libraries=libraries,
         include_dirs=["src/c++"],
         library_dirs=[join(srcpath, "minpack"), join(srcpath, "port3")]
     ))
@@ -184,6 +219,7 @@ def main():
             'clean': Clean
         }
     )
+
 
 if __name__ == "__main__":
     main()
