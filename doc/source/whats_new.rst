@@ -3,6 +3,10 @@
 **********
 What's New
 **********
+Version 1.8.15 (2018/05/21):
+
+    * Fix setup.py for boost versions > 1.63 (#58)
+
 Version 1.8.14 (2018/05/18):
 
     * Fix an error on total flux density (#50)

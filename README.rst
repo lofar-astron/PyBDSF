@@ -16,7 +16,7 @@ The documentation is currently hosted at http://www.astron.nl/citt/pybdsf
 Installation
 ------------
 Installation is done through ``pip``, e.g. ``pip install .`` if you cloned the reposiory
-or ``pip install https://github.com/lofar-astron/PyBDSF/archive/v1.8.14.tar.gz`` to install the latest release.
+or ``pip install https://github.com/lofar-astron/PyBDSF/archive/v1.8.15.tar.gz`` to install the latest release.
 
 External requirements include the ubuntu packages (or similar packages in another Linux distribution):
 
