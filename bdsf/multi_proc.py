@@ -8,6 +8,7 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 (http://www.astropython.org/snippet/2010/3/Parallel-map-using-multiprocessing).
 
 """
+from __future__ import print_function
 import traceback
 import sys
 
@@ -51,13 +52,13 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
     for val in chunk:
         try:
             result = f(val)
-        except Exception, e:
+        except Exception as e:
             etype,val,tbk=sys.exc_info()
-            print 'Thread raised exception',e
-            print 'Traceback of thread is:'
-            print '-------------------------'
+            print('Thread raised exception',e)
+            print('Traceback of thread is:')
+            print('-------------------------')
             traceback.print_tb(tbk)
-            print '-------------------------'
+            print('-------------------------')
             err_q.put(e)
             return
 
@@ -102,7 +103,7 @@ def run_tasks(procs, err_q, out_q, num):
         for proc in procs:
             proc.join()
 
-    except Exception, e:
+    except Exception as e:
         # kill all slave processes on ctrl-C
         die(procs)
         raise e

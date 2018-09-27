@@ -90,7 +90,7 @@ namespace num_util{
   {
     return PyArray_DOUBLE;
   }
-    
+
   template <>
   PyArray_TYPES getEnum<long double>(void)
   {
@@ -148,7 +148,7 @@ KindCharMapEntry kindCharMapEntries[] =
     KindCharMapEntry(PyArray_CDOUBLE,'D'),
     KindCharMapEntry(PyArray_OBJECT, 'O')
   };
- 
+
 typedef KindTypeMap::value_type  KindTypeMapEntry;
 KindTypeMapEntry kindTypeMapEntries[] =
   {
@@ -186,7 +186,7 @@ pyndarray makeNum(object x){
   object obj(handle<>
 	     (PyArray_ContiguousFromObject(x.ptr(),PyArray_NOTYPE,0,0)));
   check_PyArrayElementType(obj);
-  return extract<pyndarray>(obj); 
+  return extract<pyndarray>(obj);
 }
 
 //Create a one-dimensional Numeric array of length n and Numeric type t
@@ -194,9 +194,9 @@ pyndarray makeNum(int n, PyArray_TYPES t=PyArray_DOUBLE){
   object obj(handle<>(PyArray_FromDims(1, &n, t)));
   return extract<pyndarray>(obj);
 }
-  
+
 //Create a Numeric array with dimensions dimens and Numeric type t
-pyndarray makeNum(std::vector<int> dimens, 
+pyndarray makeNum(std::vector<int> dimens,
 		       PyArray_TYPES t=PyArray_DOUBLE){
   object obj(handle<>(PyArray_FromDims(dimens.size(), &dimens[0], t)));
   return extract<pyndarray>(obj);
@@ -206,13 +206,13 @@ pyndarray makeNum(const pyndarray& arr){
   //Returns a reference of arr by calling pyndarray copy constructor.
   //The copy constructor increases arr's reference count.
   return pyndarray(arr);
-} 
+}
 
 PyArray_TYPES type(pyndarray arr){
   return PyArray_TYPES(PyArray_TYPE(arr.ptr()));
 }
 
-void check_type(pyndarray arr, 
+void check_type(pyndarray arr,
 		PyArray_TYPES expected_type){
   PyArray_TYPES actual_type = type(arr);
   if (actual_type != expected_type) {
@@ -239,7 +239,7 @@ void check_rank(pyndarray arr, int expected_rank){
   int actual_rank = rank(arr);
   if (actual_rank != expected_rank) {
     std::ostringstream stream;
-    stream << "expected rank " << expected_rank 
+    stream << "expected rank " << expected_rank
 	   << ", found rank " << actual_rank << std::ends;
     PyErr_SetString(PyExc_RuntimeError, stream.str().c_str());
     throw_error_already_set();
@@ -260,7 +260,7 @@ void check_size(pyndarray arr, int expected_size){
   int actual_size = size(arr);
   if (actual_size != expected_size) {
     std::ostringstream stream;
-    stream << "expected size " << expected_size 
+    stream << "expected size " << expected_size
 	   << ", found size " << actual_size << std::ends;
     PyErr_SetString(PyExc_RuntimeError, stream.str().c_str());
     throw_error_already_set();
@@ -289,7 +289,7 @@ int get_dim(pyndarray arr, int dimnum){
     std::ostringstream stream;
     stream << "Error: asked for length of dimension ";
     stream << dimnum << " but rank of array is " << the_rank << std::ends;
-    PyErr_SetString(PyExc_RuntimeError, stream.str().c_str());       
+    PyErr_SetString(PyExc_RuntimeError, stream.str().c_str());
     throw_error_already_set();
   }
   std::vector<int> actual_dims = shape(arr);
@@ -315,7 +315,7 @@ void check_dim(pyndarray arr, int dimnum, int dimsize){
     stream << "Error: expected dimension number ";
     stream << dimnum << " to be length " << dimsize;
     stream << ", but found length " << actual_dims[dimnum]  << std::ends;
-    PyErr_SetString(PyExc_RuntimeError, stream.str().c_str());       
+    PyErr_SetString(PyExc_RuntimeError, stream.str().c_str());
     throw_error_already_set();
   }
   return;
@@ -352,7 +352,7 @@ void copy_data(pyndarray arr, char* new_data){
     arr_data[i] = new_data[i];
   }
   return;
-} 
+}
 
 //Return a clone of this array
 pyndarray clone(pyndarray arr){
@@ -393,7 +393,7 @@ void check_PyArrayElementType(object newo){
   if(theType == PyArray_OBJECT){
       std::ostringstream stream;
       stream << "array elments have been cast to PyArray_OBJECT, "
-             << "numhandle can only accept arrays with numerical elements" 
+             << "numhandle can only accept arrays with numerical elements"
 	     << std::ends;
       PyErr_SetString(PyExc_TypeError, stream.str().c_str());
       throw_error_already_set();
@@ -428,9 +428,9 @@ boost::python::numpy::dtype type2dtype(char t){
     case 'd':
       return boost::python::numpy::dtype::get_builtin<double>();
     case 'F':
-      return boost::python::numpy::dtype::get_builtin<std::complex<float>>();
+      return boost::python::numpy::dtype::get_builtin<std::complex<float> >();
     case 'D':
-      return boost::python::numpy::dtype::get_builtin<std::complex<double>>();
+      return boost::python::numpy::dtype::get_builtin<std::complex<double> >();
     default:
       std::cout << "Invalid character code!" << std::endl;
       break;

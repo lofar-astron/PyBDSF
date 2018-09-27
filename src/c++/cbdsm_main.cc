@@ -1,8 +1,8 @@
 /*!
   \file cbdsm_main.cc
-  
-  \ingroup pybdsm
-  
+
+  \ingroup pybdsf
+
   \author Oleksandr Usov
 */
 
@@ -15,15 +15,29 @@
 
 using namespace boost::python;
 
-BOOST_PYTHON_MODULE(_cbdsm)
+#if PY_MAJOR_VERSION == 2
+static void wrap_import_array()
 {
   import_array();
+}
+#else
+static void * wrap_import_array()
+{
+  import_array();
+  return NULL;
+}
+#endif
+
+BOOST_PYTHON_MODULE(_cbdsm)
+{
+  wrap_import_array();
+//   import_array();
   #if BOOST_VERSION < 106500
   numeric::array::set_module_and_type("numpy", "ndarray");
   #endif
-  
-  scope().attr("__doc__") = 
-    "A collection of optimized C & Fortran routines for pybdsm";
+
+  scope().attr("__doc__") =
+    "A collection of optimized C & Fortran routines for pybdsf";
 
   def("bstat", &bstat, (arg("array"), arg("mask") = false, arg("kappa") = 3),
       "calculate (clipped) mean and rms of the n-dimensional (masked) image\n"

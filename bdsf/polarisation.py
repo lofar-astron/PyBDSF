@@ -6,24 +6,25 @@ by gaul2srl. The position angle is defined from North, with positive angles
 towards East.
 
 """
+from __future__ import absolute_import
 
-from image import *
-from islands import *
-from gausfit import Gaussian
-from gaul2srl import *
-from preprocess import Op_preprocess
-from rmsimage import Op_rmsimage
-from threshold import Op_threshold
-from islands import Op_islands
-from gausfit import Op_gausfit
+from .image import *
+from .islands import *
+from .gausfit import Gaussian
+from .gaul2srl import *
+from .preprocess import Op_preprocess
+from .rmsimage import Op_rmsimage
+from .threshold import Op_threshold
+from .islands import Op_islands
+from .gausfit import Op_gausfit
 
-from gaul2srl import Op_gaul2srl
-from make_residimage import Op_make_residimage
-from const import fwsig
-import mylogger
+from .gaul2srl import Op_gaul2srl
+from .make_residimage import Op_make_residimage
+from .const import fwsig
+from . import mylogger
 import numpy as N
-import functions as func
-import statusbar
+from . import functions as func
+from . import statusbar
 
 ### Insert polarization attributes into Gaussian and Source classes
 Gaussian.total_flux_Q        = Float(doc="Total flux density (Jy), Stokes Q", colname='Total_Q',

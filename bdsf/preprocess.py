@@ -3,14 +3,15 @@
 Calculates some basic statistics of the image and sets up processing
 parameters for PyBDSM.
 """
+from __future__ import absolute_import
 
 import numpy as N
-import _cbdsm
-from image import *
+from . import _cbdsm
+from .image import *
 from math import pi, sqrt, log
-import const
-import functions as func
-import mylogger
+from . import const
+from . import functions as func
+from . import mylogger
 
 ### Insert attributes into Image class
 Image.raw_mean = Float(doc="Unclipped image mean")
@@ -160,7 +161,7 @@ class Op_preprocess(Op):
 
         confused = False
         if opts.mean_map == 'default':
-          if opts.bmpersrc_th <= 25. or cmean/crms >= 0.1:
+          if img.bmpersrc_th <= 25. or cmean/crms >= 0.1:
             confused = True
         img.confused = confused
         mylog.info('Parameter confused is '+str(img.confused))
@@ -183,7 +184,7 @@ class Op_preprocess(Op):
               skyc = img.pix2sky(pix1)
               pix2 = img.sky2pix(skyc)
               if abs(pix1[0]-pix2[0]) > 0.5 or abs(pix1[1]-pix2[1]) > 0.5: out=True
-            except RuntimeError, err:
+            except RuntimeError as err:
               pass
             if out or ("8" in str(err)):
               noutside += 1

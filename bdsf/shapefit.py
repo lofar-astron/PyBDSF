@@ -2,16 +2,21 @@
 
 This will do all the shapelet analysis of islands in an image
 """
+from __future__ import absolute_import
 
-from image import *
-from islands import *
-from shapelets import *
-import mylogger
-import statusbar
-import multi_proc as mp
+from .image import *
+from .islands import *
+from .shapelets import *
+from . import mylogger
+from . import statusbar
+from . import multi_proc as mp
 import itertools
-import functions as func
-from gausfit import find_bbox
+try:
+    from itertools import izip as zip
+except ImportError: # will be 3.x series
+    pass
+from . import functions as func
+from .gausfit import find_bbox
 
 
 Island.shapelet_basis=String(doc="Coordinate system for shapelet decomposition (cartesian/polar)", colname='Basis', units=None)
@@ -51,7 +56,7 @@ class Op_shapelets(Op):
             # Now call the parallel mapping function. Returns a list of
             # [beta, centre, nmax, basis, cf] for each island
             shap_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_island),
+                        zip(itertools.repeat(self.process_island),
                         img.islands, itertools.repeat(img_simple),
                         itertools.repeat(opts)), numcores=opts.ncores,
                         bar=bar)
@@ -109,18 +114,18 @@ class Op_shapelets(Op):
 
     def get_shapelet_params(self, image, mask, basis, beam_pix, fixed, ori, mode, beta=None, cen=None, nmax=None):
          """ This takes as input an image, its mask (false=valid), basis="cartesian"/"polar",
-	     fixed=(i,j,k) where i,j,k =0/1 to calculate or take as fixed for (beta, centre, nmax),
-	     beam_pix has the beam in (pix_fwhm, pix_fwhm, deg),
-	     beta (the scale), cen (centre of basis expansion), nmax (max order). The output
-	     is an updated set of values of (beta, centre, nmax). If fixed is 1 and the value is not
-	     specified as an argument, then fixed is taken as 0."""
-	 from math import sqrt, log, floor
-         import functions as func
+         fixed=(i,j,k) where i,j,k =0/1 to calculate or take as fixed for (beta, centre, nmax),
+         beam_pix has the beam in (pix_fwhm, pix_fwhm, deg),
+         beta (the scale), cen (centre of basis expansion), nmax (max order). The output
+         is an updated set of values of (beta, centre, nmax). If fixed is 1 and the value is not
+         specified as an argument, then fixed is taken as 0."""
+         from math import sqrt, log, floor
+         from . import functions as func
          import numpy as N
 
-	 if fixed[0]==1 and beta==None: fixed[0]=0
-	 if fixed[1]==1 and cen==None: fixed[1]=0
-	 if fixed[2]==1 and nmax==None: fixed[2]=0
+         if fixed[0]==1 and beta==None: fixed[0]=0
+         if fixed[1]==1 and cen==None: fixed[1]=0
+         if fixed[2]==1 and nmax==None: fixed[2]=0
 
          if fixed[0]*fixed[1]==0:
              (m1, m2, m3)=func.moment(image, mask)
@@ -129,7 +134,7 @@ class Op_shapelets(Op):
              beta=sqrt(m3[0]*m3[1])*2.0
              if beta == 0.0:
                 beta = 0.5
-	 if fixed[1]==0:
+         if fixed[1]==0:
              cen=m2
          if fixed[2]==0:
              (n, m)=image.shape
@@ -141,23 +146,23 @@ class Op_shapelets(Op):
                nmax_max = int(round(0.5*(-3+sqrt(1+8*npix))))
                nmax=min(nmax, nmax_max)
 
-         betarange=[0.5,sqrt(beta*max(n,m))]  # min, max
+             betarange=[0.5,sqrt(beta*max(n,m))]  # min, max
 
-	 if fixed[1]==0:
+             if fixed[1]==0:
+                 cen=shape_findcen(image, mask, basis, beta, nmax, beam_pix) # + check_cen_shapelet
+                 #print 'First Centre = ',cen,N.array(cen)+ori
+
+                 from time import time
+                 t1 = time()
+                 if fixed[0]==0:
+                     beta, err=shape_varybeta(image, mask, basis, beta, cen, nmax, betarange, plot=False)
+                 t2 = time()
+                 #print 'TIME ',t2-t1, '\n'
+                 #print 'Final Beta = ',beta, err
+
+         if fixed[1]==0 and fixed[0]==0:
              cen=shape_findcen(image, mask, basis, beta, nmax, beam_pix) # + check_cen_shapelet
-         #print 'First Centre = ',cen,N.array(cen)+ori
-
-         from time import time
-         t1 = time()
-         if fixed[0]==0:
-             beta, err=shape_varybeta(image, mask, basis, beta, cen, nmax, betarange, plot=False)
-         t2 = time()
-         #print 'TIME ',t2-t1, '\n'
-         #print 'Final Beta = ',beta, err
-
-	 if fixed[1]==0 and fixed[0]==0:
-             cen=shape_findcen(image, mask, basis, beta, nmax, beam_pix) # + check_cen_shapelet
-         #print 'Final Cen = ',N.array(cen)+ori
+             #print 'Final Cen = ',N.array(cen)+ori
 
          return beta, cen, nmax
 

@@ -7,19 +7,24 @@ The current implementation will handle both 2D and 3D images,
 where for 3D case it will calculate maps for each plane (=
 Stokes images).
 """
+from __future__ import absolute_import
 
 import numpy as N
 import scipy.ndimage as nd
-import _cbdsm
-from image import Op, Image, NArray, List
-import const
-import mylogger
+from . import _cbdsm
+from .image import Op, Image, NArray, List
+from . import const
+from . import mylogger
 import os
-import functions as func
+from . import functions as func
 import scipy.ndimage as nd
-import multi_proc as mp
+from . import multi_proc as mp
 import itertools
-from functions import read_image_from_file
+try:
+    from itertools import izip as zip
+except ImportError: # will be 3.x series
+    pass
+from .functions import read_image_from_file
 
 
 class Op_rmsimage(Op):
@@ -375,24 +380,24 @@ class Op_rmsimage(Op):
         rms_map=None, whether to take the map (if variance
         is significant) or a constant value
         """
-    	from math import sqrt
+        from math import sqrt
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Checkrms  ")
         cdelt = img.wcs_obj.acdelt[:2]
-    	bm = (img.beam[0], img.beam[1])
-    	fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
-    	if img.masked:
-    	    unmasked = N.where(~img.mask_arr)
+        bm = (img.beam[0], img.beam[1])
+        fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
+        if img.masked:
+            unmasked = N.where(~img.mask_arr)
             stdsub = N.std(rms[unmasked])
             maxrms = N.max(rms[unmasked])
         else:
             stdsub = N.std(rms)
             maxrms = N.max(rms)
 
-    	rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
+        rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of rms image = ', stdsub*1000.0, 'mJy'))
         mylog.debug('%s %10.6f %s' % ('Expected standard deviation = ', rms_expect*1000.0, 'mJy'))
-    	if stdsub > 1.1*rms_expect:
+        if stdsub > 1.1*rms_expect:
             img.use_rms_map = True
             mylogger.userinfo(mylog, 'Variation in rms image significant')
         else:
@@ -406,13 +411,13 @@ class Op_rmsimage(Op):
         mean_map=None, whether to take the map (if variance
         is significant) or a constant value
         """
-    	from math import sqrt
+        from math import sqrt
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Checkmean ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
-    	if img.masked:
+        if img.masked:
             unmasked = N.where(~img.mask_arr)
             stdsub = N.std(mean[unmasked])
             maxmean = N.max(mean[unmasked])
@@ -690,12 +695,12 @@ class Op_rmsimage(Op):
         # for each coordinate.
         if use_extrapolation:
             cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                    itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                    zip(itertools.repeat(self.process_mean_rms_maps),
                     ind_list, itertools.repeat(mask), itertools.repeat(arr),
                     itertools.repeat(kappa)), numcores=ncores)
         else:
             cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                    itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                    zip(itertools.repeat(self.process_mean_rms_maps),
                     ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
                     itertools.repeat(kappa)), numcores=ncores)
 
@@ -722,12 +727,12 @@ class Op_rmsimage(Op):
                     ind_list.append([-BS, arr_pad.shape[0], j*SS,j*SS+BS])
             if use_extrapolation:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask), itertools.repeat(arr),
                         itertools.repeat(kappa)), numcores=ncores)
             else:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
                         itertools.repeat(kappa)), numcores=ncores)
 
@@ -749,12 +754,12 @@ class Op_rmsimage(Op):
                     ind_list.append([i*SS,i*SS+BS, -BS,arr_pad.shape[1]])
             if use_extrapolation:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask), itertools.repeat(arr),
                         itertools.repeat(kappa)), numcores=ncores)
             else:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
                         itertools.repeat(kappa)), numcores=ncores)
 

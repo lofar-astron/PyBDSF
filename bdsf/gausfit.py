@@ -11,20 +11,26 @@ class and a number of fitter routines in _cbdsm module.
 MGFunction class implements multi-gaussian function and
 provides all functionality required by the specific fitters.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
-from image import *
+from .image import *
 from copy import deepcopy as cp
-import mylogger
+from . import mylogger
 import sys
 import time
-import statusbar
-import _cbdsm
+from . import statusbar
+from . import _cbdsm
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
 import scipy.ndimage as nd
-import multi_proc as mp
-
+from . import multi_proc as mp
+import itertools
+try:
+    from itertools import izip as zip
+except ImportError: # will be 3.x series
+    pass
 
 ngaus = Int(doc="Total number of gaussians extracted")
 total_flux_gaus = Float(doc="Total flux in the Gaussians extracted")
@@ -40,8 +46,7 @@ class Op_gausfit(Op):
     """
     def __call__(self, img):
         from time import time
-        import functions as func
-        import itertools
+        from . import functions as func
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gausfit")
         if len(img.islands) == 0:
@@ -89,11 +94,14 @@ class Op_gausfit(Op):
 
         # Now call the parallel mapping function. Returns a list of [gaul, fgaul]
         # for each island.
-        gaus_list = mp.parallel_map(func.eval_func_tuple,
-                    itertools.izip(itertools.repeat(self.process_island),
-                    img.islands, itertools.repeat(img_simple),
-                    itertools.repeat(opts)), numcores=opts.ncores,
-                    bar=bar, weights=weights)
+        gaus_list = []
+        for isl in img.islands:
+            gaus_list.append(self.process_island(isl, img_simple, opts))
+#         gaus_list = mp.parallel_map(func.eval_func_tuple,
+#                     zip(itertools.repeat(self.process_island),
+#                     img.islands, itertools.repeat(img_simple),
+#                     itertools.repeat(opts)), numcores=opts.ncores,
+#                     bar=bar, weights=weights)
 
         for isl in img.islands:
             ### now convert gaussians into Gaussian objects and store
@@ -187,7 +195,7 @@ class Op_gausfit(Op):
 
         Returns a list of the best-fit Gaussians and flagged Gaussians.
         """
-        import functions as func
+        from . import functions as func
 
         if opts is None:
             opts = img.opts
@@ -205,7 +213,7 @@ class Op_gausfit(Op):
 
         size = isl.size_active/img.pixel_beamarea()*2.0   # 2.0 roughly corrects for thresh_isl
         if opts.verbose_fitting:
-            print "Fitting isl #", isl.island_id, '; # pix = ',N.sum(~isl.mask_active),'; size = ',size
+            print("Fitting isl #", isl.island_id, '; # pix = ',N.sum(~isl.mask_active),'; size = ',size)
 
         if size > maxsize:
             tosplit = func.isl_tosplit(isl, opts)
@@ -213,7 +221,7 @@ class Op_gausfit(Op):
                 n_subisl, sub_labels = tosplit[1], tosplit[2]
                 gaul = []; fgaul = []
                 if opts.verbose_fitting:
-                    print 'SPLITTING ISLAND INTO ',n_subisl,' PARTS FOR ISLAND ',isl.island_id
+                    print('SPLITTING ISLAND INTO ',n_subisl,' PARTS FOR ISLAND ',isl.island_id)
                 for i_sub in range(n_subisl):
                     islcp = isl.copy(img.pixel_beamarea())
                     islcp.mask_active = N.where(sub_labels == i_sub+1, False, True)
@@ -257,14 +265,15 @@ class Op_gausfit(Op):
                and one or more flagged Gaussians indicate
                that significant residuals remain (peak > thr).
         """
-        from _cbdsm import MGFunction
-        import functions as func
-        from const import fwsig
+        from ._cbdsm import MGFunction
+        from . import functions as func
+        from .const import fwsig
 
         if ffimg is None:
             fit_image = isl.image-isl.islmean
         else:
             fit_image = isl.image-isl.islmean-ffimg
+
         fcn = MGFunction(fit_image, isl.mask_active, 1)
         # For fitting, use img.beam instead of img.pixel_beam, as we want
         # to pick up the wavelet beam (img.pixel_beam is not changed for
@@ -394,8 +403,8 @@ class Op_gausfit(Op):
                                        for flag, g in fgaul]
 
         if verbose:
-            print 'Number of good Gaussians: %i' % (len(gaul),)
-            print 'Number of flagged Gaussians: %i' % (len(fgaul),)
+            print('Number of good Gaussians: %i' % (len(gaul),))
+            print('Number of flagged Gaussians: %i' % (len(fgaul),))
         return gaul, fgaul
 
 
@@ -406,7 +415,7 @@ class Op_gausfit(Op):
         it is much faster to fit a small number of Gaussians simultaneously
         and iterate. However, this does usually result in larger residuals.
         """
-        import functions as func
+        from . import functions as func
         sgaul = []; sfgaul = []
         gaul = []; fgaul = []
         if opts is None:
@@ -418,7 +427,7 @@ class Op_gausfit(Op):
         rms = isl.rms
 
         if opts.verbose_fitting:
-            print 'Iteratively fitting island ', isl.island_id
+            print('Iteratively fitting island ', isl.island_id)
         gaul = []; fgaul = []
         ffimg_tot = N.zeros(isl.shape, dtype=N.float32)
         peak_val = N.max(isl.image - isl.islmean)
@@ -461,8 +470,8 @@ class Op_gausfit(Op):
     def inigaus_fbdsm(self, isl, thr, beam, img):
         """ initial guess for gaussians like in fbdsm """
         from math import sqrt
-        from const import fwsig
-        import functions as func
+        from .const import fwsig
+        from . import functions as func
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
@@ -521,9 +530,9 @@ class Op_gausfit(Op):
         and use geometric mean of all minima of a peak as the size of that peak.
         """
         from math import sqrt
-        from const import fwsig
+        from .const import fwsig
         import scipy.ndimage as nd
-        import functions as func
+        from . import functions as func
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
@@ -712,8 +721,8 @@ class Op_gausfit(Op):
         """The actual flagging routine. See above for description.
         """
         from math import sqrt, sin, cos, log, pi
-        from const import fwsig
-        import functions as func
+        from .const import fwsig
+        from . import functions as func
         import scipy.ndimage as nd
 
         A, x1, x2, s1, s2, th = g
@@ -867,7 +876,7 @@ def find_bbox(thresh, g):
     return ceil(S*sqrt(-2*log(thresh/A)))
 
 
-from image import *
+from .image import *
 
 class Gaussian(object):
     """Instances of this class are used to store information about
@@ -939,8 +948,8 @@ class Gaussian(object):
         g_idx: gaussian serial number
         flag: flagging (if any)
         """
-        import functions as func
-        from const import fwsig
+        from . import functions as func
+        from .const import fwsig
         import numpy as N
 
         use_wcs = True
@@ -1018,7 +1027,7 @@ class Gaussian(object):
 
 
 ### Insert attributes into Island class
-from islands import Island
+from .islands import Island
 Island.gaul = List(tInstance(Gaussian), doc="List of extracted gaussians")
 Island.fgaul= List(tInstance(Gaussian),
                    doc="List of extracted (flagged) gaussians")

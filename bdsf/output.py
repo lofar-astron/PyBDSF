@@ -4,7 +4,9 @@ Defines functions that write the results of source detection in a
 variety of formats. These are then used as methods of Image objects
 and/or are called by the outlist operation if output_all is True.
 """
-from image import Op
+from __future__ import print_function
+from __future__ import absolute_import
+from .image import Op
 
 class Op_outlist(Op):
     """Write out list of Gaussians
@@ -115,7 +117,7 @@ class Op_outlist(Op):
         """ Writes input parameters to a text file."""
         import inspect
         import types
-        import mylogger
+        from . import mylogger
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
         fname = 'parameters_used'
@@ -123,7 +125,7 @@ class Op_outlist(Op):
         mylog.info('Writing '+dir+fname)
         for attr in inspect.getmembers(img.opts):
           if attr[0][0] != '_':
-            if isinstance(attr[1], (int, str, bool, float, types.NoneType, tuple, list)):
+            if isinstance(attr[1], (int, str, bool, float, type(None), tuple, list)):
               f.write('%-40s' % attr[0])
               f.write(repr(attr[1])+'\n')
 
@@ -132,7 +134,7 @@ class Op_outlist(Op):
               if hasattr(img, attr[0]):
                   used = img.__getattribute__(attr[0])
                   if used != attr[1] and isinstance(used, (int, str, bool, float,
-                                                           types.NoneType, tuple,
+                                                           type(None), tuple,
                                                            list)):
                       f.write('%-40s' % '    Value used')
                       f.write(repr(used)+'\n')
@@ -140,8 +142,8 @@ class Op_outlist(Op):
 
     def save_opts(self, img, dir):
         """ Saves input parameters to a PyBDSM save file."""
-        import interface
-        import mylogger
+        from . import interface
+        from . import mylogger
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
         fname = 'parameters.sav'
@@ -210,8 +212,8 @@ def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
                    clobber=False, incl_empty=False, correct_proj=True):
     """Writes Gaussian list to a BBS sky model"""
     import numpy as N
-    from const import fwsig
-    import mylogger
+    from .const import fwsig
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
@@ -244,8 +246,8 @@ def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
                    clobber=False, incl_empty=False):
     """Writes Gaussian list to a SAGECAL lsm sky model"""
     import numpy as N
-    from const import fwsig
-    import mylogger
+    from .const import fwsig
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
@@ -276,8 +278,8 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
                    clobber=False, incl_empty=False, objtype='gaul'):
     """Writes Gaussian list to a ds9 region file"""
     import numpy as N
-    from const import fwsig
-    import mylogger
+    from .const import fwsig
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -315,7 +317,7 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
 def write_ascii_list(img, filename=None, sort_by='indx', format = 'ascii',
                      incl_chan=False, incl_empty=False, clobber=False, objtype='gaul'):
     """Writes Gaussian list to an ASCII file"""
-    import mylogger
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -345,7 +347,7 @@ def write_ascii_list(img, filename=None, sort_by='indx', format = 'ascii',
 
 def write_casa_gaul(img, filename=None,  incl_empty=False, clobber=False):
     """Writes a clean box file for use in casapy"""
-    import mylogger
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -367,13 +369,13 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                     incl_chan=False, incl_empty=False, clobber=False):
     """ Write as FITS binary table.
     """
-    import mylogger
+    from . import mylogger
     from distutils.version import StrictVersion
     try:
         from astropy.io import fits as pyfits
         use_header_update = False
         use_from_columns = True
-    except ImportError, err:
+    except ImportError as err:
         import pyfits
         if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
             use_header_update = True
@@ -383,7 +385,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
             use_from_columns = True
     import os
     import numpy as N
-    from _version import __version__
+    from ._version import __version__
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
     if objtype == 'gaul':
@@ -466,7 +468,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
 
 def write_kvis_ann(img, filename=None, sort_by='indx',
                    clobber=False):
-    import mylogger
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -499,8 +501,8 @@ def write_kvis_ann(img, filename=None, sort_by='indx',
 
 def write_star(img, filename=None, sort_by='indx',
                clobber=False):
-    from output import ra2hhmmss, dec2ddmmss
-    import mylogger
+    from .output import ra2hhmmss, dec2ddmmss
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -539,8 +541,8 @@ def write_star(img, filename=None, sort_by='indx',
 def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                  incl_empty=False, correct_proj=True):
     """Makes a list of string entries for a BBS sky model."""
-    from output import ra2hhmmss
-    from output import dec2ddmmss
+    from .output import ra2hhmmss
+    from .output import dec2ddmmss
     import numpy as N
 
     outstr_list = []
@@ -656,8 +658,8 @@ def make_bbs_shapeletfiles(img):
 
     column major
     """
-    from output import ra2hhmmss
-    from output import dec2ddmmss
+    from .output import ra2hhmmss
+    from .output import dec2ddmmss
     import numpy as N
 
     for isl in img.islands:
@@ -689,11 +691,11 @@ def make_bbs_shapeletfiles(img):
 
 def make_lsm_str(img, glist, gnames, incl_empty=False):
     """Makes a list of string entries for a SAGECAL sky model."""
-    from output import ra2hhmmss
-    from output import dec2ddmmss
-    from const import fwsig
+    from .output import ra2hhmmss
+    from .output import dec2ddmmss
+    from .const import fwsig
     import numpy as N
-    from _version import __version__
+    from ._version import __version__
 
     outstr_list = ["# SAGECAL sky model\n"]
     freq = "%.5e" % img.frequency
@@ -807,7 +809,7 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
 def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False,
     incl_chan=False):
     """Makes a list of string entries for an ascii region file."""
-    from _version import __version__
+    from ._version import __version__
     outstr_list = []
     freq = "%.5e" % img.frequency
 
@@ -849,7 +851,7 @@ def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False,
 
 def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False,
     incl_chan=False):
-    import functions as func
+    from . import functions as func
 
     out_list = []
     if img.opts.aperture is not None:
@@ -872,7 +874,7 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False,
 
 def make_casa_str(img, glist):
     """Makes a list of string entries for a casa region file."""
-    import functions as func
+    from . import functions as func
     outstr_list = ['#CRTFv0 CASA Region Text Format version 0\n']
     sep = ' '
     scale = 2.0 # scale box to 2 times FWHM of Gaussian
@@ -960,7 +962,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
     The names are root_iXX_sXX_gXX (or wXX_iXX_sXX_gXX for wavelet Gaussians)
     """
     import numpy as N
-    import functions as func
+    from . import functions as func
 
     # Define lists
     if root is None:
@@ -1047,7 +1049,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
         # some Gaussians that fell outside of the regions in the patch
         # mask file.
         if 0 in unique_patch_ids:
-            import mylogger
+            from . import mylogger
             mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
             mylog.warning('Some sources fall outside of the regions '
                       'defined in the mask file. These sources are not '
@@ -1151,7 +1153,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
         names = ['island_id', 'shapelet_posn_sky', 'shapelet_posn_skyE',
                  'shapelet_basis', 'shapelet_beta', 'shapelet_nmax', 'shapelet_cf']
     else:
-        print 'Object type unrecongnized.'
+        print('Object type unrecongnized.')
         return (None, None, None, None)
     if incl_spin:
         names += ['spec_indx', 'e_spec_indx']

@@ -5,21 +5,23 @@ ordermax = nmax+1; range(ordermax) has all the values of n
 Order n => J=n, where J=0 is the gaussian.
 
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import numpy as N
 try:
     from astropy.io import fits as pyfits
-except ImportError, err:
+except ImportError as err:
     import pyfits
 from scipy.optimize import leastsq
 
 def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     """ Decomposes image (with mask) and beta, centre (2-tuple) , nmax into basis
         shapelets and returns the coefficient matrix cf.
-	Mode is 'fit' or 'integrate' for method finding coeffs. If fit then integrated
-	values are taken as initial guess.
-	Centre is by python convention, for retards who count from zero.
-	"""
+    Mode is 'fit' or 'integrate' for method finding coeffs. If fit then integrated
+    values are taken as initial guess.
+    Centre is by python convention, for retards who count from zero.
+    """
     bad = False
     if (beta < 0 or beta/max(image.shape) > 5 or \
        (max(N.abs(list(centre)))-max(image.shape)/2) > 10*max(image.shape)): bad = True
@@ -28,7 +30,7 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     if not bad:
       hc = shapelet_coeff(nmax, basis)
     else:
-      print ' Bad input params'
+      print(' Bad input params')
     ordermax=nmax+1
 
     Bset=N.zeros((ordermax, ordermax, image.shape[0], image.shape[1]), dtype=N.float32)
@@ -36,11 +38,11 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     index = [(i,j) for i in range(ordermax) for j in range(ordermax-i)]  # i=0->nmax, j=0-nmax-i
     for coord in index:
         B = shapelet_image(basis, beta, centre, hc, coord[0], coord[1], image.shape)
-	if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
-	m = N.copy(mask)
-	for i, v in N.ndenumerate(mask): m[i] = not v
+    if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
+    m = N.copy(mask)
+    for i, v in N.ndenumerate(mask): m[i] = not v
 
-	cf[coord] = N.sum(image*B*m)
+    cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
       npix = N.product(image.shape)-N.sum(mask)
@@ -56,7 +58,7 @@ def fit_shapeletbasis(image, mask, cf0, Bset):
     """ Fits the image to the shapelet basis functions to estimate shapelet coefficients
     instead of integrating it out. This should avoid the problems of digitisation and hence
     non-orthonormality. """
-    import functions as func
+    from . import functions as func
 
     ma = N.where(~mask.flatten())
 
@@ -130,7 +132,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     and for the c2 image, the zero crossing for every horizontal line, and then
     we find intersection point of these two. This seems to work even for highly
     non-gaussian cases. """
-    import functions as func
+    from . import functions as func
     import sys
 
     hc = []
@@ -146,20 +148,20 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     for coord in index:
         if msk[coord]:
             B12 = shapelet_image(basis, beta, coord, hc, 0, 1, image.shape)
-	    cf12[coord] = N.sum(image*B12*msk)
+            cf12[coord] = N.sum(image*B12*msk)
 
             if coord==(27,51): dumpy = B12
 
             B21 = shapelet_image(basis, beta, coord, hc, 1, 0, image.shape)
-	    cf21[coord] = N.sum(image*B21*msk)
+            cf21[coord] = N.sum(image*B21*msk)
         else:
-	    cf12[coord] = None
-	    cf21[coord] = None
+            cf12[coord] = None
+            cf21[coord] = None
 
     (xmax,ymax) = N.unravel_index(image.argmax(),image.shape)  #  FIX  with mask
     if xmax in [1,n] or ymax in [1,m]:
         (m1, m2, m3) = func.moment(mask)
-	xmax,ymax = N.round(m2)
+    xmax,ymax = N.round(m2)
 
     # in high snr area, get zero crossings for each horizontal and vertical line for c1, c2 resp
     tr_mask=mask.transpose()
@@ -204,7 +206,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     if error > 0:
         #print 'Error '+str(error)+' in finding centre, will take 1st moment instead.'
         (m1, m2, m3) = func.moment(image, mask)
-	cen = m2
+    cen = m2
 
     return cen
 
@@ -227,34 +229,34 @@ def getzeroes_matrix(mask, cf, cen, cenx):
         npts = len(l)-sum(l)
 
         #print 'npts = ',npts
-	if npts > 3 and not N.isnan(cf[i,cen]):
- 	  mrow=mask[i,:]
-	  if sum(l) == 0:
-            low=0
-	    up=cf.shape[1]-1
+    if npts > 3 and not N.isnan(cf[i,cen]):
+      mrow=mask[i,:]
+      if sum(l) == 0:
+        low=0
+        up=cf.shape[1]-1
+      else:
+        low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
+        #print 'mrow = ',i, mrow, low,
+        try:
+          up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
+          #print 'up1= ', up
+        except IndexError:
+          if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
+            up = len(mrow)
+            #print 'up2= ', up,
           else:
-            low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
-            #print 'mrow = ',i, mrow, low,
-            try:
-              up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
-              #print 'up1= ', up
-            except IndexError:
-              if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
-                up = len(mrow)
-                #print 'up2= ', up,
-              else:
-                raise
+            raise
           #print
-	  low += 1; up -= 1
-	  npoint = up-low+1
-	  xfn = N.arange(npoint)+low
-	  yfn = cf[i,xfn]
-	  root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
-	  if error != 1:
-            y[i] = root
-          else:
-            y[i] = 0.0
-	else:
+      low += 1; up -= 1
+      npoint = up-low+1
+      xfn = N.arange(npoint)+low
+      yfn = cf[i,xfn]
+      root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
+      if error != 1:
+        y[i] = root
+      else:
+        y[i] = 0.0
+    else:
           y[i] = 0.0
 
     return x,y
@@ -263,7 +265,7 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
     """ This finds the root for finding the shapelet centre. If there are multiple roots, takes
     that which closest to the 'centre', taken as the intensity barycentre. This is the python
     version of getroot.f of anaamika."""
-    import functions as func
+    from . import functions as func
 
     root=None
     npoint=len(xfn)
@@ -276,18 +278,18 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
     minint=0; minintold=0
     for i in range(1,npoint):
         if yfn[i-1]*yfn[i] < 0.:
-            if minintold == 0:  # so take nearest to centre
-	      if abs(yfn[i-1]) < abs(yfn[i]):
-	        minint=i-1
-              else:
-	        minint=i
+          if minintold == 0:  # so take nearest to centre
+            if abs(yfn[i-1]) < abs(yfn[i]):
+              minint=i-1
             else:
-	        dnew=func.dist_2pt([xco,xfn[i]], [xcen,ycen])
-	        dold=func.dist_2pt([xco,xfn[minintold]], [xcen,ycen])
-		if dnew <= dold:
-		    minint=i
-                else:
-		    minint=minintold
+              minint=i
+          else:
+            dnew=func.dist_2pt([xco,xfn[i]], [xcen,ycen])
+            dold=func.dist_2pt([xco,xfn[minintold]], [xcen,ycen])
+        if dnew <= dold:
+            minint=i
+        else:
+            minint=minintold
             minintold=minint
 
     if minint < 1 or minint > npoint: error=1
@@ -320,7 +322,7 @@ def shapelet_check_centre(image, mask, cen, beam_pix):
 
     if error > 0:
         if (N.product(mask.shape)-sum(sum(mask)))/(pi*0.25*beam_pix[0]*beam_pix[1]) < 2.5:
-	    error = error*10   # expected to fail since source is too small
+            error = error*10   # expected to fail since source is too small
 
     return error
 
@@ -369,7 +371,7 @@ def shapelet_coeff(nmax=20,basis='cartesian'):
 
     order=nmax+1
     if basis == 'polar':
-       raise NotImplementedError, "Polar shapelets not yet implemented."
+       raise NotImplementedError("Polar shapelets not yet implemented.")
 
     hc=N.zeros([order,order])
     hnm1=N.zeros(order); hn=N.zeros(order)

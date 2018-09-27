@@ -2,35 +2,37 @@
 
 Do source extraction on this if asked.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as N
-from image import *
-import mylogger
+from .image import *
+from . import mylogger
 import os
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
-import _cbdsm
+from . import _cbdsm
 from math import log, floor, sqrt
-from const import fwsig
+from .const import fwsig
 from copy import deepcopy as cp
-import functions as func
+from . import functions as func
 import gc
 from numpy import array, product
 import scipy.signal
 from scipy.signal.signaltools import _centered
-from readimage import Op_readimage
-from preprocess import Op_preprocess
-from rmsimage import Op_rmsimage
-from threshold import Op_threshold
-from islands import Op_islands
-from gausfit import Op_gausfit, Gaussian
-from gaul2srl import Op_gaul2srl
-from make_residimage import Op_make_residimage
-from output import Op_outlist
-from interface import raw_input_no_history
-import multi_proc as mp
+from .readimage import Op_readimage
+from .preprocess import Op_preprocess
+from .rmsimage import Op_rmsimage
+from .threshold import Op_threshold
+from .islands import Op_islands
+from .gausfit import Op_gausfit, Gaussian
+from .gaul2srl import Op_gaul2srl
+from .make_residimage import Op_make_residimage
+from .output import Op_outlist
+from .interface import raw_input_no_history
+from . import multi_proc as mp
 import itertools
-import statusbar
+from . import statusbar
 try:
     import pyfftw.interfaces
     pyfftw.interfaces.cache.enable()
@@ -128,7 +130,7 @@ class Op_wavelet_atrous(Op):
             else:
                 w = im_old - im_new
             im_old = im_new
-            suffix = 'w' + `j`
+            suffix = 'w' + repr(j)
             filename = img.imagename + '.atrous.' + suffix + '.fits'
             if img.opts.output_all:
                 func.write_image_to_file('fits', filename, w, img, bdir)
@@ -277,9 +279,9 @@ class Op_wavelet_atrous(Op):
               if img.opts.interactive and has_pl:
                   dc = '\033[34;1m'
                   nc = '\033[0m'
-                  print dc + '--> Displaying islands and rms image...' + nc
+                  print(dc + '--> Displaying islands and rms image...' + nc)
                   if max(wimg.ch0_arr.shape) > 4096:
-                      print dc + '--> Image is large. Showing islands only.' + nc
+                      print(dc + '--> Image is large. Showing islands only.' + nc)
                       wimg.show_fit(rms_image=False, mean_image=False, ch0_image=False,
                         ch0_islands=True, gresid_image=False, sresid_image=False,
                         gmodel_image=False, smodel_image=False, pyramid_srcs=False)
@@ -425,8 +427,8 @@ class Op_wavelet_atrous(Op):
 
 ######################################################################################################
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
-        import functions as func
-        from make_residimage import Op_make_residimage as opp
+        from . import functions as func
+        from .make_residimage import Op_make_residimage as opp
 
         dummy = opp()
         shape = residim.shape
@@ -509,7 +511,7 @@ class Pyramid_source(object):
             self.jlevels = [level0]
 
         def belongs(self, img, isl):
-            import functions as func
+            from . import functions as func
                                                 # get centroid of island (as integer)
             mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
             cen = N.array(mom[1:3]) + isl.origin
@@ -604,7 +606,7 @@ def merge_islands(img, isl1, isl2):
 
     The merged island replaces isl1 in img.
     """
-    from islands import Island
+    from .islands import Island
     import scipy.ndimage as nd
 
     shape,nbox1,nbox2,origin,fullbox=merge_bbox(isl1.bbox,isl2.bbox)

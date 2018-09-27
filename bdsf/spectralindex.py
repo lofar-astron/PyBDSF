@@ -3,19 +3,21 @@
    This module calculates spectral indices for Gaussians and sources for a multichannel cube.
 
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import numpy as N
-from image import *
-import mylogger
-from gaul2srl import Source
+from .image import *
+from . import mylogger
+from .gaul2srl import Source
 from copy import deepcopy as cp
-import _cbdsm
-import collapse
+from . import _cbdsm
+from . import collapse
 import sys
-import functions as func
+from . import functions as func
 import time
-import statusbar
-from gausfit import Gaussian
+from . import statusbar
+from .gausfit import Gaussian
 
 
 Gaussian.spec_indx = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
@@ -133,11 +135,11 @@ class Op_spectralindex(Op):
                         npos = len(N.where(total_flux[:, ig] > 0.0)[0])
                         if img.opts.verbose_fitting:
                             if img.opts.flagchan_snr:
-                                print 'Gaussian #%i : averaged to %i channels, of which %i meet SNR criterion' % (gaussian.gaus_num,
-                                       len(total_flux[:, ig]), n_good_chan_per_gaus[ig])
+                                print('Gaussian #%i : averaged to %i channels, of which %i meet SNR criterion' % (gaussian.gaus_num,
+                                       len(total_flux[:, ig]), n_good_chan_per_gaus[ig]))
                             else:
-                                print 'Gaussian #%i : averaged to %i channels, all of which will be used' % (gaussian.gaus_num,
-                                       len(total_flux[:, ig]))
+                                print('Gaussian #%i : averaged to %i channels, all of which will be used' % (gaussian.gaus_num,
+                                       len(total_flux[:, ig])))
                         if (img.opts.flagchan_snr and n_good_chan_per_gaus[ig] < 2) or npos < 2:
                             gaussian.spec_indx = N.NaN
                             gaussian.e_spec_indx = N.NaN
@@ -196,11 +198,11 @@ class Op_spectralindex(Op):
                         src_mask = src_mask.reshape((src_mask.shape[0],))
                         if img.opts.verbose_fitting:
                             if img.opts.flagchan_snr:
-                                print 'Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id,
-                                      len(src_total_flux), nchan)
+                                print('Source #%i : averaged to %i channels, of which %i meet SNR criterion' % (src.source_id,
+                                      len(src_total_flux), nchan))
                             else:
-                                print 'Source #%i : averaged to %i channels, all of which will be used' % (src.source_id,
-                                       len(src_total_flux))
+                                print('Source #%i : averaged to %i channels, all of which will be used' % (src.source_id,
+                                       len(src_total_flux)))
                         npos = len(N.where(src_total_flux > 0.0)[0])
 
                         if isinstance(n_good_chan, int):
@@ -326,7 +328,7 @@ class Op_spectralindex(Op):
 
 ####################################################################################
     def rms_spectrum(self, img, image):
-        from rmsimage import Op_rmsimage
+        from .rmsimage import Op_rmsimage
         global bar1
         mylog = img.mylog
 
@@ -374,7 +376,7 @@ class Op_spectralindex(Op):
         """ Fits spectral index to data.
 
         do_log is True/False implies you fit spectral index in logFlux vs logFreq space or not."""
-        import functions as func
+        from . import functions as func
         import math
         from scipy.optimize import leastsq
 
@@ -422,7 +424,7 @@ class Op_spectralindex(Op):
             [[0, 1], [2], [3, 4]]
         """
         from math import sqrt
-        from collapse import avspc_direct, avspc_blanks
+        from .collapse import avspc_direct, avspc_blanks
 
         nchan = imagein.shape[0]
 
@@ -526,8 +528,8 @@ class Op_spectralindex(Op):
         Returns array of total fluxes (N_channels x N_Gaussians) and array
         of errors (N_channels x N_Gaussians).
         """
-        import functions as func
-        from const import fwsig
+        from . import functions as func
+        from .const import fwsig
 
         isl = img.islands[src.island_id]
         isl_bbox = isl.bbox

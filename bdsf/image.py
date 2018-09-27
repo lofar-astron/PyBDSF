@@ -11,9 +11,11 @@ used by the interactive IPython shell made by pybdsf).
 This module also defines class Op, which is used as a base class for all PyBDSF
 operations.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import numpy as N
-from opts import *
+from .opts import *
 
 class Image(object):
     """Image is a primary data container for PyBDSF.
@@ -66,7 +68,7 @@ class Image(object):
         return state
 
     def __getattribute__(self, name):
-        import functions as func
+        from . import functions as func
         if name.endswith("_arr"):
             if self.do_cache:
                 map_data = func.retrieve_map(self, name)
@@ -80,14 +82,14 @@ class Image(object):
             return object.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
-        import functions as func
+        from . import functions as func
         if self.do_cache and name.endswith("_arr") and isinstance(value, N.ndarray):
             func.store_map(self, name, value)
         else:
             super(Image, self).__setattr__(name, value)
 
     def __delattr__(self, name):
-        import functions as func
+        from . import functions as func
         if self.do_cache and name.endswith("_arr"):
             func.del_map(self, name)
         else:
@@ -95,7 +97,7 @@ class Image(object):
 
     def get_map(self, map_name):
         """Returns requested map."""
-        import functions as func
+        from . import functions as func
         if self.do_cache:
             map_data = func.retrieve_map(self, map_name)
         else:
@@ -104,7 +106,7 @@ class Image(object):
 
     def put_map(self, map_name, map_data):
         """Stores requested map."""
-        import functions as func
+        from . import functions as func
         if self.do_cache:
             func.store_map(self, map_name, map_data)
         else:
@@ -112,28 +114,28 @@ class Image(object):
 
     def list_pars(self):
         """List parameter values."""
-        import interface
+        from . import interface
         interface.list_pars(self)
 
     def set_pars(self, **kwargs):
         """Set parameter values."""
-        import interface
+        from . import interface
         interface.set_pars(self, **kwargs)
 
     def process(self, **kwargs):
         """Process Image object"""
-        import interface
+        from . import interface
         success = interface.process(self, **kwargs)
         return success
 
     def save_pars(self, savefile=None):
         """Save parameter values."""
-        import interface
+        from . import interface
         interface.save_pars(self, savefile)
 
     def load_pars(self, loadfile=None):
         """Load parameter values."""
-        import interface
+        from . import interface
         import os
         if loadfile is None or loadfile == '':
             loadfile = self.opts.filename + '.pybdsf.sav'
@@ -145,47 +147,47 @@ class Image(object):
                 self.opts.filename = orig_filename # reset filename to original
             else:
                 if self._is_interactive_shell:
-                    print "\n\033[31;1mERROR\033[0m: '"+\
-                    loadfile+"' is not a valid parameter save file."
+                    print("\n\033[31;1mERROR\033[0m: '"+\
+                    loadfile+"' is not a valid parameter save file.")
                 else:
                     raise RuntimeError(str(err))
         else:
             if self._is_interactive_shell:
-                print "\n\033[31;1mERROR\033[0m: File '"+\
-                loadfile+"' not found."
+                print("\n\033[31;1mERROR\033[0m: File '"+\
+                loadfile+"' not found.")
             else:
                 raise RuntimeError('File not found')
 
     def show_fit(self, **kwargs):
         """Show results of the fit."""
-        import plotresults
+        from . import plotresults
         if not hasattr(self, 'nisl'):
-            print 'Image has not been processed. Please run process_image first.'
+            print('Image has not been processed. Please run process_image first.')
             return False
         plotresults.plotresults(self, **kwargs)
         return True
 
     def export_image(self, **kwargs):
         """Export an internal image to a file."""
-        import interface
+        from . import interface
         try:
             result = interface.export_image(self, **kwargs)
             return result
-        except RuntimeError, err:
+        except RuntimeError as err:
             if self._is_interactive_shell:
-                print "\n\033[31;1mERROR\033[0m: " + str(err)
+                print("\n\033[31;1mERROR\033[0m: " + str(err))
             else:
                 raise RuntimeError(str(err))
 
     def write_catalog(self, **kwargs):
         """Write the Gaussian, source, or shapelet list to a file"""
-        import interface
+        from . import interface
         try:
             result = interface.write_catalog(self, **kwargs)
             return result
-        except RuntimeError, err:
+        except RuntimeError as err:
             if self._is_interactive_shell:
-                print "\n\033[31;1mERROR\033[0m: " + str(err)
+                print("\n\033[31;1mERROR\033[0m: " + str(err))
             else:
                 raise RuntimeError(str(err))
 

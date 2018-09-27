@@ -8,13 +8,13 @@ the screen. For a property (e.g., flux density), one can define the
 column name to be used on output and the associated units.
 
 For a much more generic and capable implementation I can recommend
-to look at Enthought Traits package: 
+to look at Enthought Traits package:
     http://code.enthought.com/projects/traits
 
 
 Defined are:
  - a number tc-handlers which allow to type-check and/or cast
-   values to the specific type (tcCType, tcEnum, tcTuple, 
+   values to the specific type (tcCType, tcEnum, tcTuple,
    tcOption, tcInstance, tcList, tcAny). These aren't really
    inteded for use by end-user.
 
@@ -26,7 +26,7 @@ Defined are:
    tInstance, List, Any)
 
 Usage:
-For the most needs it's enough to use wrapper-interface. 
+For the most needs it's enough to use wrapper-interface.
 One important remark -- class containing tc-variables should be
 new-style class, thus you should explicitly inherit from 'object'
 for Python < 2.6.
@@ -50,14 +50,17 @@ v.intval = "failure"   # FAILS
 v.op_type= "op2"       # OK
 v.op_type= "op3"       # FAILS
 """
-import exceptions
+try:
+    import exceptions
+except ImportError:
+    import builtins as exceptions
 import types
 
-_sequence_types = (types.ListType, types.TupleType)
-_class_types = (types.ClassType, types.TypeType)
-_basic_types = (types.BooleanType, types.IntType, types.LongType,
-                types.FloatType,   types.ComplexType,
-                types.StringType,  types.UnicodeType)
+_sequence_types = (list, tuple)
+_class_types = (type, type)
+_basic_types = (bool, int, int,
+                float,   complex,
+                bytes,  str)
 
 
 ############################################################
@@ -152,7 +155,7 @@ def Option(value, type=None, doc=None, group=None):
 
     return TC(value, tcOption(type), doc, group)
 
-def NArray(value=None, or_none=True, doc=None, group=None, colname=None, 
+def NArray(value=None, or_none=True, doc=None, group=None, colname=None,
            units=None):
     """Creates tc-value which holds Numpy arrays
 
@@ -166,12 +169,12 @@ def NArray(value=None, or_none=True, doc=None, group=None, colname=None,
     try:
         import numpy as N
     except:
-        raise tcError, "Can't create tc-value of type NArray " \
-            "without access to numpy module"
+        raise tcError("Can't create tc-value of type NArray " \
+            "without access to numpy module")
 
     return Instance(value, N.ndarray, or_none, doc, group, colname, units)
 
-def Instance(value, type=None, or_none=True, doc=None, group=None, 
+def Instance(value, type=None, or_none=True, doc=None, group=None,
              colname=None, units=None):
     """Creates tc-value which holds instances of specific class.
 
@@ -250,7 +253,7 @@ def List(value, type=None, doc=None, group=None, colname=None, units=None):
     print x2.l   # this will print [1]
 
     x1.l = [2]
-    print x2.l   # still [1], as x1 has it's own local value now    
+    print x2.l   # still [1], as x1 has it's own local value now
     """
     if type is None:
         value, type = [], tc_from(value)
@@ -294,7 +297,7 @@ class TC(object):
     test.value2 = (3, None)
 
     An important restriction -- it might only be used with
-    new-style objects (e.g. objects derived from 'object' 
+    new-style objects (e.g. objects derived from 'object'
     or 'type'. And the attribute should be defined in the
     class of the object.
     """
@@ -347,8 +350,8 @@ class TC(object):
 
         if not self._name:
             self.set_property_names(instance.__class__)
-        
-        values[self] = self._type.cast(value, self._name, 
+
+        values[self] = self._type.cast(value, self._name,
                                        instance.__class__.__name__)
 
     def __delete__(self, instance):
@@ -386,13 +389,13 @@ class TC(object):
     def set_property_names(klass):
         """Scan class definition and update _name for all
         TC objects defined there"""
-        for k,v in klass.__dict__.iteritems():
+        for k,v in klass.__dict__.items():
             if isinstance(v, TC):
                 v._name = k
 
 
 ############################################################
-## tcHandler and derived handlers for the specific 
+## tcHandler and derived handlers for the specific
 ## types/values
 ############################################################
 class tcHandler(object):
@@ -404,7 +407,7 @@ class tcHandler(object):
         self.error(strx(value), *args)
 
     def is_valid(self, value):
-        """Check if provided value can be safely casted to the 
+        """Check if provided value can be safely casted to the
         proper type"""
         try:
             self.cast(value)
@@ -453,11 +456,11 @@ class tcCType(tcHandler):
     """
     def __init__(self, _type):
         """Creates tcType handler.
-        
+
         Parameters:
         _type: Python type object or a value of a reqired type
         """
-        if not isinstance(_type, types.TypeType):
+        if not isinstance(_type, type):
             _type = type(_type)
 
         self.type = _type
@@ -474,14 +477,14 @@ class tcCType(tcHandler):
 
     def info(self):
         return "a value of %s" % str_type(self.type)
-                    
+
 
 ############################################################
 class tcEnum(tcHandler):
     """Ensures that a value is a member of a specified list of values"""
     def __init__(self, *values):
         """Creates a tcEnum handler.
-        
+
         Parameters:
         values: list or tuple of all legal values
 
@@ -519,7 +522,7 @@ class tcTuple(tcHandler):
         args: list of tuple components
 
         Description:
-        Each tuple component should be either a specific 
+        Each tuple component should be either a specific
         tc-handler or a value which can be converted to it
         (by the means of tc_from function)
         """
@@ -546,13 +549,13 @@ class tcTuple(tcHandler):
 
 ############################################################
 class tcOption(tcHandler):
-    """Implements an optional value: None or a value 
+    """Implements an optional value: None or a value
     restricted by another tcHandler"""
     def __init__(self, _type):
         """Creates tcOption handler.
-        
+
         Parameters:
-        _type: tc-handle, Python type object or a value of 
+        _type: tc-handle, Python type object or a value of
                a reqired type
         """
         self.type = tc_from(_type)
@@ -572,7 +575,7 @@ class tcOption(tcHandler):
 
 ############################################################
 class tcInstance(tcHandler):
-    """Ensures that a value belongs to a specified python 
+    """Ensures that a value belongs to a specified python
     class or type (or one of it's subclasses).
     """
     def __init__(self, klass, or_none=True):
@@ -641,16 +644,17 @@ class tcListObject(list):
         self.extras = extras
 
         ## type-check initial values
-        self.__setslice__(0, 0, values)
+#         self.__setslice__(0, 0, values)
 
     def __setitem__(self, key, value):
         v = self.type.cast(value, *self.extras)
         list.__setitem__(self, key, v)
 
-    def __setslice__(self, i, j, values):
-        cast = self.type.cast
-        v = [cast(x, *self.extras) for x in values]
-        list.__setslice__(self, i, j, v)
+#     def __setslice__(self, i, j, values):
+#         cast = self.type.cast
+#         v = [cast(x, *self.extras) for x in values]
+#         list[i:j] = v
+#         list.__setslice__(self, i, j, v)
 
     def append(self, value):
         v = self.type.cast(value, *self.extras)
@@ -669,11 +673,11 @@ class tcListObject(list):
 ############################################################
 def tc_from(v):
     """tc_from tries to guess an appropriate tc-handler for the
-    provided object. 
+    provided object.
 
     The basic logic is a following:
      - TC object results in it's internal type constrain
-     - for a instances and type-objects of the basic numerica 
+     - for a instances and type-objects of the basic numerica
        types we use tcCType handler
      - a list of values results in tcEnum handler
      - a tuple of values results in tcTuple handler
@@ -687,9 +691,9 @@ def tc_from(v):
         return tcCType(v)
     if type(v) in _basic_types:
         return tcCType(v)
-    if type(v) is types.ListType:
+    if type(v) is list:
         return tcEnum(v)
-    if type(v) is types.TupleType:
+    if type(v) is tuple:
         return tcTuple(*v)
     if v is None:
         return tcAny()
