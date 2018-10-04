@@ -771,7 +771,7 @@ def get_errors(img, p, stdav, bm_pix=None):
 
     if len(p) % 7 > 0:
       mylog.error("Gaussian parameters passed have to have 7n numbers")
-    ngaus = len(p)/7
+    ngaus = int(len(p)/7)
     errors = []
     for i in range(ngaus):
       pp = p[i*7:i*7+7]

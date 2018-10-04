@@ -620,7 +620,7 @@ class Op_gausfit(Op):
         thr  : peak threshold for adding more gaussians
         verbose: whether to print fitting progress information
         """
-        from _cbdsm import lmder_fit, dn2g_fit, dnsg_fit
+        from ._cbdsm import lmder_fit, dn2g_fit, dnsg_fit
         fit = lmder_fit
         beam = list(beam)
 
@@ -675,7 +675,7 @@ class Op_gausfit(Op):
         parameters: initial values for gaussian parameters
         dof: total possible number of fitted parameters
         """
-        from _cbdsm import Gtype
+        from ._cbdsm import Gtype
 
         if g3_only:
             gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
