@@ -11,7 +11,11 @@
 
 #include <boost/version.hpp>
 #include <boost/python.hpp>
+#include <numpy/arrayobject.h>
 #include <boost/python/detail/api_placeholder.hpp>
+#if BOOST_VERSION > 106500
+  #include <boost/python/numpy.hpp>
+#endif
 
 #if BOOST_VERSION > 103200
 #define ADD_PROPERTY1(name, get, doc) .add_property(name, get, doc)

@@ -44,11 +44,10 @@ and parameters under exponents (NL_ij) are non-linear.
 #if not(defined(_LIBCPP_VERSION)) and __cplusplus <= 199711L
 using namespace __gnu_cxx;
 #endif
-using namespace std;
 namespace n = num_util;
 
-vector<MGFunction::dcache_t> MGFunction::mm_data;
-vector<MGFunction::fcache_t> MGFunction::mm_fcn;
+std::vector<MGFunction::dcache_t> MGFunction::mm_data;
+std::vector<MGFunction::fcache_t> MGFunction::mm_fcn;
 void * MGFunction::mm_obj = 0;
 unsigned long MGFunction::mm_cksum = -1;
 static const double deg = M_PI/180;
@@ -217,7 +216,7 @@ void MGFunction::fcn_gradient(double *buf) const
   fcache_it f = mm_fcn.begin();
   for (unsigned didx = 0; didx < m_ndata; ++didx)
     for (unsigned gidx = 0; gidx < m_gaul.size(); ++gidx, ++f) {
-      const vector<double> &p = m_parameters[gidx];
+      const std::vector<double> &p = m_parameters[gidx];
       double cs = f->cs;
       double sn = f->sn;
       double f1 = f->f1;
@@ -253,7 +252,7 @@ void MGFunction::fcn_diff_gradient(double *buf) const
   fcache_it f = mm_fcn.begin();
   for (unsigned didx = 0; didx < m_ndata; ++didx)
     for (unsigned gidx = 0; gidx < m_gaul.size(); ++gidx, ++f) {
-      const vector<double> &p = m_parameters[gidx];
+      const std::vector<double> &p = m_parameters[gidx];
       double cs = f->cs;
       double sn = f->sn;
       double f1 = f->f1;
@@ -295,7 +294,7 @@ void MGFunction::fcn_transposed_gradient(double *buf) const
   for (didx = 0; didx < m_ndata; ++didx) {
     ggidx = 0;
     for (gidx = 0; gidx < m_gaul.size(); ++gidx, ++f) {
-      const vector<double> &p = m_parameters[gidx];
+      const std::vector<double> &p = m_parameters[gidx];
       double cs = f->cs;
       double sn = f->sn;
       double f1 = f->f1;
@@ -334,7 +333,7 @@ void MGFunction::fcn_diff_transposed_gradient(double *buf) const
   for (didx = 0; didx < m_ndata; ++didx) {
     ggidx = 0;
     for (gidx = 0; gidx < m_gaul.size(); ++gidx, ++f) {
-      const vector<double> &p = m_parameters[gidx];
+      const std::vector<double> &p = m_parameters[gidx];
       double cs = f->cs;
       double sn = f->sn;
       double f1 = f->f1;
@@ -378,7 +377,7 @@ void MGFunction::fcn_partial_gradient(double *buf) const
   for (didx = 0; didx < m_ndata; ++didx) {
     ggidx = 0;
     for (gidx = 0; gidx < m_gaul.size(); ++gidx, ++f) {
-      const vector<double> &p = m_parameters[gidx];
+      const std::vector<double> &p = m_parameters[gidx];
       double cs = f->cs;
       double sn = f->sn;
       double f1 = f->f1;
@@ -456,7 +455,7 @@ void MGFunction::__update_dcache() const
 {
   PyObject *data = (PyObject *)m_data.ptr();
   PyObject *mask = (PyObject *)m_mask.ptr();
-  vector<int> shape = n::shape(m_data);
+  std::vector<int> shape = n::shape(m_data);
   dcache_t t;
 
   mm_data.clear();
@@ -518,7 +517,7 @@ void MGFunction::_update_fcache() const
     fcache_it f = mm_fcn.begin();
     for (dcache_it d = mm_data.begin(); d != mm_data.end(); ++d)
       for (unsigned gidx = 0; gidx < ngaul; ++gidx, ++f) {
-	const vector<double> &p = m_parameters[gidx];
+	const std::vector<double> &p = m_parameters[gidx];
 	int x1 = d->x1;
 	int x2 = d->x2;
 	double cs = cos(p[5]*deg);

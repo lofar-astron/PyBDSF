@@ -240,8 +240,8 @@ class Op_wavelet_atrous(Op):
                                   isl_id = -1
                               if isl_id >= 0:
                                   isl = img.islands[isl_id]
-                                  gcenter = (g.centre_pix[0] - isl.origin[0],
-                                             g.centre_pix[1] - isl.origin[1])
+                                  gcenter = (int(g.centre_pix[0] - isl.origin[0]),
+                                             int(g.centre_pix[1] - isl.origin[1]))
                                   if not isl.mask_active[gcenter]:
                                       gaus_id += 1
                                       gcp = Gaussian(img, g.parameters[:], isl.island_id, gaus_id)

@@ -18,8 +18,10 @@ using namespace boost::python;
 BOOST_PYTHON_MODULE(_cbdsm)
 {
   import_array();
+  #if BOOST_VERSION < 106500
   numeric::array::set_module_and_type("numpy", "ndarray");
-
+  #endif
+  
   scope().attr("__doc__") = 
     "A collection of optimized C & Fortran routines for pybdsm";
 

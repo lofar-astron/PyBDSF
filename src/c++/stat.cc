@@ -46,7 +46,7 @@ bool _nonzero(const unsigned &n, const int *v)
 // calculate clipped mean/rms for array
 template<class T>
 static pair<double, double>
-_stat_nd(numeric::array arr, double _mean, double _threshold)
+_stat_nd(pyndarray arr, double _mean, double _threshold)
 {
   // ensure contiguous memory access by appropriately sorting indices
   vector<int> shape = n::shape(arr);
@@ -118,7 +118,7 @@ _stat_nd(numeric::array arr, double _mean, double _threshold)
 // calculate clipped mean/rms for masked array
 template<class T>
 static pair<double, double>
-_stat_nd_m(numeric::array arr, numeric::array mask, double _mean, double _threshold)
+_stat_nd_m(pyndarray arr, pyndarray mask, double _mean, double _threshold)
 {
   // ensure contiguous memory access by appropriately sorting indices
   vector<int> shape = n::shape(arr);
@@ -201,17 +201,17 @@ _stat_nd_m(numeric::array arr, numeric::array mask, double _mean, double _thresh
 // dispatch calculation to the correct _stat_FOO function
 template<class T>
 static pair<double, double>
-_stat(numeric::array arr, object mask, double _mean, double _threshold)
+_stat(pyndarray arr, object mask, double _mean, double _threshold)
 {
   if (mask.ptr() == Py_None || mask.ptr() == Py_False 
       || npybool_check(mask.ptr(), false))
     return _stat_nd<T>(arr, _mean, _threshold);
   else
-    return _stat_nd_m<T>(arr, extract<numeric::array>(mask), _mean, _threshold);
+    return _stat_nd_m<T>(arr, extract<pyndarray>(mask), _mean, _threshold);
 }
 
 template<class T>
-static object _bstat(numeric::array arr, object mask, double kappa)
+static object _bstat(pyndarray arr, object mask, double kappa)
 {
   #include <iostream>
   const int max_iter = 200;
@@ -232,7 +232,7 @@ static object _bstat(numeric::array arr, object mask, double kappa)
   return boost::python::make_tuple(mean[1], dev[1], mean.back(), dev.back(), cnt);
 }
 
-object bstat(numeric::array arr, object mask, double kappa)
+object bstat(pyndarray arr, object mask, double kappa)
 {
   NPY_TYPES type = n::type(arr);
 
@@ -241,7 +241,7 @@ object bstat(numeric::array arr, object mask, double kappa)
 
   if (mask.ptr() != Py_None && mask.ptr() != Py_False 
       && !npybool_check(mask.ptr(), false)) {
-    numeric::array amask = extract<numeric::array>(mask);
+    pyndarray amask = extract<pyndarray>(mask);
 
     n::check_type(amask, NPY_BOOL);
     int rank = n::rank(arr);

@@ -148,7 +148,7 @@ KindCharMapEntry kindCharMapEntries[] =
     KindCharMapEntry(PyArray_CDOUBLE,'D'),
     KindCharMapEntry(PyArray_OBJECT, 'O')
   };
-  
+ 
 typedef KindTypeMap::value_type  KindTypeMapEntry;
 KindTypeMapEntry kindTypeMapEntries[] =
   {
@@ -164,14 +164,10 @@ KindTypeMapEntry kindTypeMapEntries[] =
     KindTypeMapEntry('O',PyArray_OBJECT)
   };
 
-  
 int numStringEntries = sizeof(kindStringMapEntries)/sizeof(KindStringMapEntry);
 int numCharEntries = sizeof(kindCharMapEntries)/sizeof(KindCharMapEntry);
 int numTypeEntries = sizeof(kindTypeMapEntries)/sizeof(KindTypeMapEntry);
 
-
-using namespace boost::python;
-  
 static KindStringMap kindstrings(kindStringMapEntries,
                                    kindStringMapEntries + numStringEntries);
 
@@ -182,7 +178,7 @@ static KindTypeMap kindtypes(kindTypeMapEntries,
                                    kindTypeMapEntries + numTypeEntries);
 
 //Create a numarray referencing Python sequence object
-numeric::array makeNum(object x){
+pyndarray makeNum(object x){
   if (!PySequence_Check(x.ptr())){
     PyErr_SetString(PyExc_ValueError, "expected a sequence");
     throw_error_already_set();
@@ -190,33 +186,33 @@ numeric::array makeNum(object x){
   object obj(handle<>
 	     (PyArray_ContiguousFromObject(x.ptr(),PyArray_NOTYPE,0,0)));
   check_PyArrayElementType(obj);
-  return extract<numeric::array>(obj); 
+  return extract<pyndarray>(obj); 
 }
 
 //Create a one-dimensional Numeric array of length n and Numeric type t
-numeric::array makeNum(int n, PyArray_TYPES t=PyArray_DOUBLE){
+pyndarray makeNum(int n, PyArray_TYPES t=PyArray_DOUBLE){
   object obj(handle<>(PyArray_FromDims(1, &n, t)));
-  return extract<numeric::array>(obj);
+  return extract<pyndarray>(obj);
 }
   
 //Create a Numeric array with dimensions dimens and Numeric type t
-numeric::array makeNum(std::vector<int> dimens, 
+pyndarray makeNum(std::vector<int> dimens, 
 		       PyArray_TYPES t=PyArray_DOUBLE){
   object obj(handle<>(PyArray_FromDims(dimens.size(), &dimens[0], t)));
-  return extract<numeric::array>(obj);
+  return extract<pyndarray>(obj);
 }
 
-numeric::array makeNum(const numeric::array& arr){
-  //Returns a reference of arr by calling numeric::array copy constructor.
+pyndarray makeNum(const pyndarray& arr){
+  //Returns a reference of arr by calling pyndarray copy constructor.
   //The copy constructor increases arr's reference count.
-  return numeric::array(arr);
+  return pyndarray(arr);
 } 
 
-PyArray_TYPES type(numeric::array arr){
+PyArray_TYPES type(pyndarray arr){
   return PyArray_TYPES(PyArray_TYPE(arr.ptr()));
 }
 
-void check_type(boost::python::numeric::array arr, 
+void check_type(pyndarray arr, 
 		PyArray_TYPES expected_type){
   PyArray_TYPES actual_type = type(arr);
   if (actual_type != expected_type) {
@@ -230,7 +226,7 @@ void check_type(boost::python::numeric::array arr,
 }
 
 //Return the number of dimensions
-int rank(numeric::array arr){
+int rank(pyndarray arr){
   //std::cout << "inside rank" << std::endl;
   if(!PyArray_Check(arr.ptr())){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
@@ -239,7 +235,7 @@ int rank(numeric::array arr){
   return PyArray_NDIM(arr.ptr());
 }
 
-void check_rank(boost::python::numeric::array arr, int expected_rank){
+void check_rank(pyndarray arr, int expected_rank){
   int actual_rank = rank(arr);
   if (actual_rank != expected_rank) {
     std::ostringstream stream;
@@ -251,7 +247,7 @@ void check_rank(boost::python::numeric::array arr, int expected_rank){
   return;
 }
 
-int size(numeric::array arr)
+int size(pyndarray arr)
 {
   if(!PyArray_Check(arr.ptr())){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
@@ -260,7 +256,7 @@ int size(numeric::array arr)
   return PyArray_Size(arr.ptr());
 }
 
-void check_size(boost::python::numeric::array arr, int expected_size){
+void check_size(pyndarray arr, int expected_size){
   int actual_size = size(arr);
   if (actual_size != expected_size) {
     std::ostringstream stream;
@@ -272,7 +268,7 @@ void check_size(boost::python::numeric::array arr, int expected_size){
   return;
 }
 
-std::vector<int> shape(numeric::array arr){
+std::vector<int> shape(pyndarray arr){
   std::vector<int> out_dims;
   if(!PyArray_Check(arr.ptr())){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
@@ -286,7 +282,7 @@ std::vector<int> shape(numeric::array arr){
   return out_dims;
 }
 
-int get_dim(boost::python::numeric::array arr, int dimnum){
+int get_dim(pyndarray arr, int dimnum){
   assert(dimnum >= 0);
   int the_rank=rank(arr);
   if(the_rank < dimnum){
@@ -300,7 +296,7 @@ int get_dim(boost::python::numeric::array arr, int dimnum){
   return actual_dims[dimnum];
 }
 
-void check_shape(boost::python::numeric::array arr, std::vector<int> expected_dims){
+void check_shape(pyndarray arr, std::vector<int> expected_dims){
   std::vector<int> actual_dims = shape(arr);
   if (actual_dims != expected_dims) {
     std::ostringstream stream;
@@ -312,7 +308,7 @@ void check_shape(boost::python::numeric::array arr, std::vector<int> expected_di
   return;
 }
 
-void check_dim(boost::python::numeric::array arr, int dimnum, int dimsize){
+void check_dim(pyndarray arr, int dimnum, int dimsize){
   std::vector<int> actual_dims = shape(arr);
   if(actual_dims[dimnum] != dimsize){
     std::ostringstream stream;
@@ -325,13 +321,13 @@ void check_dim(boost::python::numeric::array arr, int dimnum, int dimsize){
   return;
 }
 
-bool iscontiguous(numeric::array arr)
+bool iscontiguous(pyndarray arr)
 {
   //  return arr.iscontiguous();
   return PyArray_ISCONTIGUOUS(arr.ptr());
 }
 
-void check_contiguous(numeric::array arr)
+void check_contiguous(pyndarray arr)
 {
   if (!iscontiguous(arr)) {
     PyErr_SetString(PyExc_RuntimeError, "expected a contiguous array");
@@ -340,7 +336,7 @@ void check_contiguous(numeric::array arr)
   return;
 }
 
-void* data(numeric::array arr){
+void* data(pyndarray arr){
   if(!PyArray_Check(arr.ptr())){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
     throw_error_already_set();
@@ -349,7 +345,7 @@ void* data(numeric::array arr){
 }
 
 //Copy data into the array
-void copy_data(boost::python::numeric::array arr, char* new_data){
+void copy_data(pyndarray arr, char* new_data){
   char* arr_data = (char*) data(arr);
   int nbytes = PyArray_NBYTES(arr.ptr());
   for (int i = 0; i < nbytes; i++) {
@@ -359,18 +355,22 @@ void copy_data(boost::python::numeric::array arr, char* new_data){
 } 
 
 //Return a clone of this array
-numeric::array clone(numeric::array arr){
+pyndarray clone(pyndarray arr){
   object obj(handle<>(PyArray_NewCopy((PyArrayObject*)arr.ptr(),PyArray_CORDER)));
   return makeNum(obj);
 }
 
-  
+
 //Return a clone of this array with a new type
-numeric::array astype(boost::python::numeric::array arr, PyArray_TYPES t){
-  return (numeric::array) arr.astype(type2char(t));
+pyndarray astype(pyndarray arr, PyArray_TYPES t){
+  #if BOOST_VERSION < 106500
+    return (pyndarray) arr.astype(type2char(t));
+  #else
+    return (pyndarray) arr.astype(type2dtype(type2char(t)));
+  #endif
 }
 
-std::vector<int> strides(numeric::array arr){
+std::vector<int> strides(pyndarray arr){
   std::vector<int> out_strides;
   if(!PyArray_Check(arr.ptr())){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
@@ -384,7 +384,7 @@ std::vector<int> strides(numeric::array arr){
   return out_strides;
 }
 
-int refcount(numeric::array arr){
+int refcount(pyndarray arr){
   return NPY_REFCOUNT(arr.ptr());
 }
 
@@ -408,6 +408,35 @@ std::string type2string(PyArray_TYPES t_type){
 char type2char(PyArray_TYPES t_type){
   return kindchars[t_type];
 }
+
+#if BOOST_VERSION >= 106500
+boost::python::numpy::dtype type2dtype(char t){
+
+  switch(t) {
+    case 'B':
+      return boost::python::numpy::dtype::get_builtin<unsigned char>();
+    case 'b':
+      return boost::python::numpy::dtype::get_builtin<signed char>();
+    case 'h':
+      return boost::python::numpy::dtype::get_builtin<short>();
+    case 'i':
+      return boost::python::numpy::dtype::get_builtin<int>();
+    case 'l':
+      return boost::python::numpy::dtype::get_builtin<long int>();
+    case 'f':
+      return boost::python::numpy::dtype::get_builtin<float>();
+    case 'd':
+      return boost::python::numpy::dtype::get_builtin<double>();
+    case 'F':
+      return boost::python::numpy::dtype::get_builtin<std::complex<float>>();
+    case 'D':
+      return boost::python::numpy::dtype::get_builtin<std::complex<double>>();
+    default:
+      std::cout << "Invalid character code!" << std::endl;
+      break;
+  }
+}
+#endif
 
 PyArray_TYPES char2type(char e_type){
   return kindtypes[e_type];
@@ -439,5 +468,5 @@ inline void check_size_match(std::vector<int> dims, int n)
   return;
 }
 
-} //namespace num_util
 
+} //namespace num_util

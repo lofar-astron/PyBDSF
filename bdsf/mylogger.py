@@ -7,19 +7,17 @@ Use as follows:
 mylog = mylogger.logging.getLogger("name")
 
 mylog.info('info') --> print to logfile, but not to screen
-mylog.userinfo(mylog, 'info') --> print to screen (if quiet==False)
-                                  and to logfile
+mylogger.userinfo(mylog, 'info') --> print to screen (if quiet==False)
+                                     and to logfile
 """
 import logging
 from socket import gethostname
-import commands
-import time
 import copy
 
 def init_logger(logfilename, quiet=False, debug=False):
   logging.USERINFO = logging.INFO + 1
   logging.addLevelName(logging.USERINFO, 'USERINFO')
-  logger = logging.getLogger("PyBDSM")
+  logger = logging.root
   logger.setLevel(logging.DEBUG)
 
   # First remove any existing handlers (in case PyBDSM has been run

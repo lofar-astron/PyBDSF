@@ -797,7 +797,7 @@ def get_errors(img, p, stdav, bm_pix=None):
             e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
             e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
             e_pa = e_pa * 180.0/pi
-            e_tot = pp[0] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) * (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
+            e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) * (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
         except:
             e_peak = 0.0
             e_x0 = 0.0
@@ -1968,7 +1968,7 @@ def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
     return mask
 
 def make_src_mask(mask_size, posn_pix, aperture_pix):
-    """Makes an island mask (1 = inside aperture)f or a given source position.
+    """Makes an island mask (1 = inside aperture) for a given source position.
     """
     import numpy as N
 
@@ -1977,16 +1977,16 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
         return N.zeros((xsize, ysize), dtype=N.int)
 
     # Make subimages
-    xlo = posn_pix[0]-int(aperture_pix)-1
+    xlo = int(posn_pix[0]-int(aperture_pix)-1)
     if xlo < 0:
         xlo = 0
-    xhi = posn_pix[0]+int(aperture_pix)+1
+    xhi = int(posn_pix[0]+int(aperture_pix)+1)
     if xhi > xsize:
         xhi = xsize
-    ylo = posn_pix[1]-int(aperture_pix)-1
+    ylo = int(posn_pix[1]-int(aperture_pix)-1)
     if ylo < 0:
         ylo = 0
-    yhi = posn_pix[1]+int(aperture_pix)+1
+    yhi = int(posn_pix[1]+int(aperture_pix)+1)
     if yhi > ysize:
         yhi = ysize
 

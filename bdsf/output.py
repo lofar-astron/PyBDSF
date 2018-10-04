@@ -450,6 +450,11 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         tbhdu.header['INIMAGE'] = (img.filename, 'Filename of image')
         tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
         tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
+
+    for key in img.header.keys():
+        if key in ['HISTORY','COMMENT','']: continue
+        tbhdu.header['I_%s'%key]=img.header[key]
+
     if filename is None:
         filename = img.imagename + '.' + objtype + '.fits'
     if os.path.exists(filename) and clobber == False:

@@ -22,14 +22,13 @@ parameters coming to/from python side.
 #include <num_util/num_util.h>
 #include <cfloat>
 
-using namespace std;
 namespace n = num_util;
 
 
 //
 // Constructor -- check data types/shapes and store them
 //
-MGFunction::MGFunction(numeric::array data, numeric::array mask, double weight)
+MGFunction::MGFunction(pyndarray data, pyndarray mask, double weight)
   :  m_weight(weight), m_npar(0), m_data(data), m_mask(mask)
 {
   py_assert(n::rank(data) == 2 && n::rank(mask) == 2,
@@ -76,14 +75,14 @@ void MGFunction::py_add_gaussian(Gtype type, object parameters)
   py_assert(len(parameters) == 6,
 	    PyExc_ValueError, "Wrong number of parameters for gaussian");
 
-  vector<double> t(6);
+  std::vector<double> t(6);
   for (int i = 0; i < 6; ++i)
     t[i] = extract<double>(parameters[i]);
 
   m_npar += int(type);
   m_gaul.push_back(int(type));
   m_parameters.push_back(t);
-  m_errors.push_back(vector<double>(6));
+  m_errors.push_back(std::vector<double>(6));
 }
 
 //
@@ -114,7 +113,7 @@ boost::python::tuple MGFunction::py_get_gaussian(int idx)
   py_assert(idx >= 0 && idx < (int)m_gaul.size(),
 	    PyExc_IndexError, "Incorrect index");
 
-  vector<double> &p = m_parameters[idx];
+  std::vector<double> &p = m_parameters[idx];
 
   return boost::python::make_tuple(p[0], p[1], p[2], p[3], p[4], p[5]);
 }
@@ -170,7 +169,7 @@ list MGFunction::py_get_errors()
   list res;
 
   for (unsigned i = 0; i < m_gaul.size(); ++i) {
-    vector<double> &e = m_errors[i];
+    std::vector<double> &e = m_errors[i];
     res.append(boost::python::make_tuple(e[0], e[1], e[2], e[3], e[4], e[5]));
   }
 
@@ -182,7 +181,7 @@ list MGFunction::py_get_errors()
 //
 boost::python::tuple MGFunction::py_find_peak()
 {
-  vector<double> buf(data_size());
+  std::vector<double> buf(data_size());
   fcn_diff(&buf.front());
 
   double peak = buf[0];
@@ -225,7 +224,7 @@ void MGFunction::register_class()
 			"and implements all math required to use it for fitting.\n\n"
 			"NEVER EVER USE IT IN MULTITHREADED SOFTWARE WITHOUT APPROPRIATE LOCKING\n"
 			"IT'S INTERNAL CACHES ARE NOT THREAD-SAFE\n\n",
-			init<numeric::array, numeric::array, 
+			init<pyndarray, pyndarray, 
 			double>((arg("data"), "mask", arg("weight") = 1.)))
 
     .def("__len__", &MGFunction::gaul_size, 

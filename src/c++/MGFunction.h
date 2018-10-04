@@ -5,6 +5,7 @@
 #include <vector>
 #include <utility>
 #include <boost/python.hpp>
+#include <pyndarray.h>
 
 using namespace boost::python;
 
@@ -46,7 +47,7 @@ using namespace boost::python;
 class MGFunction
 {
  public:
-  MGFunction(numeric::array data, numeric::array mask, double weight);
+  MGFunction(pyndarray data, pyndarray mask, double weight);
   ~MGFunction();
   
   ////////////////////////////////
@@ -120,9 +121,9 @@ protected:
   /*! number of fitted (unmasked) datapoints */
   unsigned m_ndata;
   /*! Data array */
-  numeric::array m_data;
+  pyndarray m_data;
   /*! Mask array */
-  numeric::array m_mask;
+  pyndarray m_mask;
   
  private:
   /*! prevent copying of the MGFunction objects */
