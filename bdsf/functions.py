@@ -277,11 +277,10 @@ def corrected_size(size):
     return csize
 
 def drawellipse(g):
-    import math
     import numpy as N
     from gausfit import Gaussian
 
-    rad = 180.0/math.pi
+    rad = 180.0/N.pi
     if isinstance(g, Gaussian):
       param = g2param(g)
     else:
@@ -290,15 +289,13 @@ def drawellipse(g):
       else:
         raise RuntimeError("Input to drawellipse neither Gaussian nor list")
 
-    x2 = []; y2 = []
     size = [param[3], param[4], param[5]]
     size_fwhm = corrected_size(size)
-    for th in range(0, 370, 10):
-      x1=size_fwhm[0]*math.cos(th/rad)
-      y1=size_fwhm[1]*math.sin(th/rad)
-      x2.append(x1*math.cos(param[5]/rad)-y1*math.sin(param[5]/rad)+param[1])
-      y2.append(x1*math.sin(param[5]/rad)+y1*math.cos(param[5]/rad)+param[2])
-    x2 = N.array(x2); y2 = N.array(y2)
+    th=N.arange(0, 370, 10)
+    x1=size_fwhm[0]*N.cos(th/rad)
+    y1=size_fwhm[1]*N.sin(th/rad)
+    x2=x1*N.cos(param[5]/rad)-y1*N.sin(param[5]/rad)+param[1]
+    y2=x1*N.sin(param[5]/rad)+y1*N.cos(param[5]/rad)+param[2]
 
     return x2, y2
 
