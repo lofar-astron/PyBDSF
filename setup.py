@@ -126,14 +126,13 @@ def find_boost_numpy():
 
     elif system == 'Darwin':
         if sys.version_info[0] == 2:
-            boost_python = "boost_numpy-mt"
+            boost_numpy = "boost_numpy-mt"
         else:
-            boost_python = "boost_numpy3-mt"
+            boost_numpy = "boost_numpy3-mt"
 
         if not find_library(boost_numpy):
             return None
-
-    return boost_python
+        return boost_numpy
 
 
 def main():
