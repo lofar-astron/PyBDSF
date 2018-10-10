@@ -412,7 +412,8 @@ def moment(x,mask=None):
         m2 += val*N.array(i)
         m3 += val*N.array(i)*N.array(i)
     m2 /= m1
-    m3 = N.sqrt(m3/m1-m2*m2)
+    if N.all(m3/m1 > m2*m2):
+        m3 = N.sqrt(m3/m1-m2*m2)
     return m1, m2, m3
 
 def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
