@@ -94,14 +94,12 @@ class Op_gausfit(Op):
 
         # Now call the parallel mapping function. Returns a list of [gaul, fgaul]
         # for each island.
-        gaus_list = []
-        for isl in img.islands:
-            gaus_list.append(self.process_island(isl, img_simple, opts))
-#         gaus_list = mp.parallel_map(func.eval_func_tuple,
-#                     zip(itertools.repeat(self.process_island),
-#                     img.islands, itertools.repeat(img_simple),
-#                     itertools.repeat(opts)), numcores=opts.ncores,
-#                     bar=bar, weights=weights)
+        gaus_list = mp.parallel_map(func.eval_func_tuple,
+                    zip(itertools.repeat(self.process_island),
+                    img.islands, itertools.repeat(img_simple),
+                    itertools.repeat(opts)), numcores=opts.ncores,
+                    bar=bar, weights=weights)
+        gaus_list = list(gaus_list)
 
         for isl in img.islands:
             ### now convert gaussians into Gaussian objects and store

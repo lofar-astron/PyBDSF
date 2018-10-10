@@ -115,7 +115,7 @@ class Op_islands(Op):
             pyrank = N.zeros(ch0_shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
-                pyrank[isl.bbox] += N.invert(isl.mask_active) * (i + 1)
+                pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
             pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
 
             if opts.output_all: write_islands(img)
@@ -191,7 +191,7 @@ class Op_islands(Op):
             if (isl_size >= img.minpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
-                pyrank[isl.bbox] += N.invert(isl.mask_active)*idx // idx
+                pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active)*idx // idx
 
         return res
 
@@ -300,17 +300,17 @@ class Island(object):
             origin = [b.start for b in bbox]   # easier in case ndim > 2
             if origin == []:
                 0/0
-            data = img[bbox]
-            bbox_rms_im = rms[bbox]
-            bbox_mean_im = mean[bbox]
+            data = img[tuple(bbox)]
+            bbox_rms_im = rms[tuple(bbox)]
+            bbox_mean_im = mean[tuple(bbox)]
 
             ### create (inverted) masks
             # Note that mask_active is the island mask; mask_noisy marks only
             # the noisy pixels in the island image. If you want to mask the
             # noisy pixels, set the final mask to:
             #     mask = mask_active + mask_noisy
-            isl_mask = (labels[bbox] == idx)
-            noise_mask = (labels[bbox] == 0)
+            isl_mask = (labels[tuple(bbox)] == idx)
+            noise_mask = (labels[tuple(bbox)] == 0)
             N.logical_or(noise_mask, isl_mask, noise_mask)
 
             ### invert masks

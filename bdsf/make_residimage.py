@@ -88,7 +88,7 @@ class Op_make_residimage(Op):
 
         ### residual rms and mean per island
         for isl in img.islands:
-            resid = resid_gaus[isl.bbox]
+            resid = resid_gaus[tuple(isl.bbox)]
             self.calc_resid_mean_rms(isl, resid, type='gaus')
 
         # Calculate some statistics for the Gaussian residual image
@@ -117,7 +117,7 @@ class Op_make_residimage(Op):
                 basis, beta, nmax, cf = isl.shapelet_basis, isl.shapelet_beta, \
                                         isl.shapelet_nmax, isl.shapelet_cf
                 image_recons=reconstruct_shapelets(isl.shape, mask, basis, beta, cen, nmax, cf)
-                fimg[isl.bbox] += image_recons
+                fimg[tuple(isl.bbox)] += image_recons
 
             model_shap = fimg
             resid_shap = img.ch0_arr - fimg
@@ -141,7 +141,7 @@ class Op_make_residimage(Op):
 
             ### shapelet residual rms and mean per island
             for isl in img.islands:
-                resid = resid_shap[isl.bbox]
+                resid = resid_shap[tuple(isl.bbox)]
                 self.calc_resid_mean_rms(isl, resid, type='shap')
 
             # Calculate some statistics for the Shapelet residual image

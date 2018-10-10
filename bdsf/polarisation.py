@@ -230,10 +230,10 @@ class Op_polarisation(Op):
 
           for isl in img.islands:
             isl_bbox = isl.bbox
-            ch0_I = img.ch0_arr[isl_bbox]
-            ch0_Q = img.ch0_Q_arr[isl_bbox]
-            ch0_U = img.ch0_U_arr[isl_bbox]
-            ch0_V = img.ch0_V_arr[isl_bbox]
+            ch0_I = img.ch0_arr[tuple(isl_bbox)]
+            ch0_Q = img.ch0_Q_arr[tuple(isl_bbox)]
+            ch0_U = img.ch0_U_arr[tuple(isl_bbox)]
+            ch0_V = img.ch0_V_arr[tuple(isl_bbox)]
             ch0_images = [ch0_I, ch0_Q, ch0_U, ch0_V]
 
             for i, src in enumerate(isl.sources):
@@ -264,7 +264,7 @@ class Op_polarisation(Op):
                         else:
                             rms_img = img.rms_arr
                         if len(rms_img.shape) > 1:
-                            rms_isl = rms_img[isl.bbox].mean()
+                            rms_isl = rms_img[tuple(isl.bbox)].mean()
                         else:
                             rms_isl = rms_img
                         errors[sind] = func.get_errors(img, p, rms_isl)[6]
@@ -621,9 +621,9 @@ def renumber_islands(img):
         for dg in isl.dgaul:
             dg.island_id = i
         if i == 0:
-            img.pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
+            img.pyrank[tuple(isl.bbox)] = N.invert(isl.mask_active) - 1
         else:
-            img.pyrank[isl.bbox] = N.invert(isl.mask_active) * isl.island_id - isl.mask_active
+            img.pyrank[tuple(isl.bbox)] = N.invert(isl.mask_active) * isl.island_id - isl.mask_active
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
     img.gaussians = gaussian_list
 

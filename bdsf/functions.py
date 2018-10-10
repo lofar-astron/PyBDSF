@@ -1414,7 +1414,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             img.frequency, img.equinox, telescope, xmin=xmin, ymin=ymin,
             is_mask=is_mask)
         tfile = tempfile.NamedTemporaryFile(delete=False)
-        temp_im.writeto(tfile.name, clobber=clobber)
+        temp_im.writeto(tfile.name, overwrite=clobber)
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
     else:
         # Write image to FITS file
@@ -1440,7 +1440,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             outfile = outdir + filename + '.fits'
         else:
             outfile = outdir + filename
-        temp_im.writeto(outfile,  clobber=clobber)
+        temp_im.writeto(outfile,  overwrite=clobber)
         temp_im.close()
 
         if use == 'rap':
