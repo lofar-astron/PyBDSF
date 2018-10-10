@@ -219,7 +219,7 @@ def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     if len(indx) % 6 != 0:
       print(" Something wrong with the parameters passed - need multiples of 6 !")
     else:
-      ngaus = len(indx)/6
+      ngaus = int(len(indx)/6)
       params = N.zeros(6*ngaus)
       params[N.where(indx==1)[0]] = c
       params[N.where(indx==0)[0]] = p_tofix
@@ -922,7 +922,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
       errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
                      N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
       try:
-          p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind), warning=False)
+          p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
       except TypeError:
           # This error means no warning argument is available, so redirect stdout to a null device
           # to suppress printing of warning messages

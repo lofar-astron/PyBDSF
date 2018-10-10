@@ -161,7 +161,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     (xmax,ymax) = N.unravel_index(image.argmax(),image.shape)  #  FIX  with mask
     if xmax in [1,n] or ymax in [1,m]:
         (m1, m2, m3) = func.moment(mask)
-    xmax,ymax = N.round(m2)
+        xmax,ymax = N.round(m2)
 
     # in high snr area, get zero crossings for each horizontal and vertical line for c1, c2 resp
     tr_mask=mask.transpose()
@@ -206,7 +206,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     if error > 0:
         #print 'Error '+str(error)+' in finding centre, will take 1st moment instead.'
         (m1, m2, m3) = func.moment(image, mask)
-    cen = m2
+        cen = m2
 
     return cen
 
@@ -329,7 +329,7 @@ def shapelet_check_centre(image, mask, cen, beam_pix):
 def shape_varybeta(image, mask, basis, betainit, cen, nmax, betarange, plot):
     """ Shapelet decomposes and then reconstructs an image with various values of beta
     and looks at the residual rms vs beta to estimate the optimal value of beta. """
-    import _cbdsm
+    from . import _cbdsm
 
     nbin = 30
     delta = (2.0*betainit-betainit/2.0)/nbin

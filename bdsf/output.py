@@ -604,9 +604,9 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                   sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.6f" % (dec[2])).zfill(6)
                   total = str("%.3e" % (g.total_flux))
                   if correct_proj:
-                      deconv = g.deconv_size_sky
+                      deconv = list(g.deconv_size_sky)
                   else:
-                      deconv = g.deconv_size_sky_uncorr
+                      deconv = list(g.deconv_size_sky_uncorr)
                   if deconv[0] == 0.0  and deconv[1] == 0.0:
                       stype = 'POINT'
                       deconv[2] = 0.0
@@ -1075,15 +1075,14 @@ def list_and_sort_gaussians(img, patch=None, root=None,
             patchnames = [None]
         if sort_by == 'flux':
             # Sort by Gaussian flux
-            indx = range(len(gauslist))
-            indx.sort(lambda x,y: cmp(gausflux[x],gausflux[y]), reverse=True)
+            indx = N.argsort(N.array(gausflux)).tolist()
+            indx.reverse()
         elif sort_by == 'index':
             # Sort by Gaussian index
-            indx = range(len(gausindx))
-            indx.sort(lambda x,y: cmp(gausindx[x],gausindx[y]), reverse=False)
+            indx = N.argsort(N.array(gausindx)).tolist()
         else:
             # Unrecognized property --> Don't sort
-            indx = range(len(gausindx))
+            indx = list(range(len(gausindx)))
         for i, si in enumerate(indx):
                 outlist_sorted[0][i] = outlist[0][si]
                 outnames_sorted[0][i] = outnames[0][si]
@@ -1094,15 +1093,14 @@ def list_and_sort_gaussians(img, patch=None, root=None,
         patchnames_sorted = list(patchnames)
         if sort_by == 'flux':
             # Sort by patch flux
-            indx = range(len(patchflux))
-            indx.sort(lambda x,y: cmp(patchflux[x],patchflux[y]), reverse=True)
+            indx = N.argsort(N.array(patchflux)).tolist()
+            indx.reverse()
         elif sort_by == 'index':
             # Sort by source index
-            indx = range(len(patchindx))
-            indx.sort(lambda x,y: cmp(patchindx[x],patchindx[y]), reverse=False)
+            indx = N.argsort(N.array(patchindx)).tolist()
         else:
             # Unrecognized property --> Don't sort
-            indx = range(len(gausindx))
+            indx = list(range(len(gausindx)))
 
         for i, si in enumerate(indx):
             outlist_sorted[i] = outlist[si]

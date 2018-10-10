@@ -523,8 +523,6 @@ class Op_polarisation(Op):
 
   ####################################################################################
     def setpara_bdsm(self, img):
-        from types import ClassType, TypeType
-
         chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
                  Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
 
@@ -540,7 +538,7 @@ class Op_polarisation(Op):
 
         ops = []
         for op in chain:
-          if isinstance(op, (ClassType, TypeType)):
+          if isinstance(op, type):
             ops.append(op())
           else:
             ops.append(op)

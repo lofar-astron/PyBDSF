@@ -525,7 +525,8 @@ class Op_rmsimage(Op):
         """
         mask_small = mask
         axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
-        ax = map(self.remap_axis, arr.shape, axes)
+        ax = [self.remap_axis(ashp, ax) for (ashp, ax) in zip(arr.shape, axes)]
+        #ax = map(self.remap_axis, arr.shape, axes)
         ax = N.meshgrid(*ax[-1::-1])
         pt_src_scale = box[0]
         if do_adapt:
@@ -675,6 +676,8 @@ class Op_rmsimage(Op):
                 mask_pad = self.pad_array(mask, new_shape)
 
         # Make arrays for calculated data
+        mapshape = [int(ms) for ms in mapshape]
+        boxcount = [int(bc) for bc in boxcount]
         mean_map = N.zeros(mapshape, dtype=N.float32)
         rms_map  = N.zeros(mapshape, dtype=N.float32)
         axes     = [N.zeros(len, dtype=N.float32) for len in mapshape]

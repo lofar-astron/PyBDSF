@@ -1408,6 +1408,7 @@ static struct PyModuleDef natgridmodule =
 PyMODINIT_FUNC
 PyInit_natgridmodule(void)
 {
+  import_array();
   return PyModule_Create(&natgridmodule);
 }
 

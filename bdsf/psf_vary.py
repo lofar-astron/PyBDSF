@@ -631,11 +631,12 @@ class Op_psf_vary(Op):
 
         xgen, ygen, snrgen = vorogenP
         flag = N.zeros(len(xgen))
-        coord=N.array([xgen,ygen]).transpose()
+        coord = N.array([xgen,ygen]).transpose()
         tile_list = []
         tile_coord = []; tile_snr = []
         for i in range(len(xgen)):
-            dist = N.array(map(lambda t: func.dist_2pt(coord[i], t), coord))
+            dist = N.array([func.dist_2pt(coord[i], t) for t in coord])
+#             dist = N.array(map(lambda t: func.dist_2pt(coord[i], t), coord))
             indi = N.argsort(dist)
             sortdist = dist[indi]
             if sortdist[1] < frac * sortdist[2]:    # first is the element itself
@@ -823,7 +824,7 @@ class Op_psf_vary(Op):
         psfimage = N.zeros((psfimsize, psfimsize), dtype=N.float32)
         cs2=cutoutsize2 = int(round(psfimsize*(1. + 2./factor)/2.))  # size/2. factor => to avoid edge effects etc
         cc = cutoutcen_ind=[cs2, cs2]
-        cpsf=cen_psf_ind = N.array([int(round(psfimsize))/2]*2)
+        cpsf=cen_psf_ind = N.array([int(int(round(psfimsize))/2)]*2)
         wt=0.
 
         num=len(gxcens_pix)
