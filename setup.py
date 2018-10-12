@@ -190,7 +190,7 @@ def main():
 
     setup(
         name='bdsf',
-        version='1.8.14',
+        version='1.8.15',
         author='David Rafferty',
         author_email='drafferty@hs.uni-hamburg.de',
         url='https://github.com/lofar-astron/PyBDSF',
