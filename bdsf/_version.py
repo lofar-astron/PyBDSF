@@ -18,6 +18,14 @@ def changelog():
 
     2018/10/18 - Fix various minor bugs
 
+    2018/10/12 - Version 1.8.15
+
+    2018/10/09 - Fix segfault in Gaussian fitting (#63)
+
+    2018/10/04 - Fix math domain error (#76)
+
+    2018/06/21 - Fix setup.py for boost versions > 1.63
+
     2018/05/18 - Version 1.8.14
 
     2018/05/18 - Fix an error on total flux density (#50)

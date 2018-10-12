@@ -9,6 +9,14 @@ Version 1.9.0 (2018/10/18):
 
     * Fix various minor bugs
 
+Version 1.8.15 (2018/10/12):
+
+    * Fix segfault in Gaussian fitting (#63)
+
+    * Fix math domain error (#76)
+
+    * Fix setup.py for boost versions > 1.63 (#58)
+
 Version 1.8.14 (2018/05/18):
 
     * Fix an error on total flux density (#50)
