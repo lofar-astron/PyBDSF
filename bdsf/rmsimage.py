@@ -859,7 +859,7 @@ class Op_rmsimage(Op):
         """Returns a padded array by mirroring around the edges."""
         # Assume that padding is the same for both axes and is equal
         # around all edges.
-        half_size = (new_shape[0] - arr.shape[0]) / 2
+        half_size = int((new_shape[0] - arr.shape[0]) / 2)
         arr_pad = N.zeros( (new_shape), dtype=arr.dtype)
 
         # left band
