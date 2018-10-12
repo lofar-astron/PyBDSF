@@ -17,6 +17,7 @@ from __future__ import absolute_import
 import numpy as N
 from .opts import *
 
+
 class Image(object):
     """Image is a primary data container for PyBDSF.
 
@@ -38,20 +39,21 @@ class Image(object):
     gaussian lists, etc) are inserted at run-time by the specific
     PyBDSF modules.
     """
-    opts   = Instance(Opts, doc="User options")
-    header = Any(doc="Image header")
-    masked = Bool(False, doc="Flag if mask is present")
-    basedir = String('DUMMY', doc="Base directory for output files")
-    completed_Ops = List(String(), doc="List of completed operations")
-    _is_interactive_shell = Bool(False, doc="PyBDSF is being used in the interactive shell")
-    waveletimage = Bool(False, doc="Image is a wavelet transform image")
-    _pi = Bool(False, doc="Image is a polarized intensity image")
-    do_cache = Bool(False, doc="Cache images to disk")
-
     def __init__(self, opts):
-        self.opts = Opts(opts)
         self._prev_opts = None
         self.extraparams = {}
+        self.masked = False
+        self.completed_Ops = []
+        self.waveletimage = False
+        self._pi = False
+        self.do_cache = False
+        self.bbspatchnum = 0
+        self.blankpix = 0
+        self.use_io = ''
+        self.j = 0
+        self.freq_pars = [0.0, 0.0, 0.0]
+        self.filename = ''
+        self.opts = Opts(opts)
 
     def __setstate__(self, state):
         """Needed for multiprocessing"""
@@ -83,8 +85,11 @@ class Image(object):
 
     def __setattr__(self, name, value):
         from . import functions as func
-        if self.do_cache and name.endswith("_arr") and isinstance(value, N.ndarray):
-            func.store_map(self, name, value)
+        if hasattr(self, 'do_cache'):
+            if self.do_cache and name.endswith("_arr") and isinstance(value, N.ndarray):
+                func.store_map(self, name, value)
+            else:
+                super(Image, self).__setattr__(name, value)
         else:
             super(Image, self).__setattr__(name, value)
 

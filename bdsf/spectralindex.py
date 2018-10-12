@@ -9,7 +9,6 @@ from __future__ import absolute_import
 import numpy as N
 from .image import *
 from . import mylogger
-from .gaul2srl import Source
 from copy import deepcopy as cp
 from . import _cbdsm
 from . import collapse
@@ -17,19 +16,7 @@ import sys
 from . import functions as func
 import time
 from . import statusbar
-from .gausfit import Gaussian
 
-
-Gaussian.spec_indx = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
-Gaussian.e_spec_indx = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
-Gaussian.specin_flux = List(Float(), doc = "Total flux density per channel, Jy", colname=['Total_flux'], units=['Jy'])
-Gaussian.specin_fluxE = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
-Gaussian.specin_freq = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
-Source.spec_indx = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
-Source.e_spec_indx = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
-Source.specin_flux = List(Float(), doc = "Total flux density, Jy", colname=['Total_flux'], units=['Jy'])
-Source.specin_fluxE = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
-Source.specin_freq = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
 
 class Op_spectralindex(Op):
     """Computes spectral index of every gaussian and every source.

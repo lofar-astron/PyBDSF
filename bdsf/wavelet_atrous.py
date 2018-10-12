@@ -43,14 +43,6 @@ try:
 except ImportError:
     pass
 
-jmax = Int(doc = "Maximum order of a-trous wavelet decomposition")
-lpf = String(doc = "Low pass filter used for a-trous wavelet decomposition")
-atrous_islands = List(Any(), doc = "")
-atrous_gaussians = List(Any(), doc = "")
-atrous_sources = List(Any(), doc = "")
-n_pyrsrc = Int(0, doc = "Number of pyramidal sources")
-Image.resid_wavelets = NArray(doc = "Residual image calculated from " \
-                                "gaussians fitted to wavelet sources")
 
 class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""

@@ -2237,5 +2237,3 @@ def bstat(indata, mask, kappa_npixbeam):
     r = numpy.sqrt(sigma**2 * (r1 / (r1 - 2.0*kappa*numpy.exp(-kappa**2/2.0))))
 
     return m_raw, r_raw, m, r, iter
-
-

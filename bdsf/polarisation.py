@@ -10,14 +10,12 @@ from __future__ import absolute_import
 
 from .image import *
 from .islands import *
-from .gausfit import Gaussian
 from .gaul2srl import *
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
 from .threshold import Op_threshold
 from .islands import Op_islands
 from .gausfit import Op_gausfit
-
 from .gaul2srl import Op_gaul2srl
 from .make_residimage import Op_make_residimage
 from .const import fwsig
@@ -129,6 +127,16 @@ class Op_polarisation(Op):
                           pi_src.specin_fluxE = [N.NaN]
                           pi_src.specin_freq = [N.NaN]
                           pi_src.specin_freq0 = N.NaN
+                          for gaus in pi_src.gaussians:
+                              gaus.island_id = isl_id
+                              gaus.source_id = src_id
+                              gaus.spec_indx = N.NaN
+                              gaus.e_spec_indx = N.NaN
+                              gaus.spec_norm = N.NaN
+                              gaus.specin_flux = [N.NaN]
+                              gaus.specin_fluxE = [N.NaN]
+                              gaus.specin_freq = [N.NaN]
+                              gaus.specin_freq0 = N.NaN
                           new_sources.append(pi_src)
                           new_src.append(pi_src)
                           n_new_src += 1

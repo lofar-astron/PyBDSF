@@ -10,15 +10,6 @@ from .image import *
 from .shapelets import *
 from . import mylogger
 
-### Insert attribute into Image class for model image
-Image.resid_gaus = NArray(doc="Residual image calculated from " \
-                                "extracted gaussians")
-Image.resid_shap = NArray(doc="Residual image calculated from " \
-                                "shapelet coefficient")
-Image.model_gaus = NArray(doc="Model image calculated from " \
-                                "extracted gaussians")
-Image.model_shap = NArray(doc="Model image calculated from " \
-                                "shapelet coefficient")
 
 class Op_make_residimage(Op):
     """Creates an image from the fitted gaussians
@@ -111,13 +102,14 @@ class Op_make_residimage(Op):
             fimg = N.zeros(shape, dtype=N.float32)
 
             for isl in img.islands:
-              if isl.shapelet_beta > 0: # make sure shapelet has nonzero scale for this island
-                mask=isl.mask_active
-                cen=isl.shapelet_centre-N.array(isl.origin)
-                basis, beta, nmax, cf = isl.shapelet_basis, isl.shapelet_beta, \
-                                        isl.shapelet_nmax, isl.shapelet_cf
-                image_recons=reconstruct_shapelets(isl.shape, mask, basis, beta, cen, nmax, cf)
-                fimg[tuple(isl.bbox)] += image_recons
+              if  hasattr(isl, 'shapelet_beta'):
+                  if isl.shapelet_beta > 0: # make sure shapelet has nonzero scale for this island
+                    mask=isl.mask_active
+                    cen=isl.shapelet_centre-N.array(isl.origin)
+                    basis, beta, nmax, cf = isl.shapelet_basis, isl.shapelet_beta, \
+                                            isl.shapelet_nmax, isl.shapelet_cf
+                    image_recons=reconstruct_shapelets(isl.shape, mask, basis, beta, cen, nmax, cf)
+                    fimg[tuple(isl.bbox)] += image_recons
 
             model_shap = fimg
             resid_shap = img.ch0_arr - fimg
@@ -219,5 +211,3 @@ class Op_make_residimage(Op):
                 else:
                     dsrc.sresid_rms = N.std(resid)
                     dsrc.sresid_mean = N.mean(resid)
-
-

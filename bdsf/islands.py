@@ -29,7 +29,6 @@ from .rmsimage import Op_rmsimage
 from .threshold import Op_threshold
 from .collapse import Op_collapse
 
-nisl = Int(doc="Total number of islands detected")
 
 class Op_islands(Op):
     """Detect islands of emission in the image
@@ -261,26 +260,6 @@ class Island(object):
 
     Its primary use is a container for all kinds of data describing island.
     """
-#     bbox        = List(Instance(slice(0), or_none=False),
-#                        doc = "Bounding box of the island")
-#    origin      = List(Float(), doc="Coordinates of lower-left corner")
-#     image       = NArray(doc="Sub-image of the island")
-#     mask_active = NArray(doc="Mask for just active pixels")
-#     mask_noisy  = NArray(doc="Mask for active pixels and surrounding noise")
-#     shape       = List(Int(), doc="Shape of the island")
-#     size_active = Int(doc="Number of active pixels in the island")
-#     mean        = Float(doc="Average mean value")
-#     rms         = Float(doc="Average rms")
-#     total_flux  = Float(doc="Total flux from sum of pixels in island")
-#     total_fluxE  = Float(doc="Error on total flux from sum of pixels in island")
-#     max_value   = Float(doc="Maximum value in island")
-#     island_id   = Int(doc="Island id, starting from 0", colname='Isl_id')
-#     gresid_rms  = Float(doc="Rms of residual image of island")
-#     gresid_mean = Float(doc="Mean of residual image of island")
-#     connected   = Tuple(String(), Int(), doc="'multiple' or 'single' -ly connected, # of holes inside island")
-#     convex_def  = Float(doc="Convex deficiency, with first order correction for edge effect")
-#     islmean     = Float(doc="a constant value to subtract from image before fitting")
-
     def __init__(self, img, mask, mean, rms, labels, bbox, idx,
                  beamarea, origin=None, noise_mask=None, copy=False):
         """Create Island instance.
@@ -290,7 +269,20 @@ class Island(object):
         labels: labels array from scipy.ndimage
         bbox: slices
         """
-        TCInit(self)
+        # Add attribute definitions needed for output
+        self.island_id_def = Int(doc="Island id, starting from 0", colname='Isl_id')
+        self.shapelet_basis_def = String(doc="Coordinate system for shapelet decomposition (cartesian/polar)",
+                                         colname='Basis', units=None)
+        self.shapelet_beta_def = Float(doc="Value of shapelet scale beta", colname='Beta', units=None)
+        self.shapelet_nmax_def = Int(doc="Maximum value of shapelet order", colname='NMax', units=None)
+        self.shapelet_posn_sky_def = List(Float(), doc="Posn (RA, Dec in deg) of shapelet centre",
+                                          colname=['RA', 'DEC'], units=['deg', 'deg'])
+        self.shapelet_posn_skyE_def = List(Float(), doc="Error on sky coordinates of shapelet centre",
+                                           colname=['E_RA', 'E_DEC'], units=['deg', 'deg'])
+        self.shapelet_cf_def = NArray(doc="Coefficient matrix of the shapelet decomposition",
+                                      colname='Coeff_matrix', units=None)
+
+#        TCInit(self)
 
         if not copy:
             ### we make bbox slightly bigger
@@ -330,7 +322,6 @@ class Island(object):
             bbox_mean_im = mean
             self.oldbbox = bbox
             self.oldidx = idx
-
 
         ### finish initialization
         isl_size = N.sum(~isl_mask)
@@ -390,7 +381,6 @@ class Island(object):
         """Expand bbox of the image by 1 pixel"""
         def __expand(bbox, shape):
             return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
-#        return map(__expand, bbox, shape)
         ebbox = [__expand(b, shape[i]) for i, b in enumerate(bbox)]
         return ebbox
 
@@ -416,7 +406,3 @@ class Island(object):
         border = N.transpose(N.asarray(N.where(mask ^ nd.binary_erosion(mask)))) + self.origin
 
         return N.transpose(N.array(border))
-
-
-### Insert attribute for island list into Image class
-#Image.islands = List(tInstance(Island), doc="List of islands")

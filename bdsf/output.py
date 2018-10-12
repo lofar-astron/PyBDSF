@@ -6,7 +6,9 @@ and/or are called by the outlist operation if output_all is True.
 """
 from __future__ import print_function
 from __future__ import absolute_import
+
 from .image import Op
+
 
 class Op_outlist(Op):
     """Write out list of Gaussians
@@ -396,14 +398,15 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
             # Append the dummy sources for islands without any unflagged Gaussians
             outl[0] += img.dsources
     elif objtype == 'shap':
-        outl = [img.islands]
+        outl = [[isl for isl in img.islands if hasattr(isl, 'shapelet_nmax')]]
 
     nmax = 0
     if objtype == 'shap':
         # loop over shapelets and get maximum size of coefficient matrix
         for isl in outl[0]:
-            if isl.shapelet_nmax > nmax:
-                nmax = isl.shapelet_nmax
+            if hasattr(isl, 'shapelet_nmax'):
+                if isl.shapelet_nmax > nmax:
+                    nmax = isl.shapelet_nmax
         nmax += 1
 
     if img.opts.aperture is not None:

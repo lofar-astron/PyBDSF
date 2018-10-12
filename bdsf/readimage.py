@@ -21,17 +21,6 @@ import sys
 import shutil
 import tempfile
 
-Image.imagename = String(doc="Identifier name for output files")
-Image.filename = String(doc="Name of input file without extension")
-Image.bbspatchnum = Int(doc="To keep track of patch number for bbs file "\
-                            "for seperate patches per source")
-Image.frequency = Float(doc="Frequency in the header")
-Image.use_io = String(doc="pyfits or pyrap")
-Image.j = Int(doc="Wavelet order j, 0 for normal run")
-Image.freq_pars = Tuple((0.0, 0.0, 0.0),
-                        doc="Frequency prarmeters from the header: (crval, cdelt, crpix)")
-Image.waveletimage = Bool(doc="Whether a wavelet transform image of not")
-Image.equinox = Float(2000.0, doc='Equinox of input image from header')
 
 class Op_readimage(Op):
     """Image file loader
@@ -80,6 +69,7 @@ class Op_readimage(Op):
         img.basedir = './' + fname + '_pybdsm/'
 
         # Read in data and header
+        img.use_io = ''
         image_file = os.path.basename(img.opts.filename)
         result = read_image_from_file(image_file, img, img.indir)
         if result is None:
@@ -630,4 +620,3 @@ class TempDir(str):
         import os
         if os.path.exists(self.__str__()):
             shutil.rmtree(self.__str__())
-

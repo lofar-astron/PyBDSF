@@ -13,24 +13,6 @@ from . import const
 from . import functions as func
 from . import mylogger
 
-### Insert attributes into Image class
-Image.raw_mean = Float(doc="Unclipped image mean")
-Image.raw_rms  = Float(doc="Unclipped image rms")
-Image.clipped_mean = Float(doc="Clipped image mean")
-Image.clipped_rms  = Float(doc="Clipped image rms")
-Image.clipped_mean_QUV = List(Float(), doc="Clipped image mean for Q, U, V")
-Image.clipped_rms_QUV = List(Float(), doc="Clipped image rms for Q, U, V")
-Image.blankpix  = Int(doc="Number of blanked pixels")
-Image.noutside_univ  = Int(doc="Number of blanked pixels")
-
-Image.maxpix_coord = Tuple(Int(), Int(),
-                           doc="Coordinates of maximal pixel in the image")
-Image.minpix_coord = Tuple(Int(), Int(),
-                           doc="Coordinates of minimal pixel in the image")
-Image.max_value = Float(doc="Maximal pixel in the image")
-Image.min_value = Float(doc="Minimal pixel in the image")
-Image.omega = Float(doc="Solid angle covered by the image")
-confused = String(doc = 'confused image or not')
 
 class Op_preprocess(Op):
     """Preprocessing -- calculate some basic statistics and set
@@ -192,6 +174,3 @@ class Op_preprocess(Op):
               ch0[pix1] = float("NaN")
               img.ch0_arr = ch0
         return noutside
-
-
-

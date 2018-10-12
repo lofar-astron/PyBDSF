@@ -18,16 +18,11 @@ from __future__ import absolute_import
 
 from .image import *
 from .islands import *
-from .gausfit import Gaussian
 from .interface import wrap
 from . import mylogger
 import numpy as N
-
 N.seterr(divide='raise')
 
-nsrc = Int(doc="Number of sources in the image")
-Gaussian.source_id = Int(doc="Source number of a gaussian", colname='Source_id')
-Gaussian.code = String(doc='Source code S, C, or M', colname='S_Code')
 
 class Op_gaul2srl(Op):
     """
@@ -126,22 +121,21 @@ class Op_gaul2srl(Op):
         bbox = img.islands[g.island_id].bbox
         ngaus = 1
         island_id = g.island_id
-        if g.gaus_num < 0:
-            gaussians = []
-        else:
-            gaussians = list([g])
         aper_flux = func.ch0_aperture_flux(img, g.centre_pix, img.aperture)
-
-        source_prop = list([code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid, \
-             posn_sky_max, size_sky, size_sky_uncorr, deconv_size_sky, deconv_size_sky_uncorr, bbox, ngaus, island_id, gaussians])
-        source = Source(img, source_prop)
-
         if g.gaussian_idx == -1:
             src_index -= 1
         else:
             src_index += 1
         g.source_id = src_index
         g.code = code
+        if g.gaus_num < 0:
+            gaussians = []
+        else:
+            gaussians = [g]
+
+        source_prop = list([code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid,
+             posn_sky_max, size_sky, size_sky_uncorr, deconv_size_sky, deconv_size_sky_uncorr, bbox, ngaus, island_id, gaussians])
+        source = Source(img, source_prop)
         source.source_id = src_index
 
         return src_index, source
@@ -565,13 +559,12 @@ class Op_gaul2srl(Op):
 ##################################################################################################
 
 from .image import *
-from .gausfit import Gaussian
-from .islands import Island
 
 class Source(object):
     """ Instances of this class store sources made from grouped gaussians. """
 
     def __init__(self, img, sourceprop):
+        # Add attribute definitions needed for output
         self.source_id_def           = Int(doc="Source index", colname='Source_id')
         self.code_def                = String(doc='Source code S, C, or M', colname='S_Code')
         self.total_flux_def          = Float(doc="Total flux density (Jy)", colname='Total_flux', units='Jy')
@@ -643,8 +636,12 @@ class Source(object):
                                     colname='Resid_Isl_mean', units='Jy/beam')
         self.ngaus_def               = Int(doc='Number of gaussians in the source', colname='N_gaus')
         self.island_id_def           = Int(doc="Serial number of the island", colname='Isl_id')
-        self.gaussians_def           = List(tInstance(Gaussian), doc="")
         self.bbox_def                = List(Instance(slice(0), or_none=False), doc = "")
+        self.spec_indx_def = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
+        self.e_spec_indx_def = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
+        self.specin_flux_def = List(Float(), doc = "Total flux density, Jy", colname=['Total_flux'], units=['Jy'])
+        self.specin_fluxE_def = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
+        self.specin_freq_def = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
 
         code, total_flux, peak_flux_centroid, peak_flux_max, aper_flux, posn_sky_centroid, \
                      posn_sky_max, size_sky, size_sky_uncorr, deconv_size_sky, \

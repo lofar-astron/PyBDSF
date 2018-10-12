@@ -13,11 +13,6 @@ from . import _cbdsm
 from . import mylogger
 from . import functions as func
 
-avspc_wtarr = NArray(doc = "Weight array for channel collapse")
-channel_rms = NArray(doc = "RMS per channel")
-channel_mean = NArray(doc = "Mean per channel")
-channel_clippedrms = NArray(doc = "Clipped RMS per channel")
-channel_clippedmean = NArray(doc = "Clipped mean per channel")
 
 class Op_collapse(Op):
     """Collapse 3D image"""

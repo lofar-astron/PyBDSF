@@ -205,10 +205,10 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 
     im_mean = img.clipped_mean
     im_rms = img.clipped_rms
-    if img.resid_gaus is None:
+    if img.resid_gaus_arr is None:
         low = 1.1*abs(img.min_value)
     else:
-        low = N.max([1.1*abs(img.min_value),1.1*abs(N.nanmin(img.resid_gaus))])
+        low = N.max([1.1*abs(img.min_value),1.1*abs(N.nanmin(img.resid_gaus_arr))])
     if low <= 0.0:
         low = 1E-6
     vmin_est = im_mean - im_rms*5.0 + low

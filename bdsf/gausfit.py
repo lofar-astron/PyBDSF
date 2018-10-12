@@ -32,8 +32,6 @@ try:
 except ImportError: # will be 3.x series
     pass
 
-ngaus = Int(doc="Total number of gaussians extracted")
-total_flux_gaus = Float(doc="Total flux in the Gaussians extracted")
 
 class Op_gausfit(Op):
     """Fit a number of 2D gaussians to each island.
@@ -896,7 +894,6 @@ class Gaussian(object):
         import numpy as N
 
         # Add attribute definitions needed for output
-        self.gaussian_idx_def = Int(doc="Serial number of the gaussian within island")
         self.source_id_def           = Int(doc="Source index", colname='Source_id')
         self.code_def                = String(doc='Source code S, C, or M', colname='S_Code')
         self.gaus_num_def = Int(doc="Serial number of the gaussian for the image", colname='Gaus_id')
@@ -941,8 +938,6 @@ class Gaussian(object):
         self.deconv_size_skyE_uncorr_def = List(Float(), doc="Error on deconvolved shape in image plane of the gaussian FWHM, PA, deg",
                           colname=['E_DC_Maj_img_plane', 'E_DC_Min_img_plane', 'E_DC_PA_img_plane'], units=['deg', 'deg',
                           'deg'])
-        self.size_pix_def   = List(Float(), doc="Shape of the gaussian FWHM, pixel units")
-        self.size_pixE_def  = List(Float(), doc="Error on shape of the gaussian FWHM, pixel units")
         self.rms_def        = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
         self.mean_def       = Float(doc="Island mean Jy/beam", colname='Isl_mean', units='Jy/beam')
         self.total_flux_isl_def = Float(doc="Island total flux from sum of pixels", colname='Isl_Total_flux', units='Jy')
@@ -952,6 +947,11 @@ class Gaussian(object):
         self.sresid_rms_def = Float(doc="Island rms in Shapelet residual image", colname='Resid_Isl_rms', units='Jy/beam')
         self.sresid_mean_def= Float(doc="Island mean in Shapelet residual image", colname='Resid_Isl_mean', units='Jy/beam')
         self.jlevel_def     = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
+        self.spec_indx_def = Float(doc = "Spectral index", colname='Spec_Indx', units=None)
+        self.e_spec_indx_def = Float(doc = "Error in spectral index", colname='E_Spec_Indx', units=None)
+        self.specin_flux_def = List(Float(), doc = "Total flux density per channel, Jy", colname=['Total_flux'], units=['Jy'])
+        self.specin_fluxE_def = List(Float(), doc = "Error in total flux density per channel, Jy", colname=['E_Total_flux'], units=['Jy'])
+        self.specin_freq_def = List(Float(), doc = "Frequency per channel, Hz", colname=['Freq'], units=['Hz'])
 
         use_wcs = True
         self.gaussian_idx = g_idx

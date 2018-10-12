@@ -19,16 +19,6 @@ from . import functions as func
 from .gausfit import find_bbox
 
 
-Island.shapelet_basis=String(doc="Coordinate system for shapelet decomposition (cartesian/polar)", colname='Basis', units=None)
-Island.shapelet_beta=Float(doc="Value of shapelet scale beta", colname='Beta', units=None)
-Island.shapelet_nmax=Int(doc="Maximum value of shapelet order", colname='NMax', units=None)
-Island.shapelet_centre=Tuple(Float(), Float(),doc="Centre for the shapelet decomposition, starts from zero")
-Island.shapelet_posn_sky = List(Float(), doc="Posn (RA, Dec in deg) of shapelet centre",
-                               colname=['RA', 'DEC'], units=['deg', 'deg'])
-Island.shapelet_posn_skyE = List(Float(), doc="Error on sky coordinates of shapelet centre",
-                       colname=['E_RA', 'E_DEC'], units=['deg', 'deg'])
-Island.shapelet_cf=NArray(doc="Coefficient matrix of the shapelet decomposition", colname='Coeff_matrix', units=None)
-
 class Op_shapelets(Op):
     """ Get the image and mask from each island and send it to
     shapelet programs which can then also be called seperately """
@@ -165,7 +155,3 @@ class Op_shapelets(Op):
              #print 'Final Cen = ',N.array(cen)+ori
 
          return beta, cen, nmax
-
-
-
-

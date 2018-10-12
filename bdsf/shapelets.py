@@ -388,6 +388,3 @@ def shapelet_coeff(nmax=20,basis='cartesian'):
         hn=hnp1
 
     return hc
-
-
-
