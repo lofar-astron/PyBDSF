@@ -895,61 +895,63 @@ class Gaussian(object):
         from .const import fwsig
         import numpy as N
 
-        gaussian_idx = Int(doc="Serial number of the gaussian within island")
-        gaus_num = Int(doc="Serial number of the gaussian for the image", colname='Gaus_id')
-        island_id   = Int(doc="Serial number of the island", colname='Isl_id')
-        flag        = Int(doc="Flag associated with gaussian", colname='Flag')
-        parameters  = List(Float(), doc="Raw gaussian parameters")
-        total_flux  = Float(doc="Total flux density, Jy", colname='Total_flux', units='Jy')
-        total_fluxE = Float(doc="Total flux density error, Jy", colname='E_Total_flux',
+        # Add attribute definitions needed for output
+        self.gaussian_idx_def = Int(doc="Serial number of the gaussian within island")
+        self.source_id_def           = Int(doc="Source index", colname='Source_id')
+        self.code_def                = String(doc='Source code S, C, or M', colname='S_Code')
+        self.gaus_num_def = Int(doc="Serial number of the gaussian for the image", colname='Gaus_id')
+        self.island_id_def   = Int(doc="Serial number of the island", colname='Isl_id')
+        self.flag_def        = Int(doc="Flag associated with gaussian", colname='Flag')
+        self.total_flux_def  = Float(doc="Total flux density, Jy", colname='Total_flux', units='Jy')
+        self.total_fluxE_def = Float(doc="Total flux density error, Jy", colname='E_Total_flux',
                             units='Jy')
-        peak_flux   = Float(doc="Peak flux density/beam, Jy/beam", colname='Peak_flux',
+        self.peak_flux_def   = Float(doc="Peak flux density/beam, Jy/beam", colname='Peak_flux',
                             units='Jy/beam')
-        peak_fluxE  = Float(doc="Peak flux density/beam error, Jy/beam",
+        self.peak_fluxE_def  = Float(doc="Peak flux density/beam error, Jy/beam",
                             colname='E_Peak_flux', units='Jy/beam')
-        centre_sky  = List(Float(), doc="Sky coordinates of gaussian centre",
+        self.centre_sky_def  = List(Float(), doc="Sky coordinates of gaussian centre",
                            colname=['RA', 'DEC'], units=['deg', 'deg'])
-        centre_skyE = List(Float(), doc="Error on sky coordinates of gaussian centre",
+        self.centre_skyE_def = List(Float(), doc="Error on sky coordinates of gaussian centre",
                            colname=['E_RA', 'E_DEC'], units=['deg', 'deg'])
-        centre_pix  = List(Float(), doc="Pixel coordinates of gaussian centre",
+        self.centre_pix_def  = List(Float(), doc="Pixel coordinates of gaussian centre",
                            colname=['Xposn', 'Yposn'], units=['pix', 'pix'])
-        centre_pixE = List(Float(), doc="Error on pixel coordinates of gaussian centre",
+        self.centre_pixE_def = List(Float(), doc="Error on pixel coordinates of gaussian centre",
                            colname=['E_Xposn', 'E_Yposn'], units=['pix', 'pix'])
-        size_sky   = List(Float(), doc="Shape of the gaussian FWHM, PA, deg",
+        self.size_sky_def   = List(Float(), doc="Shape of the gaussian FWHM, PA, deg",
                           colname=['Maj', 'Min', 'PA'], units=['deg', 'deg',
                           'deg'])
-        size_skyE  = List(Float(), doc="Error on shape of the gaussian FWHM, PA, deg",
+        self.size_skyE_def  = List(Float(), doc="Error on shape of the gaussian FWHM, PA, deg",
                           colname=['E_Maj', 'E_Min', 'E_PA'], units=['deg', 'deg',
                           'deg'])
-        deconv_size_sky = List(Float(), doc="Deconvolved shape of the gaussian FWHM, PA, deg",
+        self.deconv_size_sky_def = List(Float(), doc="Deconvolved shape of the gaussian FWHM, PA, deg",
                           colname=['DC_Maj', 'DC_Min', 'DC_PA'], units=['deg', 'deg',
                           'deg'])
-        deconv_size_skyE = List(Float(), doc="Error on deconvolved shape of the gaussian FWHM, PA, deg",
+        self.deconv_size_skyE_def = List(Float(), doc="Error on deconvolved shape of the gaussian FWHM, PA, deg",
                           colname=['E_DC_Maj', 'E_DC_Min', 'E_DC_PA'], units=['deg', 'deg',
                           'deg'])
-        size_sky_uncorr   = List(Float(), doc="Shape in image plane of the gaussian FWHM, PA, deg",
+        self.size_sky_uncorr_def   = List(Float(), doc="Shape in image plane of the gaussian FWHM, PA, deg",
                           colname=['Maj_img_plane', 'Min_img_plane', 'PA_img_plane'], units=['deg', 'deg',
                           'deg'])
-        size_skyE_uncorr  = List(Float(), doc="Error on shape in image plane of the gaussian FWHM, PA, deg",
+        self.size_skyE_uncorr_def  = List(Float(), doc="Error on shape in image plane of the gaussian FWHM, PA, deg",
                           colname=['E_Maj_img_plane', 'E_Min_img_plane', 'E_PA_img_plane'], units=['deg', 'deg',
                           'deg'])
-        deconv_size_sky_uncorr = List(Float(), doc="Deconvolved shape in image plane of the gaussian FWHM, PA, deg",
+        self.deconv_size_sky_uncorr_def = List(Float(), doc="Deconvolved shape in image plane of the gaussian FWHM, PA, deg",
                           colname=['DC_Maj_img_plane', 'DC_Min_img_plane', 'DC_PA_img_plane'], units=['deg', 'deg',
                           'deg'])
-        deconv_size_skyE_uncorr = List(Float(), doc="Error on deconvolved shape in image plane of the gaussian FWHM, PA, deg",
+        self.deconv_size_skyE_uncorr_def = List(Float(), doc="Error on deconvolved shape in image plane of the gaussian FWHM, PA, deg",
                           colname=['E_DC_Maj_img_plane', 'E_DC_Min_img_plane', 'E_DC_PA_img_plane'], units=['deg', 'deg',
                           'deg'])
-        size_pix   = List(Float(), doc="Shape of the gaussian FWHM, pixel units")
-        size_pixE  = List(Float(), doc="Error on shape of the gaussian FWHM, pixel units")
-        rms        = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
-        mean       = Float(doc="Island mean Jy/beam", colname='Isl_mean', units='Jy/beam')
-        total_flux_isl = Float(doc="Island total flux from sum of pixels", colname='Isl_Total_flux', units='Jy')
-        total_flux_islE = Float(doc="Error on island total flux from sum of pixels", colname='E_Isl_Total_flux', units='Jy')
-        gresid_rms = Float(doc="Island rms in Gaussian residual image", colname='Resid_Isl_rms', units='Jy/beam')
-        gresid_mean= Float(doc="Island mean in Gaussian residual image", colname='Resid_Isl_mean', units='Jy/beam')
-        sresid_rms = Float(doc="Island rms in Shapelet residual image", colname='Resid_Isl_rms', units='Jy/beam')
-        sresid_mean= Float(doc="Island mean in Shapelet residual image", colname='Resid_Isl_mean', units='Jy/beam')
-        jlevel     = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
+        self.size_pix_def   = List(Float(), doc="Shape of the gaussian FWHM, pixel units")
+        self.size_pixE_def  = List(Float(), doc="Error on shape of the gaussian FWHM, pixel units")
+        self.rms_def        = Float(doc="Island rms Jy/beam", colname='Isl_rms', units='Jy/beam')
+        self.mean_def       = Float(doc="Island mean Jy/beam", colname='Isl_mean', units='Jy/beam')
+        self.total_flux_isl_def = Float(doc="Island total flux from sum of pixels", colname='Isl_Total_flux', units='Jy')
+        self.total_flux_islE_def = Float(doc="Error on island total flux from sum of pixels", colname='E_Isl_Total_flux', units='Jy')
+        self.gresid_rms_def = Float(doc="Island rms in Gaussian residual image", colname='Resid_Isl_rms', units='Jy/beam')
+        self.gresid_mean_def= Float(doc="Island mean in Gaussian residual image", colname='Resid_Isl_mean', units='Jy/beam')
+        self.sresid_rms_def = Float(doc="Island rms in Shapelet residual image", colname='Resid_Isl_rms', units='Jy/beam')
+        self.sresid_mean_def= Float(doc="Island mean in Shapelet residual image", colname='Resid_Isl_mean', units='Jy/beam')
+        self.jlevel_def     = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
 
         use_wcs = True
         self.gaussian_idx = g_idx
@@ -1023,10 +1025,3 @@ class Gaussian(object):
         self.mean = img.islands[isl_idx].mean
         self.total_flux_isl = img.islands[isl_idx].total_flux
         self.total_flux_islE = img.islands[isl_idx].total_fluxE
-
-
-### Insert attributes into Island class
-# from .islands import Island
-# Island.gaul = List(tInstance(Gaussian), doc="List of extracted gaussians")
-# Island.fgaul= List(tInstance(Gaussian),
-#                    doc="List of extracted (flagged) gaussians")

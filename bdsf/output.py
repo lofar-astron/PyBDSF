@@ -453,16 +453,20 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
         tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
 
-    for key in img.header.keys():
-        if key in ['HISTORY','COMMENT','']: continue
-        tbhdu.header['I_%s'%key]=img.header[key]
+    import warnings
+    from astropy.io.fits.verify import VerifyWarning
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore",category=VerifyWarning)
+        for key in img.header.keys():
+            if key in ['HISTORY','COMMENT','']: continue
+            tbhdu.header['I_%s'%key]=img.header[key]
 
     if filename is None:
         filename = img.imagename + '.' + objtype + '.fits'
     if os.path.exists(filename) and clobber == False:
         return None
     mylog.info('Writing ' + filename)
-    tbhdu.writeto(filename, clobber=True)
+    tbhdu.writeto(filename, overwrite=True)
     return filename
 
 
@@ -841,11 +845,11 @@ def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False,
             if format == 'ascii':
                 if i == 0:
                     outstr_list.append("# " + " ".join(cnames) + "\n")
-                outstr_list.append(" ".join(cformats) % tuple(cvals))
+                outstr_list.append(" ".join(cformats).format(*cvals))
             else:
                 if i == 0:
                     outstr_list.append("# " + ", ".join(cnames) + "\n")
-                outstr_list.append(", ".join(cformats) % tuple(cvals))
+                outstr_list.append(", ".join(cformats).format(*cvals))
     return outstr_list
 
 
@@ -1173,33 +1177,33 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
             if name in ['specin_flux', 'specin_fluxE', 'specin_freq']:
                 # As these are variable length lists, they must
                 # (unfortunately) be treated differently.
-                    val = obj.__getattribute__(name)
-                    colname = obj.__class__.__dict__[name]._colname
-                    units = obj.__class__.__dict__[name]._units
-                    for i in range(nchan):
-                        if i < len(val):
-                            cvals.append(val[i])
-                            cnames.append(colname[0]+'_ch'+str(i+1))
-                            cunits.append(units[0])
-                        else:
-                            cvals.append(N.NaN)
-                            cnames.append(colname[0]+'_ch'+str(i+1))
-                            cunits.append(units[0])
+                val = obj.__getattribute__(name)
+                colname = obj.__dict__[name+'_def']._colname
+                units = obj.__dict__[name+'_def']._units
+                for i in range(nchan):
+                    if i < len(val):
+                        cvals.append(val[i])
+                        cnames.append(colname[0]+'_ch'+str(i+1))
+                        cunits.append(units[0])
+                    else:
+                        cvals.append(N.NaN)
+                        cnames.append(colname[0]+'_ch'+str(i+1))
+                        cunits.append(units[0])
             else:
                 if not skip_next:
                     val = obj.__getattribute__(name)
-                    colname = obj.__class__.__dict__[name]._colname
-                    units = obj.__class__.__dict__[name]._units
+                    colname = obj.__dict__[name+'_def']._colname
+                    units = obj.__dict__[name+'_def']._units
                     if units is None:
                         units = ' '
-                    if isinstance(val, list):
+                    if isinstance(val, list) or isinstance(val, tuple):
                         # This is a list, so handle it differently. We assume the next
                         # entry will have the errors, and they are interleaved to be
                         # in the order (val, error).
                         next_name = names[n+1]
                         val_next = obj.__getattribute__(next_name)
-                        colname_next = obj.__class__.__dict__[next_name]._colname
-                        units_next = obj.__class__.__dict__[next_name]._units
+                        colname_next = obj.__dict__[next_name+'_def']._colname
+                        units_next = obj.__dict__[next_name+'_def']._units
                         if units_next is None:
                             units_next = ' '
                         for i in range(len(val)):
@@ -1229,19 +1233,23 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
         if fits:
             if isinstance(v, int):
                 cformats.append('J')
-            if isinstance(v, float):
+            elif isinstance(v, float) or isinstance(v, N.float32) or isinstance(v, N.float64):
                 cformats.append('D')
-            if isinstance(v, str):
+            elif isinstance(v, str):
                 cformats.append('A')
-            if isinstance(v, N.ndarray):
+            elif isinstance(v, N.ndarray):
                 cformats.append('%iD' % (nmax**2,))
+            else:
+                raise RuntimeError("Format not supported.")
         else:
             if isinstance(v, int):
-                cformats.append('%4d')
-            if isinstance(v, float):
-                cformats.append('%.14f')
-            if isinstance(v, str):
-                cformats.append('%4s')
+                cformats.append('{'+str(i)+':4d}')
+            elif isinstance(v, float) or isinstance(v, N.float32) or isinstance(v, N.float64):
+                cformats.append('{'+str(i)+':.14f}')
+            elif isinstance(v, str):
+                cformats.append('{'+str(i)+':4s}')
+            else:
+                raise RuntimeError("Format not supported.")
 
     if objtype == 'gaul':
         if obj.gaus_num < 0 and not incl_empty:

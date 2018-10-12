@@ -176,8 +176,12 @@ class Op_readimage(Op):
 
         try:
             from astropy.wcs import WCS
-            t = WCS(hdr)
-            t.wcs.fix()
+            from astropy.wcs import FITSFixedWarning
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                warnings.filterwarnings("ignore",category=FITSFixedWarning)
+                t = WCS(hdr)
+                t.wcs.fix()
         except ImportError as err:
             import warnings
             with warnings.catch_warnings():

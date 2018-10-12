@@ -1240,9 +1240,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # Make sure that the spectral axis has been identified properly
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         try:
-            from astropy.wcs import WCS
-            t = WCS(hdr)
-            t.wcs.fix()
+            from astropy.wcs import FITSFixedWarning
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                warnings.filterwarnings("ignore",category=FITSFixedWarning)
+                from astropy.wcs import WCS
+                t = WCS(hdr)
+                t.wcs.fix()
         except ImportError as err:
             import warnings
             with warnings.catch_warnings():

@@ -18,7 +18,9 @@ from math import log10
 from . import functions as func
 from .const import fwsig
 import os
+import warnings
 import numpy as N
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
@@ -287,8 +289,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                     if hasattr(img, 'nsrc'):
                         nsrc = len(isl.sources)
                         for isrc in range(nsrc):
-                            col = colours[isrc % 6]
-                            style = styles[isrc/6 % 3]
+                            col = colours[int(isrc % 6)]
+                            style = styles[int(isrc/6 % 3)]
                             src = isl.sources[isrc]
                             for g in src.gaussians:
                                 if hasattr(g, 'valid'):
@@ -312,7 +314,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                                     e.pflux = g.peak_flux
                                     e.centre_sky = g.centre_sky
                 if len(img.islands) > 0:
-                    island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
+                    island_offsets = list(zip(N.array(island_offsets_x), N.array(island_offsets_y)))
                     isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color,
                                     transOffset=ax.transData, sizes=(10.0,))
                     ax.add_collection(isl_borders)
