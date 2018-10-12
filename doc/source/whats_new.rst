@@ -3,6 +3,12 @@
 **********
 What's New
 **********
+Version 1.9.0 (2018/10/18):
+
+    * Add support for Python 3
+
+    * Fix various minor bugs
+
 Version 1.8.14 (2018/05/18):
 
     * Fix an error on total flux density (#50)

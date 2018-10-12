@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.8.14'
+__version__ = '1.9.0'
 
 
 # Changelog
@@ -12,6 +12,12 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2018/10/18 - Version 1.9.0
+
+    2018/10/18 - Add support for Python 3
+
+    2018/10/18 - Fix various minor bugs
+
     2018/05/18 - Version 1.8.14
 
     2018/05/18 - Fix an error on total flux density (#50)
@@ -20,7 +26,8 @@ def changelog():
 
     2018/05/18 - Append the image FITS header into catalog FITS header (#53)
 
-    2018/05/18 - Make PyBDSF compatible with newer boost libraries, specifically those used in Ubuntu 18.04 (#55)
+    2018/05/18 - Make PyBDSF compatible with newer boost libraries, specifically
+        those used in Ubuntu 18.04 (#55)
 
     2017/11/17 - Version 1.8.13
 
