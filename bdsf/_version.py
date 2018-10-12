@@ -12,7 +12,9 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
-    2018/06/21 - Version 1.8.15
+    2018/10/12 - Version 1.8.15
+
+    2018/10/09 - Fix segfault in Gaussian fitting (#63)
 
     2018/06/21 - Fix setup.py for boost versions > 1.63
 

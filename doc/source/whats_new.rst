@@ -3,7 +3,9 @@
 **********
 What's New
 **********
-Version 1.8.15 (2018/05/21):
+Version 1.8.15 (2018/10/12):
+
+    * Fix segfault in Gaussian fitting (#63)
 
     * Fix setup.py for boost versions > 1.63 (#58)
 
