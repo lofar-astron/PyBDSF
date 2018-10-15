@@ -721,7 +721,7 @@ def make_lsm_str(img, glist, gnames, incl_empty=False):
             decsign = ('-' if dec[3] < 0 else '+')
             sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.6f" % (dec[2])).zfill(6)
             total = str("%.3e" % (g.total_flux))
-            deconv = g.deconv_size_sky
+            deconv = list(g.deconv_size_sky)
             if deconv[0] == 0.0  and deconv[1] == 0.0:
                 sname = 'P' + src_name
                 deconv[2] = 0.0
