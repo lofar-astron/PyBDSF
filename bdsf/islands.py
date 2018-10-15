@@ -282,8 +282,6 @@ class Island(object):
         self.shapelet_cf_def = NArray(doc="Coefficient matrix of the shapelet decomposition",
                                       colname='Coeff_matrix', units=None)
 
-#        TCInit(self)
-
         if not copy:
             ### we make bbox slightly bigger
             self.oldbbox = bbox
@@ -343,6 +341,11 @@ class Island(object):
         pixels_in_isl = N.sum(~N.isnan(self.image[self.mask_active])) # number of unmasked pixels assigned to current island
         self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
         self.border = self.get_border()
+        self.gaul = []
+        self.sources = []
+        self.gresid_mean = 0.0
+        self.gresid_rms = 0.0
+
 
     def __setstate__(self, state):
         """Needed for multiprocessing"""
