@@ -22,9 +22,9 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION boost libboost setuptools numpy scipy
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION setuptools numpy scipy
   - source activate test-environment
-  - export LIBRARY_PATH="$HOME/miniconda/envs/test-environment/lib";
+  - conda install -q -y -c meznom boost-python
   - python setup.py install
 
 script: "cd test && python tbdsf_process_image.py"
