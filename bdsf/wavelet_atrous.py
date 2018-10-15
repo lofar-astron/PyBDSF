@@ -412,6 +412,8 @@ class Op_wavelet_atrous(Op):
         wimg.do_cache = img.do_cache
         wimg.tempdir = img.tempdir
         wimg.shape = img.shape
+        wimg.frequency = img.frequency
+        wimg.equinox = img.equinox
         wimg.use_io = 'fits'
 
 
