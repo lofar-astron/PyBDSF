@@ -525,7 +525,7 @@ class Op_rmsimage(Op):
         """
         mask_small = mask
         axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
-        ax = [self.remap_axis(ashp, ax) for (ashp, ax) in zip(arr.shape, axes)]
+        ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)]
         #ax = map(self.remap_axis, arr.shape, axes)
         ax = N.meshgrid(*ax[-1::-1])
         pt_src_scale = box[0]
@@ -540,7 +540,7 @@ class Op_rmsimage(Op):
             axes2mod = axes2[:]
             axes2mod[0] = axes2[0]/arr.shape[0]*mean_map1.shape[0]
             axes2mod[1] = axes2[1]/arr.shape[1]*mean_map1.shape[1]
-            ax2 = map(self.remap_axis, out_rms2.shape, axes2mod)
+            ax2 = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(out_rms2.shape, axes2mod)]
             ax2 = N.meshgrid(*ax2[-1::-1])
             nd.map_coordinates(rms_map2,  ax2[-1::-1], order=interp, output=out_rms2)
             nd.map_coordinates(mean_map2, ax2[-1::-1], order=interp, output=out_mean2)
@@ -565,7 +565,7 @@ class Op_rmsimage(Op):
                 # 2 of large-scale value. Use distance to center of the box
                 # to determine taper value. This tapering prevents the use of the
                 # small-scale box beyond the range of artifacts.
-                low_vals_ind = N.where(rms_map1[bbox]/out_rms2[bbox] < 2.0)
+                low_vals_ind = N.where(rms_map1[tuple(bbox)]/out_rms2[tuple(bbox)] < 2.0)
                 if len(low_vals_ind[0]) > 0:
                     dist_to_cen = []
                     for (x,y) in zip(low_vals_ind[0],low_vals_ind[1]):
@@ -578,8 +578,8 @@ class Op_rmsimage(Op):
                                                (y-src_center[1])**2 )
                             if dist_to_cen >= med_dist_to_cen:
                                 weights[x,y] = 1.0 - dist_to_cen/N.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0
-                rms_map[bbox] = rms_map1[bbox]*weights + out_rms2[bbox]*(1.0-weights)
-                mean_map[bbox] = mean_map1[bbox]*weights + out_mean2[bbox]*(1.0-weights)
+                rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
+                mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
         else:
             rms_map = rms_map1
             mean_map = mean_map1
