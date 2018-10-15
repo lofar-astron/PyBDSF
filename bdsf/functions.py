@@ -1928,16 +1928,16 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     # Make ch0 and rms subimages
     ch0 = img.ch0_arr
     shape = ch0.shape
-    xlo = posn_pix[0]-int(aperture_pix)-1
+    xlo = int(posn_pix[0]) - int(aperture_pix) - 1
     if xlo < 0:
         xlo = 0
-    xhi = posn_pix[0]+int(aperture_pix)+1
+    xhi = int(posn_pix[0]) + int(aperture_pix) + 1
     if xhi > shape[0]:
         xhi = shape[0]
-    ylo = posn_pix[1]-int(aperture_pix)-1
+    ylo = int(posn_pix[1]) - int(aperture_pix) - 1
     if ylo < 0:
         ylo = 0
-    yhi = posn_pix[1]+int(aperture_pix)+1
+    yhi = int(posn_pix[1]) + int(aperture_pix) + 1
     if yhi > shape[1]:
         yhi = shape[1]
 
@@ -1945,7 +1945,7 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     rms = img.rms_arr
     aper_im = ch0[xlo:xhi, ylo:yhi] - mean[xlo:xhi, ylo:yhi]
     aper_rms = rms[xlo:xhi, ylo:yhi]
-    posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
+    posn_pix_new = [int(posn_pix[0])-xlo, int(posn_pix[1])-ylo]
     pixel_beamarea = img.pixel_beamarea()
     aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
     return aper_flux
