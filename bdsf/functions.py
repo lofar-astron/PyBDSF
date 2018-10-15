@@ -1590,7 +1590,7 @@ def retrieve_map(img, map_name):
     filename = get_name(img, map_name)
     if not os.path.isfile(filename):
         return None
-    infile = file(filename, 'rb')
+    infile = open(filename, 'rb')
     data = N.load(infile)
     infile.close()
     return data
@@ -1600,7 +1600,7 @@ def store_map(img, map_name, map_data):
     import numpy as N
 
     filename = get_name(img, map_name)
-    outfile = file(filename, 'wb')
+    outfile = open(filename, 'wb')
     N.save(outfile, map_data)
     outfile.close()
 
