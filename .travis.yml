@@ -1,31 +1,14 @@
 language: python
 
 python:
-  - "2.7"
-  - "3.6"
+  - 2.7
+  - 3.5
 
 before_install:
-  - sudo apt-get install gfortran
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libboost-python-dev gfortran
+  - pip install setuptools numpy scipy pyfits pywcs
 
-install:
-  - sudo apt-get update
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  - conda info -a
-
-  # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION setuptools numpy scipy
-  - source activate test-environment
-  - conda install -q -y -c meznom boost-python
-  - ln -s $HOME/miniconda/envs/test-environment/lib/libboost_python-mt.dylib $HOME/miniconda/envs/test-environment/lib/libboost_python-py36.dylib
-  - python setup.py install
+install: "python setup.py install"
 
 script: "cd test && python tbdsf_process_image.py"
