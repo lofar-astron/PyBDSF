@@ -53,6 +53,7 @@ class Image(object):
         self.j = 0
         self.freq_pars = [0.0, 0.0, 0.0]
         self.filename = ''
+        self.resid_gaus_arr = None
         self.opts = Opts(opts)
 
     def __setstate__(self, state):
