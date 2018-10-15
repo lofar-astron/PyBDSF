@@ -8,6 +8,13 @@ custom IPython shell defined in pybdsf.
 from __future__ import print_function
 from __future__ import absolute_import
 
+try:
+    # For Python 2, use raw_input() for input()
+    input = raw_input
+except NameError:
+    pass
+
+
 def process(img, **kwargs):
     """Find and measure sources in an image.
 
@@ -293,7 +300,7 @@ def get_op_chain(img):
     # If a changed option is not in any of the above lists,
     # force a re-run of all Ops.
     if not found:
-        del img.completed_Ops
+        img.completed_Ops = []
         if hasattr(img, 'use_io'): del img.use_io
         if hasattr(img, 'image_arr'): del img.image_arr
         if hasattr(img, 'mask_arr'): del img.mask_arr
@@ -698,10 +705,10 @@ def in_ipython():
 def raw_input_no_history(prompt):
     """Removes user input from readline history."""
     import readline
-    input = raw_input(prompt)
-    if input != '':
+    userinput = input(prompt)
+    if userinput != '':
         readline.remove_history_item(readline.get_current_history_length()-1)
-    return input
+    return userinput
 
 
 # The following functions just make the printing of
