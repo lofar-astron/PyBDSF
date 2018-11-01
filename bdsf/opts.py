@@ -31,8 +31,10 @@ class Op_new_op(Op):
 ## type-checking works properly.
 Opts.my_new_opt = Float(33, doc="docstring")
 """
+from __future__ import absolute_import
+
 import sys
-from tc import Int, Float, Bool, String, Tuple, Enum, \
+from .tc import Int, Float, Bool, String, Tuple, Enum, \
     Option, NArray, Instance, tInstance, List, Any, TCInit, tcError
 
 class Opts(object):
@@ -1381,7 +1383,7 @@ class Opts(object):
         opts should be dictionary of name->value
         """
         opts = dict(opts)
-        for k, v in opts.iteritems():
+        for k, v in opts.items():
             try:
                 # Fix for lofar parameter set integration:
                 # If the attribute is a bool, test if it is a string.
@@ -1400,7 +1402,7 @@ class Opts(object):
                 if v == "none":
                     v = None
                 self.__setattr__(k, v)
-            except tcError, e:
+            except tcError as e:
                 # Catch and re-raise as a RuntimeError
                 raise RuntimeError(
                         'Parameter "{0}" is not defined properly. \n {1}'.format(k
@@ -1425,7 +1427,7 @@ class Opts(object):
 
     def info(self):
         """Pretty-print current values of options"""
-        import tc
+        from . import tc
         ## enumerate all options
         opts = self.to_list()
         res = ""
@@ -1443,9 +1445,9 @@ class Opts(object):
         If the group name is specified, only opts that belong to that group
         are returned.
         """
-        import tc
+        from . import tc
         opts_list = []
-        for k, v in self.__class__.__dict__.iteritems():
+        for k, v in self.__class__.__dict__.items():
             if isinstance(v, tc.TC):
                 if group is not None:
                     if v.group() == group:
@@ -1457,9 +1459,9 @@ class Opts(object):
 
     def to_dict(self):
         """Returns a dictionary of names and values for all opts."""
-        import tc
+        from . import tc
         opts_dict = {}
-        for k, v in self.__class__.__dict__.iteritems():
+        for k, v in self.__class__.__dict__.items():
             if isinstance(v, tc.TC):
                 opts_dict.update({k: self.__getattribute__(k)})
         return opts_dict
@@ -1470,9 +1472,9 @@ class Opts(object):
         If the group name is specified, only opts that belong to that group
         are returned.
         """
-        import tc
+        from . import tc
         opts_list = []
-        for k, v in self.__class__.__dict__.iteritems():
+        for k, v in self.__class__.__dict__.items():
             if isinstance(v, tc.TC):
                 if group is not None:
                     if v.group() == group:
@@ -1486,9 +1488,9 @@ class Opts(object):
         self.set_opts(state)
 
     def __getstate__(self):
-        import tc
+        from . import tc
         state = {}
-        for k, v in self.__class__.__dict__.iteritems():
+        for k, v in self.__class__.__dict__.items():
             if isinstance(v, tc.TC):
                 state.update({k: self.__getattribute__(k)})
         return state

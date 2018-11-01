@@ -7,19 +7,24 @@ The current implementation will handle both 2D and 3D images,
 where for 3D case it will calculate maps for each plane (=
 Stokes images).
 """
+from __future__ import absolute_import
 
 import numpy as N
 import scipy.ndimage as nd
-import _cbdsm
-from image import Op, Image, NArray, List
-import const
-import mylogger
+from . import _cbdsm
+from .image import Op, Image, NArray, List
+from . import const
+from . import mylogger
 import os
-import functions as func
+from . import functions as func
 import scipy.ndimage as nd
-import multi_proc as mp
+from . import multi_proc as mp
 import itertools
-from functions import read_image_from_file
+try:
+    from itertools import izip as zip
+except ImportError: # will be 3.x series
+    pass
+from .functions import read_image_from_file
 
 
 class Op_rmsimage(Op):
@@ -375,24 +380,24 @@ class Op_rmsimage(Op):
         rms_map=None, whether to take the map (if variance
         is significant) or a constant value
         """
-    	from math import sqrt
+        from math import sqrt
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Checkrms  ")
         cdelt = img.wcs_obj.acdelt[:2]
-    	bm = (img.beam[0], img.beam[1])
-    	fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
-    	if img.masked:
-    	    unmasked = N.where(~img.mask_arr)
+        bm = (img.beam[0], img.beam[1])
+        fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
+        if img.masked:
+            unmasked = N.where(~img.mask_arr)
             stdsub = N.std(rms[unmasked])
             maxrms = N.max(rms[unmasked])
         else:
             stdsub = N.std(rms)
             maxrms = N.max(rms)
 
-    	rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
+        rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of rms image = ', stdsub*1000.0, 'mJy'))
         mylog.debug('%s %10.6f %s' % ('Expected standard deviation = ', rms_expect*1000.0, 'mJy'))
-    	if stdsub > 1.1*rms_expect:
+        if stdsub > 1.1*rms_expect:
             img.use_rms_map = True
             mylogger.userinfo(mylog, 'Variation in rms image significant')
         else:
@@ -406,13 +411,13 @@ class Op_rmsimage(Op):
         mean_map=None, whether to take the map (if variance
         is significant) or a constant value
         """
-    	from math import sqrt
+        from math import sqrt
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Checkmean ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
-    	if img.masked:
+        if img.masked:
             unmasked = N.where(~img.mask_arr)
             stdsub = N.std(mean[unmasked])
             maxmean = N.max(mean[unmasked])
@@ -520,7 +525,8 @@ class Op_rmsimage(Op):
         """
         mask_small = mask
         axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
-        ax = map(self.remap_axis, arr.shape, axes)
+        ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)]
+        #ax = map(self.remap_axis, arr.shape, axes)
         ax = N.meshgrid(*ax[-1::-1])
         pt_src_scale = box[0]
         if do_adapt:
@@ -534,7 +540,7 @@ class Op_rmsimage(Op):
             axes2mod = axes2[:]
             axes2mod[0] = axes2[0]/arr.shape[0]*mean_map1.shape[0]
             axes2mod[1] = axes2[1]/arr.shape[1]*mean_map1.shape[1]
-            ax2 = map(self.remap_axis, out_rms2.shape, axes2mod)
+            ax2 = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(out_rms2.shape, axes2mod)]
             ax2 = N.meshgrid(*ax2[-1::-1])
             nd.map_coordinates(rms_map2,  ax2[-1::-1], order=interp, output=out_rms2)
             nd.map_coordinates(mean_map2, ax2[-1::-1], order=interp, output=out_mean2)
@@ -559,7 +565,7 @@ class Op_rmsimage(Op):
                 # 2 of large-scale value. Use distance to center of the box
                 # to determine taper value. This tapering prevents the use of the
                 # small-scale box beyond the range of artifacts.
-                low_vals_ind = N.where(rms_map1[bbox]/out_rms2[bbox] < 2.0)
+                low_vals_ind = N.where(rms_map1[tuple(bbox)]/out_rms2[tuple(bbox)] < 2.0)
                 if len(low_vals_ind[0]) > 0:
                     dist_to_cen = []
                     for (x,y) in zip(low_vals_ind[0],low_vals_ind[1]):
@@ -572,8 +578,8 @@ class Op_rmsimage(Op):
                                                (y-src_center[1])**2 )
                             if dist_to_cen >= med_dist_to_cen:
                                 weights[x,y] = 1.0 - dist_to_cen/N.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0
-                rms_map[bbox] = rms_map1[bbox]*weights + out_rms2[bbox]*(1.0-weights)
-                mean_map[bbox] = mean_map1[bbox]*weights + out_mean2[bbox]*(1.0-weights)
+                rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
+                mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
         else:
             rms_map = rms_map1
             mean_map = mean_map1
@@ -670,6 +676,8 @@ class Op_rmsimage(Op):
                 mask_pad = self.pad_array(mask, new_shape)
 
         # Make arrays for calculated data
+        mapshape = [int(ms) for ms in mapshape]
+        boxcount = [int(bc) for bc in boxcount]
         mean_map = N.zeros(mapshape, dtype=N.float32)
         rms_map  = N.zeros(mapshape, dtype=N.float32)
         axes     = [N.zeros(len, dtype=N.float32) for len in mapshape]
@@ -690,12 +698,12 @@ class Op_rmsimage(Op):
         # for each coordinate.
         if use_extrapolation:
             cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                    itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                    zip(itertools.repeat(self.process_mean_rms_maps),
                     ind_list, itertools.repeat(mask), itertools.repeat(arr),
                     itertools.repeat(kappa)), numcores=ncores)
         else:
             cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                    itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                    zip(itertools.repeat(self.process_mean_rms_maps),
                     ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
                     itertools.repeat(kappa)), numcores=ncores)
 
@@ -722,12 +730,12 @@ class Op_rmsimage(Op):
                     ind_list.append([-BS, arr_pad.shape[0], j*SS,j*SS+BS])
             if use_extrapolation:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask), itertools.repeat(arr),
                         itertools.repeat(kappa)), numcores=ncores)
             else:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
                         itertools.repeat(kappa)), numcores=ncores)
 
@@ -749,12 +757,12 @@ class Op_rmsimage(Op):
                     ind_list.append([i*SS,i*SS+BS, -BS,arr_pad.shape[1]])
             if use_extrapolation:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask), itertools.repeat(arr),
                         itertools.repeat(kappa)), numcores=ncores)
             else:
                 cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.process_mean_rms_maps),
+                        zip(itertools.repeat(self.process_mean_rms_maps),
                         ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
                         itertools.repeat(kappa)), numcores=ncores)
 
@@ -851,7 +859,7 @@ class Op_rmsimage(Op):
         """Returns a padded array by mirroring around the edges."""
         # Assume that padding is the same for both axes and is equal
         # around all edges.
-        half_size = (new_shape[0] - arr.shape[0]) / 2
+        half_size = int((new_shape[0] - arr.shape[0]) / 2)
         arr_pad = N.zeros( (new_shape), dtype=arr.dtype)
 
         # left band

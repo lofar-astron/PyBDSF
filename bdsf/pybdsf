@@ -6,6 +6,7 @@ This module initializes the interactive PyBDSF shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
 command "pybdsf".
 """
+from __future__ import print_function
 import bdsf
 from bdsf.image import Image
 import pydoc
@@ -44,12 +45,12 @@ def inp(cur_cmd=None):
         return
     if cur_cmd is not None:
         if not hasattr(cur_cmd, 'arg_list'):
-            print '\033[31;1mERROR\033[0m: not a valid task'
+            print('\033[31;1mERROR\033[0m: not a valid task')
             return
         _set_current_cmd(cur_cmd)
     else:
         if not hasattr(_img, '_current_cmd'):
-            print '\033[31;1mERROR\033[0m: no task is set'
+            print('\033[31;1mERROR\033[0m: no task is set')
             return
     bdsf.interface.list_pars(_img, opts_list=_img._current_cmd_arg_list,
                              banner=_img._current_cmd_desc,
@@ -69,11 +70,11 @@ def go(cur_cmd=None):
         return
     if cur_cmd is None:
         if not hasattr(_img, '_current_cmd'):
-            print '\033[31;1mERROR\033[0m: no task is set'
+            print('\033[31;1mERROR\033[0m: no task is set')
             return
         cur_cmd = _img._current_cmd
     if not hasattr(cur_cmd, 'arg_list'):
-        print '\033[31;1mERROR\033[0m: not a valid task'
+        print('\033[31;1mERROR\033[0m: not a valid task')
         return
     cur_cmd()
 
@@ -88,14 +89,14 @@ def default(cur_cmd=None):
     global _img
     if cur_cmd is None:
         if not hasattr(_img, '_current_cmd'):
-            print '\033[31;1mERROR\033[0m: no task is set'
+            print('\033[31;1mERROR\033[0m: no task is set')
             return
         cur_cmd = _img._current_cmd
 
     if hasattr(cur_cmd, 'arg_list'):
         opts_list = cur_cmd.arg_list
     else:
-        print '\033[31;1mERROR\033[0m: not a valid task'
+        print('\033[31;1mERROR\033[0m: not a valid task')
         return
     _img.opts.set_default(opts_list)
     _replace_vals_in_namespace(opt_names=opts_list)
@@ -140,8 +141,8 @@ def tget(filename=None):
         if os.path.isfile('pybdsf.last'):
             filename = 'pybdsf.last'
         else:
-            print '\033[31;1mERROR\033[0m: No file name given and '\
-                  '"pybdsf.last" not found.\nPlease specify a file to load.'
+            print('\033[31;1mERROR\033[0m: No file name given and '\
+                  '"pybdsf.last" not found.\nPlease specify a file to load.')
             return
 
     if os.path.isfile(filename):
@@ -151,12 +152,12 @@ def tget(filename=None):
             pkl_file.close()
             _img.opts.set_opts(pars)
             _replace_vals_in_namespace()
-            print "--> Loaded parameters from file '" + filename + "'."
+            print("--> Loaded parameters from file '" + filename + "'.")
         except:
-            print "\033[31;1mERROR\033[0m: Could not read file '" + \
-                  filename + "'."
+            print("\033[31;1mERROR\033[0m: Could not read file '" + \
+                  filename + "'.")
     else:
-        print "\033[31;1mERROR\033[0m: File '" + filename + "' not found."
+        print("\033[31;1mERROR\033[0m: File '" + filename + "' not found.")
 
 
 def tput(filename=None, quiet=False):
@@ -197,7 +198,7 @@ def tput(filename=None, quiet=False):
     pickle.dump(pars, output)
     output.close()
     if not quiet:
-        print "--> Saved parameters to file '" + filename + "'."
+        print("--> Saved parameters to file '" + filename + "'.")
 
 
 def _set_pars_from_prompt():
@@ -217,7 +218,7 @@ def _set_pars_from_prompt():
     # build options dictionary
     opts = _img.opts.to_dict()
     user_entered_opts = {}
-    for k, v in opts.iteritems():
+    for k, v in opts.items():
         if k in f_dict:
             if f_dict[k] == '':
                 # Set option to default value in _img and namespace
@@ -229,7 +230,7 @@ def _set_pars_from_prompt():
     try:
         _img.opts.set_opts(user_entered_opts)
         return True
-    except RuntimeError, err:
+    except RuntimeError as err:
         # If an opt fails to set, replace its value in the namespace
         # with its current value in _img. Then print error so user knows.
         err_msg = str(err)
@@ -239,8 +240,8 @@ def _set_pars_from_prompt():
         k = err_msg_trim[indx1:indx2]
         orig_opt_val = opts[k]
         f_dict[k] = orig_opt_val
-        print '\033[31;1mERROR\033[0m: ' + err_msg_trim + \
-              '\nResetting to previous value.'
+        print('\033[31;1mERROR\033[0m: ' + err_msg_trim + \
+              '\nResetting to previous value.')
         return False
 
 
@@ -416,7 +417,7 @@ def show_fit(**kwargs):
         if success:
             tput(quiet=True)
     except KeyboardInterrupt:
-        print "\n\033[31;1mAborted\033[0m"
+        print("\n\033[31;1mAborted\033[0m")
 
 show_fit.arg_list = ['ch0_image', 'rms_image', 'mean_image', 'ch0_islands',
                      'gresid_image', 'sresid_image', 'gmodel_image',
@@ -453,7 +454,7 @@ def write_catalog(**kwargs):
         if success:
             tput(quiet=True)
     except KeyboardInterrupt:
-        print "\n\033[31;1mAborted\033[0m"
+        print("\n\033[31;1mAborted\033[0m")
 
 write_catalog.arg_list = ['bbs_patches', 'format', 'outfile', 'srcroot',
                           'incl_chan', 'clobber', 'catalog_type', 'incl_empty',
@@ -484,7 +485,7 @@ def export_image(**kwargs):
         if success:
             tput(quiet=True)
     except KeyboardInterrupt:
-        print "\n\033[31;1mAborted\033[0m"
+        print("\n\033[31;1mAborted\033[0m")
 
 export_image.arg_list = ['outfile', 'img_type', 'img_format', 'mask_dilation',
                          'pad_image', 'clobber']
@@ -535,7 +536,7 @@ class bdsmDocHelper(pydoc.Helper):
                             + group_text
                             + '\n\n' + desc_text)
             except(KeyError):
-                print "Parameter '" + request + "' not recognized."
+                print("Parameter '" + request + "' not recognized.")
 pydoc.help = bdsmDocHelper(sys.stdin, sys.stdout)
 
 

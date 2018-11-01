@@ -10,13 +10,14 @@ pixels, then FDR is chosen, else the hard threshold option is chosen.
 
 Masked images aren't handled properly yet.
 """
+from __future__ import absolute_import
 
 import numpy as N
-from image import Op, Image, NArray
+from .image import Op, Image, NArray
 from math import sqrt,pi,log
 from scipy.special import erfc
-import const
-import mylogger
+from . import const
+from . import mylogger
 
 
 class Op_threshold(Op):
@@ -87,7 +88,7 @@ class Op_threshold(Op):
         return img
 
     def get_srcp(self, img):
-        import sourcecounts as sc
+        from . import sourcecounts as sc
         fwsig = const.fwsig
         cutoff = 5.0
         spin = -0.80

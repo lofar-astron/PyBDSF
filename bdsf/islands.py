@@ -10,24 +10,25 @@ If this (scipy.ndimage.label) isn't fixed by the time we need 3D source
 extraction, one will have to adopt my old pixel-runs algorithm for 3D data.
 Check out islands.py rev. 1362 from repository for it.
 """
+from __future__ import absolute_import
+from __future__ import division
 
 import numpy as N
 import scipy.ndimage as nd
-from image import *
-import mylogger
+from .image import *
+from . import mylogger
 try:
     from astropy.io import fits as pyfits
-except ImportError, err:
+except ImportError as err:
     import pyfits
-import functions as func
-from output import write_islands
-from readimage import Op_readimage
-from preprocess import Op_preprocess
-from rmsimage import Op_rmsimage
-from threshold import Op_threshold
-from collapse import Op_collapse
+from . import functions as func
+from .output import write_islands
+from .readimage import Op_readimage
+from .preprocess import Op_preprocess
+from .rmsimage import Op_rmsimage
+from .threshold import Op_threshold
+from .collapse import Op_collapse
 
-nisl = Int(doc="Total number of islands detected")
 
 class Op_islands(Op):
     """Detect islands of emission in the image
@@ -113,7 +114,7 @@ class Op_islands(Op):
             pyrank = N.zeros(ch0_shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
-                pyrank[isl.bbox] += N.invert(isl.mask_active) * (i + 1)
+                pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
             pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
 
             if opts.output_all: write_islands(img)
@@ -189,7 +190,7 @@ class Op_islands(Op):
             if (isl_size >= img.minpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
-                pyrank[isl.bbox] += N.invert(isl.mask_active)*idx / idx
+                pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active)*idx // idx
 
         return res
 
@@ -252,33 +253,13 @@ class Op_islands(Op):
         return ops, opts
 
 
-from image import *
+from .image import *
 
 class Island(object):
     """Instances of this class represent islands of emission in the image.
 
     Its primary use is a container for all kinds of data describing island.
     """
-    bbox        = List(Instance(slice(0), or_none=False),
-                       doc = "Bounding box of the island")
-    origin      = List(Float(), doc="Coordinates of lower-left corner")
-    image       = NArray(doc="Sub-image of the island")
-    mask_active = NArray(doc="Mask for just active pixels")
-    mask_noisy  = NArray(doc="Mask for active pixels and surrounding noise")
-    shape       = List(Int(), doc="Shape of the island")
-    size_active = Int(doc="Number of active pixels in the island")
-    mean        = Float(doc="Average mean value")
-    rms         = Float(doc="Average rms")
-    total_flux  = Float(doc="Total flux from sum of pixels in island")
-    total_fluxE  = Float(doc="Error on total flux from sum of pixels in island")
-    max_value   = Float(doc="Maximum value in island")
-    island_id   = Int(doc="Island id, starting from 0", colname='Isl_id')
-    gresid_rms  = Float(doc="Rms of residual image of island")
-    gresid_mean = Float(doc="Mean of residual image of island")
-    connected   = Tuple(String(), Int(), doc="'multiple' or 'single' -ly connected, # of holes inside island")
-    convex_def  = Float(doc="Convex deficiency, with first order correction for edge effect")
-    islmean     = Float(doc="a constant value to subtract from image before fitting")
-
     def __init__(self, img, mask, mean, rms, labels, bbox, idx,
                  beamarea, origin=None, noise_mask=None, copy=False):
         """Create Island instance.
@@ -288,7 +269,18 @@ class Island(object):
         labels: labels array from scipy.ndimage
         bbox: slices
         """
-        TCInit(self)
+        # Add attribute definitions needed for output
+        self.island_id_def = Int(doc="Island id, starting from 0", colname='Isl_id')
+        self.shapelet_basis_def = String(doc="Coordinate system for shapelet decomposition (cartesian/polar)",
+                                         colname='Basis', units=None)
+        self.shapelet_beta_def = Float(doc="Value of shapelet scale beta", colname='Beta', units=None)
+        self.shapelet_nmax_def = Int(doc="Maximum value of shapelet order", colname='NMax', units=None)
+        self.shapelet_posn_sky_def = List(Float(), doc="Posn (RA, Dec in deg) of shapelet centre",
+                                          colname=['RA', 'DEC'], units=['deg', 'deg'])
+        self.shapelet_posn_skyE_def = List(Float(), doc="Error on sky coordinates of shapelet centre",
+                                           colname=['E_RA', 'E_DEC'], units=['deg', 'deg'])
+        self.shapelet_cf_def = NArray(doc="Coefficient matrix of the shapelet decomposition",
+                                      colname='Coeff_matrix', units=None)
 
         if not copy:
             ### we make bbox slightly bigger
@@ -296,17 +288,19 @@ class Island(object):
             self.oldidx = idx
             bbox = self.__expand_bbox(bbox, img.shape)
             origin = [b.start for b in bbox]   # easier in case ndim > 2
-            data = img[bbox]
-            bbox_rms_im = rms[bbox]
-            bbox_mean_im = mean[bbox]
+            if origin == []:
+                0/0
+            data = img[tuple(bbox)]
+            bbox_rms_im = rms[tuple(bbox)]
+            bbox_mean_im = mean[tuple(bbox)]
 
             ### create (inverted) masks
             # Note that mask_active is the island mask; mask_noisy marks only
             # the noisy pixels in the island image. If you want to mask the
             # noisy pixels, set the final mask to:
             #     mask = mask_active + mask_noisy
-            isl_mask = (labels[bbox] == idx)
-            noise_mask = (labels[bbox] == 0)
+            isl_mask = (labels[tuple(bbox)] == idx)
+            noise_mask = (labels[tuple(bbox)] == 0)
             N.logical_or(noise_mask, isl_mask, noise_mask)
 
             ### invert masks
@@ -326,7 +320,6 @@ class Island(object):
             bbox_mean_im = mean
             self.oldbbox = bbox
             self.oldidx = idx
-
 
         ### finish initialization
         isl_size = N.sum(~isl_mask)
@@ -348,6 +341,11 @@ class Island(object):
         pixels_in_isl = N.sum(~N.isnan(self.image[self.mask_active])) # number of unmasked pixels assigned to current island
         self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
         self.border = self.get_border()
+        self.gaul = []
+        self.sources = []
+        self.gresid_mean = 0.0
+        self.gresid_rms = 0.0
+
 
     def __setstate__(self, state):
         """Needed for multiprocessing"""
@@ -386,7 +384,8 @@ class Island(object):
         """Expand bbox of the image by 1 pixel"""
         def __expand(bbox, shape):
             return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
-        return map(__expand, bbox, shape)
+        ebbox = [__expand(b, shape[i]) for i, b in enumerate(bbox)]
+        return ebbox
 
     def copy(self, pixel_beamarea, image=None, mean=None, rms=None):
         mask = self.mask_active
@@ -410,7 +409,3 @@ class Island(object):
         border = N.transpose(N.asarray(N.where(mask ^ nd.binary_erosion(mask)))) + self.origin
 
         return N.transpose(N.array(border))
-
-
-### Insert attribute for island list into Image class
-Image.islands = List(tInstance(Island), doc="List of islands")

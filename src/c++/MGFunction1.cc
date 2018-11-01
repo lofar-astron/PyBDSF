@@ -1,10 +1,10 @@
 /*!
   \file MGFunction.cc
-  
+
   \ingroup pybdsm
-  
+
   \author Oleksandr Usov
-  
+
   \author 15/10/2007
 
 
@@ -24,6 +24,11 @@ parameters coming to/from python side.
 
 namespace n = num_util;
 
+// to support python 3 where all ints are long
+#if PY_MAJOR_VERSION >= 3
+    #define PyInt_FromLong PyLong_FromLong
+    #define PyInt_AsLong PyLong_AsLong
+#endif
 
 //
 // Constructor -- check data types/shapes and store them
@@ -50,7 +55,7 @@ MGFunction::MGFunction(pyndarray data, pyndarray mask, double weight)
 MGFunction::~MGFunction()
 {
   // enforce data cache reset
-  // this is needed if new MGFunction object is allocated 
+  // this is needed if new MGFunction object is allocated
   // at the same spot in memory as previous one
   if (mm_obj == this)
     mm_obj = 0;
@@ -224,10 +229,10 @@ void MGFunction::register_class()
 			"and implements all math required to use it for fitting.\n\n"
 			"NEVER EVER USE IT IN MULTITHREADED SOFTWARE WITHOUT APPROPRIATE LOCKING\n"
 			"IT'S INTERNAL CACHES ARE NOT THREAD-SAFE\n\n",
-			init<pyndarray, pyndarray, 
+			init<pyndarray, pyndarray,
 			double>((arg("data"), "mask", arg("weight") = 1.)))
 
-    .def("__len__", &MGFunction::gaul_size, 
+    .def("__len__", &MGFunction::gaul_size,
 	 "total number of gaussians")
 
     .def("add_gaussian", &MGFunction::py_add_gaussian, (arg("type"), "parameters"),

@@ -2,7 +2,9 @@
 
 This module is used to display fits results.
 """
-from image import *
+from __future__ import print_function
+from __future__ import absolute_import
+from .image import *
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
@@ -13,10 +15,12 @@ if has_pl:
     from matplotlib.lines import Line2D
     from matplotlib import collections
 from math import log10
-import functions as func
-from const import fwsig
+from . import functions as func
+from .const import fwsig
 import os
+import warnings
 import numpy as N
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
@@ -33,7 +37,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     global samp_key, samp_gaul_table_url, samp_srl_table_url
 
     if not has_pl:
-        print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled."
+        print("\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting is disabled.")
         return
     if hasattr(img, 'samp_client'):
         samp_client = img.samp_client
@@ -89,7 +93,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         names.append('ch0')
     if ch0_flagged:
         if not hasattr(img, 'ngaus'):
-            print 'Image was not fit with Gaussians. Skipping display of flagged Gaussians.'
+            print('Image was not fit with Gaussians. Skipping display of flagged Gaussians.')
         else:
             img_ch0 = img.ch0_arr
             images.append(img_ch0)
@@ -97,7 +101,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         names.append('ch0')
     if pi_image:
         if not hasattr(img, 'ch0_pi_arr'):
-            print 'Polarization module not run. Skipping PI image.'
+            print('Polarization module not run. Skipping PI image.')
         else:
             img_pi = img.ch0_pi_arr
             images.append(img_pi)
@@ -110,7 +114,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         names.append('rms')
     if gresid_image:
         if not hasattr(img, 'ngaus'):
-            print 'Image was not fit with Gaussians. Skipping residual Gaussian image.'
+            print('Image was not fit with Gaussians. Skipping residual Gaussian image.')
         else:
             img_gaus_resid = img.resid_gaus_arr
             images.append(img_gaus_resid)
@@ -118,7 +122,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
             names.append('gaus_resid')
     if gmodel_image:
         if not hasattr(img, 'ngaus'):
-            print 'Image was not fit with Gaussians. Skipping model Gaussian image.'
+            print('Image was not fit with Gaussians. Skipping model Gaussian image.')
         else:
             img_gaus_mod = img.model_gaus_arr
             images.append(img_gaus_mod)
@@ -131,7 +135,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         names.append('mean')
     if sresid_image:
         if img.opts.shapelet_do == False:
-            print 'Image was not decomposed into shapelets. Skipping residual shapelet image.'
+            print('Image was not decomposed into shapelets. Skipping residual shapelet image.')
         else:
             img_shap_resid = img.ch0_arr - img.model_shap_arr
             images.append(img_shap_resid)
@@ -139,7 +143,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
             names.append('shap_resid')
     if smodel_image:
         if img.opts.shapelet_do == False:
-            print 'Image was not decomposed into shapelets. Skipping model shapelet image.'
+            print('Image was not decomposed into shapelets. Skipping model shapelet image.')
         else:
             img_shap_mod = img.model_shap_arr
             images.append(img_shap_mod)
@@ -147,12 +151,12 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
             names.append('shap_mod')
     if source_seds:
         if img.opts.spectralindex_do == False:
-            print 'Source SEDs were not fit. Skipping source SED plots.'
+            print('Source SEDs were not fit. Skipping source SED plots.')
         else:
             src_list = img.sources
             sed_src = get_src(src_list, 0)
             if sed_src is None:
-                print 'No sources found. Skipping source SED plots.'
+                print('No sources found. Skipping source SED plots.')
             else:
                 images.append('seds')
                 titles.append('')
@@ -160,11 +164,11 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 srcid_cur = 0
     if pyramid_srcs:
         if img.opts.atrous_do == False:
-            print 'Image was not decomposed into wavelets. Skipping wavelet images.'
+            print('Image was not decomposed into wavelets. Skipping wavelet images.')
         else:
             # Get the unique j levels and store them. Only make subplots for
             # occupied j levels
-            print 'Pyramidal source plots not yet supported.'
+            print('Pyramidal source plots not yet supported.')
 #             j_list = []
 #             for p in img.pyrsrcs:
 #                 for l in p.jlevels:
@@ -177,7 +181,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
 #                 names.append('pyrsrc'+str(i))
     if psf_major or psf_minor or psf_pa:
         if img.opts.psf_vary_do == False:
-            print 'PSF variation not calculated. Skipping PSF variation images.'
+            print('PSF variation not calculated. Skipping PSF variation images.')
         else:
             if psf_major:
                 img_psf_maj = img.psf_vary_maj_arr*fwsig
@@ -196,15 +200,15 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 names.append('psf_pa')
 
     if images == []:
-        print 'No images to display.'
+        print('No images to display.')
         return
 
     im_mean = img.clipped_mean
     im_rms = img.clipped_rms
-    if img.resid_gaus is None:
+    if img.resid_gaus_arr is None:
         low = 1.1*abs(img.min_value)
     else:
-        low = N.max([1.1*abs(img.min_value),1.1*abs(N.nanmin(img.resid_gaus))])
+        low = N.max([1.1*abs(img.min_value),1.1*abs(N.nanmin(img.resid_gaus_arr))])
     if low <= 0.0:
         low = 1E-6
     vmin_est = im_mean - im_rms*5.0 + low
@@ -220,22 +224,22 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     origin = 'lower'
     colours = ['m', 'b', 'c', 'g', 'y', 'k'] # reserve red ('r') for wavelets
     styles = ['-', '-.', '--']
-    print '=' * 72
-    print 'NOTE -- With the mouse pointer in plot window:'
-    print '  Press "i" ........ : Get integrated flux densities and mean rms'
-    print '                       values for the visible portion of the image'
-    print '  Press "m" ........ : Change min and max scaling values'
-    print '  Press "n" ........ : Show / hide island IDs'
-    print '  Press "0" ........ : Reset scaling to default'
+    print('=' * 72)
+    print('NOTE -- With the mouse pointer in plot window:')
+    print('  Press "i" ........ : Get integrated flux densities and mean rms')
+    print('                       values for the visible portion of the image')
+    print('  Press "m" ........ : Change min and max scaling values')
+    print('  Press "n" ........ : Show / hide island IDs')
+    print('  Press "0" ........ : Reset scaling to default')
     if 'seds' in images:
-        print '  Press "c" ........ : Change source for SED plot'
+        print('  Press "c" ........ : Change source for SED plot')
     if ch0_islands and hasattr(img, 'ngaus'):
-        print '  Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode, '
-        print '                       toggled with the "zoom" button and indicated in '
-        print '                       the lower right corner, must be off)'
+        print('  Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode, ')
+        print('                       toggled with the "zoom" button and indicated in ')
+        print('                       the lower right corner, must be off)')
         if 'seds' in images:
-            print '                       The SED plot will also show the chosen source.'
-    print '_' * 72
+            print('                       The SED plot will also show the chosen source.')
+    print('_' * 72)
 
     if len(images) > 1:
         numx = 2
@@ -256,7 +260,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 cmd = 'ax' + str(i+1) + ' = pl.subplot(' + str(numx) + \
                     ', ' + str(numy) + ', ' + str(i+1) + ', sharex=ax1' + \
                     ', sharey=ax1)'
-            exec cmd
+            exec(cmd)
             if 'PSF' in titles[i]:
                 im = image
             else:
@@ -285,8 +289,8 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                     if hasattr(img, 'nsrc'):
                         nsrc = len(isl.sources)
                         for isrc in range(nsrc):
-                            col = colours[isrc % 6]
-                            style = styles[isrc/6 % 3]
+                            col = colours[int(isrc % 6)]
+                            style = styles[int(isrc/6 % 3)]
                             src = isl.sources[isrc]
                             for g in src.gaussians:
                                 if hasattr(g, 'valid'):
@@ -310,7 +314,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                                     e.pflux = g.peak_flux
                                     e.centre_sky = g.centre_sky
                 if len(img.islands) > 0:
-                    island_offsets = zip(N.array(island_offsets_x), N.array(island_offsets_y))
+                    island_offsets = list(zip(N.array(island_offsets_x), N.array(island_offsets_y)))
                     isl_borders = collections.AsteriskPolygonCollection(4, offsets=island_offsets, color=border_color,
                                     transOffset=ax.transData, sizes=(10.0,))
                     ax.add_collection(isl_borders)
@@ -353,14 +357,14 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
             else:
                 cmd = 'ax' + str(i+1) + ".imshow(N.transpose(im), origin=origin, "\
                       "interpolation='nearest',vmin=vmin, vmax=vmax, cmap=gray_palette)"
-            exec cmd
+            exec(cmd)
             cmd = 'ax' + str(i+1) + '.format_coord = format_coord_'+names[i]
-            exec cmd
+            exec(cmd)
             pl.title(titles[i])
         elif image == 'seds':
             cmd = 'ax' + str(i+1) + ' = pl.subplot(' + str(numx) + \
                 ', ' + str(numy) + ', ' + str(i+1) + ')'
-            exec cmd
+            exec(cmd)
             ax = pl.gca()
             plot_sed(sed_src, ax)
 
@@ -370,7 +374,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                     cmd = 'ax' + str(j+i+1) + ' = pl.subplot(' + str(numx) + \
                         ', ' + str(numy) + ', ' + str(j+i+1) + ', sharex=ax1, '+\
                         'sharey=ax1)'
-                    exec cmd
+                    exec(cmd)
                     pl.title('Pyramidal Sources for\nWavelet Scale J = ' +
                              str(j_with_gaus[j]))
             for pyr in img.pyrsrcs:
@@ -382,7 +386,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 cmd = "ax" + str(jindx + index_first_waveplot + 1) + \
                     ".plot(ind[0]+isl.origin[0], "\
                     "ind[1]+isl.origin[1], '.', color=col)"
-                exec cmd
+                exec(cmd)
 
     fig.canvas.mpl_connect('key_press_event', on_press)
     fig.canvas.mpl_connect('pick_event', on_pick)
@@ -401,14 +405,14 @@ def on_pick(event):
         pflux = g.pflux
         wav_j = g.jlevel
         if wav_j == 0:
-            print 'Gaussian #' + str(gaus_id) + ' (in src #' + str(src_id) + \
+            print('Gaussian #' + str(gaus_id) + ' (in src #' + str(src_id) + \
                 ', isl #' + str(isl_id) + '): F_tot = ' + str(round(tflux,4)) + \
-                ' Jy, F_peak = ' + str(round(pflux,4)) + ' Jy/beam'
+                ' Jy, F_peak = ' + str(round(pflux,4)) + ' Jy/beam')
         else:
-            print 'Gaussian #' + str(gaus_id) + ' (in src #' + str(src_id) + \
+            print('Gaussian #' + str(gaus_id) + ' (in src #' + str(src_id) + \
                 ', isl #' + str(isl_id) + ', wav #' + str(wav_j) + \
                 '): F_tot = ' + str(round(tflux,3)) + ' Jy, F_peak = ' + \
-                str(round(pflux,4)) + ' Jy/beam'
+                str(round(pflux,4)) + ' Jy/beam')
 
         # Transmit src_id, gaus_id, and coordinates to SAMP Hub (if we are connected)
         if do_broadcast and samp_key is not None:
@@ -436,15 +440,15 @@ def on_pick(event):
             if images[axindx] == 'seds':
                 plot_sed(sed_src, ax)
     else:
-        print 'Flagged Gaussian (flag = ' + str(g.flag) + '; use "' + \
-            "help 'flagging_opts'" + '" for flag meanings)'
+        print('Flagged Gaussian (flag = ' + str(g.flag) + '; use "' + \
+            "help 'flagging_opts'" + '" for flag meanings)')
 
     pl.draw()
 
 
 def on_press(event):
     """Handle keypresses"""
-    from interface import raw_input_no_history
+    from .interface import raw_input_no_history
     import numpy
 
     global img_ch0, img_rms, img_mean, img_gaus_mod, img_shap_mod
@@ -452,9 +456,9 @@ def on_press(event):
     global ch0min, ch0max, low, fig, images, src_list, srcid_cur
     global markers
     if event.key == '0':
-        print 'Resetting limits to defaults (%.4f -- %.4f Jy/beam)' \
+        print('Resetting limits to defaults (%.4f -- %.4f Jy/beam)' \
             % (pow(10, vmin)-low,
-               pow(10, vmax)-low)
+               pow(10, vmax)-low))
         axes_list = fig.get_axes()
         for axindx, ax in enumerate(axes_list):
             if images[axindx] != 'wavelets' and images[axindx] != 'seds':
@@ -484,7 +488,7 @@ def on_press(event):
                 try:
                     minscl = raw_input_no_history(prompt)
                 except RuntimeError:
-                    print 'Sorry, unable to change scaling.'
+                    print('Sorry, unable to change scaling.')
                     return
         minscl = N.log10(minscl + low)
         maxscl = 'a'
@@ -499,11 +503,11 @@ def on_press(event):
                 try:
                     maxscl = raw_input_no_history(prompt)
                 except RuntimeError:
-                    print 'Sorry, unable to change scaling.'
+                    print('Sorry, unable to change scaling.')
                     return
         maxscl = N.log10(maxscl + low)
         if maxscl <= minscl:
-            print 'Max value must be greater than min value!'
+            print('Max value must be greater than min value!')
             return
         axes_list = fig.get_axes()
         for axindx, ax in enumerate(axes_list):
@@ -533,12 +537,12 @@ def on_press(event):
                 try:
                     srcid = raw_input_no_history(prompt)
                 except RuntimeError:
-                    print 'Sorry, unable to change source.'
+                    print('Sorry, unable to change source.')
                     return
         ax_indx = images.index('seds')
         sed_src = get_src(src_list, srcid)
         if sed_src is None:
-            print 'Source not found!'
+            print('Source not found!')
             return
         srcid_cur = srcid
         axes_list = fig.get_axes()
@@ -576,19 +580,19 @@ def on_press(event):
             gaus_mod_flux = 0.0
         else:
             gaus_mod_flux = N.nansum(img_gaus_mod[xmin:xmax, ymin:ymax])/pixels_per_beam
-        print 'Visible region (%i:%i, %i:%i) :' % (xmin, xmax, ymin, ymax)
-        print '  ch0 flux density from sum of pixels ... : %f Jy'\
-            % (flux,)
-        print '  Background mean map flux density ...... : %f Jy'\
-            % (mean_map_flux,)
-        print '  Gaussian model flux density ........... : %f Jy'\
-            % (gaus_mod_flux,)
+        print('Visible region (%i:%i, %i:%i) :' % (xmin, xmax, ymin, ymax))
+        print('  ch0 flux density from sum of pixels ... : %f Jy'\
+            % (flux,))
+        print('  Background mean map flux density ...... : %f Jy'\
+            % (mean_map_flux,))
+        print('  Gaussian model flux density ........... : %f Jy'\
+            % (gaus_mod_flux,))
         if img_shap_mod is not None:
             shap_mod_flux = N.nansum(img_shap_mod[xmin:xmax, ymin:ymax])/pixels_per_beam
-            print '  Shapelet model flux density ........... : %f Jy'\
-                % (shap_mod_flux,)
-        print '  Mean rms (from rms map) ............... : %f Jy/beam'\
-            % (mean_rms,)
+            print('  Shapelet model flux density ........... : %f Jy'\
+                % (shap_mod_flux,))
+        print('  Mean rms (from rms map) ............... : %f Jy/beam'\
+            % (mean_rms,))
     if event.key == 'n':
         # Show/Hide island numbers
         if markers:
@@ -679,7 +683,7 @@ def format_coord_psf_pa(x, y):
 
 def xy_to_radec_str(x, y):
     """Converts x, y in image coords to a sexigesimal string"""
-    from output import ra2hhmmss, dec2ddmmss
+    from .output import ra2hhmmss, dec2ddmmss
     global pix2sky
     ra, dec = pix2sky([x, y])
 

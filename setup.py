@@ -190,7 +190,7 @@ def main():
 
     setup(
         name='bdsf',
-        version='1.8.15',
+        version='1.9.0',
         author='David Rafferty',
         author_email='drafferty@hs.uni-hamburg.de',
         url='https://github.com/lofar-astron/PyBDSF',
@@ -204,6 +204,7 @@ def main():
             'Programming Language :: C++',
             'Programming Language :: Fortran',
             'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3',
             'Topic :: Scientific/Engineering :: Astronomy'
         ],
         ext_modules=extensions,

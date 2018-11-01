@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 # some functions
 
 def poly(c,x):
@@ -19,7 +21,7 @@ def sp_in(c, x):
       if order == 2:
         y = c[0]*N.power(x, c[1])*N.power(x, c[2]*N.log(x))
       else:
-        print 'Not yet implemented'
+        print('Not yet implemented')
 
     return y
 
@@ -52,7 +54,7 @@ def shapeletfit(cf, Bset, cfshape):
     y = N.zeros(y.shape)
     index = [(i,j) for i in range(ordermax) for j in range(ordermax-i)]  # i=0->nmax, j=0-nmax-i
     for coord in index:
-	linbasis = (Bset[coord[0], coord[1], ::]).flatten()
+        linbasis = (Bset[coord[0], coord[1], ::]).flatten()
         y += cf.reshape(cfshape)[coord]*linbasis
 
     return y
@@ -75,8 +77,8 @@ def func_poly2d(ord,p,x,y):
         z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y+\
           p[6]*x*x*x+p[7]*x*x*y+p[8]*x*y*y+p[9]*y*y*y
     if ord > 3:
-        print " We do not trust polynomial fits > 3 "
-	z = None
+        print(" We do not trust polynomial fits > 3 ")
+    z = None
 
     return z
 
@@ -139,7 +141,7 @@ def polar2cart(polar, cen):
 
 def gaus_pixval(g, pix):
     """ Calculates the value at a pixel pix due to a gaussian object g. """
-    from const import fwsig, pi
+    from .const import fwsig, pi
     from math import sin, cos, exp
 
     cen = g.centre_pix
@@ -215,9 +217,9 @@ def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     val = N.zeros(x.shape)
     indx = N.array(ind)
     if len(indx) % 6 != 0:
-      print " Something wrong with the parameters passed - need multiples of 6 !"
+      print(" Something wrong with the parameters passed - need multiples of 6 !")
     else:
-      ngaus = len(indx)/6
+      ngaus = int(len(indx)/6)
       params = N.zeros(6*ngaus)
       params[N.where(indx==1)[0]] = c
       params[N.where(indx==0)[0]] = p_tofix
@@ -229,7 +231,7 @@ def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
 
 def g2param(g, adj=False):
     """Convert gaussian object g to param list [amp, cenx, ceny, sigx, sigy, theta] """
-    from const import fwsig
+    from .const import fwsig
     from math import pi
 
     A = g.peak_flux
@@ -245,7 +247,7 @@ def g2param(g, adj=False):
 
 def g2param_err(g, adj=False):
     """Convert errors on gaussian object g to param list [Eamp, Ecenx, Eceny, Esigx, Esigy, Etheta] """
-    from const import fwsig
+    from .const import fwsig
     from math import pi
 
     A = g.peak_fluxE
@@ -262,7 +264,7 @@ def g2param_err(g, adj=False):
 def corrected_size(size):
     """ convert major and minor axis from sigma to fwhm and angle from horizontal to P.A. """
 
-    from const import fwsig
+    from .const import fwsig
 
     csize = [0,0,0]
     csize[0] = size[0]*fwsig
@@ -278,7 +280,7 @@ def corrected_size(size):
 
 def drawellipse(g):
     import numpy as N
-    from gausfit import Gaussian
+    from .gausfit import Gaussian
 
     rad = 180.0/N.pi
     if isinstance(g, Gaussian):
@@ -350,7 +352,7 @@ def mask_fwhm(g, fac1, fac2, delc, shap):
         fac1*FWHM and inside (more flux) fac2*FWHM. Also returns the values as well."""
     import math
     import numpy as N
-    from const import fwsig
+    from .const import fwsig
 
     x, y = N.indices(shap)
     params = g2param(g)
@@ -404,10 +406,11 @@ def moment(x,mask=None):
     for i, val in N.ndenumerate(x):
         if not mask[i]:
             m1 += val
-	    m2 += val*N.array(i)
-	    m3 += val*N.array(i)*N.array(i)
+        m2 += val*N.array(i)
+        m3 += val*N.array(i)*N.array(i)
     m2 /= m1
-    m3 = N.sqrt(m3/m1-m2*m2)
+    if N.all(m3/m1 > m2*m2):
+        m3 = N.sqrt(m3/m1-m2*m2)
     return m1, m2, m3
 
 def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
@@ -556,7 +559,7 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
         Returns normalised peak, centroid, fwhm and P.A. assuming North is top.
     """
     from math import sqrt, atan, pi
-    from const import fwsig
+    from .const import fwsig
     import numpy as N
     N.seterr(all='ignore')
 
@@ -592,10 +595,10 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
     import sys
 
     if mask is not None and mask.shape != data.shape:
-        print 'Data and mask array dont have the same shape, ignoring mask'
+        print('Data and mask array dont have the same shape, ignoring mask')
         mask = None
     if err is not None and err.shape != data.shape:
-        print 'Data and error array dont have the same shape, ignoring error'
+        print('Data and error array dont have the same shape, ignoring error')
         err = None
 
     if mask is None: mask = N.zeros(data.shape, bool)
@@ -691,9 +694,9 @@ def deconv2(gaus_bm, gaus_c):
         All PA is in degrees.
 
         Returns deconvolved gaussian parameters and flag:
-   	 0   All OK.
+     0   All OK.
      1   Result is pretty close to a point source.
-	 2   Illegal result.
+     2   Illegal result.
 
         """
     from math import pi, cos, sin, atan2, sqrt
@@ -726,20 +729,20 @@ def deconv2(gaus_bm, gaus_c):
             bmaj = 0.0
             bpa = 0.0
         else:
-	        bmaj = sqrt(0.5*(s+t))
-	        bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
+            bmaj = sqrt(0.5*(s+t))
+            bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         bmin = 0.0
         if 0.5*(s-t) < limit and alpha > -limit and beta > -limit:
-	        ifail = 1
+            ifail = 1
         else:
             ifail = 2
     else:
         bmaj = sqrt(0.5*(s+t))
         bmin = sqrt(0.5*(s-t))
         if abs(gamma) + abs(alpha-beta) == 0.0:
-	        bpa = 0.0
+            bpa = 0.0
         else:
-	        bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
+            bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         ifail = 0
     return (bmaj, bmin, bpa), ifail
 
@@ -757,16 +760,16 @@ def get_errors(img, p, stdav, bm_pix=None):
         e_tot [Jy]
 
     """
-    from const import fwsig
+    from .const import fwsig
     from math import sqrt, log, pow, pi
-    import mylogger
+    from . import mylogger
     import numpy as N
 
     mylog = mylogger.logging.getLogger("PyBDSM.Compute")
 
     if len(p) % 7 > 0:
       mylog.error("Gaussian parameters passed have to have 7n numbers")
-    ngaus = len(p)/7
+    ngaus = int(len(p)/7)
     errors = []
     for i in range(ngaus):
       pp = p[i*7:i*7+7]
@@ -887,10 +890,10 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
     import sys
 
     if mask is not None and mask.shape != image.shape:
-        print 'Data and mask array dont have the same shape, ignoring mask'
+        print('Data and mask array dont have the same shape, ignoring mask')
         mask = None
     if err is not None and err.shape != image.shape:
-        print 'Data and error array dont have the same shape, ignoring error'
+        print('Data and error array dont have the same shape, ignoring error')
         err = None
     if mask is None: mask = N.zeros(image.shape, bool)
 
@@ -917,7 +920,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
       errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
                      N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
       try:
-          p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind), warning=False)
+          p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
       except TypeError:
           # This error means no warning argument is available, so redirect stdout to a null device
           # to suppress printing of warning messages
@@ -946,7 +949,7 @@ def gaussian_fcn(g, x1, x2):
     g: Gaussian object or list of Gaussian paramters
     """
     from math import radians, sin, cos
-    from const import fwsig
+    from .const import fwsig
     import numpy as N
 
     if isinstance(g, list):
@@ -1063,7 +1066,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     PyFITS is required, as it is used to standardize the header format. pyrap
     is optional.
     """
-    import mylogger
+    from . import mylogger
     import os
     import numpy as N
     from copy import deepcopy as cp
@@ -1088,7 +1091,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 from astropy.io import fits as pyfits
                 old_pyfits = False
                 use_sections = True
-            except ImportError, err:
+            except ImportError as err:
                 import pyfits
                 if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
                     old_pyfits = True
@@ -1103,14 +1106,14 @@ def read_image_from_file(filename, img, indir, quiet=False):
                     fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
                 else:
                     fits = pyfits.open(image_file, mode="readonly")
-            except IOError, err:
+            except IOError as err:
                 img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
         if img.use_io == 'rap':
             import pyrap.images as pim
             try:
                 inputimage = pim.image(image_file)
-            except IOError, err:
+            except IOError as err:
                 img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
     else:
@@ -1122,7 +1125,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 from astropy.io import fits as pyfits
                 old_pyfits = False
                 use_sections = True
-            except ImportError, err:
+            except ImportError as err:
                 import pyfits
                 if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
                     old_pyfits = True
@@ -1134,12 +1137,12 @@ def read_image_from_file(filename, img, indir, quiet=False):
                     old_pyfits = False
                     use_sections = True
             has_pyfits = True
-        except ImportError, err:
+        except ImportError as err:
             raise RuntimeError("Astropy or PyFITS is required.")
         try:
             import pyrap.images as pim
             has_pyrap = True
-        except ImportError, err:
+        except ImportError as err:
             has_pyrap = False
             e_pyrap = str(err)
 
@@ -1153,13 +1156,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
             else:
                 fits = pyfits.open(image_file, mode="readonly")
             img.use_io = 'fits'
-        except IOError, err:
+        except IOError as err:
             e_pyfits = str(err)
             if has_pyrap:
                 try:
                     inputimage = pim.image(image_file)
                     img.use_io = 'rap'
-                except IOError, err:
+                except IOError as err:
                     e_pyrap = str(err)
                     failed_read = True
                     img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
@@ -1180,7 +1183,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         hdr = convert_pyrap_header(inputimage, tmpdir)
         coords = inputimage.coordinates()
         img.coords_dict = coords.dict()
-        if img.coords_dict.has_key('telescope'):
+        if 'telescope' in img.coords_dict:
             img._telescope = img.coords_dict['telescope']
         else:
             img._telescope = None
@@ -1234,10 +1237,14 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # Make sure that the spectral axis has been identified properly
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
         try:
-            from astropy.wcs import WCS
-            t = WCS(hdr)
-            t.wcs.fix()
-        except ImportError, err:
+            from astropy.wcs import FITSFixedWarning
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                warnings.filterwarnings("ignore",category=FITSFixedWarning)
+                from astropy.wcs import WCS
+                t = WCS(hdr)
+                t.wcs.fix()
+        except ImportError as err:
             import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore",category=DeprecationWarning)
@@ -1354,7 +1361,7 @@ def convert_pyrap_header(pyrap_image, tmpdir):
     import shutil
     try:
         from astropy.io import fits as pyfits
-    except ImportError, err:
+    except ImportError as err:
         import pyfits
 
     if not os.path.exists(tmpdir):
@@ -1376,7 +1383,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
     """ Writes image array to outdir/filename"""
     import numpy as N
     import os
-    import mylogger
+    from . import mylogger
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Writefile")
 
@@ -1409,7 +1416,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             img.frequency, img.equinox, telescope, xmin=xmin, ymin=ymin,
             is_mask=is_mask)
         tfile = tempfile.NamedTemporaryFile(delete=False)
-        temp_im.writeto(tfile.name, clobber=clobber)
+        temp_im.writeto(tfile.name, overwrite=clobber)
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
     else:
         # Write image to FITS file
@@ -1435,7 +1442,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             outfile = outdir + filename + '.fits'
         else:
             outfile = outdir + filename
-        temp_im.writeto(outfile,  clobber=clobber)
+        temp_im.writeto(outfile,  overwrite=clobber)
         temp_im.close()
 
         if use == 'rap':
@@ -1458,7 +1465,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                         outtable.putkeywords({'coords': img.coords_dict})
                         outtable.done()
 
-            except ImportError, err:
+            except ImportError as err:
                 import os
                 os.remove(outfile)
                 raise RuntimeError("Error writing CASA image. Use img_format = 'fits' instead.")
@@ -1471,7 +1478,7 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
     try:
         from astropy.io import fits as pyfits
         use_header_update = False
-    except ImportError, err:
+    except ImportError as err:
         import pyfits
 
         # Due to changes in the way pyfits handles headers from version 3.1 on,
@@ -1583,7 +1590,7 @@ def retrieve_map(img, map_name):
     filename = get_name(img, map_name)
     if not os.path.isfile(filename):
         return None
-    infile = file(filename, 'rb')
+    infile = open(filename, 'rb')
     data = N.load(infile)
     infile.close()
     return data
@@ -1593,7 +1600,7 @@ def store_map(img, map_name, map_data):
     import numpy as N
 
     filename = get_name(img, map_name)
-    outfile = file(filename, 'wb')
+    outfile = open(filename, 'wb')
     N.save(outfile, map_data)
     outfile.close()
 
@@ -1898,7 +1905,7 @@ def isl_tosplit(isl, opts):
             pl.subplot(2,2,2); pl.imshow(N.transpose(labels3), origin='lower', interpolation='nearest'); pl.title('labels3')
             pl.subplot(2,2,3); pl.imshow(N.transpose(labels5), origin='lower', interpolation='nearest'); pl.title('labels5')
         except ImportError:
-            print "\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting disabled."
+            print("\033[31;1mWARNING\033[0m: Matplotlib not found. Plotting disabled.")
     if index == 0: return [index, n_subisl5, labels5]
     else: return [index, n_subisl, labels]
 
@@ -1921,16 +1928,16 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     # Make ch0 and rms subimages
     ch0 = img.ch0_arr
     shape = ch0.shape
-    xlo = posn_pix[0]-int(aperture_pix)-1
+    xlo = int(posn_pix[0]) - int(aperture_pix) - 1
     if xlo < 0:
         xlo = 0
-    xhi = posn_pix[0]+int(aperture_pix)+1
+    xhi = int(posn_pix[0]) + int(aperture_pix) + 1
     if xhi > shape[0]:
         xhi = shape[0]
-    ylo = posn_pix[1]-int(aperture_pix)-1
+    ylo = int(posn_pix[1]) - int(aperture_pix) - 1
     if ylo < 0:
         ylo = 0
-    yhi = posn_pix[1]+int(aperture_pix)+1
+    yhi = int(posn_pix[1]) + int(aperture_pix) + 1
     if yhi > shape[1]:
         yhi = shape[1]
 
@@ -1938,7 +1945,7 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     rms = img.rms_arr
     aper_im = ch0[xlo:xhi, ylo:yhi] - mean[xlo:xhi, ylo:yhi]
     aper_rms = rms[xlo:xhi, ylo:yhi]
-    posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
+    posn_pix_new = [int(posn_pix[0])-xlo, int(posn_pix[1])-ylo]
     pixel_beamarea = img.pixel_beamarea()
     aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
     return aper_flux
@@ -2227,5 +2234,3 @@ def bstat(indata, mask, kappa_npixbeam):
     r = numpy.sqrt(sigma**2 * (r1 / (r1 - 2.0*kappa*numpy.exp(-kappa**2/2.0))))
 
     return m_raw, r_raw, m, r, iter
-
-

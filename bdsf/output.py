@@ -4,7 +4,11 @@ Defines functions that write the results of source detection in a
 variety of formats. These are then used as methods of Image objects
 and/or are called by the outlist operation if output_all is True.
 """
-from image import Op
+from __future__ import print_function
+from __future__ import absolute_import
+
+from .image import Op
+
 
 class Op_outlist(Op):
     """Write out list of Gaussians
@@ -115,7 +119,7 @@ class Op_outlist(Op):
         """ Writes input parameters to a text file."""
         import inspect
         import types
-        import mylogger
+        from . import mylogger
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
         fname = 'parameters_used'
@@ -123,7 +127,7 @@ class Op_outlist(Op):
         mylog.info('Writing '+dir+fname)
         for attr in inspect.getmembers(img.opts):
           if attr[0][0] != '_':
-            if isinstance(attr[1], (int, str, bool, float, types.NoneType, tuple, list)):
+            if isinstance(attr[1], (int, str, bool, float, type(None), tuple, list)):
               f.write('%-40s' % attr[0])
               f.write(repr(attr[1])+'\n')
 
@@ -132,7 +136,7 @@ class Op_outlist(Op):
               if hasattr(img, attr[0]):
                   used = img.__getattribute__(attr[0])
                   if used != attr[1] and isinstance(used, (int, str, bool, float,
-                                                           types.NoneType, tuple,
+                                                           type(None), tuple,
                                                            list)):
                       f.write('%-40s' % '    Value used')
                       f.write(repr(used)+'\n')
@@ -140,8 +144,8 @@ class Op_outlist(Op):
 
     def save_opts(self, img, dir):
         """ Saves input parameters to a PyBDSM save file."""
-        import interface
-        import mylogger
+        from . import interface
+        from . import mylogger
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
         fname = 'parameters.sav'
@@ -210,8 +214,8 @@ def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
                    clobber=False, incl_empty=False, correct_proj=True):
     """Writes Gaussian list to a BBS sky model"""
     import numpy as N
-    from const import fwsig
-    import mylogger
+    from .const import fwsig
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
@@ -244,8 +248,8 @@ def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
                    clobber=False, incl_empty=False):
     """Writes Gaussian list to a SAGECAL lsm sky model"""
     import numpy as N
-    from const import fwsig
-    import mylogger
+    from .const import fwsig
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
@@ -276,8 +280,8 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
                    clobber=False, incl_empty=False, objtype='gaul'):
     """Writes Gaussian list to a ds9 region file"""
     import numpy as N
-    from const import fwsig
-    import mylogger
+    from .const import fwsig
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -315,7 +319,7 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
 def write_ascii_list(img, filename=None, sort_by='indx', format = 'ascii',
                      incl_chan=False, incl_empty=False, clobber=False, objtype='gaul'):
     """Writes Gaussian list to an ASCII file"""
-    import mylogger
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -345,7 +349,7 @@ def write_ascii_list(img, filename=None, sort_by='indx', format = 'ascii',
 
 def write_casa_gaul(img, filename=None,  incl_empty=False, clobber=False):
     """Writes a clean box file for use in casapy"""
-    import mylogger
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -367,13 +371,13 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                     incl_chan=False, incl_empty=False, clobber=False):
     """ Write as FITS binary table.
     """
-    import mylogger
+    from . import mylogger
     from distutils.version import StrictVersion
     try:
         from astropy.io import fits as pyfits
         use_header_update = False
         use_from_columns = True
-    except ImportError, err:
+    except ImportError as err:
         import pyfits
         if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
             use_header_update = True
@@ -383,7 +387,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
             use_from_columns = True
     import os
     import numpy as N
-    from _version import __version__
+    from ._version import __version__
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
     if objtype == 'gaul':
@@ -394,14 +398,15 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
             # Append the dummy sources for islands without any unflagged Gaussians
             outl[0] += img.dsources
     elif objtype == 'shap':
-        outl = [img.islands]
+        outl = [[isl for isl in img.islands if hasattr(isl, 'shapelet_nmax')]]
 
     nmax = 0
     if objtype == 'shap':
         # loop over shapelets and get maximum size of coefficient matrix
         for isl in outl[0]:
-            if isl.shapelet_nmax > nmax:
-                nmax = isl.shapelet_nmax
+            if hasattr(isl, 'shapelet_nmax'):
+                if isl.shapelet_nmax > nmax:
+                    nmax = isl.shapelet_nmax
         nmax += 1
 
     if img.opts.aperture is not None:
@@ -451,22 +456,26 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
         tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
 
-    for key in img.header.keys():
-        if key in ['HISTORY','COMMENT','']: continue
-        tbhdu.header['I_%s'%key]=img.header[key]
+    import warnings
+    from astropy.io.fits.verify import VerifyWarning
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore",category=VerifyWarning)
+        for key in img.header.keys():
+            if key in ['HISTORY','COMMENT','']: continue
+            tbhdu.header['I_%s'%key]=img.header[key]
 
     if filename is None:
         filename = img.imagename + '.' + objtype + '.fits'
     if os.path.exists(filename) and clobber == False:
         return None
     mylog.info('Writing ' + filename)
-    tbhdu.writeto(filename, clobber=True)
+    tbhdu.writeto(filename, overwrite=True)
     return filename
 
 
 def write_kvis_ann(img, filename=None, sort_by='indx',
                    clobber=False):
-    import mylogger
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -499,8 +508,8 @@ def write_kvis_ann(img, filename=None, sort_by='indx',
 
 def write_star(img, filename=None, sort_by='indx',
                clobber=False):
-    from output import ra2hhmmss, dec2ddmmss
-    import mylogger
+    from .output import ra2hhmmss, dec2ddmmss
+    from . import mylogger
     import os
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -539,8 +548,8 @@ def write_star(img, filename=None, sort_by='indx',
 def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                  incl_empty=False, correct_proj=True):
     """Makes a list of string entries for a BBS sky model."""
-    from output import ra2hhmmss
-    from output import dec2ddmmss
+    from .output import ra2hhmmss
+    from .output import dec2ddmmss
     import numpy as N
 
     outstr_list = []
@@ -602,9 +611,9 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                   sdec = decsign+str(dec[0]).zfill(2)+'.'+str(dec[1]).zfill(2)+'.'+str("%.6f" % (dec[2])).zfill(6)
                   total = str("%.3e" % (g.total_flux))
                   if correct_proj:
-                      deconv = g.deconv_size_sky
+                      deconv = list(g.deconv_size_sky)
                   else:
-                      deconv = g.deconv_size_sky_uncorr
+                      deconv = list(g.deconv_size_sky_uncorr)
                   if deconv[0] == 0.0  and deconv[1] == 0.0:
                       stype = 'POINT'
                       deconv[2] = 0.0
@@ -656,8 +665,8 @@ def make_bbs_shapeletfiles(img):
 
     column major
     """
-    from output import ra2hhmmss
-    from output import dec2ddmmss
+    from .output import ra2hhmmss
+    from .output import dec2ddmmss
     import numpy as N
 
     for isl in img.islands:
@@ -689,11 +698,11 @@ def make_bbs_shapeletfiles(img):
 
 def make_lsm_str(img, glist, gnames, incl_empty=False):
     """Makes a list of string entries for a SAGECAL sky model."""
-    from output import ra2hhmmss
-    from output import dec2ddmmss
-    from const import fwsig
+    from .output import ra2hhmmss
+    from .output import dec2ddmmss
+    from .const import fwsig
     import numpy as N
-    from _version import __version__
+    from ._version import __version__
 
     outstr_list = ["# SAGECAL sky model\n"]
     freq = "%.5e" % img.frequency
@@ -712,7 +721,7 @@ def make_lsm_str(img, glist, gnames, incl_empty=False):
             decsign = ('-' if dec[3] < 0 else '+')
             sdec = decsign+str(dec[0]).zfill(2)+' '+str(dec[1]).zfill(2)+' '+str("%.6f" % (dec[2])).zfill(6)
             total = str("%.3e" % (g.total_flux))
-            deconv = g.deconv_size_sky
+            deconv = list(g.deconv_size_sky)
             if deconv[0] == 0.0  and deconv[1] == 0.0:
                 sname = 'P' + src_name
                 deconv[2] = 0.0
@@ -807,7 +816,7 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
 def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False,
     incl_chan=False):
     """Makes a list of string entries for an ascii region file."""
-    from _version import __version__
+    from ._version import __version__
     outstr_list = []
     freq = "%.5e" % img.frequency
 
@@ -839,17 +848,17 @@ def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False,
             if format == 'ascii':
                 if i == 0:
                     outstr_list.append("# " + " ".join(cnames) + "\n")
-                outstr_list.append(" ".join(cformats) % tuple(cvals))
+                outstr_list.append(" ".join(cformats).format(*cvals))
             else:
                 if i == 0:
                     outstr_list.append("# " + ", ".join(cnames) + "\n")
-                outstr_list.append(", ".join(cformats) % tuple(cvals))
+                outstr_list.append(", ".join(cformats).format(*cvals))
     return outstr_list
 
 
 def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False,
     incl_chan=False):
-    import functions as func
+    from . import functions as func
 
     out_list = []
     if img.opts.aperture is not None:
@@ -872,7 +881,7 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False,
 
 def make_casa_str(img, glist):
     """Makes a list of string entries for a casa region file."""
-    import functions as func
+    from . import functions as func
     outstr_list = ['#CRTFv0 CASA Region Text Format version 0\n']
     sep = ' '
     scale = 2.0 # scale box to 2 times FWHM of Gaussian
@@ -960,7 +969,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
     The names are root_iXX_sXX_gXX (or wXX_iXX_sXX_gXX for wavelet Gaussians)
     """
     import numpy as N
-    import functions as func
+    from . import functions as func
 
     # Define lists
     if root is None:
@@ -1047,7 +1056,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
         # some Gaussians that fell outside of the regions in the patch
         # mask file.
         if 0 in unique_patch_ids:
-            import mylogger
+            from . import mylogger
             mylog = mylogger.logging.getLogger("PyBDSM.write_gaul")
             mylog.warning('Some sources fall outside of the regions '
                       'defined in the mask file. These sources are not '
@@ -1073,15 +1082,14 @@ def list_and_sort_gaussians(img, patch=None, root=None,
             patchnames = [None]
         if sort_by == 'flux':
             # Sort by Gaussian flux
-            indx = range(len(gauslist))
-            indx.sort(lambda x,y: cmp(gausflux[x],gausflux[y]), reverse=True)
+            indx = N.argsort(N.array(gausflux)).tolist()
+            indx.reverse()
         elif sort_by == 'index':
             # Sort by Gaussian index
-            indx = range(len(gausindx))
-            indx.sort(lambda x,y: cmp(gausindx[x],gausindx[y]), reverse=False)
+            indx = N.argsort(N.array(gausindx)).tolist()
         else:
             # Unrecognized property --> Don't sort
-            indx = range(len(gausindx))
+            indx = list(range(len(gausindx)))
         for i, si in enumerate(indx):
                 outlist_sorted[0][i] = outlist[0][si]
                 outnames_sorted[0][i] = outnames[0][si]
@@ -1092,15 +1100,14 @@ def list_and_sort_gaussians(img, patch=None, root=None,
         patchnames_sorted = list(patchnames)
         if sort_by == 'flux':
             # Sort by patch flux
-            indx = range(len(patchflux))
-            indx.sort(lambda x,y: cmp(patchflux[x],patchflux[y]), reverse=True)
+            indx = N.argsort(N.array(patchflux)).tolist()
+            indx.reverse()
         elif sort_by == 'index':
             # Sort by source index
-            indx = range(len(patchindx))
-            indx.sort(lambda x,y: cmp(patchindx[x],patchindx[y]), reverse=False)
+            indx = N.argsort(N.array(patchindx)).tolist()
         else:
             # Unrecognized property --> Don't sort
-            indx = range(len(gausindx))
+            indx = list(range(len(gausindx)))
 
         for i, si in enumerate(indx):
             outlist_sorted[i] = outlist[si]
@@ -1151,7 +1158,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
         names = ['island_id', 'shapelet_posn_sky', 'shapelet_posn_skyE',
                  'shapelet_basis', 'shapelet_beta', 'shapelet_nmax', 'shapelet_cf']
     else:
-        print 'Object type unrecongnized.'
+        print('Object type unrecongnized.')
         return (None, None, None, None)
     if incl_spin:
         names += ['spec_indx', 'e_spec_indx']
@@ -1173,33 +1180,33 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
             if name in ['specin_flux', 'specin_fluxE', 'specin_freq']:
                 # As these are variable length lists, they must
                 # (unfortunately) be treated differently.
-                    val = obj.__getattribute__(name)
-                    colname = obj.__class__.__dict__[name]._colname
-                    units = obj.__class__.__dict__[name]._units
-                    for i in range(nchan):
-                        if i < len(val):
-                            cvals.append(val[i])
-                            cnames.append(colname[0]+'_ch'+str(i+1))
-                            cunits.append(units[0])
-                        else:
-                            cvals.append(N.NaN)
-                            cnames.append(colname[0]+'_ch'+str(i+1))
-                            cunits.append(units[0])
+                val = obj.__getattribute__(name)
+                colname = obj.__dict__[name+'_def']._colname
+                units = obj.__dict__[name+'_def']._units
+                for i in range(nchan):
+                    if i < len(val):
+                        cvals.append(val[i])
+                        cnames.append(colname[0]+'_ch'+str(i+1))
+                        cunits.append(units[0])
+                    else:
+                        cvals.append(N.NaN)
+                        cnames.append(colname[0]+'_ch'+str(i+1))
+                        cunits.append(units[0])
             else:
                 if not skip_next:
                     val = obj.__getattribute__(name)
-                    colname = obj.__class__.__dict__[name]._colname
-                    units = obj.__class__.__dict__[name]._units
+                    colname = obj.__dict__[name+'_def']._colname
+                    units = obj.__dict__[name+'_def']._units
                     if units is None:
                         units = ' '
-                    if isinstance(val, list):
+                    if isinstance(val, list) or isinstance(val, tuple):
                         # This is a list, so handle it differently. We assume the next
                         # entry will have the errors, and they are interleaved to be
                         # in the order (val, error).
                         next_name = names[n+1]
                         val_next = obj.__getattribute__(next_name)
-                        colname_next = obj.__class__.__dict__[next_name]._colname
-                        units_next = obj.__class__.__dict__[next_name]._units
+                        colname_next = obj.__dict__[next_name+'_def']._colname
+                        units_next = obj.__dict__[next_name+'_def']._units
                         if units_next is None:
                             units_next = ' '
                         for i in range(len(val)):
@@ -1229,19 +1236,23 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
         if fits:
             if isinstance(v, int):
                 cformats.append('J')
-            if isinstance(v, float):
+            elif isinstance(v, float) or isinstance(v, N.float32) or isinstance(v, N.float64):
                 cformats.append('D')
-            if isinstance(v, str):
+            elif isinstance(v, str):
                 cformats.append('A')
-            if isinstance(v, N.ndarray):
+            elif isinstance(v, N.ndarray):
                 cformats.append('%iD' % (nmax**2,))
+            else:
+                raise RuntimeError("Format not supported.")
         else:
             if isinstance(v, int):
-                cformats.append('%4d')
-            if isinstance(v, float):
-                cformats.append('%.14f')
-            if isinstance(v, str):
-                cformats.append('%4s')
+                cformats.append('{'+str(i)+':4d}')
+            elif isinstance(v, float) or isinstance(v, N.float32) or isinstance(v, N.float64):
+                cformats.append('{'+str(i)+':.14f}')
+            elif isinstance(v, str):
+                cformats.append('{'+str(i)+':4s}')
+            else:
+                raise RuntimeError("Format not supported.")
 
     if objtype == 'gaul':
         if obj.gaus_num < 0 and not incl_empty:

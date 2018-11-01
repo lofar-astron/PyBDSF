@@ -11,26 +11,16 @@ the read_image_from_file in functions.py for details.
 Lastly, wcs and spectal information are stored in the PyWCS
 object img.wcs_obj.
 """
+from __future__ import absolute_import
 
 import numpy as N
-from image import *
-from functions import read_image_from_file
-import mylogger
+from .image import *
+from .functions import read_image_from_file
+from . import mylogger
 import sys
 import shutil
 import tempfile
 
-Image.imagename = String(doc="Identifier name for output files")
-Image.filename = String(doc="Name of input file without extension")
-Image.bbspatchnum = Int(doc="To keep track of patch number for bbs file "\
-                            "for seperate patches per source")
-Image.frequency = Float(doc="Frequency in the header")
-Image.use_io = String(doc="pyfits or pyrap")
-Image.j = Int(doc="Wavelet order j, 0 for normal run")
-Image.freq_pars = Tuple((0.0, 0.0, 0.0),
-                        doc="Frequency prarmeters from the header: (crval, cdelt, crpix)")
-Image.waveletimage = Bool(doc="Whether a wavelet transform image of not")
-Image.equinox = Float(2000.0, doc='Equinox of input image from header')
 
 class Op_readimage(Op):
     """Image file loader
@@ -79,6 +69,7 @@ class Op_readimage(Op):
         img.basedir = './' + fname + '_pybdsm/'
 
         # Read in data and header
+        img.use_io = ''
         image_file = os.path.basename(img.opts.filename)
         result = read_image_from_file(image_file, img, img.indir)
         if result is None:
@@ -175,9 +166,13 @@ class Op_readimage(Op):
 
         try:
             from astropy.wcs import WCS
-            t = WCS(hdr)
-            t.wcs.fix()
-        except ImportError, err:
+            from astropy.wcs import FITSFixedWarning
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                warnings.filterwarnings("ignore",category=FITSFixedWarning)
+                t = WCS(hdr)
+                t.wcs.fix()
+        except ImportError as err:
             import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore",category=DeprecationWarning)
@@ -301,12 +296,18 @@ class Op_readimage(Op):
             instancemethod = type(t.wcs_pix2world)
         else:
             instancemethod = type(t.wcs_pix2sky)
-        t.p2s = instancemethod(p2s, t, WCS)
+        if sys.version_info[0] > 2:
+            t.p2s = instancemethod(p2s, t)
+        else:
+            t.p2s = instancemethod(p2s, t, WCS)
         if hasattr(t, 'wcs_world2pix'):
             instancemethod = type(t.wcs_world2pix)
         else:
             instancemethod = type(t.wcs_sky2pix)
-        t.s2p = instancemethod(s2p, t, WCS)
+        if sys.version_info[0] > 2:
+            t.s2p = instancemethod(s2p, t)
+        else:
+            t.s2p = instancemethod(s2p, t, WCS)
 
         img.wcs_obj = t
         img.wcs_obj.acdelt = acdelt
@@ -320,7 +321,7 @@ class Op_readimage(Op):
     def init_beam(self, img):
         """Initialize beam parameters, and conversion routines
         to convert beam to/from pixel coordinates"""
-        from const import fwsig
+        from .const import fwsig
         mylog = mylogger.logging.getLogger("PyBDSM.InitBeam")
 
         hdr = img.header
@@ -424,7 +425,7 @@ class Op_readimage(Op):
         """
         try:
             from astropy.wcs import WCS
-        except ImportError, err:
+        except ImportError as err:
             import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -474,12 +475,18 @@ class Op_readimage(Op):
                     instancemethod = type(img.wcs_obj.wcs_pix2world)
                 else:
                     instancemethod = type(img.wcs_obj.wcs_pix2sky)
-                img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj, WCS)
+                if sys.version_info[0] > 2:
+                    img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj)
+                else:
+                    img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj, WCS)
                 if hasattr(img.wcs_obj, 'wcs_world2pix'):
                     instancemethod = type(img.wcs_obj.wcs_world2pix)
                 else:
                     instancemethod = type(img.wcs_obj.wcs_sky2pix)
-                img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj, WCS)
+                if sys.version_info[0] > 2:
+                    img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj)
+                else:
+                    img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj, WCS)
 
                 if img.opts.frequency is not None:
                     img.frequency = img.opts.frequency
@@ -554,7 +561,7 @@ class Op_readimage(Op):
         pa - position angle in degrees east of north
         location - x and y location of center
         """
-        import functions as func
+        from . import functions as func
 
         if location is None:
             x1 = int(img.image_arr.shape[2] / 2.0)
@@ -586,7 +593,7 @@ class Op_readimage(Op):
         pa - position angle in degrees CCW from +y axis
         location - x and y location of center
         """
-        import functions as func
+        from . import functions as func
 
         if location is None:
             x1 = int(img.image_arr.shape[2] / 2.0)
@@ -613,4 +620,3 @@ class TempDir(str):
         import os
         if os.path.exists(self.__str__()):
             shutil.rmtree(self.__str__())
-

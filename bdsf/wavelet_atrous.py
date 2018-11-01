@@ -2,35 +2,37 @@
 
 Do source extraction on this if asked.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as N
-from image import *
-import mylogger
+from .image import *
+from . import mylogger
 import os
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
-import _cbdsm
+from . import _cbdsm
 from math import log, floor, sqrt
-from const import fwsig
+from .const import fwsig
 from copy import deepcopy as cp
-import functions as func
+from . import functions as func
 import gc
 from numpy import array, product
 import scipy.signal
 from scipy.signal.signaltools import _centered
-from readimage import Op_readimage
-from preprocess import Op_preprocess
-from rmsimage import Op_rmsimage
-from threshold import Op_threshold
-from islands import Op_islands
-from gausfit import Op_gausfit, Gaussian
-from gaul2srl import Op_gaul2srl
-from make_residimage import Op_make_residimage
-from output import Op_outlist
-from interface import raw_input_no_history
-import multi_proc as mp
+from .readimage import Op_readimage
+from .preprocess import Op_preprocess
+from .rmsimage import Op_rmsimage
+from .threshold import Op_threshold
+from .islands import Op_islands
+from .gausfit import Op_gausfit, Gaussian
+from .gaul2srl import Op_gaul2srl
+from .make_residimage import Op_make_residimage
+from .output import Op_outlist
+from .interface import raw_input_no_history
+from . import multi_proc as mp
 import itertools
-import statusbar
+from . import statusbar
 try:
     import pyfftw.interfaces
     pyfftw.interfaces.cache.enable()
@@ -41,14 +43,6 @@ try:
 except ImportError:
     pass
 
-jmax = Int(doc = "Maximum order of a-trous wavelet decomposition")
-lpf = String(doc = "Low pass filter used for a-trous wavelet decomposition")
-atrous_islands = List(Any(), doc = "")
-atrous_gaussians = List(Any(), doc = "")
-atrous_sources = List(Any(), doc = "")
-n_pyrsrc = Int(0, doc = "Number of pyramidal sources")
-Image.resid_wavelets = NArray(doc = "Residual image calculated from " \
-                                "gaussians fitted to wavelet sources")
 
 class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""
@@ -128,7 +122,7 @@ class Op_wavelet_atrous(Op):
             else:
                 w = im_old - im_new
             im_old = im_new
-            suffix = 'w' + `j`
+            suffix = 'w' + repr(j)
             filename = img.imagename + '.atrous.' + suffix + '.fits'
             if img.opts.output_all:
                 func.write_image_to_file('fits', filename, w, img, bdir)
@@ -277,9 +271,9 @@ class Op_wavelet_atrous(Op):
               if img.opts.interactive and has_pl:
                   dc = '\033[34;1m'
                   nc = '\033[0m'
-                  print dc + '--> Displaying islands and rms image...' + nc
+                  print(dc + '--> Displaying islands and rms image...' + nc)
                   if max(wimg.ch0_arr.shape) > 4096:
-                      print dc + '--> Image is large. Showing islands only.' + nc
+                      print(dc + '--> Image is large. Showing islands only.' + nc)
                       wimg.show_fit(rms_image=False, mean_image=False, ch0_image=False,
                         ch0_islands=True, gresid_image=False, sresid_image=False,
                         gmodel_image=False, smodel_image=False, pyramid_srcs=False)
@@ -307,7 +301,7 @@ class Op_wavelet_atrous(Op):
                   g.island_id = i
               for dg in isl.dgaul:
                   dg.island_id = i
-              pyrank[isl.bbox] += N.invert(isl.mask_active) * (i + 1)
+              pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
           pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
           img.pyrank = pyrank
 
@@ -348,8 +342,6 @@ class Op_wavelet_atrous(Op):
 
 #######################################################################################################
     def setpara_bdsm(self, img):
-        from types import ClassType, TypeType
-
         chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
                Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
 
@@ -390,7 +382,7 @@ class Op_wavelet_atrous(Op):
 
         ops = []
         for op in chain:
-          if isinstance(op, (ClassType, TypeType)):
+          if isinstance(op, type):
             ops.append(op())
           else:
             ops.append(op)
@@ -420,13 +412,15 @@ class Op_wavelet_atrous(Op):
         wimg.do_cache = img.do_cache
         wimg.tempdir = img.tempdir
         wimg.shape = img.shape
+        wimg.frequency = img.frequency
+        wimg.equinox = img.equinox
         wimg.use_io = 'fits'
 
 
 ######################################################################################################
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
-        import functions as func
-        from make_residimage import Op_make_residimage as opp
+        from . import functions as func
+        from .make_residimage import Op_make_residimage as opp
 
         dummy = opp()
         shape = residim.shape
@@ -509,7 +503,7 @@ class Pyramid_source(object):
             self.jlevels = [level0]
 
         def belongs(self, img, isl):
-            import functions as func
+            from . import functions as func
                                                 # get centroid of island (as integer)
             mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
             cen = N.array(mom[1:3]) + isl.origin
@@ -604,7 +598,7 @@ def merge_islands(img, isl1, isl2):
 
     The merged island replaces isl1 in img.
     """
-    from islands import Island
+    from .islands import Island
     import scipy.ndimage as nd
 
     shape,nbox1,nbox2,origin,fullbox=merge_bbox(isl1.bbox,isl2.bbox)
@@ -631,7 +625,7 @@ def merge_islands(img, isl1, isl2):
         # first to avoid an expensive operation over the whole array
         labels = labels-1+idx
         new_labels = N.zeros(image.shape)
-        new_labels[fullbox]=labels
+        new_labels[tuple(fullbox)]=labels
         beamarea = img.pixel_beamarea()
         merged_isl = Island(image, mask, mean, rms, new_labels, new_bbox, idx, beamarea)
 
@@ -671,7 +665,7 @@ def renumber_islands(img):
             g.island_id = i
         for dg in isl.dgaul:
             dg.island_id = i
-            pyrank[isl.bbox] += N.invert(isl.mask_active) * (i + 1)
+            pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
     pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
     img.pyrank = pyrank
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
@@ -702,13 +696,13 @@ def check_islands_for_overlap(img, wimg):
             # Get unique island IDs. If an island overlaps with one
             # in the original ch0 image, merge them together. If not,
             # add the island as a new one.
-            wav_islands = orig_rankim_bool[wvisl.bbox] * wpp[wvisl.bbox] - 1
+            wav_islands = orig_rankim_bool[tuple(wvisl.bbox)] * wpp[tuple(wvisl.bbox)] - 1
             wav_ids = N.unique(wav_islands) # saves conversion to set and back
             for wvg in wvisl.gaul:
                 tot_flux += wvg.total_flux
                 wvg.valid = True
             if idx in wav_ids:
-                orig_idx=N.unique(orig_islands[wvisl.bbox][wav_islands == idx])
+                orig_idx=N.unique(orig_islands[tuple(wvisl.bbox)][wav_islands == idx])
                 if len(orig_idx) == 1:
                     merge_islands(img, img.islands[orig_idx[0]], wvisl)
                 else:
@@ -725,7 +719,7 @@ def check_islands_for_overlap(img, wimg):
                     orig_islands = wav_rankim_bool * ipp - 1
             else:
                 isl_id = img.islands[-1].island_id + 1
-                new_isl = wvisl.copy(img.pixel_beamarea(), image=img.ch0_arr[wvisl.bbox], mean=img.mean_arr[wvisl.bbox], rms=img.rms_arr[wvisl.bbox])
+                new_isl = wvisl.copy(img.pixel_beamarea(), image=img.ch0_arr[tuple(wvisl.bbox)], mean=img.mean_arr[tuple(wvisl.bbox)], rms=img.rms_arr[tuple(wvisl.bbox)])
                 new_isl.gaul = []
                 new_isl.dgaul = []
                 new_isl.island_id = isl_id

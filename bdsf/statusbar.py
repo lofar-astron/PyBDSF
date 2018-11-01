@@ -1,7 +1,8 @@
 """Display an animated statusbar"""
+from __future__ import absolute_import
 import sys
 import os
-import functions as func
+from . import functions as func
 
 class StatusBar():
     # class variables:

@@ -4,18 +4,15 @@ Defines operation Op_collapse which collapses 3D image. Calculates and
 stores mean and rms (normal and clipped) per channel anyway for further
 use, even if weights are unity.
 """
+from __future__ import absolute_import
 
 import numpy as N
-from image import *
-import _cbdsm
-import mylogger
-import functions as func
+from .image import *
+from . import _cbdsm
+#_cbdsm.init_numpy()
+from . import mylogger
+from . import functions as func
 
-avspc_wtarr = NArray(doc = "Weight array for channel collapse")
-channel_rms = NArray(doc = "RMS per channel")
-channel_mean = NArray(doc = "Mean per channel")
-channel_clippedrms = NArray(doc = "Clipped RMS per channel")
-channel_clippedmean = NArray(doc = "Clipped mean per channel")
 
 class Op_collapse(Op):
     """Collapse 3D image"""

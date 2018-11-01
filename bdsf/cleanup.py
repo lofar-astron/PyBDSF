@@ -1,16 +1,17 @@
 """
         Does miscellaneous jobs at the end, which assumes all other tasks are run.
 """
+from __future__ import absolute_import
 
 import numpy as N
 import os
-from image import *
-import mylogger, os
+from .image import *
+from . import mylogger
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
     import matplotlib.cm as cm
-import functions as func
+from . import functions as func
 
 class Op_cleanup(Op):
     """  """

@@ -3,6 +3,12 @@
 **********
 What's New
 **********
+Version 1.9.0 ():
+
+    * Add support for Python 3
+
+    * Fix various minor bugs
+
 Version 1.8.15 (2018/10/12):
 
     * Fix segfault in Gaussian fitting (#63)

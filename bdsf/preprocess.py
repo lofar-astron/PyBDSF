@@ -3,33 +3,16 @@
 Calculates some basic statistics of the image and sets up processing
 parameters for PyBDSM.
 """
+from __future__ import absolute_import
 
 import numpy as N
-import _cbdsm
-from image import *
+from . import _cbdsm
+from .image import *
 from math import pi, sqrt, log
-import const
-import functions as func
-import mylogger
+from . import const
+from . import functions as func
+from . import mylogger
 
-### Insert attributes into Image class
-Image.raw_mean = Float(doc="Unclipped image mean")
-Image.raw_rms  = Float(doc="Unclipped image rms")
-Image.clipped_mean = Float(doc="Clipped image mean")
-Image.clipped_rms  = Float(doc="Clipped image rms")
-Image.clipped_mean_QUV = List(Float(), doc="Clipped image mean for Q, U, V")
-Image.clipped_rms_QUV = List(Float(), doc="Clipped image rms for Q, U, V")
-Image.blankpix  = Int(doc="Number of blanked pixels")
-Image.noutside_univ  = Int(doc="Number of blanked pixels")
-
-Image.maxpix_coord = Tuple(Int(), Int(),
-                           doc="Coordinates of maximal pixel in the image")
-Image.minpix_coord = Tuple(Int(), Int(),
-                           doc="Coordinates of minimal pixel in the image")
-Image.max_value = Float(doc="Maximal pixel in the image")
-Image.min_value = Float(doc="Minimal pixel in the image")
-Image.omega = Float(doc="Solid angle covered by the image")
-confused = String(doc = 'confused image or not')
 
 class Op_preprocess(Op):
     """Preprocessing -- calculate some basic statistics and set
@@ -160,7 +143,7 @@ class Op_preprocess(Op):
 
         confused = False
         if opts.mean_map == 'default':
-          if opts.bmpersrc_th <= 25. or cmean/crms >= 0.1:
+          if img.bmpersrc_th <= 25. or cmean/crms >= 0.1:
             confused = True
         img.confused = confused
         mylog.info('Parameter confused is '+str(img.confused))
@@ -183,7 +166,7 @@ class Op_preprocess(Op):
               skyc = img.pix2sky(pix1)
               pix2 = img.sky2pix(skyc)
               if abs(pix1[0]-pix2[0]) > 0.5 or abs(pix1[1]-pix2[1]) > 0.5: out=True
-            except RuntimeError, err:
+            except RuntimeError as err:
               pass
             if out or ("8" in str(err)):
               noutside += 1
@@ -191,6 +174,3 @@ class Op_preprocess(Op):
               ch0[pix1] = float("NaN")
               img.ch0_arr = ch0
         return noutside
-
-
-

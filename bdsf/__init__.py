@@ -7,31 +7,33 @@ execute chain of operations properly. Also define the
 options as arguments rather than as a dictionary (as
 required by 'execute').
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 try:
     import matplotlib.pyplot as pl
     has_pl = True
 except (RuntimeError, ImportError, AssertionError):
     import sys
-    print >> sys.stderr, "\033[31;1mWARNING\033[0m: Matplotlib pyplot could not be imported. Plotting is disabled."
+    print("\033[31;1mWARNING\033[0m: Matplotlib pyplot could not be imported. Plotting is disabled.", file=sys.stderr)
     has_pl = False
-from readimage import Op_readimage
-from collapse import Op_collapse
-from preprocess import Op_preprocess
-from rmsimage import Op_rmsimage
-from threshold import Op_threshold
-from islands import Op_islands
-from gausfit import Op_gausfit
-from make_residimage import Op_make_residimage
-from output import Op_outlist
-from shapefit import Op_shapelets
-from gaul2srl import Op_gaul2srl
-from spectralindex import Op_spectralindex
-from polarisation import Op_polarisation
-from wavelet_atrous import Op_wavelet_atrous
-from psf_vary import Op_psf_vary
-from cleanup import Op_cleanup
-from _version import __version__
+from .readimage import Op_readimage
+from .collapse import Op_collapse
+from .preprocess import Op_preprocess
+from .rmsimage import Op_rmsimage
+from .threshold import Op_threshold
+from .islands import Op_islands
+from .gausfit import Op_gausfit
+from .make_residimage import Op_make_residimage
+from .output import Op_outlist
+from .shapefit import Op_shapelets
+from .gaul2srl import Op_gaul2srl
+from .spectralindex import Op_spectralindex
+from .polarisation import Op_polarisation
+from .wavelet_atrous import Op_wavelet_atrous
+from .psf_vary import Op_psf_vary
+from .cleanup import Op_cleanup
+from ._version import __version__
 import gc
 
 default_chain = [Op_readimage(),
@@ -59,8 +61,8 @@ def execute(chain, opts):
     Create new Image with given options and apply chain of
     operations to it. The opts input must be a dictionary.
     """
-    from image import Image
-    import mylogger
+    from .image import Image
+    from . import mylogger
 
     if 'quiet' in opts:
         quiet = opts['quiet']
@@ -80,7 +82,7 @@ def execute(chain, opts):
         img.log = log_filename
         _run_op_list(img, chain)
         return img
-    except RuntimeError, err:
+    except RuntimeError as err:
         # Catch and log, then re-raise if needed (e.g., for AstroWise)
         mylog.error(str(err))
         raise
@@ -96,17 +98,16 @@ def _run_op_list(img, chain):
     interface.py) to use it as well.
     """
     from time import time
-    from types import ClassType, TypeType
-    from interface import raw_input_no_history
-    from gausfit import Op_gausfit
-    import mylogger
+    from .interface import raw_input_no_history
+    from .gausfit import Op_gausfit
+    from . import mylogger
     import gc
 
     ops = []
     stopat = img.opts.stop_at
     # Make sure all op's are instances
     for op in chain:
-        if isinstance(op, (ClassType, TypeType)):
+        if isinstance(op, type):
             ops.append(op())
         else:
             ops.append(op)
@@ -131,9 +132,9 @@ def _run_op_list(img, chain):
     nc = '\033[0m'
     for op in ops:
         if isinstance(op, Op_gausfit) and img.opts.interactive:
-            print dc + '--> Displaying islands and rms image...' + nc
+            print(dc + '--> Displaying islands and rms image...' + nc)
             if max(img.ch0_arr.shape) > 4096:
-                print dc + '--> Image is large. Showing islands only.' + nc
+                print(dc + '--> Image is large. Showing islands only.' + nc)
                 img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
                     ch0_islands=True, gresid_image=False, sresid_image=False,
                     gmodel_image=False, smodel_image=False, pyramid_srcs=False)
@@ -153,7 +154,7 @@ def _run_op_list(img, chain):
         gc.collect()
 
     if img.opts.interactive and not img._pi:
-        print dc + 'Fitting complete. Displaying results...' + nc
+        print(dc + 'Fitting complete. Displaying results...' + nc)
         if img.opts.shapelet_do:
             show_smod = True
             show_sres = True
@@ -165,7 +166,7 @@ def _run_op_list(img, chain):
         else:
             show_spec = False
         if max(img.ch0_arr.shape) > 4096:
-            print dc + '--> Image is large. Showing Gaussian residual image only.' + nc
+            print(dc + '--> Image is large. Showing Gaussian residual image only.' + nc)
             img.show_fit(rms_image=False, mean_image=False, ch0_image=False,
                 ch0_islands=False, gresid_image=True, sresid_image=False,
                 gmodel_image=False, smodel_image=False, pyramid_srcs=False,
@@ -175,17 +176,17 @@ def _run_op_list(img, chain):
                      source_seds=show_spec)
 
     if img.opts.print_timing:
-        print "="*36
-        print "%18s : %10s" % ("Module", "Time (sec)")
-        print "-"*36
+        print("="*36)
+        print("%18s : %10s" % ("Module", "Time (sec)"))
+        print("-"*36)
         for i, op in enumerate(chain):
             if hasattr(op, '__start_time'):
-                print "%18s : %f" % (op.__class__.__name__,
-                                 (op.__stop_time - op.__start_time))
+                print("%18s : %f" % (op.__class__.__name__,
+                                 (op.__stop_time - op.__start_time)))
                 indx_stop = i
-        print "="*36
-        print "%18s : %f" % ("Total",
-                             (chain[indx_stop].__stop_time - chain[0].__start_time))
+        print("="*36)
+        print("%18s : %f" % ("Total",
+                             (chain[indx_stop].__stop_time - chain[0].__start_time)))
 
     # Log all internally derived parameters
     mylog = mylogger.logging.getLogger("PyBDSF.Final")
@@ -195,11 +196,11 @@ def _run_op_list(img, chain):
 
     for attr in inspect.getmembers(img.opts):
         if attr[0][0] != '_':
-            if isinstance(attr[1], (int, str, bool, float, types.NoneType, tuple, list)):
+            if isinstance(attr[1], (int, str, bool, float, type(None), tuple, list)):
                 if hasattr(img, attr[0]):
                     used = img.__getattribute__(attr[0])
                     if used != attr[1] and isinstance(used, (int, str, bool, float,
-                                                             types.NoneType, tuple,
+                                                             type(None), tuple,
                                                              list)):
 
                         par_msg += '    %-20s : %s\n' % (attr[0], repr(used))
@@ -223,8 +224,8 @@ def process_image(input, **kwargs):
         > img_VirA = bdsf.process_image('VirA_im.pybdsf.sav')
           --> load parameter save file and process
     """
-    from interface import load_pars
-    from image import Image
+    from .interface import load_pars
+    from .image import Image
     import os
 
     # Try to load input assuming it's a parameter save file or a dictionary.

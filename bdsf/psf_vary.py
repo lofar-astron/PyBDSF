@@ -1,25 +1,30 @@
+from __future__ import print_function
+from __future__ import absolute_import
 
 import numpy as N
-from image import *
-import mylogger
+from .image import *
+from . import mylogger
 from copy import deepcopy as cp
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
 import scipy
 import scipy.signal as S
-import _cbdsm
-import functions as func
-import _pytesselate as _pytess
-import shapelets as sh
+from . import _cbdsm
+from . import functions as func
+from . import _pytesselate as _pytess
+from . import shapelets as sh
 from scipy.optimize import leastsq
-import nat
+from . import nat
 from math import *
-import statusbar
-from const import fwsig
-import multi_proc as mp
+from . import statusbar
+from .const import fwsig
+from . import multi_proc as mp
 import itertools
-
+try:
+    from itertools import izip as zip
+except ImportError: # will be 3.x series
+    pass
 
 class Op_psf_vary(Op):
     """Computes variation of psf across the image """
@@ -37,7 +42,7 @@ class Op_psf_vary(Op):
         try:
             from astropy.io import fits as pyfits
             old_pyfits = False
-        except ImportError, err:
+        except ImportError as err:
             from distutils.version import StrictVersion
             import pyfits
             if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
@@ -187,7 +192,7 @@ class Op_psf_vary(Op):
                 basis = 'cartesian'
                 betarange = [0.5,sqrt(betainit*max(tshape))]
                 beta, error  = sh.shape_varybeta(totpsfimage, mask, basis, betainit, cen, nmax, betarange, plot)
-                if error == 1: print '  Unable to find minimum in beta'
+                if error == 1: print('  Unable to find minimum in beta')
 
                 # decompose all the psf images using the beta from above
                 nmax=12; psf_cf=[]
@@ -269,7 +274,7 @@ class Op_psf_vary(Op):
                     if img.opts.quiet == False:
                         bar.start()
                     map_list = mp.parallel_map(func.eval_func_tuple,
-                        itertools.izip(itertools.repeat(self.interp_prop),
+                        zip(itertools.repeat(self.interp_prop),
                         psf_maps, itertools.repeat(psfcoords),
                         itertools.repeat(image.shape)), numcores=opts.ncores,
                         bar=bar)
@@ -290,7 +295,7 @@ class Op_psf_vary(Op):
                         if img.opts.quiet == False:
                             bar.start()
                         map_list = mp.parallel_map(func.eval_func_tuple,
-                            itertools.izip(itertools.repeat(self.blur_image),
+                            zip(itertools.repeat(self.blur_image),
                             psf_maps, itertools.repeat(sm_scale)), numcores=opts.ncores,
                             bar=bar)
                         if img.aperture is None:
@@ -602,7 +607,7 @@ class Op_psf_vary(Op):
 
         if generators == 'calibrators':
             if gencode == 'file':
-                raise NotImplementedError, "gencode=file not yet implemented."
+                raise NotImplementedError("gencode=file not yet implemented.")
 
         x1 = x.tolist()
         y1 = y.tolist()
@@ -626,11 +631,12 @@ class Op_psf_vary(Op):
 
         xgen, ygen, snrgen = vorogenP
         flag = N.zeros(len(xgen))
-        coord=N.array([xgen,ygen]).transpose()
+        coord = N.array([xgen,ygen]).transpose()
         tile_list = []
         tile_coord = []; tile_snr = []
         for i in range(len(xgen)):
-            dist = N.array(map(lambda t: func.dist_2pt(coord[i], t), coord))
+            dist = N.array([func.dist_2pt(coord[i], t) for t in coord])
+#             dist = N.array(map(lambda t: func.dist_2pt(coord[i], t), coord))
             indi = N.argsort(dist)
             sortdist = dist[indi]
             if sortdist[1] < frac * sortdist[2]:    # first is the element itself
@@ -693,7 +699,7 @@ class Op_psf_vary(Op):
 
         if tess_method == 'roundness':
           #tilenum = pytess_roundness(tilecoord, pixel, wts, tess_sc, tess_fuzzy)
-          print " Not yet implemented !!!! "
+          print(" Not yet implemented !!!! ")
           return 0
         else:
           xgen, ygen = tilecoord
@@ -707,7 +713,7 @@ class Op_psf_vary(Op):
           if tess_sc == 's':
             tilenum=minind
           else:
-            print " Not yet implemented !!!! "
+            print(" Not yet implemented !!!! ")
 
         return tilenum
 
@@ -743,7 +749,7 @@ class Op_psf_vary(Op):
         """ Looks at tiles with no (or one) unresolved source inside it and deletes it and recomputes
            the tiling. For now, does not recompute since we wont use the rank for those pixels anyway."""
 
-        if ltnum > 1: raise NotImplementedError, "NOT YET IMPLEMENTED FOR LTNUM>1"
+        if ltnum > 1: raise NotImplementedError("NOT YET IMPLEMENTED FOR LTNUM>1")
 
         tile_list, tile_coord, tile_snr = tile_prop
         tr_gaul = self.trans_gaul(g_gauls)
@@ -818,7 +824,7 @@ class Op_psf_vary(Op):
         psfimage = N.zeros((psfimsize, psfimsize), dtype=N.float32)
         cs2=cutoutsize2 = int(round(psfimsize*(1. + 2./factor)/2.))  # size/2. factor => to avoid edge effects etc
         cc = cutoutcen_ind=[cs2, cs2]
-        cpsf=cen_psf_ind = N.array([int(round(psfimsize))/2]*2)
+        cpsf=cen_psf_ind = N.array([int(int(round(psfimsize))/2)]*2)
         wt=0.
 
         num=len(gxcens_pix)
