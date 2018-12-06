@@ -1999,7 +1999,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     submask_xsize = xhi - xlo
     submask_ysize = yhi - ylo
     submask = generate_aperture(submask_xsize, submask_ysize, posn_pix_new[0], posn_pix_new[1], aperture_pix)
-    submask_slice = [slice(xlo, xhi), slice(ylo, yhi)]
+    submask_slice = [slice(int(xlo), int(xhi)), slice(int(ylo), int(yhi))]
     mask[submask_slice] = submask
     return mask
 

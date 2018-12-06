@@ -383,7 +383,7 @@ class Island(object):
     def __expand_bbox(self, bbox, shape):
         """Expand bbox of the image by 1 pixel"""
         def __expand(bbox, shape):
-            return slice(max(0, bbox.start - 1), min(shape, bbox.stop + 1))
+            return slice(int(max(0, bbox.start - 1)), int(min(shape, bbox.stop + 1)))
         ebbox = [__expand(b, shape[i]) for i, b in enumerate(bbox)]
         return ebbox
 

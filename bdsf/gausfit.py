@@ -117,8 +117,8 @@ class Op_gausfit(Op):
                 # the island dgaul list.
                 if opts.src_ra_dec is not None:
                     # Center the dummy Gaussian on the user-specified source position
-                    posn_isl = (isl.shape[0]/2.0, isl.shape[1]/2.0)
-                    posn_img = (isl.shape[0]/2.0 + isl.origin[0], isl.shape[1]/2.0 + isl.origin[1])
+                    posn_isl = (int(isl.shape[0]/2.0), int(isl.shape[1]/2.0))
+                    posn_img = (int(isl.shape[0]/2.0 + isl.origin[0]), int(isl.shape[1]/2.0 + isl.origin[1]))
                     par = [isl.image[posn_isl], posn_img[0], posn_img[1], 0.0, 0.0, 0.0]
                 else:
                     # Center the dummy Gaussian on the maximum pixel
