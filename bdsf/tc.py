@@ -623,51 +623,13 @@ class tcList(tcHandler):
 
     def cast(self, value, *args):
         if isinstance(value, _sequence_types):
-            return tcListObject(self, value, args)
+            v = [self.type.cast(x, *args) for x in value]
+            return list(v)
 
         self.error(reprx(value), *args)
 
     def info(self):
         return "a list where each element is " + self.type.info()
-
-
-############################################################
-class tcListObject(list):
-    """Helper class for tcList.
-
-    It's basically a customized implementation of list type,
-    which imposes specific type constrains on it's elements.
-    """
-    def __init__(self, tc, values, extras):
-        self.list_handler = tc
-        self.type = tc.type
-        self.extras = extras
-
-        ## type-check initial values
-#         self.__setslice__(0, 0, values)
-
-    def __setitem__(self, key, value):
-        v = self.type.cast(value, *self.extras)
-        list.__setitem__(self, key, v)
-
-#     def __setslice__(self, i, j, values):
-#         cast = self.type.cast
-#         v = [cast(x, *self.extras) for x in values]
-#         list[i:j] = v
-#         list.__setslice__(self, i, j, v)
-
-    def append(self, value):
-        v = self.type.cast(value, *self.extras)
-        list.append(self, v)
-
-    def extend(self, values):
-        cast = self.type.cast
-        v = [cast(x, *self.extras) for x in values]
-        list.extend(self, v)
-
-    def insert(self, idx, value):
-        v = self.type.cast(value, *self.extras)
-        list.insert(self, idx, v)
 
 
 ############################################################
