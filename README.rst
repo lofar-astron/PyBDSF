@@ -28,7 +28,8 @@ External requirements include the ubuntu packages (or similar packages in anothe
 Also, a working ``numpy`` installation is required.
 At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore`` or ``astropy``.
 
-If you install as a user not using conda, use ``pip install --user``.
+If you install as a user not using conda, use ``pip install --user``. Make sure to use similar versions for gcc, g++ 
+and gfortran (use update-alternatives if multiple versions of gcc/g++/gfortran are present on the system).
 In this case, the script ``pybdsf`` is installed in ``~/.local/bin``, so you might want to add that to your ``$PATH``.
 
 Installation on MacOS / OSX is more involved, you will need the packages mentioned above, for example installed with Homebrew.
