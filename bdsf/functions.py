@@ -1171,7 +1171,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 e_pyrap = "Pyrap unavailable"
                 img._reason = 'Problem reading file.'
         if failed_read:
-            img._reason += '\nOriginal errors: {0}\n {1}'.format(e_pyfits, e_pyrap)
+            img._reason += '\nOriginal error: {0}\n {1}'.format(e_pyfits, e_pyrap)
             return None
 
     # Now that image has been read in successfully, get header (data is loaded
@@ -1943,8 +1943,8 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
 
     mean = img.mean_arr
     rms = img.rms_arr
-    aper_im = ch0[xlo:xhi, ylo:yhi] - mean[xlo:xhi, ylo:yhi]
-    aper_rms = rms[xlo:xhi, ylo:yhi]
+    aper_im = ch0[int(xlo):int(xhi), int(ylo):int(yhi)] - mean[int(xlo):int(xhi), int(ylo):int(yhi)]
+    aper_rms = rms[int(xlo):int(xhi), int(ylo):int(yhi)]
     posn_pix_new = [int(posn_pix[0])-xlo, int(posn_pix[1])-ylo]
     pixel_beamarea = img.pixel_beamarea()
     aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
