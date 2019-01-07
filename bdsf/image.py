@@ -54,6 +54,7 @@ class Image(object):
         self.freq_pars = [0.0, 0.0, 0.0]
         self.filename = ''
         self.resid_gaus_arr = None
+        self._is_interactive_shell = False
         self.opts = Opts(opts)
 
     def __setstate__(self, state):
