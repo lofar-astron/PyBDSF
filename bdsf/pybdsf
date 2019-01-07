@@ -195,7 +195,7 @@ def tput(filename=None, quiet=False):
     # convert opts to dictionary
     pars = _img.opts.to_dict()
     output = open(filename, 'wb')
-    pickle.dump(pars, output)
+    pickle.dump(pars, output, protocol=0)
     output.close()
     if not quiet:
         print("--> Saved parameters to file '" + filename + "'.")

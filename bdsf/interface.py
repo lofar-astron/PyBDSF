@@ -385,7 +385,7 @@ def save_pars(img, savefile=None, quiet=False):
     # convert opts to dictionary
     pars = img.opts.to_dict()
     output = open(savefile, 'wb')
-    pickle.dump(pars, output)
+    pickle.dump(pars, output, protocol=0)
     output.close()
     if not quiet:
         print("--> Saved parameters to file '" + savefile + "'.")
