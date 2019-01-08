@@ -126,8 +126,10 @@ class Op_gausfit(Op):
                     par = [isl.max_value, posn[0], posn[1], 0.0, 0.0, 0.0]
                 dgaul = [Gaussian(img, par, idx, -1)]
                 gidx = 0
-                fgaul= [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
-                        for (gidx2, (flag, par)) in enumerate(fgaul)]
+
+            # Now make the list of flagged Gaussians, if any
+            fgaul= [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
+                    for (gidx2, (flag, par)) in enumerate(fgaul)]
 
             isl.gaul = gaul
             isl.fgaul= fgaul
