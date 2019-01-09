@@ -105,6 +105,10 @@ class Op_gausfit(Op):
             gaul = gaus_list[idx][0]
             fgaul = gaus_list[idx][1]
             dgaul = []
+            if len(gaul) > 0:
+                gidx = gaul[-1][0] # save last index value for use with fgaul below
+            else:
+                gidx = 0
             gaul = [Gaussian(img, par, idx, gidx)
                         for (gidx, par) in enumerate(gaul)]
 
@@ -125,7 +129,6 @@ class Op_gausfit(Op):
                     posn = N.unravel_index(N.argmax(isl.image*~isl.mask_active), isl.shape) + N.array(isl.origin)
                     par = [isl.max_value, posn[0], posn[1], 0.0, 0.0, 0.0]
                 dgaul = [Gaussian(img, par, idx, -1)]
-                gidx = 0
 
             # Now make the list of flagged Gaussians, if any
             fgaul= [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
