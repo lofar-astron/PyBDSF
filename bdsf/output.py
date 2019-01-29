@@ -456,13 +456,9 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
         tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
 
-    import warnings
-    from astropy.io.fits.verify import VerifyWarning
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore",category=VerifyWarning)
-        for key in img.header.keys():
-            if key in ['HISTORY','COMMENT','']: continue
-            tbhdu.header['I_%s'%key]=img.header[key]
+    for key in img.header.keys():
+        if key in ['HISTORY','COMMENT','']: continue
+        tbhdu.header.add_comment('%s = %s' % (key, repr(img.header[key])))
 
     if filename is None:
         filename = img.imagename + '.' + objtype + '.fits'

@@ -105,10 +105,12 @@ class Op_rmsimage(Op):
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
-                act_pixels = (image-cmean)/threshold >= crms
+                if img.masked:
+                    act_pixels = ~(mask.copy())
+                    act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
+                else:
+                    act_pixels = (image-cmean)/threshold >= crms
                 threshold *= 0.8
-                if isinstance(mask, N.ndarray):
-                    act_pixels[mask] = False
                 rank = len(image.shape)
                 connectivity = nd.generate_binary_structure(rank, rank)
                 labels, count = nd.label(act_pixels, connectivity)
@@ -127,9 +129,11 @@ class Op_rmsimage(Op):
         # largest island at this threshold to set the large-scale rms_box
         bright_threshold = threshold
         threshold = 10.0
-        act_pixels = (image-cmean)/threshold >= crms
-        if isinstance(mask, N.ndarray):
-            act_pixels[mask] = False
+        if img.masked:
+            act_pixels = ~(mask.copy())
+            act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
+        else:
+            act_pixels = (image-cmean)/threshold >= crms
         rank = len(image.shape)
         connectivity = nd.generate_binary_structure(rank, rank)
         labels, count = nd.label(act_pixels, connectivity)
@@ -456,7 +460,11 @@ class Op_rmsimage(Op):
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
                         logname=logname, ncores=ncores)
-            if N.any(rms < 0.0):
+            if img.masked:
+                test = N.any(rms[~img.mask_arr] < 0.0)
+            else:
+                test = N.any(rms < 0.0)
+            if test:
                 rms_ok = False
                 if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
                     # Increase box by 20%
@@ -526,7 +534,6 @@ class Op_rmsimage(Op):
         mask_small = mask
         axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)]
-        #ax = map(self.remap_axis, arr.shape, axes)
         ax = N.meshgrid(*ax[-1::-1])
         pt_src_scale = box[0]
         if do_adapt:

@@ -162,9 +162,11 @@ class Op_islands(Op):
         saverank = opts.savefits_rankim
 
                         # act_pixels is true if significant emission
-        act_pixels = (image-mean)/thresh_isl >= rms
-        if isinstance(mask, N.ndarray):
-            act_pixels[mask] = False
+        if img.masked:
+            act_pixels = ~(mask.copy())
+            act_pixels[~mask] = (image[~mask]-mean[~mask])/thresh_isl >= rms[~mask]
+        else:
+            act_pixels = (image-mean)/thresh_isl >= rms
 
                         # dimension of image
         rank = len(image.shape)
@@ -288,8 +290,6 @@ class Island(object):
             self.oldidx = idx
             bbox = self.__expand_bbox(bbox, img.shape)
             origin = [b.start for b in bbox]   # easier in case ndim > 2
-            if origin == []:
-                0/0
             data = img[tuple(bbox)]
             bbox_rms_im = rms[tuple(bbox)]
             bbox_mean_im = mean[tuple(bbox)]
@@ -307,8 +307,8 @@ class Island(object):
             N.logical_not(isl_mask, isl_mask)
             N.logical_not(noise_mask, noise_mask)
             if isinstance(mask, N.ndarray):
-                noise_mask[mask[bbox]] = True
-                isl_mask[mask[bbox]] = True
+                noise_mask[mask[tuple(bbox)]] = True
+                isl_mask[mask[tuple(bbox)]] = True
         else:
             if origin is None:
                 origin = [b.start for b in bbox]
@@ -331,7 +331,7 @@ class Island(object):
         self.mask_noisy = noise_mask
         self.shape = data.shape
         self.size_active = isl_size
-        self.max_value = N.max(self.image*~self.mask_active)
+        self.max_value = N.max(self.image[~self.mask_active])
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_rms_im))
         self.rms  = bbox_rms_im[in_bbox_and_unmasked].mean()
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
