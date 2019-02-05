@@ -465,7 +465,12 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     if os.path.exists(filename) and clobber == False:
         return None
     mylog.info('Writing ' + filename)
-    tbhdu.writeto(filename, overwrite=True)
+    try:
+        tbhdu.writeto(filename, overwrite=True)
+    except TypeError:
+        # The "overwrite" argument was added in astropy v1.3, so fall back to "clobber"
+        # if it doesn't work
+        tbhdu.writeto(filename, clobber=True)
     return filename
 
 
