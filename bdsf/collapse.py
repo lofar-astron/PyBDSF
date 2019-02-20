@@ -130,26 +130,12 @@ class Op_collapse(Op):
       mylogger.userinfo(mylog, "Number of blank pixels", str(img.blankpix)
                         + ' (' + str(frac_blank * 100.0) + '%)')
 
-      # Check whether the input image might be an AWimage. If so, and there
-      # are no blank pixels, tell the user that they might to set blank_limit.
-      # Once the AWimager incorporates blanking, this check can be removed.
-      if img.opts.blank_limit is None and (img.blankpix == 0 and
-              ('restored' in img.filename.lower() or
-              'corr' in img.filename.lower() or
-              'aw' in img.filename.lower())):
-          check_low = True
-      else:
-          check_low = False
-
-      if img.opts.blank_limit is not None or check_low:
+      if img.opts.blank_limit is not None:
           import scipy
           import sys
-          if check_low:
-              threshold = 1e-5
-          else:
-              threshold = img.opts.blank_limit
-              mylogger.userinfo(mylog, "Blanking pixels with values "
-                  "below %.1e Jy/beam" % (threshold,))
+          threshold = img.opts.blank_limit
+          mylogger.userinfo(mylog, "Blanking pixels with values "
+                            "below %.1e Jy/beam" % (threshold,))
           bad = (abs(image) < threshold)
           original_stdout = sys.stdout  # keep a reference to STDOUT
           sys.stdout = func.NullDevice()  # redirect the real STDOUT
@@ -181,6 +167,7 @@ class Op_collapse(Op):
       if img.blankpix == image.shape[0] * image.shape[1]:
           # ALL pixels are blanked!
           raise RuntimeError('All pixels in the image are blanked.')
+      
       img.completed_Ops.append('collapse')
 
 
