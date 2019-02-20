@@ -1071,7 +1071,8 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import numpy as N
     from copy import deepcopy as cp
     from distutils.version import StrictVersion
-
+    import warnings
+    
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir is None or indir == './':
         prefix = ''
@@ -1245,7 +1246,6 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 t = WCS(hdr)
                 t.wcs.fix()
         except ImportError as err:
-            import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore",category=DeprecationWarning)
                 from pywcs import WCS
