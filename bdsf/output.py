@@ -962,12 +962,11 @@ def list_and_sort_gaussians(img, patch=None, root=None,
             sorted_gausname = list(gausname)
             if sort_by == 'flux':
                 # Sort Gaussians by flux within each source
-                indx = range(len(gausflux))
-                indx.sort(lambda x, y: ((gausflux[x] > gausflux[y]) - (gausflux[x] < gausflux[y])), reverse=True)
+                indx = N.argsort(N.array(gausflux)).tolist()
+                indx.reverse()
             elif sort_by == 'index':
                 # Sort Gaussians by index within each source
-                indx = range(len(gausindx))
-                indx.sort(lambda x, y: ((gausflux[x] > gausflux[y]) - (gausflux[x] < gausflux[y])), reverse=False)
+                indx = N.argsort(N.array(gausindx)).tolist()
             else:
                 # Unrecognized property --> Don't sort
                 indx = range(len(gausindx))
