@@ -10,12 +10,6 @@ Because PyBDSF is written in Python, it is straightforward to use PyBDSF non-int
 
 inside your script.
 
-.. note::
-
-     If you are working on the LOFAR CEP I/II clusters, then at some point before running the script, you will need to do::
-
-        $ use LofIm
-
 Processing may then be done using ``process_image()`` as follows::
 
     img = bdsf.process_image(filename, <args>)
