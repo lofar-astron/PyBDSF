@@ -84,8 +84,8 @@ class Op_shapelets(Op):
                 ffimg = func.gaussian_fcn(g, x_ax, y_ax)
                 model_gaus[bbox] = model_gaus[bbox] + ffimg
             arr = isl.image - isl.islmean - model_gaus[isl.bbox]
-            if N.std(arr) < thresh * isl.rms:
-                return [beta, tuple(N.array(centre) + N.array(isl.origin)), nmax, basis, cf]
+#             if N.std(arr) < thresh * isl.rms:
+#                 return [beta, tuple(N.array(centre) + N.array(isl.origin)), nmax, basis, cf]
         else:
             arr = isl.image - isl.islmean
         mask = isl.mask_active
@@ -122,7 +122,7 @@ class Op_shapelets(Op):
 
          if fixed[0]==0:
              try:
-                beta=sqrt(m3[0]*m3[1])*2.0
+                beta = sqrt(m3[0]*m3[1])*2.0
              except ValueError:
                 beta = 0.5
              if beta == 0.0:
