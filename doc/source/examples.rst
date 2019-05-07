@@ -229,12 +229,6 @@ Scripting example
 -----------------
 You can use the complete functionality of PyBDSF within Python scripts (see :ref:`scripting` for details). Scripting can be useful, for example, if you have a large number of images or if PyBDSF needs to be called as part of an automated reduction. Below is a short example of using PyBDSF to find sources in a number of images automatically. In this example, the best reduction parameters were determined beforehand for a representative image and saved to a PyBDSF save file using the ``tput`` command (see :ref:`commands` for details).
 
-.. note::
-
-     If you are working on the LOFAR CEP I/II clusters, then at some point before running the script, you will need to do::
-
-        $ use LofIm
-
 ::
 
     # pybdsf_example.py
@@ -270,10 +264,10 @@ You can use the complete functionality of PyBDSF within Python scripts (see :ref
         # Write the source list catalog. File is named automatically.
         img.write_catalog(format='fits', catalog_type='srl')
 
-        # Write the residual image. File is name automatically.
+        # Write the residual image. File is named automatically.
         img.export_image(img_type='gaus_resid')
 
-        # Write the model image. File name is specified.
+        # Write the model image. Filename is specified explicitly.
         img.export_image(img_type='gaus_model', outfile=input_image+'.model')
 
 
@@ -317,7 +311,7 @@ TOPCAT should automatically load the table. Double-click on the table name in TO
                            the lower right corner, must be off)
     ________________________________________________________________________
 
-Now, clicking on a Gaussian will highlight the row corresponding to the source to which the Gaussian belongs. Gaussian catalogs (i.e., made with ``catalog_type='srl'`` in ``write_catalog``) are also supported (and may be used simultaneously in TOPCAT with source catalogs).
+Now, clicking on a Gaussian will highlight the row corresponding to the source to which the Gaussian belongs. Gaussian catalogs (i.e., made with ``catalog_type='gaul'`` in ``write_catalog``) are also supported (and may be used simultaneously in TOPCAT with source catalogs).
 
 Images can be sent to ds9 or Aladin using the ``export_image`` task in the same way (with ``outfile = 'SAMP'``). Furthermore, if an image was sent, clicking on a Gaussian in the ``show_fit`` window will tell ds9 or Aladin to center their view on the coordinates of the Gaussian's center.
 

@@ -29,7 +29,7 @@ class Op_shapelets(Op):
         bar = statusbar.StatusBar('Decomposing islands into shapelets ...... : ', 0, img.nisl)
         opts = img.opts
         if img.opts.shapelet_do:
-            if opts.quiet == False:
+            if not opts.quiet:
                 bar.start()
 
             # Set up multiproccessing. First create a simple copy of the Image
@@ -84,8 +84,8 @@ class Op_shapelets(Op):
                 ffimg = func.gaussian_fcn(g, x_ax, y_ax)
                 model_gaus[bbox] = model_gaus[bbox] + ffimg
             arr = isl.image - isl.islmean - model_gaus[isl.bbox]
-            if N.std(arr) < thresh * isl.rms:
-                return [beta, tuple(N.array(centre) + N.array(isl.origin)), nmax, basis, cf]
+#             if N.std(arr) < thresh * isl.rms:
+#                 return [beta, tuple(N.array(centre) + N.array(isl.origin)), nmax, basis, cf]
         else:
             arr = isl.image - isl.islmean
         mask = isl.mask_active
@@ -113,15 +113,18 @@ class Op_shapelets(Op):
          from . import functions as func
          import numpy as N
 
-         if fixed[0]==1 and beta==None: fixed[0]=0
-         if fixed[1]==1 and cen==None: fixed[1]=0
-         if fixed[2]==1 and nmax==None: fixed[2]=0
+         if fixed[0]==1 and beta is None: fixed[0]=0
+         if fixed[1]==1 and cen is None: fixed[1]=0
+         if fixed[2]==1 and nmax is None: fixed[2]=0
 
          if fixed[0]*fixed[1]==0:
              (m1, m2, m3)=func.moment(image, mask)
 
          if fixed[0]==0:
-             beta=sqrt(m3[0]*m3[1])*2.0
+             try:
+                beta = sqrt(m3[0]*m3[1])*2.0
+             except ValueError:
+                beta = 0.5
              if beta == 0.0:
                 beta = 0.5
          if fixed[1]==0:

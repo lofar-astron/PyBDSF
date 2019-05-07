@@ -20,17 +20,11 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
         shapelets and returns the coefficient matrix cf.
     Mode is 'fit' or 'integrate' for method finding coeffs. If fit then integrated
     values are taken as initial guess.
-    Centre is by python convention, for retards who count from zero.
     """
-    bad = False
-    if (beta < 0 or beta/max(image.shape) > 5 or \
-       (max(N.abs(list(centre)))-max(image.shape)/2) > 10*max(image.shape)): bad = True
-
-    hc = []
-    if not bad:
-      hc = shapelet_coeff(nmax, basis)
-    else:
-      print(' Bad input params')
+#     bad = False
+#     if (beta < 0 or beta/max(image.shape) > 5 or \
+#        (max(N.abs(list(centre)))-max(image.shape)/2) > 10*max(image.shape)): bad = True
+    hc = shapelet_coeff(nmax, basis)
     ordermax=nmax+1
 
     Bset=N.zeros((ordermax, ordermax, image.shape[0], image.shape[1]), dtype=N.float32)

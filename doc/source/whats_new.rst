@@ -3,7 +3,8 @@
 **********
 What's New
 **********
-Version 1.9.0 ():
+
+Version 1.9.0 (2019/03/25):
 
     * Add support for Python 3
 
