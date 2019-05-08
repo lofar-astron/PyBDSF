@@ -32,11 +32,10 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     index = [(i,j) for i in range(ordermax) for j in range(ordermax-i)]  # i=0->nmax, j=0-nmax-i
     for coord in index:
         B = shapelet_image(basis, beta, centre, hc, coord[0], coord[1], image.shape)
-    if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
-    m = N.copy(mask)
-    for i, v in N.ndenumerate(mask): m[i] = not v
-
-    cf[coord] = N.sum(image*B*m)
+        if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
+        m = N.copy(mask)
+        for i, v in N.ndenumerate(mask): m[i] = not v
+        cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
       npix = N.product(image.shape)-N.sum(mask)
