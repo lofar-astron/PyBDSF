@@ -562,23 +562,32 @@ class Op_gausfit(Op):
           coords = [c for c in N.transpose([xm,ym])[1:]]
           alldists = [func.dist_2pt(c1, c2) for c1 in coords for c2 in coords if N.any(c1!=c2)]  # has double
           meandist = N.mean(alldists)    # mean dist between all pairs of markers
-          compact = []; invmask = []
-          for ished in range(nshed):
-            shedmask = N.where(watershed==ished+2, False, True) + isl.mask_active # good unmasked pixels = 0
-            imm = nd.binary_dilation(~shedmask, N.ones((3,3), int))
-            xbad, ybad = N.where((imm==1)*(im>im[xm[ished+1], ym[ished+1]]))
-            imm[xbad, ybad] = 0
-            invmask.append(imm); x, y = N.where(imm); xcen, ycen = N.mean(x), N.mean(y) # good pixels are now = 1
-            dist = func.dist_2pt([xcen, ycen], [xm[ished+1], ym[ished+1]])
-            if dist < max(3.0, meandist/4.0):
-              compact.append(True)  # if not compact, break source + diffuse
-            else:
-              compact.append(False)
+          # find at least some 'compact' sources
+          cscale = 3.0
+          while True:
+              compact = []; invmask = []
+              for ished in range(nshed):
+                shedmask = N.where(watershed==ished+2, False, True) + isl.mask_active # good unmasked pixels = 0
+                imm = nd.binary_dilation(~shedmask, N.ones((3,3), int))
+                xbad, ybad = N.where((imm==1)*(im>im[xm[ished+1], ym[ished+1]]))
+                imm[xbad, ybad] = 0
+                invmask.append(imm); x, y = N.where(imm); xcen, ycen = N.mean(x), N.mean(y) # good pixels are now = 1
+                dist = func.dist_2pt([xcen, ycen], [xm[ished+1], ym[ished+1]])
+                if dist < max(cscale, meandist/4.0):
+                  compact.append(True)  # if not compact, break source + diffuse
+                else:
+                  compact.append(False)
+              if N.any(compact):
+                  break
+              else:
+                  # rescale to search for more compact sources
+                  cscale*=1.5
+
           if not N.all(compact):
-           avsize = []
+           o_avsize = []
            ind = N.where(compact)[0]
-           for i in ind: avsize.append(N.sum(invmask[i]))
-           avsize = sqrt(N.mean(N.array(avsize)))
+           for i in ind: o_avsize.append(N.sum(invmask[i]))
+           avsize = sqrt(N.mean(N.array(o_avsize)))
            for i in range(len(compact)):
              if not compact[i]:                         # make them all compact
                newmask = N.zeros(imm.shape, bool)
