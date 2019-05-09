@@ -1171,6 +1171,8 @@ The options for this module are as follows:
                                    'cartesian' or 'polar'
       :term:`shapelet_fitmode` .... 'fit': Calculate shapelet coeff's by fitting ('fit') or
                                    integrating (None)
+      :term:`shapelet_gresid` ..... 'False': Use Gaussian residual image for shapelet
+                                   decomposition?
 
 .. glossary::
 
@@ -1184,6 +1186,11 @@ The options for this module are as follows:
         (actually, by summing over pixels, which introduces errors due to
         discretisation). If 'fit', then the coefficients are found by
         least-squares fitting of the shapelet basis functions to the image.
+
+    shapelet_gresid
+        This parameter is a Boolean (default is ``True``). If ``True``, then the shapelet decomposition is done
+        on the Gaussian residual image rather that the ch0 image.
+
 
 .. rubric:: Footnotes
 
