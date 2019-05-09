@@ -83,9 +83,7 @@ class Op_shapelets(Op):
                 x_ax, y_ax = N.mgrid[bbox]
                 ffimg = func.gaussian_fcn(g, x_ax, y_ax)
                 model_gaus[bbox] = model_gaus[bbox] + ffimg
-            arr = isl.image - isl.islmean - model_gaus[isl.bbox]
-#             if N.std(arr) < thresh * isl.rms:
-#                 return [beta, tuple(N.array(centre) + N.array(isl.origin)), nmax, basis, cf]
+            arr = isl.image - isl.islmean - model_gaus[tuple(isl.bbox)]
         else:
             arr = isl.image - isl.islmean
         mask = isl.mask_active

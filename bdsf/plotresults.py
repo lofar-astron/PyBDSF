@@ -137,7 +137,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         if img.opts.shapelet_do == False:
             print('Image was not decomposed into shapelets. Skipping residual shapelet image.')
         else:
-            img_shap_resid = img.ch0_arr - img.model_shap_arr
+            img_shap_resid = img.resid_shap_arr
             images.append(img_shap_resid)
             titles.append('Shapelet Residual Image')
             names.append('shap_resid')
