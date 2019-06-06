@@ -142,20 +142,14 @@ class Op_collapse(Op):
           count = scipy.signal.convolve2d(bad, N.ones((3, 3)), mode='same')
           sys.stdout = original_stdout  # turn STDOUT back on
           mask_low = (count >= 5)
-          if check_low:
-              nlow = len(N.where(mask_low)[0])
-              if nlow / float(image.shape[0] * image.shape[1]) > 0.2:
-                  mylog.warn('A significant area of the image has very low values. To blank\nthese regions (e.g., because they are outside the primary beam), set the\nblank_limit option (values of 1e-5 to 1e-4 Jy/beam usually work well).\n')
-
-          else:
-              image[N.where(mask_low)] = N.nan
-              mask = N.isnan(image)
-              img.blankpix = N.sum(mask)
-              frac_blank = round(
-                  float(img.blankpix) / float(image.shape[0] *
-                  image.shape[1]), 3)
-              mylogger.userinfo(mylog, "Total number of blanked pixels",
-                  str(img.blankpix) + ' (' + str(frac_blank * 100.0) + '%)')
+          image[N.where(mask_low)] = N.nan
+          mask = N.isnan(image)
+          img.blankpix = N.sum(mask)
+          frac_blank = round(
+              float(img.blankpix) / float(image.shape[0] *
+              image.shape[1]), 3)
+          mylogger.userinfo(mylog, "Total number of blanked pixels",
+              str(img.blankpix) + ' (' + str(frac_blank * 100.0) + '%)')
 
       masked = mask.any()
       img.masked = masked
