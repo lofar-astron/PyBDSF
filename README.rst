@@ -34,7 +34,7 @@ Make sure to use similar versions for gcc, g++ and gfortran
 In this case, the script ``pybdsf`` is installed in ``~/.local/bin``, so you might want to add that to your ``$PATH``.
 
 Installation on MacOS / OSX is more involved, you will need the packages mentioned above, for example installed with Homebrew.
-You will need to tell `setup.py` to use the same compiler for fortran as for C++.
+You will need to tell `setup.py` to use the same compiler for fortran as for C++. In case of problems, see https://github.com/lofar-astron/PyBDSF/issues/104#issuecomment-509267088 for some possible steps to try.
 
 .. image:: https://travis-ci.org/lofar-astron/PyBDSF.svg?branch=master
     :target: https://travis-ci.org/lofar-astron/PyBDSF
