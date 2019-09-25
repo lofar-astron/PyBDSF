@@ -1072,7 +1072,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     from copy import deepcopy as cp
     from distutils.version import StrictVersion
     import warnings
-    
+
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir is None or indir == './':
         prefix = ''
@@ -1478,7 +1478,8 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             except ImportError as err:
                 import os
                 os.remove(outfile)
-                raise RuntimeError("Error writing CASA image. Use img_format = 'fits' instead.")
+                raise RuntimeError("Error importing python-casacore. CASA image could not "
+                                   "be writen. Use img_format = 'fits' instead.")
 
 
 def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, ymin=0,
