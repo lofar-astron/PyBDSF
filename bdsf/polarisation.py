@@ -71,7 +71,6 @@ class Op_polarisation(Op):
               mylogger.userinfo(mylog, "\nChecking PI image for new sources")
 
               mask = img.mask_arr
-              minsize = img.opts.minpix_isl
 
               # Set up image object for PI image.
               pi_chain, pi_opts = self.setpara_bdsm(img)
@@ -108,9 +107,14 @@ class Op_polarisation(Op):
               new_src = []
               new_gaus = []
               n_new_src = 0
-              isl_id = img.islands[-1].island_id
-              src_id = img.sources[-1].source_id
-              gaus_id = img.gaussians[-1].gaus_num
+              if len(img.islands) == 0:
+                  isl_id = 0
+                  src_id = 0
+                  gaus_id = 0
+              else:
+                  isl_id = img.islands[-1].island_id
+                  src_id = img.sources[-1].source_id
+                  gaus_id = img.gaussians[-1].gaus_num
               for pi_isl in pimg.islands:
                   new_sources = []
                   for pi_src in pi_isl.sources:
@@ -193,7 +197,6 @@ class Op_polarisation(Op):
                     if (sind==0 and hasattr(src, '_pi')) or sind > 0: # Fit I only for PI sources
                         p, ep = func.fit_mulgaus2d(image, gg, x, y, srcmask, fitfix)
                         for ig in range(len(fitfix)):
-                            center_pix = (p[ig*6 + 1], p[ig*6 + 2])
                             bm_pix = N.array([img.pixel_beam()[0], img.pixel_beam()[1], img.pixel_beam()[2]])
                             total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
                         p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
