@@ -35,7 +35,7 @@ Each of the parameters is described in detail below.
         This parameter is a Boolean (default is ``False``) that determines whether existing files are overwritten or not.
 
     img_format
-        This parameter is a string (default is ``'fits'``) that sets the output file format: ``'fits'`` - FITS format, ``'casa'`` - CASA format (requires pyrap).
+        This parameter is a string (default is ``'fits'``) that sets the output file format: ``'fits'`` - FITS format, ``'casa'`` - CASA format (requires casacore).
 
     img_type
         This parameter is a string (default is ``'gaus_resid'``) that sets the type of image to export.

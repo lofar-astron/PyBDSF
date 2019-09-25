@@ -2,7 +2,7 @@
 Capabilities of PyBDSF
 **********************
 
-PyBDSF can be run on FITS images (using PyFITS [#f1]_) or CASA images (using pyrap [#f2]_), including 3-D and 4-D cubes, and can handle blanked image pixels. If a spectral cube is given, then all source extraction as well as other computation (psf variation, wavelet decomposition, etc.) are done on a collapsed 2-D stokes I image. Once sources have been identified, their spectral and polarisation properties are then extracted from the full cubes. If you need a full 3-D Gaussian decomposition, then DUCHAMP [#f3]_ is what you need.
+PyBDSF can be run on FITS images (using PyFITS [#f1]_) or CASA images (using python-casacore [#f2]_), including 3-D and 4-D cubes, and can handle blanked image pixels. If a spectral cube is given, then all source extraction as well as other computation (psf variation, wavelet decomposition, etc.) are done on a collapsed 2-D stokes I image. Once sources have been identified, their spectral and polarisation properties are then extracted from the full cubes. If you need a full 3-D Gaussian decomposition, then DUCHAMP [#f3]_ is what you need.
 
 PyBDSF performs the following tasks:
 
@@ -34,5 +34,5 @@ PyBDSF performs the following tasks:
 
 .. rubric:: Footnotes
 .. [#f1] http://www.stsci.edu/resources/software_hardware/pyfits/
-.. [#f2] http://code.google.com/p/pyrap/
+.. [#f2] http://github.com/casacore/python-casacore
 .. [#f3] http://www.atnf.csiro.au/people/Matthew.Whiting/Duchamp/

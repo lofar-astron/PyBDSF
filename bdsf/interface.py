@@ -912,7 +912,7 @@ def export_image(img, outfile=None, img_format='fits', pad_image = False,
         else:
             print('--> Wrote file ' + repr(filename))
             if use_io == 'rap':
-                # remove the temporary fits file used as a pyrap template
+                # remove the temporary fits file used as a casacore template
                 import os
                 os.remove(filename+'.fits')
 
