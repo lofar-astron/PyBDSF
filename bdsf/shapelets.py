@@ -92,7 +92,10 @@ def shapelet_image(basis, beta, centre, hc, nx, ny, size):
         try:
             from scipy.misc.common import factorial
         except ImportError:
-            from scipy.misc import factorial
+            try:
+                from scipy.misc import factorial
+            except ImportError:
+                from scipy.special import factorial
 
     hcx = hc[nx,:]
     hcy = hc[ny,:]
