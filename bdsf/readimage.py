@@ -445,7 +445,16 @@ class Op_readimage(Op):
         else:
             spec_indx = img.wcs_obj.wcs.spec
             if spec_indx == -1:
-                raise RuntimeError('No frequency information found in image header.')
+                # No frequency axis; check header instead
+                hdr = img.header
+                if 'RESTFREQ' in hdr:
+                    img.frequency = hdr['RESTFREQ']
+                    img.freq_pars = (img.frequency, 0.0, 0.0)
+                elif 'FREQ' in hdr:
+                    img.frequency = hdr['FREQ']
+                    img.freq_pars = (img.frequency, 0.0, 0.0)
+                else:
+                    raise RuntimeError('No frequency information found in image header.')
             else:
                 # Here we define p2f and f2p to allow pixel to frequency
                 # transformations. Transformations for other axes (e.g.,
