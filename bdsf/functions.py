@@ -1,6 +1,12 @@
+# some functions
 from __future__ import print_function
 from __future__ import absolute_import
-# some functions
+
+try:
+    # For Python 2
+    basestring = basestring
+except NameError:
+    basestring = str
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
