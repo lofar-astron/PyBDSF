@@ -113,6 +113,21 @@ class Op_make_residimage(Op):
 
             model_shap = fimg
             resid_shap = img.ch0_arr - fimg
+            if img.opts.shapelet_gresid:
+                # also subtract Gaussian model image
+                shape = img.ch0_arr.shape
+                thresh= img.opts.fittedimage_clip
+                model_gaus = N.zeros(shape, dtype=N.float32)
+                for isl in img.islands:
+                    for g in isl.gaul:
+                        C1, C2 = g.centre_pix
+                        b = self.find_bbox(thresh*isl.rms, g)
+                        bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
+                                    max(0, int(C2-b)):min(shape[1], int(C2+b+1))]
+                        x_ax, y_ax = N.mgrid[bbox]
+                        ffimg = func.gaussian_fcn(g, x_ax, y_ax)
+                        model_gaus[bbox] = model_gaus[bbox] + ffimg
+                resid_shap -= model_gaus
 
             # Apply mask to model and resid images
             if hasattr(img, 'rms_mask'):

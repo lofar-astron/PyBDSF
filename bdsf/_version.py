@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.9.0'
+__version__ = '1.9.1'
 
 
 # Changelog
@@ -12,6 +12,16 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2019/09/25 - Version 1.9.1
+
+    2019/09/25 - Fix various minor bugs
+
+    2019/06/06 - Fix blank_limit check_low error (#100)
+
+    2019/05/09 - Fix various shapelet decomposition issues
+
+    2019/05/08 - Fix crash in Gaussian fitting (#96)
+
     2019/03/25 - Version 1.9.0
 
     2018/10/18 - Add support for Python 3

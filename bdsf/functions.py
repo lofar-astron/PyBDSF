@@ -1060,10 +1060,10 @@ def get_kwargs(kwargs, key, typ, default):
 def read_image_from_file(filename, img, indir, quiet=False):
     """ Reads data and header from indir/filename.
 
-    We can use either pyfits or pyrap depending on the value
+    We can use either pyfits or python-casacore depending on the value
     of img.use_io = 'fits'/'rap'
 
-    PyFITS is required, as it is used to standardize the header format. pyrap
+    PyFITS is required, as it is used to standardize the header format. python-casacore
     is optional.
     """
     from . import mylogger
@@ -1072,7 +1072,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     from copy import deepcopy as cp
     from distutils.version import StrictVersion
     import warnings
-    
+
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir is None or indir == './':
         prefix = ''
@@ -1111,14 +1111,14 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
         if img.use_io == 'rap':
-            import pyrap.images as pim
+            import casacore.images as pim
             try:
                 inputimage = pim.image(image_file)
             except IOError as err:
                 img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
                 return None
     else:
-        # Simple check of whether pyrap and pyfits are available
+        # Simple check of whether casacore and pyfits are available
         # We need pyfits version 2.2 or greater to use the
         # "ignore_missing_end" argument to pyfits.open().
         try:
@@ -1141,14 +1141,14 @@ def read_image_from_file(filename, img, indir, quiet=False):
         except ImportError as err:
             raise RuntimeError("Astropy or PyFITS is required.")
         try:
-            import pyrap.images as pim
-            has_pyrap = True
+            import casacore.images as pim
+            has_casacore = True
         except ImportError as err:
-            has_pyrap = False
-            e_pyrap = str(err)
+            has_casacore = False
+            e_casacore = str(err)
 
         # First assume image is a fits file, and use pyfits to open it (if
-        # available). If that fails, try to use pyrap if available.
+        # available). If that fails, try to use casacore if available.
         failed_read = False
         reason = 0
         try:
@@ -1159,20 +1159,20 @@ def read_image_from_file(filename, img, indir, quiet=False):
             img.use_io = 'fits'
         except IOError as err:
             e_pyfits = str(err)
-            if has_pyrap:
+            if has_casacore:
                 try:
                     inputimage = pim.image(image_file)
                     img.use_io = 'rap'
                 except IOError as err:
-                    e_pyrap = str(err)
+                    e_casacore = str(err)
                     failed_read = True
                     img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
             else:
                 failed_read = True
-                e_pyrap = "Pyrap unavailable"
+                e_casacore = "Casacore unavailable"
                 img._reason = 'Problem reading file.'
         if failed_read:
-            img._reason += '\nOriginal error: {0}\n {1}'.format(e_pyfits, e_pyrap)
+            img._reason += '\nOriginal error: {0}\n {1}'.format(e_pyfits, e_casacore)
             return None
 
     # Now that image has been read in successfully, get header (data is loaded
@@ -1181,7 +1181,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
         tmpdir = img.parentname+'_tmp'
-        hdr = convert_pyrap_header(inputimage, tmpdir)
+        hdr = convert_casacore_header(inputimage, tmpdir)
         coords = inputimage.coordinates()
         img.coords_dict = coords.dict()
         if 'telescope' in img.coords_dict:
@@ -1199,7 +1199,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     # Make sure data is in proper order. Final order is [pol, chan, x (RA), y (DEC)],
     # so we need to rearrange dimensions if they are not in this order. Use the
     # ctype FITS keywords to determine order of dimensions. Note that both PyFITS
-    # and pyrap reverse the order of the axes relative to NAXIS, so we must too.
+    # and casacore reverse the order of the axes relative to NAXIS, so we must too.
     naxis = hdr['NAXIS']
     data_shape = []
     for i in range(naxis):
@@ -1255,7 +1255,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if spec_indx != -1:
             ctype_in[spec_indx] = 'FREQ'
 
-    # Now reverse the axes order to match PyFITS/pyrap order and define the
+    # Now reverse the axes order to match PyFITS/casacore order and define the
     # final desired order (cytpe_out) and shape (shape_out).
     ctype_in.reverse()
     if lat_lon:
@@ -1323,7 +1323,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             else:
                 data = data.reshape(shape_out) # Add axes if needed
         else:
-            # With pyrap, just read in the whole image and then trim
+            # With casacore, just read in the whole image and then trim
             data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
@@ -1353,8 +1353,8 @@ def read_image_from_file(filename, img, indir, quiet=False):
     return data, hdr
 
 
-def convert_pyrap_header(pyrap_image, tmpdir):
-    """Converts a pyrap header to a PyFITS header."""
+def convert_casacore_header(casacore_image, tmpdir):
+    """Converts a casacore header to a PyFITS header."""
     import tempfile
     import os
     import atexit
@@ -1367,7 +1367,7 @@ def convert_pyrap_header(pyrap_image, tmpdir):
     if not os.path.exists(tmpdir):
         os.makedirs(tmpdir)
     tfile = tempfile.NamedTemporaryFile(delete=False, dir=tmpdir)
-    pyrap_image.tofits(tfile.name)
+    casacore_image.tofits(tfile.name)
     hdr = pyfits.getheader(tfile.name)
     if os.path.isfile(tfile.name):
         os.remove(tfile.name)
@@ -1458,8 +1458,8 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         if use == 'rap':
             # For CASA images, read in FITS image and convert
             try:
-                import pyrap.images as pim
-                import pyrap.tables as pt
+                import casacore.images as pim
+                import casacore.tables as pt
                 import os
                 outimage = pim.image(outfile)
                 outimage.saveas(outdir+filename, overwrite=clobber)
@@ -1478,7 +1478,8 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             except ImportError as err:
                 import os
                 os.remove(outfile)
-                raise RuntimeError("Error writing CASA image. Use img_format = 'fits' instead.")
+                raise RuntimeError("Error importing python-casacore. CASA image could not "
+                                   "be writen. Use img_format = 'fits' instead.")
 
 
 def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, ymin=0,

@@ -32,11 +32,10 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     index = [(i,j) for i in range(ordermax) for j in range(ordermax-i)]  # i=0->nmax, j=0-nmax-i
     for coord in index:
         B = shapelet_image(basis, beta, centre, hc, coord[0], coord[1], image.shape)
-    if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
-    m = N.copy(mask)
-    for i, v in N.ndenumerate(mask): m[i] = not v
-
-    cf[coord] = N.sum(image*B*m)
+        if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
+        m = N.copy(mask)
+        for i, v in N.ndenumerate(mask): m[i] = not v
+        cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
       npix = N.product(image.shape)-N.sum(mask)
@@ -93,7 +92,10 @@ def shapelet_image(basis, beta, centre, hc, nx, ny, size):
         try:
             from scipy.misc.common import factorial
         except ImportError:
-            from scipy.misc import factorial
+            try:
+                from scipy.misc import factorial
+            except ImportError:
+                from scipy.special import factorial
 
     hcx = hc[nx,:]
     hcy = hc[ny,:]

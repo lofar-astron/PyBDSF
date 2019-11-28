@@ -4,6 +4,16 @@
 What's New
 **********
 
+Version 1.9.1 (2019/09/25):
+
+    * Fix various shapelet decomposition issues
+
+    * Fix crash in Gaussian fitting (#96)
+
+    * Fix blank_limit check_low error (#100)
+
+    * Fix various minor bugs
+
 Version 1.9.0 (2019/03/25):
 
     * Add support for Python 3

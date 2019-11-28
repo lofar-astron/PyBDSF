@@ -314,12 +314,12 @@ class Op_rmsimage(Op):
             else:
               rms[:]  = opts.rms_value
             mylogger.userinfo(mylog, 'Value of background rms' + pol_txt,
-                              '%.5f Jy/beam' % rms[0][0])
+                              '%.2e Jy/beam' % rms[0][0])
           else:
             rms_min = N.nanmin(rms)
             rms_max = N.nanmax(rms)
             mylogger.userinfo(mylog, 'Min/max values of background rms map' + pol_txt,
-                              '(%.5f, %.5f) Jy/beam' % (rms_min, rms_max))
+                              '(%.2e, %.2e) Jy/beam' % (rms_min, rms_max))
 
           if img.mean_map_type != 'map':
             if opts.mean_map == 'zero':
@@ -333,7 +333,7 @@ class Op_rmsimage(Op):
             mean_min = N.nanmin(mean)
             mean_max = N.nanmax(mean)
             mylogger.userinfo(mylog, 'Min/max values of background mean map' + pol_txt,
-                              '(%.5f, %.5f) Jy/beam' % (mean_min, mean_max))
+                              '(%.2e, %.2e) Jy/beam' % (mean_min, mean_max))
 
           if pol == 'I':
             # Apply mask to mean_map and rms_map by setting masked values to NaN
