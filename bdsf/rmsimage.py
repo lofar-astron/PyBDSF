@@ -456,6 +456,7 @@ class Op_rmsimage(Op):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
         opts = img.opts
         kappa = map_opts[0]
+        spline_rank = opts.spline_rank
         while not rms_ok:
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
@@ -482,7 +483,7 @@ class Op_rmsimage(Op):
                             img.mean_map_type = 'const'
                             rms_ok = True
                         else:
-                            map_opts = (kappa, img.rms_box_bright, opts.spline_rank)
+                            map_opts = (kappa, img.rms_box_bright, spline_rank)
                     else:
                         new_width = int(img.rms_box[0]*1.2)
                         if new_width == img.rms_box[0]:
@@ -496,17 +497,18 @@ class Op_rmsimage(Op):
                             img.mean_map_type = 'const'
                             rms_ok = True
                         else:
-                            map_opts = (kappa, img.rms_box, opts.spline_rank)
+                            map_opts = (kappa, img.rms_box, spline_rank)
 
                 else:
                     # User has specified box size, use order=1 to prevent negatives
-                    if opts.spline_rank > 1:
-                        mylog.warning('Negative values found in rms map interpolated with spline_rank = %i' % opts.spline_rank)
+                    if spline_rank > 1:
+                        mylog.warning('Negative values found in rms map interpolated with spline_rank = %i' % spline_rank)
                         mylog.warning('Using spline_rank = 1 (bilinear interpolation) instead')
+                        spline_rank = 1
                         if do_adapt:
-                            map_opts = (kappa, img.rms_box_bright, 1)
+                            map_opts = (kappa, img.rms_box_bright, spline_rank)
                         else:
-                            map_opts = (kappa, img.rms_box, 1)
+                            map_opts = (kappa, img.rms_box, spline_rank)
                     else:
                         raise RuntimeError('RMS map has negative values')
             else:
