@@ -1,0 +1,44 @@
+FROM quay.io/pypa/manylinux2010_x86_64
+
+
+# install rpms
+RUN yum install -y gcc-gfortran
+
+# download other source code
+WORKDIR /tmp
+RUN curl https://ufpr.dl.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.bz2 --output /tmp/boost.tar.bz2
+
+RUN mkdir /build
+WORKDIR /build
+
+# how many threads to use for compiling
+ENV THREADS 4
+
+ENV PYMAJOR 3
+ENV PYMINOR 6
+ENV PYUNICODE m
+ENV TARGET cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
+
+# install python dependencies, make boost install also boost_numpy
+RUN /opt/python/${TARGET}/bin/pip install numpy
+
+# setup boost
+WORKDIR /build
+RUN tar jxf /tmp/boost.tar.bz2
+WORKDIR /build/boost_1_70_0
+RUN ./bootstrap.sh --prefix=/opt/boost \
+    --with-libraries=python \
+    --with-python=/opt/python/${TARGET}/bin/python \
+    --with-python-version=${PYMAJOR}.${PYMINOR} \
+    --with-python-root=/opt/python/${TARGET}
+RUN ./b2 -j${THREADS} \
+    cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
+    link=static,shared install
+
+ADD . /PyBDSF
+WORKDIR /PyBDSF
+ENV CFLAGS "-I/opt/boost/include -L/opt/boost/lib"
+ENV LD_LIBRARY_PATH "/opt/boost/lib:/usr/local/lib"
+RUN /opt/python/${TARGET}/bin/python ./setup.py build_ext -j${THREADS}
+RUN /opt/python/${TARGET}/bin/python ./setup.py bdist_wheel -d .
+RUN auditwheel repair --plat manylinux2010_x86_64 -w /output *.whl
