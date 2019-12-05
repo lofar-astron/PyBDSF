@@ -4,6 +4,11 @@
 What's New
 **********
 
+Version 1.9.2 (2019/12/05):
+    * Fix exception behaviour if spline order change does not work
+
+    * 2019/09/27 - Add check for frequency info in header
+
 Version 1.9.1 (2019/09/25):
 
     * Fix various shapelet decomposition issues
