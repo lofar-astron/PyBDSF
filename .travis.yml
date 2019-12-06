@@ -4,6 +4,10 @@ python:
   - 2.7
   - 3.5
 
+matrix:
+  allow_failures:
+  - python: 3.5
+
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libboost-python-dev gfortran
