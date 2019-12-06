@@ -14,7 +14,18 @@ import distutils.cmd
 import distutils.log
 from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
 from distutils.command.clean import clean as distutils_clean
+from distutils import ccompiler
+import os
+import warnings
 
+
+no_boost_error = """
+Could not find a Python boost library! Please use your package manager to install boost.
+
+Or install it manually:
+
+http://boostorg.github.io/python/doc/html/index.html
+"""
 
 minpack_src = ["lmder.f", "lmpar.f", "qrfac.f", "qrsolv.f", "enorm.f", "dpmpar.f"]
 port3_src = ["dnsg.f", "dn2g.f", "drnsg.f", "drn2g.f", "d1mach.f", "da7sst.f",
@@ -90,54 +101,62 @@ class Clean(distutils_clean):
         self.run_command("mclean")
         distutils_clean.run(self)
 
+def find_library_file(libname):
+    """
+    Try to get the directory of the specified library.
+    It adds to the search path the library paths given to distutil's build_ext.
+    """
+    # Use a dummy argument parser to get user specified library dirs
+    lib_dirs = [os.path.join(sys.prefix, 'lib'),
+                             '/usr/local/lib',
+                             '/usr/lib64',
+                             '/usr/lib',
+                             '/usr/lib/x86_64-linux-gnu']
 
-def find_boost():
-    # Find correct boost-python library.
-    system = platform.system()
-    if system == 'Linux':
-        # Use version suffix if present
-        boost_python = 'boost_python-py%s%s' % (sys.version_info[0], sys.version_info[1])
-        if not find_library(boost_python):
-            boost_python = "boost_python"
-    elif system == 'Darwin':
-        if sys.version_info[0] == 2:
-            boost_python = "boost_python-mt"
-        else:
-            boost_python = "boost_python3-mt"
-    return boost_python
+    if 'LD_LIBRARY_PATH' in os.environ:
+        lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
 
+    compiler = ccompiler.new_compiler()
+    return compiler.find_library_file(lib_dirs, libname)
+
+
+def find_boost_python():
+    """Find the name of the boost-python library. Returns None if none is found."""
+    short_version = "{}{}".format(sys.version_info[0], sys.version_info[1])
+    boostlibnames = ['boost_python-py' + short_version,
+                     'boost_python' + short_version,
+                     'boost_python',
+                     ]
+    # The -mt (multithread) extension is used on macOS but not Linux.
+    # Look for it first to avoid ending up with a single-threaded version.
+    boostlibnames = [name + '-mt' for name in boostlibnames] + boostlibnames
+    for libboostname in boostlibnames:
+        if find_library_file(libboostname):
+            return libboostname
+    warnings.warn(no_boost_error)
+    return boostlibnames[0]
 
 def find_boost_numpy():
-    # Find correct boost-python library.
-    system = platform.system()
-    major = sys.version_info.major
-    minor = sys.version_info.minor
+    """Find the name of the boost-numpy library. Returns None if none is found."""
+    short_version = "{}{}".format(sys.version_info[0], sys.version_info[1])
+    boostlibnames = ['boost_numpy-py' + short_version,
+                     'boost_numpy' + short_version,
+                     'boost_numpy',
+                     ]
+    # The -mt (multithread) extension is used on macOS but not Linux.
+    # Look for it first to avoid ending up with a single-threaded version.
+    boostlibnames = [name + '-mt' for name in boostlibnames] + boostlibnames
+    for libboostname in boostlibnames:
+        if find_library_file(libboostname):
+            return libboostname
 
-    if system == 'Linux':
-        # Use version suffix if present
-        if major == 3:
-            boost_numpy = 'boost_numpy3-py%s%s' % (major, minor)
-        else:
-            boost_numpy = 'boost_numpy-py%s%s' % (major, minor)
-
-        if not find_library(boost_numpy):
-            return None
-        return boost_numpy
-
-    elif system == 'Darwin':
-        if sys.version_info[0] == 2:
-            boost_numpy = "boost_numpy-mt"
-        else:
-            boost_numpy = "boost_numpy3-mt"
-
-        if not find_library(boost_numpy):
-            return None
-        return boost_numpy
+    warnings.warn("No library boost_numpy found (this may be no problem)")
+    return None
 
 
 def main():
-
-    boost_python = find_boost()
+    boost_python_libname = find_boost_python()
+    boost_numpy_libname = find_boost_numpy()
 
     extensions = []
 
@@ -152,13 +171,10 @@ def main():
     extensions.append(fext)
 
     libraries = [
-        'minpack', 'port3', 'gfortran',
-        boost_python,
+        'minpack', 'port3', 'gfortran', boost_python_libname
     ]
-
-    boost_numpy = find_boost_numpy()
-    if boost_numpy is not None:
-        libraries.append(boost_numpy)
+    if boost_numpy_libname is not None:
+        libraries.append(boost_numpy_libname)
 
     extensions.append(Extension(
         name="bdsf._cbdsm",
