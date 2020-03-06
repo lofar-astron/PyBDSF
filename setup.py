@@ -136,10 +136,10 @@ def find_boost_python():
         if found_lib:
             return libboostname, dirname(found_lib)
     warnings.warn(no_boost_error)
-    return boostlibnames[0], None
+    return boostlibnames[0], ''
 
 def find_boost_numpy():
-    """Find the name of the boost-numpy library, and the directory where it was found. Returns None, None if not found"""
+    """Find the name of the boost-numpy library, and the directory where it was found. Returns None, '' if not found"""
     short_version = "{}{}".format(sys.version_info[0], sys.version_info[1])
     boostlibnames = ['boost_numpy-py' + short_version,
                      'boost_numpy' + short_version,
@@ -155,16 +155,16 @@ def find_boost_numpy():
             return libboostname, dirname(found_lib)
 
     warnings.warn("No library boost_numpy found (this may be no problem)")
-    return None, None
+    return None, ''
 
 
 def main():
     boost_python_libname, boost_python_libdir = find_boost_python()
     boost_numpy_libname, boost_python_libdir = find_boost_numpy()
-    if boost_python_libdir is not None:
+    if boost_python_libdir != '':
         boost_python_includedir = join(dirname(boost_python_libdir), "include")
     else:
-        boost_python_includedir = None
+        boost_python_includedir = ''
 
     extensions = []
 
