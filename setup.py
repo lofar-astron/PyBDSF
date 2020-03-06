@@ -5,6 +5,7 @@ from __future__ import print_function
 import platform
 from setuptools import Extension
 from numpy.distutils.core import setup
+import numpy
 import sys
 from ctypes.util import find_library
 from os.path import join, realpath, dirname
@@ -197,7 +198,7 @@ def main():
             "src/c++/num_util/num_util.cpp"
         ],
         libraries=libraries,
-        include_dirs=["src/c++", boost_python_includedir],
+        include_dirs=["src/c++", boost_python_includedir, numpy.get_include()],
         library_dirs=[join(srcpath, "minpack"), join(srcpath, "port3"), boost_python_libdir]
     ))
 
