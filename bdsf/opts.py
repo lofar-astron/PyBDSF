@@ -37,6 +37,13 @@ import sys
 from .tc import Int, Float, Bool, String, Tuple, Enum, \
     Option, NArray, Instance, tInstance, List, Any, TCInit, tcError
 
+try:
+    # For Python 2
+    basestring = basestring
+except NameError:
+    basestring = str
+
+
 class Opts(object):
     """Class Opts -- user-controllable parameters."""
     advanced_opts = Bool(False,

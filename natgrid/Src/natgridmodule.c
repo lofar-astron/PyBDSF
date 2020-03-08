@@ -192,7 +192,7 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
     /* fields required to construct the return of result to python */
 
     PyArrayObject *object_out;       /* array object to accept the data and return it to Python */
-    int dims[2];                     /* used in creating object_out */
+    npy_intp dims[2];                /* used in creating object_out */
 
     /* declarations for writes to a file */
 
@@ -215,7 +215,7 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
     dims[0] = numxout;
     dims[1] = numyout;
 
-    object_out = (PyArrayObject *)PyArray_FromDimsAndData(2, dims, PyArray_FLOAT, (char *)out);
+    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(PyArray_FLOAT), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
 
     if (PRINTNATGRIDS == 1) {
         /* -------- print data to the screen ---------- */
@@ -906,7 +906,7 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
     /* fields required to construct the return of result to python */
 
     PyArrayObject *object_out;       /* array object to accept the data and return it to Python */
-    int dims[2];                     /* used in creating object_out */
+    npy_intp dims[2];                /* used in creating object_out */
 
     /* declarations for writes to a file */
 
@@ -929,7 +929,7 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
     dims[0] = numxout;
     dims[1] = numyout;
 
-    object_out = (PyArrayObject *)PyArray_FromDimsAndData(2, dims, PyArray_DOUBLE, (char *)out);
+    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(PyArray_DOUBLE), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
 
 
     if (PRINTNATGRIDS == 1) {

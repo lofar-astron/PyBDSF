@@ -690,7 +690,8 @@ def check_islands_for_overlap(img, wimg):
 
     # Make "images" of island ids for overlaping regions
     orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
-    bar.start()
+    if not img.opts.quiet:
+        bar.start()
     for idx, wvisl in enumerate(wimg.islands):
         if len(wvisl.gaul) > 0:
             # Get unique island IDs. If an island overlaps with one

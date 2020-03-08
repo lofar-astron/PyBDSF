@@ -1,6 +1,12 @@
+# some functions
 from __future__ import print_function
 from __future__ import absolute_import
-# some functions
+
+try:
+    # For Python 2
+    basestring = basestring
+except NameError:
+    basestring = str
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
@@ -2062,7 +2068,12 @@ def eval_func_tuple(f_args):
 def start_samp_proxy():
     """Starts (registers) and returns a SAMP proxy"""
     import os
-    import xmlrpclib
+    try:
+        # Python 3
+        from xmlrpc.client import ServerProxy
+    except ImportError:
+        # Python 2
+        from xmlrpclib import ServerProxy
 
     lockfile = os.path.expanduser('~/.samp')
     if not os.path.exists(lockfile):
@@ -2075,7 +2086,7 @@ def start_samp_proxy():
                 HUB_PARAMS[key] = value.strip()
 
     # Set up proxy
-    s = xmlrpclib.ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
+    s = ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
 
     # Register with Hub
     metadata = {"samp.name": 'PyBDSM', "samp.description.text": 'PyBDSM: the Python Blob Detection and Source Measurement software'}

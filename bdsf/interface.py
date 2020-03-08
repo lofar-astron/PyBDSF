@@ -272,7 +272,9 @@ def get_op_chain(img):
                     img.completed_Ops.remove('polarisation')
                 found = True
             if k in make_residimage_opts:
-                if hasattr(img, 'resid_gaus_arr'): del img.resid_gaus_arr
+                if hasattr(img, 'resid_gaus_arr'):
+                    del img.resid_gaus_arr
+                    img.resid_gaus_arr = None  # set to init state
                 if hasattr(img, 'model_gaus_arr'): del img.model_gaus_arr
                 if hasattr(img, 'resid_shap_arr'): del img.resid_shap_arr
                 if hasattr(img, 'model_shap_arr'): del img.model_shap_arr

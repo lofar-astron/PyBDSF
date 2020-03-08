@@ -236,7 +236,6 @@ class Op_islands(Op):
 
 
     def setpara_bdsm(self, img, det_file):
-        from types import ClassType, TypeType
 
         chain=[Op_readimage(), Op_collapse(), Op_preprocess, Op_rmsimage(),
                 Op_threshold(), Op_islands()]
@@ -247,7 +246,7 @@ class Op_islands(Op):
 
         ops = []
         for op in chain:
-          if isinstance(op, (ClassType, TypeType)):
+          if isinstance(op, type):
             ops.append(op())
           else:
             ops.append(op)
