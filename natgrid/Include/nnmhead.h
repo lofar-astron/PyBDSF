@@ -39,11 +39,7 @@ int     datcnt, datcnt3, numtri, imag, numnei, iscale,
 char    tri_file[256] = {"nnalg.dat"}, error_file[256] = {"stderr"},
         emsg[256];
 
-#ifdef __linux__
-FILE    *fopen(), *filee = _IO_stderr;
-#else
 FILE    *fopen(), *filee = NULL;
-#endif
 
 extern void   Gradient();
 extern void   ErrorHnd(int, char *, FILE *, char *);
