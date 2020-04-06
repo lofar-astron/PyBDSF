@@ -104,7 +104,7 @@ class Op_outlist(Op):
         fname = dir + img.imagename+'.srl.FITS'
         write_fits_list(img, filename=fname, sort_by='indx',
                         clobber=True, objtype='srl',
-                        incl_empty=img.opts.incl_empty,)
+                        incl_empty=img.opts.incl_empty, incl_chan=img.opts.incl_chan)
 
     def write_shap_FITS(self, img, dir):
         """ Writes the shapelet list as a FITS file"""
@@ -416,7 +416,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                                                               incl_aper=incl_aper,
                                                               incl_empty=incl_empty,
                                                               nmax=nmax, nchan=img.nchan)
-    out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax, incl_empty=incl_empty)
+    out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax, incl_empty=incl_empty,incl_chan=incl_chan)
     col_list = []
     for ind, col in enumerate(out_list):
         list1 = pyfits.Column(name=cnames[ind], format=cformats[ind],
