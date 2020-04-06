@@ -798,15 +798,22 @@ class Opts(object):
                                  "calculate the beam per channel. If False, then a "\
                                  "constant value of the beam is taken instead.",
                              group = "multichan_opts")
-    collapse_mode = Enum('average', 'single',
-                             doc = "Collapse method: 'average' "\
-                                 "or 'single'. Average channels or take single "\
+    collapse_mode = Enum('average', 'single', 'file',
+                             doc = "Collapse method: 'average', "\
+                                 "'single', or 'file'. If 'file', use a user-provided"\
+                                 "file, else either average channels or take single "\
                                  "channel to perform source detection on\n"\
                                  "This parameter determines whether, when multiple "\
                                  "channels are present, the source extraction is "\
                                  "done on a single channel or an average of many "\
                                  "channels.",
                              group = 'multichan_opts')
+
+    collapse_file = String(None,
+                             doc = "If collapse_mode is 'file' then use this file as the ch0 image",
+                             group = 'multichan_opts')
+
+
     collapse_ch0 = Int(0,
                              doc = "Number of the channel for source extraction, "\
                                  "if collapse_mode = 'single', starting from 0",

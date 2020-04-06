@@ -33,7 +33,7 @@ class Op_collapse(Op):
         c_list = img.opts.collapse_av
         c_wts = img.opts.collapse_wt
         if c_list == []: c_list = N.arange(img.shape[1])
-        if len(c_list) == 1:
+        if len(c_list) == 1 and c_mode=='average':
             c_mode = 'single'
             chan0 = c_list[0]
             img.collapse_ch0 = chan0
@@ -67,7 +67,7 @@ class Op_collapse(Op):
               ch0[:] = img.image_arr[ipol, chan0][:]
               img.__setattr__(ch0images[ipol][:], ch0)
 
-          if c_mode == 'average':
+          elif c_mode == 'average':
             if not hasblanks:
               if pol == 'I':
                 ch0, wtarr = avspc_direct(c_list, img.image_arr[0], img.channel_clippedrms, c_wts)
@@ -100,7 +100,17 @@ class Op_collapse(Op):
               mylog.debug('%s %s' % ('Channels averaged : ', str1))
               str1 = " ".join(["%9.4e" % n for n in wtarr])
               mylog.debug('%s %s %s' % ('Channel weights : ', str1, '; unity=zero if c_wts="rms"'))
-
+          elif c_mode=='file':
+              mylogger.userinfo(mylog, 'Reading ch0 image from file %s' % (img.opts.collapse_file))
+              image,hdr=func.read_image_from_file(img.opts.collapse_file, img, None, quiet=False)
+              if pol == 'I':
+                  ch0 = image[0,0]
+                  img.ch0_arr = ch0
+                  
+              else:
+                  raise NotImplementedError('Polarization cubes not allowed in file mode')
+          else:
+              raise NotImplementedError('Mode supplied not implemented') # should never happen!
           if img.opts.output_all:
               func.write_image_to_file(img.use_io, img.imagename+'.ch0_'+pol+'.fits', ch0, img)
               mylog.debug('%s %s ' % ('Writing file ', img.imagename+'.ch0_'+pol+'.fits'))
