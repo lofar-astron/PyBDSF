@@ -810,7 +810,10 @@ class Opts(object):
                              group = 'multichan_opts')
 
     collapse_file = String(None,
-                             doc = "If collapse_mode is 'file' then use this file as the ch0 image",
+                             doc = "If collapse_mode is 'file' then use this file"\
+                                 "as the ch0 image. The image supplied can be a FITS or CASA 2-, "\
+                                 "3-, or 4-D cube. The detection image and the main"\
+                                 "image must have the same size and be registered.",
                              group = 'multichan_opts')
 
 
