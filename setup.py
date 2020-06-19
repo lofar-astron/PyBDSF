@@ -127,6 +127,7 @@ def find_boost_python():
     boostlibnames = ['boost_python-py' + short_version,
                      'boost_python' + short_version,
                      'boost_python',
+                     'boost_python3'
                      ]
     # The -mt (multithread) extension is used on macOS but not Linux.
     # Look for it first to avoid ending up with a single-threaded version.
@@ -145,6 +146,7 @@ def find_boost_numpy():
     boostlibnames = ['boost_numpy-py' + short_version,
                      'boost_numpy' + short_version,
                      'boost_numpy',
+                     'boost_numpy3'
                      ]
     # The -mt (multithread) extension is used on macOS but not Linux.
     # Look for it first to avoid ending up with a single-threaded version.
