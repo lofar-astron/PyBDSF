@@ -159,7 +159,7 @@ def find_boost_numpy():
     Find the name and path of boost-numpy
 
     Returns:
-        library_name, e.g. 'boost_numpy-py36'         (a guess if boost is not found)
+        library_name, e.g. 'boost_numpy-py36'         (None if boost_numpy is not found)
         library_dir,  e.g. '/opt/local/boost/lib'     ('' if boost is not found)
         include_dir,  e.g. '/opt/local/boost/include' ('' if boost is not found)
     """
@@ -183,8 +183,8 @@ def find_boost_numpy():
             includedir = join(dirname(libdir), "include")
             return libboostname, libdir, includedir
 
-    warnings.warn(no_boost_error)
-    return boostlibnames[0], '', ''
+    warnings.warn("No library boost_numpy found (this may be no problem)")
+    return None, '', ''
 
 
 def main():
