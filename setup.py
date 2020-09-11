@@ -111,8 +111,16 @@ def find_library_file(libname):
     lib_dirs = [os.path.join(sys.prefix, 'lib'),
                              '/usr/local/lib',
                              '/usr/lib64',
-                             '/usr/lib',
-                             '/usr/lib/x86_64-linux-gnu']
+                             '/usr/lib']
+    try:
+        lib_dirs.append(os.path.join('/usr/lib',
+                                    getattr(sys, "implementation", sys)
+                                    ._multiarch))
+    except AttributeError:  # This is a non-multiarch aware Python.
+        import sysconfig
+        arch = sysconfig.get_config_var('MULTIARCH')
+        if arch is not None:
+            lib_dirs.append(os.path.join('/usr/lib', arch))
 
     if 'LD_LIBRARY_PATH' in os.environ:
         lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
