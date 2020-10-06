@@ -341,6 +341,7 @@ class Island(object):
         self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
         self.border = self.get_border()
         self.gaul = []
+        self.fgaul = []
         self.sources = []
         self.gresid_mean = 0.0
         self.gresid_rms = 0.0
