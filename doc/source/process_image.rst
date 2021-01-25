@@ -495,11 +495,12 @@ The advanced options are:
         This parameter is a float (default is 1.0) that sets the tolerance for
         grouping of Gaussians into sources: larger values will result in larger
         sources. Sources are created by grouping nearby Gaussians as follows:
-        (1) If the minimum value between two Gaussians in an island is more than
-        ``group_tol * thresh_isl * rms_clip``\, and (2) if the centers are
-        separated by a distance less than ``0.5 * group_tol`` of the sum of their
-        FWHMs along the PA of the line joining them, they belong to the same
-        island.
+        (1) If the difference between the minimum value between two Gaussians
+        and the lower of the peak flux densities of the Gaussians in an island
+        is less than ``group_tol * thresh_isl * rms_clip``\, and (2) if the
+        centers are separated by a distance less than ``0.5 * group_tol`` of the
+        sum of their FWHMs along the PA of the line joining them, they belong to
+        the same island.
 
     ini_gausfit
         This parameter is a string (default is ``'default'``). These are three

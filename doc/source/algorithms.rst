@@ -8,7 +8,7 @@ image, :math:`N_s`, as:
 .. math::
 
     N_s = (\text{No. pixels} > 5\sigma)/(<\text{pix/src}>),
- 
+
 where the average number of pixels per source, :math:`<pix/src>`, is given by:
 
 .. math::
@@ -52,8 +52,8 @@ Grouping of Gaussians into sources
 ----------------------------------
 Inside each island, groups of Gaussians are deemed to be a part of the same source if:
 
-    1. no pixel on the line joining the centers of any pair of Gaussians has a (Gaussian-reconstructed) value less than the island threshold, and 
-    2. the centers are separated by a distance less than half the sum of their FWHMs along the line joining them. 
+    1. the difference between the minimum value along the line joining the centers of any pair of Gaussians and the peak value of the lower Gaussian is less than the product of the island threshold and the island rms, and
+    2. the centers are separated by a distance less than half the sum of their FWHMs along the line joining them.
 
 Once the Gaussians that belong to a source are identified, fluxes for the grouped Gaussians are summed to obtain the total flux of the source. The uncertainty on the total flux is calculated by summing the uncertainties on the total fluxes of the individual Gaussians in quadrature. The source RA and Dec position is set to the source centroid determined from moment analysis (the position of the maximum of the source is also calculated). The total source size is also measured using moment analysis (see http://en.wikipedia.org/wiki/Image_moment for an overview of moment analysis).
 
@@ -89,4 +89,4 @@ No color correction is performed when averaging channels. However, as is shown b
 
 
 
-.. [#f1] Katgert, P., Oort, M. J. A., & Windhorst, R. A. 1988, A&A, 195, 21 
+.. [#f1] Katgert, P., Oort, M. J. A., & Windhorst, R. A. 1988, A&A, 195, 21

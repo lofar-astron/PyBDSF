@@ -548,8 +548,10 @@ class Opts(object):
                              doc = "Tolerance for grouping of Gaussians into sources: "\
                                  "larger values will result in larger sources\n"\
                                  "Sources are created by "\
-                                 "grouping nearby Gaussians as follows: (1) If the minimum "\
-                                 "value between two Gaussians in an island is more than "\
+                                 "grouping nearby Gaussians as follows: (1) If the "\
+                                 "difference between the minimum value between two "\
+                                 "Gaussians and the lower of the peak flux densities of "\
+                                 "the Gaussians in an island is less than "\
                                  "group_tol * thresh_isl * rms_clip, "\
                                  "and (2) if the centres are seperated by a distance less "\
                                  "than 0.5*group_tol of the sum of their fwhms along the "\

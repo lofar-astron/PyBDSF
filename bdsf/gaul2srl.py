@@ -219,7 +219,7 @@ class Op_gaul2srl(Op):
         from . import functions as func
 
         def same_island_min(pair, g_list, subim, delc, tol=0.5):
-            """ If the minimum of the reconstructed fluxes along the line joining the peak positions
+            """ If the difference between the lower peak and the minimum of the reconstructed fluxes along the line joining the peak positions
                 is greater than thresh_isl times the rms_clip, they belong to different islands. """
 
             g1 = g_list[pair[0]]
