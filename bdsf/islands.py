@@ -89,12 +89,11 @@ class Op_islands(Op):
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
             # Run through islands and correct the image and rms, mean and max values
-            img.island_labels = det_img.island_labels
             corr_islands = []
             mean_map = img.mean_arr
             rms_map = img.rms_arr
             for i, isl in enumerate(det_img.islands):
-                islcp = isl.copy(img.pixel_beamarea(), image=ch0_map[isl.bbox], mean=mean_map[isl.bbox], rms=rms_map[isl.bbox])
+                islcp = isl.copy(img.pixel_beamarea(), image=ch0_map[tuple(isl.bbox)], mean=mean_map[tuple(isl.bbox)], rms=rms_map[tuple(isl.bbox)])
                 islcp.island_id = i
                 corr_islands.append(islcp)
             img.islands = corr_islands
