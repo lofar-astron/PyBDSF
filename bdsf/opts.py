@@ -223,10 +223,6 @@ class Opts(object):
                                  "significant extended emission in the image, "\
                                  "it is often necessary to force the use of a "\
                                  "constant rms map by setting rms_map = False.")
-
-    rmsmean_map_filename = List(None,doc = "Name of the fits file for the mean and rms maps. Should be a list [<mean_map.fits>,<rms_map.fits>]",
-                             group = 'advanced_opts')
-
     shapelet_do = Bool(False,
                              doc = "Decompose islands into shapelets\n"\
                                  "If True, then each island is decomposed using shapelets, "\
@@ -416,6 +412,12 @@ class Opts(object):
                                  "image header. It is set to 6 pixels for all "\
                                  "wavelet images.",
                              group = "advanced_opts")
+    maxpix_isl = Option(None, Int(),
+                             doc = "Maximum number of pixels with emission per island. "\
+                                 "None -> no limit\n"\
+                                 "This is an integer and is the maximum number of pixels "\
+                                 "in an island for the island to be included.",
+                             group = "advanced_opts")
     rms_value = Option(None, Float(),
                              doc = "Value of constant rms in "\
                                  "Jy/beam to use if rms_map = False. "\
@@ -548,8 +550,10 @@ class Opts(object):
                              doc = "Tolerance for grouping of Gaussians into sources: "\
                                  "larger values will result in larger sources\n"\
                                  "Sources are created by "\
-                                 "grouping nearby Gaussians as follows: (1) If the minimum "\
-                                 "value between two Gaussians in an island is more than "\
+                                 "grouping nearby Gaussians as follows: (1) If the "\
+                                 "difference between the minimum value between two "\
+                                 "Gaussians and the lower of the peak flux densities of "\
+                                 "the Gaussians in an island is less than "\
                                  "group_tol * thresh_isl * rms_clip, "\
                                  "and (2) if the centres are seperated by a distance less "\
                                  "than 0.5*group_tol of the sum of their fwhms along the "\
@@ -572,6 +576,12 @@ class Opts(object):
                                  "3-, or 4-D cube. The detection image and the main"\
                                  "image must have the same size and be registered.",
                              group = "advanced_opts")
+    rmsmean_map_filename = List(None,
+                             doc = "Filenames of FITS files to use as the mean and rms maps, "\
+                                 "given as a list [<mean_map.fits>, <rms_map.fits>]. If "\
+                                 "supplied, the internally generated mean and rms maps "\
+                                 "are not used.",
+                             group = 'advanced_opts')
     do_mc_errors = Bool(False,
                              doc = "Estimate uncertainties for 'M'-type sources using Monte "\
                                 "Carlo method\n"\

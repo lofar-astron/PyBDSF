@@ -232,13 +232,13 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **E_Isl_Total_flux:** the 1-:math:`\sigma` error on the total flux density of the island in which the source is located, in Jy
 
-* **Isl_rms:** the average background rms value of the island, in Jy/beam
+* **Isl_rms:** the average background rms value of the island (derived from the rms map), in Jy/beam
 
-* **Isl_mean:** the averge background mean value of the island, in Jy/beam
+* **Isl_mean:** the averge background mean value of the island  (derived from the mean map), in Jy/beam
 
-* **Resid_Isl_rms:** the average residual background rms value of the island, in Jy/beam
+* **Resid_Isl_rms:** the average residual background rms value of the island (derived from the residual map, after subtraction of fitted Gaussians), in Jy/beam
 
-* **Resid_Isl_mean:** the averge residual background mean value of the island, in Jy/beam
+* **Resid_Isl_mean:** the averge residual background mean value of the island (derived from the residual map, after subtraction of fitted Gaussians), in Jy/beam
 
 * **S_Code:** a code that defines the source structure.
     * 'S' = a single-Gaussian source that is the only source in the island

@@ -40,8 +40,9 @@ try:
     N.fft.ifftn = pyfftw.interfaces.numpy_fft.ifftn
     scipy.signal.signaltools.fftn = pyfftw.interfaces.scipy_fftpack.fftn
     scipy.signal.signaltools.ifftn = pyfftw.interfaces.scipy_fftpack.ifftn
+    has_pyfftw = True
 except ImportError:
-    pass
+    has_pyfftw = False
 
 
 class Op_wavelet_atrous(Op):

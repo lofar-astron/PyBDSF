@@ -44,6 +44,7 @@ class Op_gaul2srl(Op):
         sources = []
         dsources = []
         no_gaus_islands = []
+        no_gaus_islands_flag_values = []
         for iisl, isl in enumerate(img.islands):
             isl_sources = []
             isl_dsources = []
@@ -65,6 +66,10 @@ class Op_gaul2srl(Op):
                 if not img.waveletimage:
                     dg = isl.dgaul[0]
                     no_gaus_islands.append((isl.island_id, dg.centre_pix[0], dg.centre_pix[1]))
+                    flag_values = []
+                    for fg in isl.fgaul:
+                        flag_values.append(fg.flag)
+                    no_gaus_islands_flag_values.append(flag_values)
                     # Put in the dummy Source as the source and use negative IDs
                     g_list = isl.dgaul
                     dsrc_index, dsource = self.process_single_gaussian(img, g_list, dsrc_index, code = 'S')
@@ -84,18 +89,29 @@ class Op_gaul2srl(Op):
                 message += ':\n'
             else:
                 message += 's:\n'
-            for isl_id in no_gaus_islands:
-                message += '    Island #%i (x=%i, y=%i)\n' % isl_id
+            for isl_id, flag_list in zip(no_gaus_islands, no_gaus_islands_flag_values):
+                message += '    Island #%i (x=%i, y=%i): ' % isl_id
+                if len(flag_list) > 0:
+                    flags_str = '{}'.format(', '.join([str(f) for f in flag_list]))
+                    if len(flag_list) == 1:
+                        pl_str = ''
+                    else:
+                        pl_str = 's'
+                    message += 'fit with {0} Gaussian{1} with flag{1} = {2}\n'.format(len(flag_list), pl_str, flags_str)
+                else:
+                    message += '\n'
             if len(no_gaus_islands) == 1:
                 message += 'Please check this island. If it is a valid island and\n'
             else:
                 message += 'Please check these islands. If they are valid islands and\n'
             if img.opts.atrous_do:
                 message += 'should be fit, try adjusting the flagging options (use\n'\
-                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians).'
+                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians\n'\
+                           'and "help \'flagging_opts\'" to see the meaning of the flags).'
             else:
                 message += 'should be fit, try adjusting the flagging options (use\n'\
-                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians)\n'\
+                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians\n'\
+                           'and "help \'flagging_opts\'" to see the meaning of the flags)\n'\
                            'or enabling the wavelet module (with "atrous_do=True").'
             message += '\nTo include empty islands in output source catalogs, set\n'\
                         'incl_empty=True in the write_catalog task.'
@@ -203,7 +219,7 @@ class Op_gaul2srl(Op):
         from . import functions as func
 
         def same_island_min(pair, g_list, subim, delc, tol=0.5):
-            """ If the minimum of the reconstructed fluxes along the line joining the peak positions
+            """ If the difference between the lower peak and the minimum of the reconstructed fluxes along the line joining the peak positions
                 is greater than thresh_isl times the rms_clip, they belong to different islands. """
 
             g1 = g_list[pair[0]]

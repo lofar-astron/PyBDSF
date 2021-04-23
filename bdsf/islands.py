@@ -57,6 +57,10 @@ class Op_islands(Op):
             mylogger.userinfo(mylog, "Minimum number of pixels per island", '%i' %
                           minsize)
         img.minpix_isl = minsize
+        maxsize = opts.maxpix_isl
+        if maxsize is None:
+            maxsize = N.inf
+        img.maxpix_isl = maxsize
 
         if opts.detection_image != '':
             # Use a different image for island detection. The detection
@@ -85,12 +89,11 @@ class Op_islands(Op):
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
             # Run through islands and correct the image and rms, mean and max values
-            img.island_labels = det_img.island_labels
             corr_islands = []
             mean_map = img.mean_arr
             rms_map = img.rms_arr
             for i, isl in enumerate(det_img.islands):
-                islcp = isl.copy(img.pixel_beamarea(), image=ch0_map[isl.bbox], mean=mean_map[isl.bbox], rms=rms_map[isl.bbox])
+                islcp = isl.copy(img.pixel_beamarea(), image=ch0_map[tuple(isl.bbox)], mean=mean_map[tuple(isl.bbox)], rms=rms_map[tuple(isl.bbox)])
                 islcp.island_id = i
                 corr_islands.append(islcp)
             img.islands = corr_islands
@@ -189,7 +192,7 @@ class Op_islands(Op):
             isl_peak = nd.maximum(image[s], labels[s], idx)
             isl_maxposn = tuple(N.array(N.unravel_index(N.nanargmax(image[s]), image[s].shape))+\
                           N.array((s[0].start, s[1].start)))
-            if (isl_size >= img.minpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
+            if (isl_size >= img.minpix_isl) and (isl_size <= img.maxpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
                 pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active)*idx // idx
@@ -223,7 +226,7 @@ class Op_islands(Op):
                 aper_mask = N.where(labels.astype(bool) & ~mask)
             else:
                 aper_mask = N.where(labels.astype(bool))
-            if N.size(aper_mask) > img.minpix_isl:
+            if N.size(aper_mask) >= img.minpix_isl and N.size(aper_mask) <= img.maxpix_isl:
                 labels[aper_mask] = idx
                 s = [slice(max(0, isl_posn_pix[0] - isl_radius_pix - 1),
                      min(image.shape[0], isl_posn_pix[0] + isl_radius_pix + 1)),
@@ -341,6 +344,7 @@ class Island(object):
         self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
         self.border = self.get_border()
         self.gaul = []
+        self.fgaul = []
         self.sources = []
         self.gresid_mean = 0.0
         self.gresid_rms = 0.0

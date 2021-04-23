@@ -346,7 +346,9 @@ The advanced options are:
       :term:`ini_method` .... 'intensity': Method by which inital guess for fitting of Gaussians is chosen:
                                    'intensity' or 'curvature'
       :term:`kappa_clip` ........... 3.0 : Kappa for clipped mean and rms
-      :term:`minpix_isl` .......... None : Minimal number of pixels with emission per island.
+      :term:`maxpix_isl` .......... None : Maximum number of pixels with emission per island.
+                                   None -> no limit
+      :term:`minpix_isl` .......... None : Minimum number of pixels with emission per island.
                                    None -> calculate inside program
       :term:`ncores` .............. None : Number of cores to use during fitting, None => use
                                    all
@@ -355,6 +357,10 @@ The advanced options are:
       :term:`peak_maxsize` ........ 30.0 : If island size in beam area is more than this,
                                    attempt to fit peaks separately (if
                                    peak_fit=True). Min value is 30
+      :term:`rmsmean_map_filename`  None : Filenames of FITS files to use as the mean and rms maps,
+                                   given as a list [<mean_map.fits>, <rms_map.fits>]. If
+                                   supplied, the internally generated mean and rms maps
+                                   are not used
       :term:`rms_value` ........... None : Value of constant rms in Jy/beam to use if rms_map
                                    = False. None => calculate inside program
       :term:`spline_rank` ............ 3 : Rank of the interpolating function for rms/mean
@@ -495,11 +501,12 @@ The advanced options are:
         This parameter is a float (default is 1.0) that sets the tolerance for
         grouping of Gaussians into sources: larger values will result in larger
         sources. Sources are created by grouping nearby Gaussians as follows:
-        (1) If the minimum value between two Gaussians in an island is more than
-        ``group_tol * thresh_isl * rms_clip``\, and (2) if the centers are
-        separated by a distance less than ``0.5 * group_tol`` of the sum of their
-        FWHMs along the PA of the line joining them, they belong to the same
-        island.
+        (1) If the difference between the minimum value between two Gaussians
+        and the lower of the peak flux densities of the Gaussians in an island
+        is less than ``group_tol * thresh_isl * rms_clip``\, and (2) if the
+        centers are separated by a distance less than ``0.5 * group_tol`` of the
+        sum of their FWHMs along the PA of the line joining them, they belong to
+        the same island.
 
     ini_gausfit
         This parameter is a string (default is ``'default'``). These are three
@@ -537,6 +544,11 @@ The advanced options are:
         source pixels, less number of pixels in total, or significant
         non-Gaussianity of the underlying noise will all lead to non-convergence.
 
+    maxpix_isl
+        This parameter is an integer (default is ``None``) that sets the maximum
+        number of pixels in an island for the island to be included. If
+        ``None``, there is no limit.
+
     minpix_isl
         This parameter is an integer (default is ``None``) that sets the minimum
         number of pixels in an island for the island to be included. If
@@ -561,6 +573,12 @@ The advanced options are:
         This parameter is a float (default is 30.0). If island size in beam area
         is more than this value, attempt to fit peaks iteratively (if ``peak_fit
         = True``). The minimum value is 30.
+
+    rmsmean_map_filename
+        This parameter is a list (default is ``None``) that sets the filenames of
+        FITS files to use as the mean and rms maps, given as a list
+        [<mean_map.fits>, <rms_map.fits>]. If supplied, the internally generated
+        mean and rms maps are not used.
 
     rms_value
         This parameter is a float (default is ``None``) that sets the value of
