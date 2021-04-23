@@ -1159,7 +1159,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         reason = 0
         try:
             if not old_pyfits:
-                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True, memmap=False)
             else:
                 fits = pyfits.open(image_file, mode="readonly")
             img.use_io = 'fits'
@@ -1355,7 +1355,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     ### and make a copy of it to get proper layout & byteorder
     data = N.array(data, order='C',
                    dtype=data.dtype.newbyteorder('='))
-
+    mylog.info("Returning reordered image")
     return data, hdr
 
 
