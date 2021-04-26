@@ -73,7 +73,10 @@ def process(img, **kwargs):
             raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
-        return False
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
 
 def get_op_chain(img):
     """Determines the optimal Op chain for an Image object.
@@ -930,7 +933,10 @@ def export_image(img, outfile=None, img_format='fits', pad_image = False,
             raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
-        return False
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
 
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
