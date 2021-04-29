@@ -1352,10 +1352,6 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
     mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
 
-    ### and make a copy of it to get proper layout & byteorder
-    data = N.array(data, order='C',
-                   dtype=data.dtype.newbyteorder('='))
-
     return data, hdr
 
 
