@@ -19,6 +19,13 @@ _ncpus = 1
 try:
     # May raise ImportError
     import multiprocessing
+
+    # Set spawn method to "fork". This is needed for macOS on Python 3.8+ where the
+    # default has been changed to "spawn", causing problems (see the discussion at
+    # https://github.com/ipython/ipython/issues/12396)
+    if sys.platform == 'darwin':
+        if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
+            multiprocessing.set_start_method('fork')
     _multi = True
 
     # May raise NotImplementedError
@@ -155,7 +162,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     size = len(sequence)
 
     if not _multi or size == 1:
-        results = map(function, sequence)
+        results = list(map(function, sequence))
         if bar is not None:
             bar.stop()
         return results
