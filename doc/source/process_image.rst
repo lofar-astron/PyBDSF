@@ -1064,7 +1064,7 @@ If ``spectralindex_do = True`` (and the input image has more than one frequency)
 
         No color corrections are applied during averaging. However, unless the source spectral index is very steep or the channels are very wide, the correction is minimal. See :ref:`colorcorrections` for details.
 
-* Flux densities are measured for both individual Gaussians and for total sources. Once source flux densities have been measured in each channel, the SEDs are fit with a polynomial function. The best-fit parameters are then included in any catalogs that are written out (see :ref:`write_catalog`). In addition, plots of the fits can be viewed with the ``show_fit`` task (see :ref:`showfit`).
+* Flux densities are measured for both individual Gaussians and for total sources. Once source flux densities have been measured in each channel, the SEDs are fit with the following power-law model: :math:`S_\nu \propto \nu^\alpha`, where :math:`\alpha` is the spectral index. The resulting best-fit spectral index is then included in any catalogs that are written out (see :ref:`write_catalog`). In addition, plots of the fits can be viewed with the ``show_fit`` task (see :ref:`showfit`).
 
 The options for this module are as follows:
 
