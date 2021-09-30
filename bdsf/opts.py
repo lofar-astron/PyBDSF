@@ -798,12 +798,12 @@ class Opts(object):
                                  "is raised. PyBDSF will not work without the "\
                                  "knowledge of the frequency.",
                              group = "multichan_opts")
-    beam_sp_derive = Bool(False,
+    beam_sp_derive = Bool(True,
                              doc = "If True and beam_spectrum is None, then "\
-                                 "assume header beam is for median frequency and scales "\
+                                 "assume header beam is for lowest frequency and scales "\
                                  "with frequency for channels\n"\
                                  "If True and the parameter beam_spectrum is None, then "\
-                                 "we assume that the beam in the header is for the median "\
+                                 "we assume that the beam in the header is for the lowest "\
                                  "frequency of the image cube and scale accordingly to "\
                                  "calculate the beam per channel. If False, then a "\
                                  "constant value of the beam is taken instead.",

@@ -281,7 +281,7 @@ class Op_gausfit(Op):
         verbose = opts.verbose_fitting
         if verbose:
             print('Entering fit_island in verbose mode')
-        
+
         if ffimg is None:
             fit_image = isl.image-isl.islmean
         else:
