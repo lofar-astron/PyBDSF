@@ -15,9 +15,8 @@ WORKDIR /build
 ENV THREADS 4
 
 ENV PYMAJOR 3
-ENV PYMINOR 5
-ENV PYUNICODE m
-ENV TARGET cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
+ENV PYMINOR 9
+ENV TARGET cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}
 
 # install python dependencies, make boost install also boost_numpy
 RUN /opt/python/${TARGET}/bin/pip install numpy
