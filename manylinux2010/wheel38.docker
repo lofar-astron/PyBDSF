@@ -14,10 +14,9 @@ WORKDIR /build
 # how many threads to use for compiling
 ENV THREADS 4
 
-ENV PYMAJOR 2
-ENV PYMINOR 7
-ENV PYUNICODE mu
-ENV TARGET cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
+ENV PYMAJOR 3
+ENV PYMINOR 8
+ENV TARGET cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}
 
 # install python dependencies, make boost install also boost_numpy
 RUN /opt/python/${TARGET}/bin/pip install numpy
