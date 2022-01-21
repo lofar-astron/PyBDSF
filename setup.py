@@ -3,8 +3,7 @@
 from __future__ import print_function
 
 import platform
-from setuptools import Extension
-from numpy.distutils.core import setup
+from numpy.distutils.core import setup, Extension
 import numpy
 import sys
 from ctypes.util import find_library
@@ -265,9 +264,17 @@ def main():
             'Topic :: Scientific/Engineering :: Astronomy'
         ],
         ext_modules=extensions,
+        extras_require={
+            'ishell': ['ipython']
+        },
         install_requires=['backports.shutil_get_terminal_size',
-                          'numpy', 'scipy'],
-        scripts=['bdsf/pybdsf', 'bdsf/pybdsm'],
+                          'astropy', 'numpy', 'scipy'],
+        entry_points = {
+            'console_scripts': [
+                'pybdsf = bdsf.pybdsf:main [ishell]',
+                'pybdsm = bdsf.pybdsf:main [ishell]'
+            ]
+        },
         zip_safe=False,
         cmdclass={
             'mclean': CleanStatic,
