@@ -34,10 +34,12 @@ easy of use):
 
     pip install .
 
+.. note:: The interactive shell ``pybdsf`` is no longer installed by default.
+  To install it you have to specify the extra ``[ishell]``. For example::
+    pip install bdsf[ishell]
 
-**ATTENTION:**
-It is *not* recommend to use "``python setup.py install``". It is deprecated,
-and we do *not* support it.
+.. attention:: It is *not* recommend to use "``python setup.py install``". It is
+  deprecated, and we do *not* support it.
 
 External requirements include the ubuntu packages (or similar packages in another Linux distribution):
 
