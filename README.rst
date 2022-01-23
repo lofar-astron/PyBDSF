@@ -26,7 +26,7 @@ easy of use):
 
     pip install git+https://github.com/lofar-astron/PyBDSF.git
 
-  Or install install a specific revision or release, for example "v1.9.3:"::
+  Or install install a specific revision or release, for example ``v1.9.3``::
 
     pip install git+https://github.com/lofar-astron/PyBDSF.git@v1.9.3
 
@@ -38,7 +38,7 @@ easy of use):
   To install it you have to specify the extra ``[ishell]``. For example::
     pip install bdsf[ishell]
 
-.. attention:: It is *not* recommend to use "``python setup.py install``". It is
+.. attention:: It is *not* recommend to use ``python setup.py install``. It is
   deprecated, and we do *not* support it.
 
 External requirements include the ubuntu packages (or similar packages in another Linux distribution):
