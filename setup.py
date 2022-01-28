@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import platform
+import setuptools
 from numpy.distutils.core import setup, Extension
 import numpy
 import sys
