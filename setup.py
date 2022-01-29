@@ -260,7 +260,6 @@ def main():
             'Intended Audience :: Science/Research',
             'Programming Language :: C++',
             'Programming Language :: Fortran',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
             'Topic :: Scientific/Engineering :: Astronomy'
         ],
