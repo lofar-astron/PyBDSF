@@ -36,6 +36,7 @@ easy of use):
 
 .. note:: The interactive shell ``pybdsf`` is no longer installed by default.
   To install it you have to specify the extra ``[ishell]``. For example::
+
     pip install bdsf[ishell]
 
 .. attention:: It is *not* recommend to use ``python setup.py install``. It is
