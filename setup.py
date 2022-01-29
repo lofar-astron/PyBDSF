@@ -253,6 +253,7 @@ def main():
         url='https://github.com/lofar-astron/PyBDSF',
         description='Blob Detection and Source Finder',
         long_description=open('README.rst', 'rt').read(),
+        long_description_content_type='text/x-rst',
         platforms='Linux, Mac OS X',
         packages=['bdsf', 'bdsf.nat'],
         package_dir={'bdsf.nat': join('bdsf', 'nat')},
