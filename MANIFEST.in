@@ -1,0 +1,65 @@
+# Required minpack sources
+include src/minpack/lmder.f
+include src/minpack/lmpar.f
+include src/minpack/qrfac.f
+include src/minpack/qrsolv.f
+include src/minpack/enorm.f
+include src/minpack/dpmpar.f
+
+# Required port3 sources
+include src/port3/dnsg.f
+include src/port3/dn2g.f
+include src/port3/drnsg.f
+include src/port3/drn2g.f
+include src/port3/d1mach.f
+include src/port3/da7sst.f
+include src/port3/dc7vfn.f
+include src/port3/dd7tpr.f
+include src/port3/dd7upd.f
+include src/port3/df7hes.f
+include src/port3/dg7lit.f
+include src/port3/dg7qts.f
+include src/port3/ditsum.f
+include src/port3/divset.f
+include src/port3/dl7itv.f
+include src/port3/dl7ivm.f
+include src/port3/dl7mst.f
+include src/port3/dl7nvr.f
+include src/port3/dl7sqr.f
+include src/port3/dl7srt.f
+include src/port3/dl7svn.f
+include src/port3/dl7svx.f
+include src/port3/dl7tsq.f
+include src/port3/dl7tvm.f
+include src/port3/dl7vml.f
+include src/port3/dn2cvp.f
+include src/port3/dn2lrd.f
+include src/port3/dn2rdp.f
+include src/port3/do7prd.f
+include src/port3/dparck.f
+include src/port3/dq7apl.f
+include src/port3/dq7rad.f
+include src/port3/dq7rfh.f
+include src/port3/dr7mdc.f
+include src/port3/drldst.f
+include src/port3/ds7cpr.f
+include src/port3/ds7lup.f
+include src/port3/ds7lvm.f
+include src/port3/dv2axy.f
+include src/port3/dv2nrm.f
+include src/port3/dv7cpy.f
+include src/port3/dv7dfl.f
+include src/port3/dv7prm.f
+include src/port3/dv7scl.f
+include src/port3/dv7scp.f
+include src/port3/dv7swp.f
+include src/port3/i1mach.f
+include src/port3/i7mdcn.f
+include src/port3/stopx.f
+
+# Other fortran include files
+include src/fortran/constants.inc
+
+# Header files for natgrid
+include natgrid/Include/*.h
+

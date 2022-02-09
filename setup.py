@@ -3,8 +3,8 @@
 from __future__ import print_function
 
 import platform
-from setuptools import Extension
-from numpy.distutils.core import setup
+import setuptools
+from numpy.distutils.core import setup, Extension
 import numpy
 import sys
 from ctypes.util import find_library
@@ -247,12 +247,13 @@ def main():
 
     setup(
         name='bdsf',
-        version='1.9.2',
+        version='1.10.0a1',
         author='David Rafferty',
         author_email='drafferty@hs.uni-hamburg.de',
         url='https://github.com/lofar-astron/PyBDSF',
         description='Blob Detection and Source Finder',
         long_description=open('README.rst', 'rt').read(),
+        long_description_content_type='text/x-rst',
         platforms='Linux, Mac OS X',
         packages=['bdsf', 'bdsf.nat'],
         package_dir={'bdsf.nat': join('bdsf', 'nat')},
@@ -260,14 +261,21 @@ def main():
             'Intended Audience :: Science/Research',
             'Programming Language :: C++',
             'Programming Language :: Fortran',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
             'Topic :: Scientific/Engineering :: Astronomy'
         ],
         ext_modules=extensions,
+        extras_require={
+            'ishell': ['ipython']
+        },
         install_requires=['backports.shutil_get_terminal_size',
-                          'numpy', 'scipy'],
-        scripts=['bdsf/pybdsf', 'bdsf/pybdsm'],
+                          'astropy', 'numpy', 'scipy'],
+        entry_points = {
+            'console_scripts': [
+                'pybdsf = bdsf.pybdsf:main [ishell]',
+                'pybdsm = bdsf.pybdsf:main [ishell]'
+            ]
+        },
         zip_safe=False,
         cmdclass={
             'mclean': CleanStatic,

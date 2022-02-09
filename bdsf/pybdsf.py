@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Interactive PyBDSF shell.
 
 This module initializes the interactive PyBDSF shell, which is a customized
@@ -660,90 +658,91 @@ def _opts_completer(self, event):
         opts.append('export_image')
         return opts
 
-# Define the welcome banner to print on startup. Also check if there is a newer
-# version on the STRW ftp server. If there is, print a message to the user
-# asking them to update.
-from bdsf._version import __version__, changelog
+def main():
+    # Define the welcome banner to print on startup. Also check if there is a newer
+    # version on the STRW ftp server. If there is, print a message to the user
+    # asking them to update.
+    from bdsf._version import __version__, changelog
 
-divider1 = '=' * 72 + '\n'
-divider2 = '_' * 72 + '\n'
-banner = '\nPyBDSF version ' + __version__ + '\n'\
-+ divider1 + 'PyBDSF commands\n'\
-'  inp task ............ : Set current task and list parameters\n'\
-"  par = val ........... : Set a parameter (par = '' sets it to default)\n"\
-'                          Autocomplete (with TAB) works for par and val\n'\
-'  go .................. : Run the current task\n'\
-'  default ............. : Set current task parameters to default values\n'\
-"  tput ................ : Save parameter values\n"\
-"  tget ................ : Load parameter values\n"\
-'PyBDSF tasks\n'\
-'  process_image ....... : Process an image: find sources, etc.\n'\
-'  show_fit ............ : Show the results of a fit\n'\
-'  write_catalog ....... : Write out list of sources to a file\n'\
-'  export_image ........ : Write residual/model/rms/mean image to a file\n'\
-'PyBDSF help\n'\
-'  help command/task ... : Get help on a command or task\n'\
-'                          (e.g., help process_image)\n'\
-"  help 'par' .......... : Get help on a parameter (e.g., help 'rms_box')\n"\
-'  help changelog ...... : See list of recent changes\n'\
-+ divider2
+    divider1 = '=' * 72 + '\n'
+    divider2 = '_' * 72 + '\n'
+    banner = '\nPyBDSF version ' + __version__ + '\n'\
+    + divider1 + 'PyBDSF commands\n'\
+    '  inp task ............ : Set current task and list parameters\n'\
+    "  par = val ........... : Set a parameter (par = '' sets it to default)\n"\
+    '                          Autocomplete (with TAB) works for par and val\n'\
+    '  go .................. : Run the current task\n'\
+    '  default ............. : Set current task parameters to default values\n'\
+    "  tput ................ : Save parameter values\n"\
+    "  tget ................ : Load parameter values\n"\
+    'PyBDSF tasks\n'\
+    '  process_image ....... : Process an image: find sources, etc.\n'\
+    '  show_fit ............ : Show the results of a fit\n'\
+    '  write_catalog ....... : Write out list of sources to a file\n'\
+    '  export_image ........ : Write residual/model/rms/mean image to a file\n'\
+    'PyBDSF help\n'\
+    '  help command/task ... : Get help on a command or task\n'\
+    '                          (e.g., help process_image)\n'\
+    "  help 'par' .......... : Get help on a parameter (e.g., help 'rms_box')\n"\
+    '  help changelog ...... : See list of recent changes\n'\
+    + divider2
 
-# Go ahead and set the current task to process_image, so that the user does not
-# need to enter "inp process_image" as the first step (the first task needed
-# after startup will almost always be process_image).
-_set_current_cmd(process_image)
+    # Go ahead and set the current task to process_image, so that the user does not
+    # need to enter "inp process_image" as the first step (the first task needed
+    # after startup will almost always be process_image).
+    _set_current_cmd(process_image)
 
-# Now start the ipython shell. Due to (non-backward-compatible) changes in
-# ipython with version 0.11, we must support both versions until 0.11 or
-# greater is in common use.
-try:
-    # IPython >= 0.11
-    from distutils.version import LooseVersion
-    from IPython import __version__ as ipython_version
-    if LooseVersion(ipython_version) < LooseVersion('1.0.0'):
-        from IPython.frontend.terminal.embed import InteractiveShellEmbed
-    else:
-        from IPython.terminal.embed import InteractiveShellEmbed
+    # Now start the ipython shell. Due to (non-backward-compatible) changes in
+    # ipython with version 0.11, we must support both versions until 0.11 or
+    # greater is in common use.
     try:
-        # Use the traitlets config
-        from traitlets.config.loader import Config
-        from IPython.terminal.prompts import Prompts, Token
-        cfg = Config()
+        # IPython >= 0.11
+        from distutils.version import LooseVersion
+        from IPython import __version__ as ipython_version
+        if LooseVersion(ipython_version) < LooseVersion('1.0.0'):
+            from IPython.frontend.terminal.embed import InteractiveShellEmbed
+        else:
+            from IPython.terminal.embed import InteractiveShellEmbed
+        try:
+            # Use the traitlets config
+            from traitlets.config.loader import Config
+            from IPython.terminal.prompts import Prompts, Token
+            cfg = Config()
 
-        class CustomPrompt(Prompts):
+            class CustomPrompt(Prompts):
 
-            def in_prompt_tokens(self, cli=None):
+                def in_prompt_tokens(self, cli=None):
 
-               return [
-                    (Token.Prompt, 'BDSF ['),
-                    (Token.PromptNum, str(self.shell.execution_count)),
-                    (Token.Prompt, ']: '),
+                   return [
+                        (Token.Prompt, 'BDSF ['),
+                        (Token.PromptNum, str(self.shell.execution_count)),
+                        (Token.Prompt, ']: '),
+                        ]
+
+                def out_prompt_tokens(self):
+                   return [
+                        (Token.OutPrompt, ''),
                     ]
 
-            def out_prompt_tokens(self):
-               return [
-                    (Token.OutPrompt, ''),
-                ]
+            cfg.TerminalInteractiveShell.prompts_class = CustomPrompt
+        except ImportError:
+            # fall back to old config
+            from IPython.config.loader import Config
+            cfg = Config()
+            prompt_config = cfg.PromptManager
+            if ipython_version == '0.11':
+                cfg.InteractiveShellEmbed.prompt_in1 = "BDSF [\#]: "
+            else:
+                prompt_config.in_template = "BDSF [\#]: "
 
-        cfg.TerminalInteractiveShell.prompts_class = CustomPrompt
+        cfg.InteractiveShellEmbed.autocall = 2
+        ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
+                                        user_ns=locals())
+        ipshell.set_hook('complete_command', _opts_completer, re_key = '.*')
     except ImportError:
-        # fall back to old config
-        from IPython.config.loader import Config
-        cfg = Config()
-        prompt_config = cfg.PromptManager
-        if ipython_version == '0.11':
-            cfg.InteractiveShellEmbed.prompt_in1 = "BDSF [\#]: "
-        else:
-            prompt_config.in_template = "BDSF [\#]: "
-
-    cfg.InteractiveShellEmbed.autocall = 2
-    ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
-                                    user_ns=locals())
-    ipshell.set_hook('complete_command', _opts_completer, re_key = '.*')
-except ImportError:
-    # IPython < 0.11
-    from IPython.Shell import IPShellEmbed
-    argv = ['-prompt_in1','BDSF [\#]: ','-autocall','2']
-    ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
-    ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
-ipshell()
+        # IPython < 0.11
+        from IPython.Shell import IPShellEmbed
+        argv = ['-prompt_in1','BDSF [\#]: ','-autocall','2']
+        ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
+        ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
+    ipshell()

@@ -15,8 +15,32 @@ The documentation is currently hosted at http://www.astron.nl/citt/pybdsf
 
 Installation
 ------------
-Installation is done through ``pip``, e.g. ``pip install .`` if you cloned the repository
-or ``pip install https://github.com/lofar-astron/PyBDSF/archive/v1.9.1.tar.gz`` to install the latest release.
+Installation can be done in a number of ways. In order of preference (read:
+easy of use):
+
+* Install the latest release from PyPI::
+
+    pip install bdsf
+
+* Install the ``master`` branch from the PyBDSF git repository::
+
+    pip install git+https://github.com/lofar-astron/PyBDSF.git
+
+  Or install install a specific revision or release, for example ``v1.9.3``::
+
+    pip install git+https://github.com/lofar-astron/PyBDSF.git@v1.9.3
+
+* Install from a local source tree, e.g. after you cloned the git repository::
+
+    pip install .
+
+.. note:: The interactive shell ``pybdsf`` is no longer installed by default.
+  To install it you have to specify the extra ``[ishell]``. For example::
+
+    pip install bdsf[ishell]
+
+.. attention:: It is *not* recommend to use ``python setup.py install``. It is
+  deprecated, and we do *not* support it.
 
 External requirements include the ubuntu packages (or similar packages in another Linux distribution):
 
