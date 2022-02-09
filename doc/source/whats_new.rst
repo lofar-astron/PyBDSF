@@ -4,10 +4,22 @@
 What's New
 **********
 
+Version 1.10.0 (2022/02/09):
+    * Update some functions as required by scipy version >= 1.8.0 (PR #172)
+
+    * Fix build issues with Python 3.8, end support for Python 2, and make installation
+    of the interactive pybdsf shell optional (PR #169)
+
+    * Improve handling of the beam in the spectral index module (PR #165)
+
+    * Improve handling of large, complex islands (PR #160)
+
+    * Allow a file to be supplied for the ch0 image used in the spectral index module (PR #127)
+
 Version 1.9.2 (2019/12/05):
     * Fix exception behaviour if spline order change does not work
 
-    * 2019/09/27 - Add check for frequency info in header
+    * Add check for frequency info in header
 
 Version 1.9.1 (2019/09/25):
 
