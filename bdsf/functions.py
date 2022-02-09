@@ -533,18 +533,18 @@ def std(y):
 def imageshift(image, shift):
     """ Shifts a 2d-image by the tuple (shift). Positive shift is to the right and upwards.
     This is done by fourier shifting. """
-    import scipy
+    import scipy.fft
     from scipy import ndimage
 
     shape=image.shape
 
-    f1=scipy.fft(image, shape[0], axis=0)
-    f2=scipy.fft(f1, shape[1], axis=1)
+    f1=scipy.fft.fft(image, shape[0], axis=0)
+    f2=scipy.fft.fft(f1, shape[1], axis=1)
 
     s=ndimage.fourier_shift(f2,shift, axis=0)
 
-    y1=scipy.ifft(s, shape[1], axis=1)
-    y2=scipy.ifft(y1, shape[0], axis=0)
+    y1=scipy.fft.ifft(s, shape[1], axis=1)
+    y2=scipy.fft.ifft(y1, shape[0], axis=0)
 
     return y2.real
 
@@ -2252,3 +2252,19 @@ def bstat(indata, mask, kappa_npixbeam):
     r = numpy.sqrt(sigma**2 * (r1 / (r1 - 2.0*kappa*numpy.exp(-kappa**2/2.0))))
 
     return m_raw, r_raw, m, r, iter
+
+
+def centered(arr, newshape):
+    """Return the center newshape portion of the array
+
+    This function is a copy of the private _centered() function in
+    scipy.signal.signaltools
+    """
+    import numpy as np
+
+    newshape = np.asarray(newshape)
+    currshape = np.array(arr.shape)
+    startind = (currshape - newshape) // 2
+    endind = startind + newshape
+    myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
+    return arr[tuple(myslice)]
