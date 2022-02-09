@@ -24,7 +24,7 @@ def changelog():
     2022/02/09 - Improve handling of the beam in the spectral index module
         (PR #165)
 
-    2022/02/09 - Improve handling of large, complex islands (PR #160)
+    2021/05/05 - Improve handling of large, complex islands (PR #160)
 
     2020/04/07 - Allow a file to be supplied for the ch0 image used in the
         spectral index module (PR #127)
