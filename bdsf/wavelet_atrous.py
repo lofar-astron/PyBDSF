@@ -19,7 +19,6 @@ from . import functions as func
 import gc
 from numpy import array, product
 import scipy.signal
-from scipy.signal.signaltools import _centered
 from .readimage import Op_readimage
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
@@ -562,9 +561,9 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
             osize = s1
         else:
             osize = s2
-        return _centered(ret, osize)
+        return func.centered(ret, osize)
     elif mode == "valid":
-        return _centered(ret, abs(s2 - s1) + 1)
+        return func.centered(ret, abs(s2 - s1) + 1)
 
 
 def rebase_bbox(box,minv):
