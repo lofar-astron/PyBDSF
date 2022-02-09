@@ -825,8 +825,8 @@ The options concerning multichannel images are:
 .. parsed-literal::
 
     multichan_opts ........ True : Show options for multi-channel images
-      :term:`beam_sp_derive` ..... False : If True and beam_spectrum is None, then assume
-                                   header beam is for median frequency and scales
+      :term:`beam_sp_derive` ...... True : If True and beam_spectrum is None, then assume
+                                   header beam is for lowest frequency and scales
                                    with frequency for channels
       :term:`beam_spectrum` ....... None : FWHM of synthesized beam per channel. Specify as
                                    [(bmaj_ch1, bmin_ch1, bpa_ch1), (bmaj_ch2,
@@ -850,10 +850,10 @@ The options concerning multichannel images are:
 .. glossary::
 
     beam_sp_derive
-        This parameter is a Boolean (default is ``False``). If `True` and the parameter beam_spectrum is ``None``, then we assume that the
-        beam in the header is for the median frequency of the image cube and
+        This parameter is a Boolean (default is ``True``). If `True` and the parameter beam_spectrum is ``None`` and no channel-dependent beam parameters are found in the header, then we assume that the
+        beam in the header is for the lowest frequency of the image cube and
         scale accordingly to calculate the beam per channel. If ``False``, then a
-        constant value of the beam is taken instead.
+        constant value of the beam (that given in the header or specified with the ``beam`` parameter) is taken instead.
 
     beam_spectrum
         This parameter is a list of tuples (default is ``None``) that sets the FWHM of synthesized beam per channel. Specify as [(bmaj_ch1, bmin_ch1,
@@ -861,9 +861,9 @@ The options concerning multichannel images are:
         ``beam_spectrum = [(0.01, 0.01, 45.0), (0.02, 0.01, 34.0)]`` for two
         channels.
 
-        If ``None``, then the channel-dependent restoring beam is either assumed to
-        be a constant or to scale with frequency, depending on whether the
-        parameter ``beam_sp_derive`` is ``False`` or ``True``.
+        If ``None``, then the channel-dependent restoring beam is searched for in the header.
+        If not found, the beam is either assumed to be a constant or to scale with frequency,
+        depending on whether the parameter ``beam_sp_derive`` is ``False`` or ``True``.
 
     collapse_av
         This parameter is a list of integers (default is ``[]``) that specifies the channels to be averaged to produce the

@@ -235,6 +235,8 @@ class Op_spectralindex(Op):
 
                     if bar2.started:
                         bar2.increment()
+                if bar2.started:
+                    bar2.stop()
                 img.completed_Ops.append('spectralindex')
             else:
               mylog.warning('Image has only one channel. Spectral index module disabled.')
@@ -288,14 +290,8 @@ class Op_spectralindex(Op):
 ####################################################################################
     def freq_beamsp_unav(self, img):
         """ Defines img.beam_spectrum and img.freq for the unaveraged cube. """
-
+        # Find the channel frequencies
         shp = img.image_arr.shape
-        sbeam = img.opts.beam_spectrum
-        if sbeam is not None and len(sbeam) != shp[1]: sbeam = None  # sanity check
-        if sbeam is None:
-            sbeam = [img.beam]*shp[1]
-
-        img.beam_spectrum = sbeam
         img.freq = N.zeros(shp[1])
         crval, cdelt, crpix = img.freq_pars
         if img.wcs_obj.wcs.spec == -1 and \
@@ -312,6 +308,33 @@ class Op_spectralindex(Op):
                                  "of frequencies specified by user")
                 for ichan in range(shp[1]):
                     img.freq[ichan] = img.opts.frequency_sp[ichan]
+
+        # Find the channel beam shapes
+        sbeam = img.opts.beam_spectrum
+        if sbeam is not None and len(sbeam) != shp[1]:
+            sbeam = None  # sanity check
+        if sbeam is None:
+            sbeam = []
+            hdr = img.header
+            try:
+                # search for channel beams in the image header
+                for ichan in range(shp[1]):
+                    sbeam.append((hdr['BMAJ{}'.format(ichan+1)],
+                                 hdr['BMIN{}'.format(ichan+1)],
+                                 hdr['BPA{}'.format(ichan+1)]))
+            except KeyError:
+                # Channel beam info not found. Use constant beam or one scaled with
+                # frequency
+                if img.opts.beam_sp_derive:
+                    # Adjust channel beam sizes assuming that the beam scales as 1/nu
+                    # Note: beam is (major, minor, pos. angle)
+                    for ichan in range(shp[1]):
+                        sbeam.append((img.beam[0] * img.freq[0] / img.freq[ichan],
+                                     img.beam[1] * img.freq[0] / img.freq[ichan],
+                                     img.beam[2]))
+                else:
+                    sbeam = [img.beam] * shp[1]
+        img.beam_spectrum = sbeam
 
 ####################################################################################
     def rms_spectrum(self, img, image):
@@ -346,6 +369,8 @@ class Op_spectralindex(Op):
                   bar1.increment()
               rms_spec[ichan,:,:] = img.channel_clippedrms[ichan]
             median_rms = rms_spec
+        if bar1.started:
+            bar1.stop()
 
         str1 = " ".join(["%9.4e" % n for n in img.channel_clippedrms])
         if rms_map:
