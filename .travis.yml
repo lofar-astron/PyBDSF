@@ -1,18 +1,17 @@
 language: python
 
 python:
-  - 2.7
-  - 3.5
+  - 3.8
 
 matrix:
   allow_failures:
-  - python: 3.5
+  - python: 3.8
 
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libboost-python-dev gfortran
   - pip install setuptools numpy scipy astropy
 
-install: "python setup.py install"
+install: "pip install ."
 
 script: "cd test && python tbdsf_process_image.py"
