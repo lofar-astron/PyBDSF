@@ -209,7 +209,7 @@ def _set_pars_from_prompt():
     Returns True if successful, False if not.
     """
     global _img
-    f = sys._getframe(len(inspect.stack())-1)
+    f = sys._getframe(len(inspect.stack())-2)
     f_dict = f.f_locals
 
     # Check through all possible options and
@@ -736,13 +736,15 @@ def main():
                 prompt_config.in_template = "BDSF [\#]: "
 
         cfg.InteractiveShellEmbed.autocall = 2
+        user_ns = globals()
+        user_ns['changelog'] = locals()['changelog']
         ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
-                                        user_ns=locals())
+                                        user_ns=user_ns)
         ipshell.set_hook('complete_command', _opts_completer, re_key = '.*')
     except ImportError:
         # IPython < 0.11
         from IPython.Shell import IPShellEmbed
         argv = ['-prompt_in1','BDSF [\#]: ','-autocall','2']
-        ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
+        ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=user_ns)
         ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
     ipshell()
