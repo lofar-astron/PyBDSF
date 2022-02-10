@@ -249,7 +249,7 @@ def _replace_vals_in_namespace(opt_names=None):
     opt_names - list of option names to replace (can be string if only one)
     """
     global _img
-    f = sys._getframe(len(inspect.stack())-1)
+    f = sys._getframe(len(inspect.stack())-2)
     f_dict = f.f_locals
     if opt_names is None:
         opt_names = _img.opts.get_names()
