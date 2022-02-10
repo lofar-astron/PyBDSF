@@ -7,8 +7,9 @@ What's New
 Version 1.10.0 (2022/02/09):
     * Update some functions as required by scipy version >= 1.8.0 (PR #172)
 
-    * Fix build issues with Python 3.8, end support for Python 2, and make installation
-    of the interactive pybdsf shell optional (PR #169)
+    * Fix build issues with Python 3.8, end support for Python < 3.6, add support
+    for Python 3.8 and 3.9, and make installation of the interactive pybdsf shell
+    optional (PR #169)
 
     * Improve handling of the beam in the spectral index module (PR #165)
 
