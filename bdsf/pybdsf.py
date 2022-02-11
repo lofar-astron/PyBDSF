@@ -203,14 +203,14 @@ def _set_pars_from_prompt():
     """Gets parameters and value and stores them in _img.
 
     To do this, we extract all the valid parameter names
-    and values from the f_locals directory. Then, use
+    and values from the f_globals directory. Then, use
     set_pars() to set them all.
 
     Returns True if successful, False if not.
     """
     global _img
-    f = sys._getframe(len(inspect.stack())-1)
-    f_dict = f.f_locals
+    f = sys._getframe(len(inspect.stack())-2)
+    f_dict = f.f_globals
 
     # Check through all possible options and
     # build options dictionary
@@ -249,8 +249,8 @@ def _replace_vals_in_namespace(opt_names=None):
     opt_names - list of option names to replace (can be string if only one)
     """
     global _img
-    f = sys._getframe(len(inspect.stack())-1)
-    f_dict = f.f_locals
+    f = sys._getframe(len(inspect.stack())-2)
+    f_dict = f.f_globals
     if opt_names is None:
         opt_names = _img.opts.get_names()
     if isinstance(opt_names, str):
@@ -736,13 +736,15 @@ def main():
                 prompt_config.in_template = "BDSF [\#]: "
 
         cfg.InteractiveShellEmbed.autocall = 2
+        user_ns = globals()
+        user_ns.update(locals())
         ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
-                                        user_ns=locals())
+                                        user_ns=user_ns)
         ipshell.set_hook('complete_command', _opts_completer, re_key = '.*')
     except ImportError:
         # IPython < 0.11
         from IPython.Shell import IPShellEmbed
         argv = ['-prompt_in1','BDSF [\#]: ','-autocall','2']
-        ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=locals())
+        ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=user_ns)
         ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
     ipshell()
