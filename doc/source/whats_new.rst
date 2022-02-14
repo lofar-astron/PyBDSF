@@ -4,6 +4,9 @@
 What's New
 **********
 
+Version 1.10.1 (2022/02/14):
+    * Fix NumPy API compatibility issue
+
 Version 1.10.0 (2022/02/09):
     * Update some functions as required by scipy version >= 1.8.0 (PR #172)
 

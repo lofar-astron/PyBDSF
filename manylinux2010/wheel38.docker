@@ -19,7 +19,7 @@ ENV PYMINOR 8
 ENV TARGET cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}
 
 # install python dependencies, make boost install also boost_numpy
-RUN /opt/python/${TARGET}/bin/pip install numpy
+RUN /opt/python/${TARGET}/bin/pip install oldest-supported-numpy
 
 # setup boost
 WORKDIR /build
