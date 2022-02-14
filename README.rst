@@ -39,6 +39,12 @@ easy of use):
 
     pip install bdsf[ishell]
 
+  If you get the error::
+
+    RuntimeError: module compiled against API version 0xf but this version of numpy is 0xd
+  
+  then please update ``numpy`` with ``pip install -U numpy``.
+
 .. attention:: It is *not* recommend to use ``python setup.py install``. It is
   deprecated, and we do *not* support it.
 
@@ -49,8 +55,7 @@ External requirements include the ubuntu packages (or similar packages in anothe
 * ``libboost-numpy-dev`` (Only if boost > 1.63)
 * ``python-setuptools``.
 
-Also, a working ``numpy`` installation is required.
-At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore`` or ``astropy``.
+Also, a working ``numpy`` installation is required. At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore`` or ``astropy``.
 
 If you install as a user not using conda, use ``pip install --user``.
 Make sure to use similar versions for gcc, g++ and gfortran
