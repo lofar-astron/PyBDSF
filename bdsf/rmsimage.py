@@ -856,7 +856,7 @@ class Op_rmsimage(Op):
 
                 cutout = themap[x1:x2, y1:y2].ravel()
                 goodcutout = cutout[cutout != magic]
-                num_unmasked = N.alen(goodcutout)
+                num_unmasked = len(goodcutout)
                 if num_unmasked > 0:
                     themap[x, y] = N.nansum(goodcutout)/float(len(goodcutout))
                 delx += 1
