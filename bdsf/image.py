@@ -53,6 +53,7 @@ class Image(object):
         self.j = 0
         self.freq_pars = [0.0, 0.0, 0.0]
         self.filename = ''
+        self.logfilename = ''
         self.resid_gaus_arr = None
         self._is_interactive_shell = False
         self.opts = Opts(opts)

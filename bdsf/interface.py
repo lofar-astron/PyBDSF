@@ -32,11 +32,16 @@ def process(img, **kwargs):
 
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
-    log = img.opts.filename + '.pybdsf.log'
+    if 'logfilename' in kwargs:
+        logfilename = kwargs('logfilename')
+    elif img.opts.logfilename:
+        logfilename = img.opts.logfilename
+    else:
+        logfilename = img.opts.filename + '.pybdsf.log'
     img.log = ''
-    mylogger.init_logger(log, quiet=img.opts.quiet,
+    mylogger.init_logger(logfilename, quiet=img.opts.quiet,
                          debug=img.opts.debug)
-    add_break_to_logfile(log)
+    add_break_to_logfile(logfilename)
     mylog = mylogger.logging.getLogger("PyBDSF.Process")
     mylog.info("Processing "+img.opts.filename)
 

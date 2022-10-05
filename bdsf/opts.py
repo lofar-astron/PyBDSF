@@ -73,6 +73,7 @@ class Opts(object):
     filename = String(doc = "Input image file name\n"\
                                  "The input image can be a FITS or CASA 2-, "\
                                  "3-, or 4-D cube.")
+    logfilename = String(doc = "Log filename")
     flagging_opts = Bool(False,
                              doc = "Show options for Gaussian flagging\n"\
                                  "Gaussians which are likely in error "\

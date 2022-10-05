@@ -72,14 +72,19 @@ def execute(chain, opts):
         debug = opts['debug']
     else:
         debug = False
-    log_filename = opts["filename"] + '.pybdsf.log'
-    mylogger.init_logger(log_filename, quiet=quiet, debug=debug)
+    if 'logfilename' in opts:
+        logfilename = opts['logfilename']
+    elif img.opts.logfilename:
+        logfilename = img.opts.logfilename
+    else:
+        logfilename = opts["filename"] + '.pybdsf.log'
+    mylogger.init_logger(logfilename, quiet=quiet, debug=debug)
     mylog = mylogger.logging.getLogger("PyBDSF.Init")
     mylog.info("Processing "+opts["filename"])
 
     try:
         img = Image(opts)
-        img.log = log_filename
+        img.log = logfilename
         _run_op_list(img, chain)
         return img
     except RuntimeError as err:
