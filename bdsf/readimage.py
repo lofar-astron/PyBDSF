@@ -15,7 +15,7 @@ from __future__ import absolute_import
 
 import numpy as N
 from .image import *
-from .functions import read_image_from_file
+from .functions import read_image_from_file, set_up_output_paths
 from . import mylogger
 import sys
 import shutil
@@ -40,33 +40,22 @@ class Op_readimage(Op):
         # replacing the file name in opts with the '/' trimmed off.
         if img.opts.filename[-1] == '/':
             img.opts.filename = img.opts.filename[:-1]
+        img.filename = img.opts.filename
 
         # Determine indir if not explicitly given by user (in img.opts.indir)
         if img.opts.indir is None:
-            indir = os.path.dirname(img.opts.filename)
+            indir = os.path.dirname(img.filename)
             if indir == '':
                 indir = './'
             img.indir = indir
         else:
             img.indir = img.opts.indir
 
-        # Try to trim common extensions from filename and store various
-        # paths
-        root, ext = os.path.splitext(img.opts.filename)
-        if ext in ['.fits', '.FITS', '.image']:
-            fname = root
-        elif ext in ['.gz', '.GZ']:
-            root2, ext2 = os.path.splitext(root)
-            if ext2 in ['.fits', '.FITS', '.image']:
-                fname = root2
-            else:
-                fname = root
-        else:
-            fname = img.opts.filename
-        img.filename = img.opts.filename
-        img.parentname = fname
-        img.imagename = fname + '.pybdsm'
-        img.basedir = './' + fname + '_pybdsm/'
+        # Set up output paths, etc.
+        parentname, basedir, _ = set_up_output_paths(img.opts)
+        img.parentname = parentname
+        img.imagename = img.parentname + '.pybdsf'
+        img.basedir = basedir
 
         # Read in data and header
         img.use_io = ''

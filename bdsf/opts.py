@@ -73,7 +73,6 @@ class Opts(object):
     filename = String(doc = "Input image file name\n"\
                                  "The input image can be a FITS or CASA 2-, "\
                                  "3-, or 4-D cube.")
-    logfilename = String(doc = "Log filename")
     flagging_opts = Bool(False,
                              doc = "Show options for Gaussian flagging\n"\
                                  "Gaussians which are likely in error "\
@@ -914,6 +913,11 @@ class Opts(object):
                              group = "output_opts")
     indir = Option(None, String(),
                              doc = "Directory of input FITS files. None => get "\
+                                 "from filename",
+                             group = "output_opts")
+    outdir = Option(None, String(),
+                             doc = "Directory of to use for all output files "\
+                                 "(including log files). None => get "\
                                  "from filename",
                              group = "output_opts")
     savefits_residim = Bool(False,

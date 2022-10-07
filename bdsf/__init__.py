@@ -34,6 +34,7 @@ from .wavelet_atrous import Op_wavelet_atrous
 from .psf_vary import Op_psf_vary
 from .cleanup import Op_cleanup
 from ._version import __version__
+from .functions import set_up_output_paths
 import gc
 
 default_chain = [Op_readimage(),
@@ -72,12 +73,7 @@ def execute(chain, opts):
         debug = opts['debug']
     else:
         debug = False
-    if 'logfilename' in opts:
-        logfilename = opts['logfilename']
-    elif img.opts.logfilename:
-        logfilename = img.opts.logfilename
-    else:
-        logfilename = opts["filename"] + '.pybdsf.log'
+    _, _, logfilename = set_up_output_paths(opts)
     mylogger.init_logger(logfilename, quiet=quiet, debug=debug)
     mylog = mylogger.logging.getLogger("PyBDSF.Init")
     mylog.info("Processing "+opts["filename"])

@@ -49,7 +49,7 @@ class Op_wavelet_atrous(Op):
 
     def __call__(self, img):
 
-        mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Wavelet")
+        mylog = mylogger.logging.getLogger("PyBDSF." + img.log + "Wavelet")
 
         if img.opts.atrous_do:
           if img.nisl == 0:
@@ -398,7 +398,7 @@ class Op_wavelet_atrous(Op):
         wimg.wcs_obj = img.wcs_obj
         wimg.parentname = img.filename
         wimg.filename = img.filename + name
-        wimg.imagename = img.imagename + name + '.pybdsm'
+        wimg.imagename = img.imagename + name + '.pybdsf'
         wimg.pix2sky = img.pix2sky
         wimg.sky2pix = img.sky2pix
         wimg.pix2beam = img.pix2beam
@@ -489,7 +489,7 @@ class Op_wavelet_atrous(Op):
                 pl.plot(ind[0] + isl.origin[0], ind[1] + isl.origin[1], '.', color = col)
                 pl.axis([0.0, sh[0], 0.0, sh[1]])
                 pl.title('J = ' + str(jj))
-            pl.savefig(bdir + img.imagename + '.pybdsm.atrous.pyramidsrc.png')
+            pl.savefig(bdir + img.imagename + '.pybdsf.atrous.pyramidsrc.png')
 
 #######################################################################################################
 
