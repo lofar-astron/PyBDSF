@@ -73,7 +73,9 @@ def execute(chain, opts):
         debug = opts['debug']
     else:
         debug = False
-    _, _, logfilename = set_up_output_paths(opts)
+    _, basedir = set_up_output_paths(opts)
+    basename = os.path.basename(opts['filename']) + '.pybdsf.log'
+    logfilename = os.path.join(basedir, basename)
     mylogger.init_logger(logfilename, quiet=quiet, debug=debug)
     mylog = mylogger.logging.getLogger("PyBDSF.Init")
     mylog.info("Processing "+opts["filename"])

@@ -733,10 +733,13 @@ The output options are:
                                    that defines the patches if bbs_patches = 'mask'
       :term:`indir` ............... None : Directory of input FITS files. None => get from
                                    filename
+      :term:`outdir` .............. None : Directory of to use for all output files
+                                   (including log files). None => parent directory of the
+                                   input filename
       :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
                                    delete existing files or append a new directory
       :term:`output_all` ......... False : Write out all files automatically to directory
-                                   'filename_pybdsf'
+                                   'outdir/filename_pybdsf'
       :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end
       :term:`plot_islands` ....... False : Make separate plots of each island during fitting
                                    (for large images, this may take a long time and a
