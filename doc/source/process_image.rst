@@ -733,11 +733,11 @@ The output options are:
                                    that defines the patches if bbs_patches = 'mask'
       :term:`indir` ............... None : Directory of input FITS files. None => get from
                                    filename
+      :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
+                                   delete existing files or append a new directory
       :term:`outdir` .............. None : Directory of to use for all output files
                                    (including log files). None => parent directory of the
                                    input filename
-      :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
-                                   delete existing files or append a new directory
       :term:`output_all` ......... False : Write out all files automatically to directory
                                    'outdir/filename_pybdsf'
       :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end
@@ -772,11 +772,11 @@ The output options are:
     indir
         This parameter is a string (default is ``None``) that sets the directory of input FITS files. If ``None``, the directory is defined by the input filename.
 
-    outdir
-         This parameter is a string (default is ``None``) that sets the directory to use for all output files (including log files). If ``None``, the parent directory of the input image filename is used.
-
     opdir_overwrite
         This parameter is a string (default is ``'overwrite'``) that determines whether existing output files are overwritten or not.
+
+    outdir
+         This parameter is a string (default is ``None``) that sets the directory to use for all output files (including log files). If ``None``, the parent directory of the input image filename is used.
 
     output_all
         This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'outdir/filename_pybdsf'``.
