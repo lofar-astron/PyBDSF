@@ -735,7 +735,7 @@ The output options are:
                                    filename
       :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
                                    delete existing files or append a new directory
-      :term:`outdir` .............. None : Directory of to use for all output files
+      :term:`outdir` .............. None : Directory to use for all output files
                                    (including log files). None => parent directory of the
                                    input filename
       :term:`output_all` ......... False : Write out all files automatically to directory

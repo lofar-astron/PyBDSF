@@ -916,7 +916,7 @@ class Opts(object):
                                  "from filename",
                              group = "output_opts")
     outdir = Option(None, String(),
-                             doc = "Directory of to use for all output files "\
+                             doc = "Directory to use for all output files "\
                                  "(including log files). None => parent directory of the "\
                                  "input filename.",
                              group = "output_opts")
