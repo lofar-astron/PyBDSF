@@ -43,7 +43,6 @@ def process(img, **kwargs):
     add_break_to_logfile(logfilename)
     mylog = mylogger.logging.getLogger("PyBDSF.Process")
     mylog.info("Processing "+img.opts.filename)
-    mylogger.userinfo(mylog, 'logfile is'+logfilename)
 
     try:
         # set options if given
