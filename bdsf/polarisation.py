@@ -79,6 +79,11 @@ class Op_polarisation(Op):
               pimg.pixel_beam = img.pixel_beam
               pimg.pixel_beamarea = img.pixel_beamarea
               pimg.log = 'PI.'
+              pimg.basedir = img.basedir
+              pimg.imagename = img.imagename
+              pimg.frequency = img.frequency
+              pimg.equinox = img.equinox
+              pimg.shape = img.shape
               pimg.pix2beam = img.pix2beam
               pimg.beam2pix = img.beam2pix
               pimg.pix2gaus = img.pix2gaus
@@ -478,6 +483,7 @@ class Op_polarisation(Op):
         opts['polarisation_do'] = False
         opts['filename'] = ''
         opts['detection_image'] = ''
+        opts['output_all'] = False
 
         ops = []
         for op in chain:

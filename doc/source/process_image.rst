@@ -735,8 +735,11 @@ The output options are:
                                    filename
       :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
                                    delete existing files or append a new directory
+      :term:`outdir` .............. None : Directory to use for all output files
+                                   (including log files). None => parent directory of the
+                                   input filename
       :term:`output_all` ......... False : Write out all files automatically to directory
-                                   'filename_pybdsf'
+                                   'outdir/filename_pybdsf'
       :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end
       :term:`plot_islands` ....... False : Make separate plots of each island during fitting
                                    (for large images, this may take a long time and a
@@ -772,8 +775,11 @@ The output options are:
     opdir_overwrite
         This parameter is a string (default is ``'overwrite'``) that determines whether existing output files are overwritten or not.
 
+    outdir
+         This parameter is a string (default is ``None``) that sets the directory to use for all output files (including log files). If ``None``, the parent directory of the input image filename is used.
+
     output_all
-        This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'filename_pybdsf'``.
+        This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'outdir/filename_pybdsf'``.
 
     plot_allgaus
         This parameter is a Boolean (default is ``False``). If ``True``\, make a plot of all Gaussians at the end.

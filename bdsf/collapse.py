@@ -106,13 +106,14 @@ class Op_collapse(Op):
               if pol == 'I':
                   ch0 = image[0,0]
                   img.ch0_arr = ch0
-                  
+
               else:
                   raise NotImplementedError('Polarization cubes not allowed in file mode')
           else:
               raise NotImplementedError('Mode supplied not implemented') # should never happen!
           if img.opts.output_all:
-              func.write_image_to_file(img.use_io, img.imagename+'.ch0_'+pol+'.fits', ch0, img)
+              func.write_image_to_file(img.use_io, img.imagename+'.ch0_'+pol+'.fits', ch0,
+                                       img, outdir=img.basedir)
               mylog.debug('%s %s ' % ('Writing file ', img.imagename+'.ch0_'+pol+'.fits'))
 
       else:
@@ -171,7 +172,7 @@ class Op_collapse(Op):
       if img.blankpix == image.shape[0] * image.shape[1]:
           # ALL pixels are blanked!
           raise RuntimeError('All pixels in the image are blanked.')
-      
+
       img.completed_Ops.append('collapse')
 
 

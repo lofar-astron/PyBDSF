@@ -29,14 +29,18 @@ def process(img, **kwargs):
     from . import default_chain, _run_op_list
     from .image import Image
     from . import mylogger
+    from .functions import set_up_output_paths
+    import os
 
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
-    log = img.opts.filename + '.pybdsf.log'
+    _, basedir = set_up_output_paths(img.opts)
+    basename = os.path.basename(img.opts.filename) + '.pybdsf.log'
+    logfilename = os.path.join(basedir, basename)
     img.log = ''
-    mylogger.init_logger(log, quiet=img.opts.quiet,
-                         debug=img.opts.debug)
-    add_break_to_logfile(log)
+    mylogger.init_logger(logfilename, quiet=img.opts.quiet,
+                             debug=img.opts.debug)
+    add_break_to_logfile(logfilename)
     mylog = mylogger.logging.getLogger("PyBDSF.Process")
     mylog.info("Processing "+img.opts.filename)
 
@@ -385,7 +389,8 @@ def save_pars(img, savefile=None, quiet=False):
     import sys
 
     if savefile is None or savefile == '':
-        savefile = img.opts.filename + '.pybdsf.sav'
+        basename = os.path.basename(img.opts.filename) + '.pybdsf.sav'
+        savefile = os.path.join(img.basedir, basename)
 
     # convert opts to dictionary
     pars = img.opts.to_dict()

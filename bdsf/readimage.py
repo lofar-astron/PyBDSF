@@ -15,11 +15,13 @@ from __future__ import absolute_import
 
 import numpy as N
 from .image import *
-from .functions import read_image_from_file
+from .functions import read_image_from_file, set_up_output_paths
 from . import mylogger
 import sys
 import shutil
 import tempfile
+import time
+import os
 
 
 class Op_readimage(Op):
@@ -28,7 +30,6 @@ class Op_readimage(Op):
     Loads image and configures wcslib machinery for it.
     """
     def __call__(self, img):
-        import time, os
         mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Readimage")
 
         if img.opts.filename == '':
@@ -40,33 +41,26 @@ class Op_readimage(Op):
         # replacing the file name in opts with the '/' trimmed off.
         if img.opts.filename[-1] == '/':
             img.opts.filename = img.opts.filename[:-1]
+        img.filename = img.opts.filename
 
         # Determine indir if not explicitly given by user (in img.opts.indir)
         if img.opts.indir is None:
-            indir = os.path.dirname(img.opts.filename)
+            indir = os.path.dirname(img.filename)
             if indir == '':
                 indir = './'
             img.indir = indir
         else:
             img.indir = img.opts.indir
 
-        # Try to trim common extensions from filename and store various
-        # paths
-        root, ext = os.path.splitext(img.opts.filename)
-        if ext in ['.fits', '.FITS', '.image']:
-            fname = root
-        elif ext in ['.gz', '.GZ']:
-            root2, ext2 = os.path.splitext(root)
-            if ext2 in ['.fits', '.FITS', '.image']:
-                fname = root2
-            else:
-                fname = root
-        else:
-            fname = img.opts.filename
-        img.filename = img.opts.filename
-        img.parentname = fname
-        img.imagename = fname + '.pybdsm'
-        img.basedir = './' + fname + '_pybdsm/'
+        # Set up output paths, etc.
+        parentname, basedir = set_up_output_paths(img.opts)
+        img.parentname = parentname  # root name for constructing output files
+        img.imagename = img.parentname + '.pybdsf'  # root name of output images (e.g., rms image)
+        img.outdir = basedir  # path of parent output directory
+        img.basedir = os.path.join(basedir, img.parentname+'_pybdsf')  # used for opts.output_all
+        if img.opts.solnname is not None:
+            # Add solname (if any) to basedir
+            img.basedir += img.opts.solnname
 
         # Read in data and header
         img.use_io = ''
@@ -86,7 +80,7 @@ class Op_readimage(Op):
             img.do_cache = False
         if img.do_cache:
             mylog.info('Using disk caching.')
-            tmpdir = img.parentname+'_tmp'
+            tmpdir = os.path.join(img.outdir, img.parentname+'_tmp')
             if not os.path.exists(tmpdir):
                 os.makedirs(tmpdir)
             img._tempdir_parent = TempDir(tmpdir)
@@ -136,20 +130,14 @@ class Op_readimage(Op):
                 img.opts.opdir_overwrite = 'append'
             if opdir == 'append':
                 mylog.info('Appending output files to directory ' + img.basedir)
+                img.basedir = os.path.join(img.basedir, time.strftime("%d%b%Y_%H.%M.%S"))
             else:
                 mylog.info('Overwriting output files (if any) in directory ' + img.basedir)
                 if os.path.isdir(img.basedir):
                     os.system("rm -fr " + img.basedir + '/*')
-            if not os.path.isdir(img.basedir):
-                os.makedirs(img.basedir)
-
-            # Now add solname (if any) and time to basedir
-            if img.opts.solnname is not None:
-                img.basedir += img.opts.solnname + '_'
-            img.basedir += time.strftime("%d%b%Y_%H.%M.%S")
 
             # Make the final output directory
-            if not os.path.isdir(img.basedir):
+            if not os.path.exists(img.basedir):
                 os.makedirs(img.basedir)
 
         del data

@@ -866,7 +866,7 @@ class Opts(object):
                              group = "output_opts")
     output_all = Bool(False,
                              doc = "Write out all files automatically to directory "\
-                                 "'filename_pybdsm'",
+                                 "'outdir/filename_pybdsm'",
                              group = "output_opts")
     opdir_overwrite = Enum('overwrite', 'append',
                              doc = "'overwrite'/'append': If output_all=True, "\
@@ -914,6 +914,11 @@ class Opts(object):
     indir = Option(None, String(),
                              doc = "Directory of input FITS files. None => get "\
                                  "from filename",
+                             group = "output_opts")
+    outdir = Option(None, String(),
+                             doc = "Directory to use for all output files "\
+                                 "(including log files). None => parent directory of the "\
+                                 "input filename.",
                              group = "output_opts")
     savefits_residim = Bool(False,
                              doc = "Save residual image as fits file",
