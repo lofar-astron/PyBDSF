@@ -22,11 +22,16 @@ easy of use):
 
     pip install bdsf
 
+  .. note:: The interactive shell ``pybdsf`` is no longer installed by default.
+    To install it you have to specify the extra ``[ishell]``. For example::
+
+      pip install bdsf[ishell]
+
 * Install the ``master`` branch from the PyBDSF git repository::
 
     pip install git+https://github.com/lofar-astron/PyBDSF.git
 
-  Or install install a specific revision or release, for example ``v1.9.3``::
+  Or install a specific revision or release, for example ``v1.9.3``::
 
     pip install git+https://github.com/lofar-astron/PyBDSF.git@v1.9.3
 
@@ -34,16 +39,15 @@ easy of use):
 
     pip install .
 
-.. note:: The interactive shell ``pybdsf`` is no longer installed by default.
-  To install it you have to specify the extra ``[ishell]``. For example::
+  or (to install the interactive shell as well)::
 
-    pip install bdsf[ishell]
+    pip install .[ishell]
 
-  If you get the error::
+If you get the error::
 
-    RuntimeError: module compiled against API version 0xf but this version of numpy is 0xd
-  
-  then please update ``numpy`` with ``pip install -U numpy``.
+  RuntimeError: module compiled against API version 0xf but this version of numpy is 0xd
+
+then please update ``numpy`` with ``pip install -U numpy``.
 
 .. attention:: It is *not* recommend to use ``python setup.py install``. It is
   deprecated, and we do *not* support it.

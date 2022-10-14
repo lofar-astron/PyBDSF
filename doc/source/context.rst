@@ -8,5 +8,5 @@ Traditionally, source extraction software, at least in radio astronomy, has defi
 Note that although PyBDSF is written for LOFAR, it will obviously work for images from any radio interferometric telescope.
 
 .. rubric:: Footnotes
-.. [#f1] http://www.lofar.org
-.. [#f2] http://www.atnf.csiro.au/people/Matthew.Whiting/Duchamp/
+.. [#f1] https://www.astron.nl/telescopes/lofar
+.. [#f2] https://www.atnf.csiro.au/people/Matthew.Whiting/Duchamp/

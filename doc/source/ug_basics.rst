@@ -3,15 +3,19 @@
 *************
 PyBDSF Basics
 *************
-PyBDSF has been designed to share many similarities with the CASA interactive environment (known as ``casapy`` [#f1]_ ), which is in turn based on AIPS. Therefore, the commands used in PyBDSF should be familiar to anyone who has used these software packages.
+PyBDSF has been designed to share many similarities with the CASA interactive environment (known as ``casa`` [#f1]_ ), which is in turn based on AIPS. Therefore, the commands used in PyBDSF should be familiar to anyone who has used these software packages.
 
 Starting PyBDSF
 ---------------
-After installing (see :ref:`installing`) you can start PyBDSF by simply opening a terminal and typing::
+After installing (see :ref:`installing`) you can start the interactive PyBDSF shell by simply opening a terminal and typing::
 
     $ pybdsf
 
 at the terminal prompt.
+
+.. note::
+
+    If the above command does not work, please make sure you have installed the interactive shell (it is not installed by default). See :ref:`installing` for details.
 
 The interactive environment will then load, and a welcome screen listing common commands and tasks will be shown. You will then be at the PyBDSF prompt, which looks like this::
 
@@ -258,4 +262,4 @@ The output Gaussian or source list contains source positions, fluxes, etc.
    Output of ``show_fit``, showing the original image with and without sources, the model image, and the residual (original minus model) image. Boundaries of the islands of emission found by PyBDSF are shown in light blue. The fitted Gaussians are shown for each island as ellipses (the sizes of which correspond to the FWHMs of the Gaussians). Gaussians that have been grouped together into a source are shown with the same color. For example, the two red Gaussians of island #1 have been grouped together into one source, and the nine Gaussians of island #0 have been grouped into 4 separate sources.
 
 .. rubric:: Footnotes
-.. [#f1] http://casa.nrao.edu
+.. [#f1] https://casa.nrao.edu

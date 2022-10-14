@@ -216,7 +216,7 @@ If there is extended emission that fills a significant portion of the image, the
 
 .. figure:: HydraA_74MHz_fit.png
    :scale: 40 %
-   :figwidth: 75 %
+   :figwidth: 100 %
    :align: center
    :alt: example output
 
@@ -318,5 +318,5 @@ Images can be sent to ds9 or Aladin using the ``export_image`` task in the same 
 
 .. rubric:: Footnotes
 .. [#f1] http://www.star.bristol.ac.uk/~mbt/topcat/
-.. [#f2] http://hea-www.harvard.edu/RD/ds9/site/Home.html
-.. [#f3] http://aladin.u-strasbg.fr
+.. [#f2] https://sites.google.com/cfa.harvard.edu/saoimageds9/home
+.. [#f3] https://aladin.u-strasbg.fr

@@ -17,22 +17,22 @@ where the average number of pixels per source, :math:`<pix/src>`, is given by:
 
 where :math:`\alpha` is the slope of the differential source counts taken from Katgert et al. (1988) [#f1]_. Assuming
 a minimum of one pixel to define a source and ignoring the effect of noise for sources close to
-the threshold, we can ignore the logarithmic term and hence :math:`\text{bmpersrc\_th} = (n\times m)/(\text{No. pixels} > 5\sigma)/(\alpha-1))`. The value of :term:`bmpersrc_th` is used to decide whether
+the threshold, we can ignore the logarithmic term and hence :math:`\text{bmpersrc_th} = (n\times m)/(\text{No. pixels} > 5\sigma)/(\alpha-1))`. The value of :term:`bmpersrc_th` is used to decide whether
 the image is expected to be confused (and if so, the mean image is taken to be zero) and also
 to estimate the box size for calculating the rms image (see below).
 
 Calculation of mean and rms maps
 --------------------------------
 The box size and step size for calculating the rms image are estimated as follows (if not set by the :term:`rms_box` parameter).
-Typical intersource seperation, :math:`s_1`, is :math:`2\sqrt{\text{bmpersrc\_th}} \times B_{\text{major}}`.
-The size of brightest source, :math:`s_{\text{max}}`, is :math:`2 B_{\text{major}} \times \sqrt{[2\ln(Max_{\text{flux}}/threshold)]}`. Lastly, the maximum dimension of the largest island, :math:`s_{\text{isl}}`, defined at 10--20 sigma above the clipped rms is also found.
+Typical intersource seperation, :math:`s_1`, is :math:`2\sqrt{\text{bmpersrc_th}} \times B_{\text{major}}`.
+The size of brightest source, :math:`s_{\text{max}}`, is :math:`2 B_{\text{major}} \times \sqrt{[2\ln(\text{Max}_{\text{flux}}/\text{threshold})]}`. Lastly, the maximum dimension of the largest island, :math:`s_{\text{isl}}`, defined at 10--20 sigma above the clipped rms is also found.
 The box size is estimated as the larger of the quantities :math:`s_1`, :math:`s_{\text{max}}`, and :math:`s_{\text{isl}}`. The step size is then calculated as the minimum of a third of the box size and a tenth of the smallest image dimension. These prescriptions yield
 reasonable numbers for the images tested.
 
 Either the calculated rms image or a constant rms is used for subsequent analysis based on
 whether the dispersion in the rms image is consistent with, or is higher than, the expected
 statistics. Hence if the dispersion of the rms image is higher than 1.1 times the (clipped) rms of
-the image times the inverse of :math:`\sqrt{2} \times Boxsize_{\text{pixels}}` then the rms image is taken. Otherwise, the constant
+the image times the inverse of :math:`\sqrt{2} \times \text{Boxsize}_{\text{pixels}}` then the rms image is taken. Otherwise, the constant
 value of the clipped rms is used.
 
 Gaussian fitting
@@ -55,7 +55,7 @@ Inside each island, groups of Gaussians are deemed to be a part of the same sour
     1. the difference between the minimum value along the line joining the centers of any pair of Gaussians and the peak value of the lower Gaussian is less than the product of the island threshold and the island rms, and
     2. the centers are separated by a distance less than half the sum of their FWHMs along the line joining them.
 
-Once the Gaussians that belong to a source are identified, fluxes for the grouped Gaussians are summed to obtain the total flux of the source. The uncertainty on the total flux is calculated by summing the uncertainties on the total fluxes of the individual Gaussians in quadrature. The source RA and Dec position is set to the source centroid determined from moment analysis (the position of the maximum of the source is also calculated). The total source size is also measured using moment analysis (see http://en.wikipedia.org/wiki/Image_moment for an overview of moment analysis).
+Once the Gaussians that belong to a source are identified, fluxes for the grouped Gaussians are summed to obtain the total flux of the source. The uncertainty on the total flux is calculated by summing the uncertainties on the total fluxes of the individual Gaussians in quadrature. The source RA and Dec position is set to the source centroid determined from moment analysis (the position of the maximum of the source is also calculated). The total source size is also measured using moment analysis (see https://en.wikipedia.org/wiki/Image_moment for an overview of moment analysis).
 
 .. _colorcorrections:
 
