@@ -49,4 +49,4 @@ PyBDSF (the **Py**\thon **B**\lob **D**\etector and **S**\ource **F**\inder) is 
 
 
 .. rubric:: Footnotes
-.. [#f1] http://casa.nrao.edu
+.. [#f1] https://casa.nrao.edu
