@@ -216,7 +216,7 @@ If there is extended emission that fills a significant portion of the image, the
 
 .. figure:: HydraA_74MHz_fit.png
    :scale: 40 %
-   :figwidth: 75 %
+   :figwidth: 100 %
    :align: center
    :alt: example output
 
