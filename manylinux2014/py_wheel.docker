@@ -1,30 +1,25 @@
 FROM quay.io/pypa/manylinux2014_x86_64
 
+# how many threads to use for compiling
+ARG THREADS=4
+
+# These variables MUST be set using the --build-arg option
+ARG PYMAJOR
+ARG PYMINOR
+ARG PYUNICODE
+
+ENV TARGET="cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}"
 
 # install rpms
 RUN yum install -y gcc-gfortran
 
-# download other source code
-WORKDIR /tmp
-RUN curl https://ufpr.dl.sourceforge.net/project/boost/boost/1.76.0/boost_1_76_0.tar.bz2 --output /tmp/boost.tar.bz2
-
-RUN mkdir /build
-WORKDIR /build
-
-# how many threads to use for compiling
-ENV THREADS 4
-
-ENV PYMAJOR 3
-ENV PYMINOR 10
-ENV TARGET cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}
-
-# install python dependencies, make boost install also boost_numpy
-# need to constrain setuptools version for numpy.distutil compatibility
+# install python dependencies; constrain setuptools version for numpy.distutil compatibility
 RUN /opt/python/${TARGET}/bin/pip install oldest-supported-numpy "setuptools<65.6"
 
-# setup boost
+# download and build boost
 WORKDIR /build
-RUN tar jxf /tmp/boost.tar.bz2
+RUN curl https://ufpr.dl.sourceforge.net/project/boost/boost/1.76.0/boost_1_76_0.tar.bz2 --output boost.tar.bz2
+RUN tar jxf boost.tar.bz2
 WORKDIR /build/boost_1_76_0
 RUN ./bootstrap.sh --prefix=/opt/boost \
     --with-libraries=python \
@@ -35,6 +30,7 @@ RUN ./b2 -j${THREADS} \
     cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
     link=static,shared install
 
+# build the binary wheel
 ADD . /PyBDSF
 WORKDIR /PyBDSF
 ENV CFLAGS "-I/opt/boost/include -L/opt/boost/lib"
