@@ -337,10 +337,10 @@ class Op_gaul2srl(Op):
         maxv = N.max(subim_src)
         maxx, maxy = N.unravel_index(N.argmax(subim_src), subim_src.shape)
                                         # fit gaussian around this posn
-        blc = N.zeros(2,dtype=N.int); trc = N.zeros(2,dtype=N.int)
+        blc = N.zeros(2,dtype=int); trc = N.zeros(2,dtype=int)
         n, m = subim_src.shape[0:2]
         bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
-        ssubimsize = max(N.int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
+        ssubimsize = max(int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
         blc[0] = max(0, maxx-(ssubimsize-1)/2); blc[1] = max(0, maxy-(ssubimsize-1)/2)
         trc[0] = min(n, maxx+(ssubimsize-1)/2); trc[1] = min(m, maxy+(ssubimsize-1)/2)
         s_imsize = trc - blc + 1
@@ -369,10 +369,10 @@ class Op_gaul2srl(Op):
         # posn from gaussian fit instead.
         if N.isnan(mompara[1]):
             mompara[1] = posn[0] - delc[0]
-        x1 = N.int(N.floor(mompara[1]))
+        x1 = int(N.floor(mompara[1]))
         if N.isnan(mompara[2]):
             mompara[2] = posn[1] - delc[1]
-        y1 = N.int(N.floor(mompara[2]))
+        y1 = int(N.floor(mompara[2]))
         xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
         if img.opts.flag_smallsrc and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Island = '+str(isl.island_id))

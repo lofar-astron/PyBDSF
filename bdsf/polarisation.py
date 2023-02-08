@@ -452,7 +452,7 @@ class Op_polarisation(Op):
                 pnorm = pnorm - bias
                 bias = 1.0 / (2.0 * pnorm) + 1.0 / (8.0 * pnorm**3)
             else:
-                bias = N.interp(pnorm, data_table[:,0], data_table[:,1])
+                bias = interp(pnorm, data_table[:,0], data_table[:,1])
 
         pflux_debiased = pflux - bias * QUerr
 

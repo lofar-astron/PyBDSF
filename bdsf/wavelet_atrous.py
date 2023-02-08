@@ -294,7 +294,7 @@ class Op_wavelet_atrous(Op):
               if stop_wav == True:
                   break
 
-          pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
+          pyrank = N.zeros(img.pyrank.shape, dtype=int)
           for i, isl in enumerate(img.islands):
               isl.island_id = i
               for g in isl.gaul:
@@ -658,7 +658,7 @@ def renumber_islands(img):
 
     Also renumbers the pyrank image.
     """
-    pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
+    pyrank = N.zeros(img.pyrank.shape, dtype=int)
     for i, isl in enumerate(img.islands):
         isl.island_id = i
         for g in isl.gaul:
@@ -726,7 +726,8 @@ def check_islands_for_overlap(img, wimg):
                 new_isl.island_id = isl_id
                 img.islands.append(new_isl)
                 copy_gaussians(img, new_isl, wvisl)
-        bar.increment()
+        if not img.opts.quiet:
+            bar.increment()
     bar.stop()
 
     return tot_flux

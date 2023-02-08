@@ -94,7 +94,7 @@ class Op_psf_vary(Op):
             ### now put all relevant gaussian parameters into a list
             ngaus = img.ngaus
             nsrc = img.nsrc
-            num = N.zeros(nsrc, dtype=N.int32)
+            num = N.zeros(nsrc, dtype=int)
             peak = N.zeros(nsrc)
             xc = N.zeros(nsrc)
             yc = N.zeros(nsrc)
