@@ -645,7 +645,7 @@ class Op_gausfit(Op):
             x, y = N.where(~isl.mask_active); xcen = N.mean(x); ycen = N.mean(y)
             invm = ~isl.mask_active
             #bound = invm - nd.grey_erosion(invm, footprint = N.ones((3,3), int)) # better to use bound for ellipse fitting
-            mom = func.momanalmask_gaus(invm, N.zeros(invm.shape, dtype=int16), 0, 1.0, True)
+            mom = func.momanalmask_gaus(invm, N.zeros(invm.shape, dtype=int), 0, 1.0, True)
             g = (maxv, xcen, ycen, mom[3]/fwsig, mom[4]/fwsig, mom[5]-90.)
             gaul.append(g)
             coords.append([xcen, ycen])
