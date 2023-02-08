@@ -28,6 +28,7 @@ from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
 from .threshold import Op_threshold
 from .collapse import Op_collapse
+import os
 
 
 class Op_islands(Op):
@@ -88,6 +89,10 @@ class Op_islands(Op):
             if det_shape != ch0_shape:
                 raise RuntimeError("Detection image shape does not match that of input image.")
 
+            # Save the rms and mean maps derived from the detection image
+            img.detection_mean_arr = det_img.mean_arr
+            img.detection_rms_arr = det_img.rms_arr
+
             # Run through islands and correct the image and rms, mean and max values
             corr_islands = []
             mean_map = img.mean_arr
@@ -100,6 +105,26 @@ class Op_islands(Op):
             img.nisl = len(img.islands)
             img.pyrank = det_img.pyrank
             img.minpix_isl = det_img.minpix_isl
+
+            if opts.output_all:
+                write_islands(img)
+            if opts.savefits_rankim or opts.output_all:
+                func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', img.pyrank, img)
+            if opts.savefits_det_rmsim or opts.output_all:
+                resdir = img.basedir + '/background/'
+                if not os.path.exists(resdir):
+                    os.makedirs(resdir)
+                func.write_image_to_file(img.use_io, img.imagename + '.detection_rmsd_I.fits',
+                                         img.detection_rms_arr, img, resdir)
+                mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.detection_rmsd_I.fits'))
+            if opts.savefits_det_meanim or opts.output_all:
+                resdir = img.basedir + '/background/'
+                if not os.path.exists(resdir):
+                    os.makedirs(resdir)
+                func.write_image_to_file(img.use_io, img.imagename + '.detection_mean_I.fits',
+                                         img.detection_mean_arr, img, resdir)
+                mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.detection_mean_I.fits'))
+
             mylogger.userinfo(mylog, "\nContinuing processing using primary image")
         else:
             if opts.src_ra_dec is not None:
@@ -120,8 +145,9 @@ class Op_islands(Op):
                 pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
             pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
 
-            if opts.output_all: write_islands(img)
-            if opts.savefits_rankim:
+            if opts.output_all:
+                write_islands(img)
+            if opts.savefits_rankim or opts.output_all:
                 func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', pyrank, img)
 
             img.pyrank = pyrank
@@ -246,6 +272,8 @@ class Op_islands(Op):
         opts['filename'] = det_file
         opts['detection_image'] = ''
         opts['polarisation_do'] = False
+        opts['rmsmean_map_filename'] = opts['rmsmean_map_filename_det']
+        opts['det_rmsmean_map_filename'] = None
 
         ops = []
         for op in chain:
