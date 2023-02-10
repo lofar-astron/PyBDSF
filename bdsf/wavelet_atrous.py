@@ -294,7 +294,7 @@ class Op_wavelet_atrous(Op):
               if stop_wav == True:
                   break
 
-          pyrank = N.zeros(img.pyrank.shape, dtype=int)
+          pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
           for i, isl in enumerate(img.islands):
               isl.island_id = i
               for g in isl.gaul:
@@ -658,7 +658,7 @@ def renumber_islands(img):
 
     Also renumbers the pyrank image.
     """
-    pyrank = N.zeros(img.pyrank.shape, dtype=int)
+    pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
     for i, isl in enumerate(img.islands):
         isl.island_id = i
         for g in isl.gaul:
