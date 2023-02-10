@@ -182,7 +182,7 @@ class Op_islands(Op):
         img.island_labels = labels
 
         ### apply cuts on island size and peak value
-        pyrank = N.zeros(image.shape, dtype=int)
+        pyrank = N.zeros(image.shape, dtype=N.int32)
         res = []
         islid = 0
         for idx, s in enumerate(slices):
