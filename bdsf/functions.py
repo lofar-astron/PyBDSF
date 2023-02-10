@@ -1992,7 +1992,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
 
     xsize, ysize = mask_size
     if aperture_pix is None:
-        return N.zeros((xsize, ysize), dtype=N.int)
+        return N.zeros((xsize, ysize), dtype=int)
 
     # Make subimages
     xlo = int(posn_pix[0]-int(aperture_pix)-1)
@@ -2008,7 +2008,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     if yhi > ysize:
         yhi = ysize
 
-    mask = N.zeros((xsize, ysize), dtype=N.int)
+    mask = N.zeros((xsize, ysize), dtype=int)
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
     submask_xsize = xhi - xlo
     submask_ysize = yhi - ylo

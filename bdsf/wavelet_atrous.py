@@ -726,7 +726,8 @@ def check_islands_for_overlap(img, wimg):
                 new_isl.island_id = isl_id
                 img.islands.append(new_isl)
                 copy_gaussians(img, new_isl, wvisl)
-        bar.increment()
+        if not img.opts.quiet:
+            bar.increment()
     bar.stop()
 
     return tot_flux

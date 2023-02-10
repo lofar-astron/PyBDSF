@@ -405,8 +405,8 @@ class Op_gausfit(Op):
                 mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, pixel_beamarea, True)
                 mompara[5] += 90.0
                 if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
-                    x1 = N.int(N.floor(mompara[1]))
-                    y1 = N.int(N.floor(mompara[2]))
+                    x1 = int(N.floor(mompara[1]))
+                    y1 = int(N.floor(mompara[2]))
                     xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
                     t=(mompara[1]-x1)/(x1+1-x1)
                     u=(mompara[2]-y1)/(y1+1-y1)

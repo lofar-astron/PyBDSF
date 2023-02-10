@@ -158,7 +158,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         raise TypeError("input '%s' is not iterable" %
                 repr(sequence))
 
-    sequence = list(sequence)
+    sequence = numpy.array(list(sequence), dtype=object)
     size = len(sequence)
 
     if not _multi or size == 1:
