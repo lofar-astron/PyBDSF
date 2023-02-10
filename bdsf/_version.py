@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.10.1'
+__version__ = '1.10.2'
 
 
 # Changelog
@@ -12,6 +12,22 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2023/02/10 - Version 1.10.2
+
+    2023/02/10 - Fix issues with numpy versions >= 1.24 (#193)
+
+    2022/11/28 - Switch to `manylinux2014` for building binary wheels (#191)
+
+    2022/11/23 - Fix ImportError in setuptools (#190)
+
+    2022/10/31 - Add binary wheels for Python 3.10 (#186)
+
+    2022/10/14 - Fix various documentation issues (#185)
+
+    2022/10/11 - Add logfilename option (#181)
+
+    2022/10/05 - Use len() instead of numpy.alen() (#180)
+
     2022/02/14 - Version 1.10.1: Fix Numpy API incompatibility issue
 
     2022/02/09 - Version 1.10.0

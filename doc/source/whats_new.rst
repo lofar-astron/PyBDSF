@@ -4,6 +4,21 @@
 What's New
 **********
 
+Version 1.10.2 (2023/02/10):
+    * Fix issues with numpy versions >= 1.24 (#193)
+
+    * Switch to `manylinux2014` for building binary wheels (#191)
+
+    * Fix ImportError in setuptools (#190)
+
+    * Add binary wheels for Python 3.10 (#186)
+
+    * Fix various documentation issues (#185)
+
+    * Add logfilename option (#181)
+
+    * Use len() instead of numpy.alen() (#180)
+
 Version 1.10.1 (2022/02/14):
     * Fix NumPy API compatibility issue
 
