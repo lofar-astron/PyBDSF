@@ -248,7 +248,7 @@ http://boostorg.github.io/python/doc/html/index.html
 
 setup(
     name='bdsf',
-    version='1.10.2',
+    version='1.10.3a1',
     author='David Rafferty',
     author_email='drafferty@hs.uni-hamburg.de',
     url='https://github.com/lofar-astron/PyBDSF',
