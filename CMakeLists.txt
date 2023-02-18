@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.11)
 project(PyBDSF C CXX Fortran)
 find_package(PythonExtensions REQUIRED)
-# find_package(Python3 REQUIRED Development Numpy)
-find_package(F2PY REQUIRED)
-find_package(NumPy REQUIRED)
+# include(FindPythonExtensions)
 include(UsePythonExtensions)
+find_package(Python3 REQUIRED COMPONENTS Development)
+# find_package(NumPy REQUIRED)
+find_package(F2PY)
+find_package(Boost COMPONENTS python numpy)
 
+# include_directories(${Python3_INCLUDE_DIRS})
+# include_directories(${Boost_INCLUDE_DIRS})
 
 if(SKBUILD)
   message(STATUS "The project is built using scikit-build")
@@ -88,25 +92,27 @@ set(PYTESSELATE_SRC
     src/fortran/pytess_simple.f
     src/fortran/pytess_roundness.f
 )
-# set(PYTESSELATE_MODULE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PYTESSELATE_MODULE_NAME}${PYTHON_EXTENSION_MODULE_SUFFIX})
-# add_custom_target(${PYTESSELATE_MODULE_NAME} ALL
-#   DEPENDS ${PYTESSELATE_MODULE_FILE}
-# )
-# add_custom_command(
-#   OUTPUT ${PYTESSELATE_MODULE_FILE}
-#   COMMAND ${F2PY_EXECUTABLE}
-#     -m ${PYTESSELATE_MODULE_NAME}
-#     -c
-#     ${fortran_src_file}
-#   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-#   )
-add_library(_pytesselate MODULE ${PYTESSELATE_SRC})
-set_target_properties(_pytesselate PROPERTIES PREFIX "")
+set(PYTESSELATE_MODULE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PYTESSELATE_MODULE_NAME}${PYTHON_EXTENSION_MODULE_SUFFIX})
+add_custom_target(${PYTESSELATE_MODULE_NAME} ALL
+  DEPENDS ${PYTESSELATE_MODULE_FILE}
+)
+add_custom_command(
+  OUTPUT ${PYTESSELATE_MODULE_FILE}
+  COMMAND ${F2PY_EXECUTABLE}
+    -m ${PYTESSELATE_MODULE_NAME}
+    -c
+    ${PYTESSELATE_SRC}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+# add_library(_pytesselate MODULE ${PYTESSELATE_SRC})
+# target_link_libraries(_pytesselate ${Boost_LIBRARIES})
+# set_target_properties(_pytesselate PROPERTIES PREFIX "")
 python_extension_module(_pytesselate)
 # add_python_extension(_pytesselate
 #     SOURCES ${PYTESSELATE_SRC}
 # )
-install(TARGETS _pytesselate LIBRARY DESTINATION pytesselate)
+# install(TARGETS _pytesselate LIBRARY DESTINATION bdsf)
+install(TARGETS ${PYTESSELATE_MODULE_NAME} LIBRARY DESTINATION bdsf)
 
 set(CBDSM_SRC
     src/c++/Fitter_dn2g.cc
@@ -119,11 +125,32 @@ set(CBDSM_SRC
     src/c++/num_util/num_util.cpp
 )
 include_directories(
-    ${Python_INCLUDE_DIRS}
-    ${Python_NumPy_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/src/c++
+    ${Python3_INCLUDE_DIRS}
+    ${Python3_NumPy_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/c++
 )
 add_library(_cbdsm MODULE ${CBDSM_SRC})
-set_target_properties(_cbdsm PROPERTIES PREFIX "")
+# target_include_directories(_cbdsm PUBLIC ${Python3_INCLUDE_DIRS})
+target_link_libraries(_cbdsm minpack port3 gfortran ${Boost_LIBRARIES})
+# set_target_properties(_cbdsm PROPERTIES PREFIX "")
 python_extension_module(_cbdsm)
+install(TARGETS _cbdsm LIBRARY DESTINATION bdsf)
 
+set(NATGRID_SRC
+    natgrid/Src/natgrid.c
+    natgrid/Src/natgridd.c
+    natgrid/Src/natgridmodule.c
+    natgrid/Src/natgrids.c
+    natgrid/Src/nncrunch.c
+    natgrid/Src/nncrunchd.c
+    natgrid/Src/nncrunchs.c
+    natgrid/Src/nnerror.c
+    natgrid/Src/nnuser.c
+    natgrid/Src/nnuserd.c
+    natgrid/Src/nnusers.c
+)
+
+add_library(natgridmodule MODULE ${NATGRID_SRC})
+target_include_directories(natgridmodule PRIVATE natgrid/Include)
+python_extension_module(natgridmodule)
+install(TARGETS natgridmodule LIBRARY DESTINATION bdsf/nat)
