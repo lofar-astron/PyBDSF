@@ -23,6 +23,7 @@ jobs:
     - name: install 
       run: |
         sudo apt-get install -y libboost-python-dev libboost-numpy-dev
+        python -m pip -U pip
         python -m pip install .
         cd test && python tbdsf_process_image.py
     - name: test
