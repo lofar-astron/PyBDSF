@@ -17,13 +17,14 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    # - name: pre-install
-    #   run: |
-        # sudo apt-get install -y libboost-python-dev libboost-numpy-dev
-    - name: build 
+    - name: pre-install
+      run: |
+        sudo apt-get install -y libboost-python-dev libboost-numpy-dev
+    - name: install 
       run: |
         sudo apt-get install -y libboost-python-dev libboost-numpy-dev
         python -m pip install .
-    # - name: test
-    #   run: |
+        cd test && python tbdsf_process_image.py
+    - name: test
+      run: |
         cd test && python tbdsf_process_image.py
