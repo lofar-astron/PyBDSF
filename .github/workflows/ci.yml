@@ -19,7 +19,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: pre-install
       run: |
-        sudo apt-get install -y libboost-python-dev
+        sudo apt-get install -y libboost-python-dev libboost-numpy-dev
     - name: install 
       run: |
         python -m pip install .
