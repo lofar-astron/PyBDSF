@@ -1,4 +1,4 @@
-name: Python package build and test
+name: Build and test PyBDSF
 
 on: [push, pull_request]
 
