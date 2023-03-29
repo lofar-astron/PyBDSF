@@ -2,3 +2,6 @@
 requires = ["setuptools<65.6",
             "wheel", 
             "oldest-supported-numpy"]
+
+[tool.cibuildwheel]
+before-build = "cibuildwheel/before_build.sh"
