@@ -18,7 +18,7 @@ jobs:
         id: install-boost
         with:
           boost_version: 1.76.0
-
+          platform_version: 20.04
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.1
         env:
