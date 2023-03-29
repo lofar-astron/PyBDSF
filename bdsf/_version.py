@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.10.2'
+__version__ = '1.10.3a1'
 
 
 # Changelog
