@@ -247,12 +247,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         numx = 1
     numy = int(N.ceil(float(len(images))/float(numx)))
     fig = pl.figure(figsize=(max(15, 10.0*float(numy)/float(numx)), 10.0))
-    try:
-        # This way has been deprecated with Matplotlib 3.4.
-        fig.canvas.set_window_title('PyBDSM Fit Results for '+ img.filename)
-    except AttributeError:
-        # We are on a newer Matplotlib where the above is deprecated.
-        fig.canvas.manager.set_window_title('PyBDSM Fit Results for '+ img.filename)
+    fig.canvas.manager.set_window_title('PyBDSM Fit Results for '+ img.filename)
     gray_palette = cm.gray
     gray_palette.set_bad('k')
 
