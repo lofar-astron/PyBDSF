@@ -14,8 +14,8 @@ FILE="${LONG_NAME}.tar.bz2"
 
 URL="${BASE_URL}/${DIRECTORY}/${FILE}"
 
-rm -rf /build
-mkdir -p /build
-cd /build
+rm -rf ${BOOST_BUILD_DIR}
+mkdir -p ${BOOST_BUILD_DIR}
+cd ${BOOST_BUILD_DIR}
 curl -o - ${URL} | tar -xjf -
 mv ${LONG_NAME} ${NAME}

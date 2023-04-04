@@ -8,9 +8,9 @@ THREADS=$(nproc)
 
 # rm -rf /build
 # mkdir /build
-cd /build/boost
+cd ${BOOST_BUILD_DIR}/boost
 # tar xjf /src/boost.tar.bz2
-./bootstrap.sh --prefix=${BOOST_PREFIX} \
+./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} \
   --with-libraries=python \
   --with-python=/opt/python/${TARGET}/bin/python \
   --with-python-version=${PYMAJOR}.${PYMINOR} \
