@@ -13,6 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup GNU Fortran
+        uses: modflowpy/install-gfortran-action@v1
+        id: macos-setup-fortran
+        if: runner.os == 'macOS'
+        with:
+          compiler: gcc
+          version: 11
+
       # - name: Install boost
       #   uses: MarkusJx/install-boost@v2.4.1
       #   id: install-boost
