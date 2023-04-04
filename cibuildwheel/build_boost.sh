@@ -6,6 +6,12 @@ PYUNICODE=$([ ${PYMAJOR} -eq 3 -a ${PYMINOR} -le 7 ] && echo "m" || echo "")
 TARGET=cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
 THREADS=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
 
+CFLAGS="${CFLAGS} $(python-config --cflags)"
+LDFLAGS=${LDFLAGS} $(python-config --ldflags)"
+
+echo "===> CFLAGS=${CFLAGS} <==="
+echo "===> LDFLAGS=${LDFLAGS} <==="
+
 # rm -rf /build
 # mkdir /build
 cd ${BOOST_BUILD_DIR}/boost
