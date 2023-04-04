@@ -6,13 +6,17 @@ requires = [
 ]
 
 [tool.cibuildwheel]
-build = "cp*-*x86_64"
-build-verbosity = 3
-environment = """ \
-    CFLAGS="-I/opt/boost/include -L/opt/boost/lib" \
-    LD_LIBRARY_PATH="/opt/boost/lib:/usr/local/lib" \
-"""
+before-all = "cibuildwheel/download_boost.sh"
+build = "cp*"
 skip = ["cp311-*", "pp*"]
 
 [tool.cibuildwheel.linux]
 before-build = "cibuildwheel/build_boost.sh"
+build = "cp*-manylinux_x86_64"
+build-verbosity = 3
+environment = """ \
+    BOOST_VERSION="1.76.0" \
+    BOOST_PREFIX="/opt/boost" \
+    CFLAGS="-I${BOOST_PREFIX}/include -L${BOOST_PREFIX}/lib" \
+    LD_LIBRARY_PATH="${BOOST_PREFIX}/lib" \
+"""
