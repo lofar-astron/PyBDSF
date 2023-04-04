@@ -9,24 +9,28 @@ THREADS=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
 PY_INC_DIR=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
 # LDFLAGS="${LDFLAGS-} $(python-config --ldflags)"
 
-echo "===> CFLAGS=${CFLAGS} <==="
+which python
+python --version
+# echo "===> CFLAGS=${CFLAGS} <==="
 # echo "===> LDFLAGS=${LDFLAGS} <==="
 
-find / -name "*fortran*" -ls 2>/dev/null
-exit 1
+# find / -name "*fortran*" -ls 2>/dev/null
+# exit 1
 
 # rm -rf /build
 # mkdir /build
 cd ${BOOST_BUILD_DIR}/boost
 # tar xjf /src/boost.tar.bz2
 ./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} \
-  --with-libraries=python \
-  --with-python=/opt/python/${TARGET}/bin/python \
-  --with-python-version=${PYMAJOR}.${PYMINOR} \
-  --with-python-root=/opt/python/${TARGET}
+  --with-libraries=python
 ./b2 -j${THREADS} \
   cxxflags="-fPIC -I${PY_INC_DIR}" \
   link=static,shared install
+# ./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} \
+#   --with-libraries=python \
+#   --with-python=/opt/python/${TARGET}/bin/python \
+#   --with-python-version=${PYMAJOR}.${PYMINOR} \
+#   --with-python-root=/opt/python/${TARGET}
 # ./b2 -j${THREADS} \
 #   cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
 #   link=static,shared install
