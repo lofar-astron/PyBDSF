@@ -6,14 +6,14 @@ PYUNICODE=$([ ${PYMAJOR} -eq 3 -a ${PYMINOR} -le 7 ] && echo "m" || echo "")
 TARGET=cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
 THREADS=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
 
-CFLAGS="${CFLAGS-} $(python-config --cflags)"
-LDFLAGS="${LDFLAGS-} $(python-config --ldflags)"
+PY_INC_DIR=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
+# LDFLAGS="${LDFLAGS-} $(python-config --ldflags)"
 
 echo "===> CFLAGS=${CFLAGS} <==="
-echo "===> LDFLAGS=${LDFLAGS} <==="
+# echo "===> LDFLAGS=${LDFLAGS} <==="
 
-find / -name pyconfig.h -ls
-exit 1
+# find / -name pyconfig.h -ls 2>/dev/null
+# exit 1
 
 # rm -rf /build
 # mkdir /build
@@ -25,5 +25,8 @@ cd ${BOOST_BUILD_DIR}/boost
   --with-python-version=${PYMAJOR}.${PYMINOR} \
   --with-python-root=/opt/python/${TARGET}
 ./b2 -j${THREADS} \
-  cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
+  cxxflags="-fPIC -I${PY_INC_DIR}" \
   link=static,shared install
+# ./b2 -j${THREADS} \
+#   cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
+#   link=static,shared install
