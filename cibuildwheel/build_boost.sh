@@ -12,8 +12,8 @@ PY_INC_DIR=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
 echo "===> CFLAGS=${CFLAGS} <==="
 # echo "===> LDFLAGS=${LDFLAGS} <==="
 
-# find / -name pyconfig.h -ls 2>/dev/null
-# exit 1
+find / -name "*fortran*" -ls 2>/dev/null
+exit 1
 
 # rm -rf /build
 # mkdir /build
