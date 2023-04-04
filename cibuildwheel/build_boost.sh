@@ -34,3 +34,6 @@ cd ${BOOST_BUILD_DIR}/boost
 # ./b2 -j${THREADS} \
 #   cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
 #   link=static,shared install
+
+find / -name "*libboost_python36*" -ls 2>/dev/null
+exit 1

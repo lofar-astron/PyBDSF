@@ -17,9 +17,9 @@ jobs:
         uses: modflowpy/install-gfortran-action@v1
         id: macos-setup-fortran
         if: runner.os == 'macOS'
-        with:
-          compiler: gcc
-          version: 11
+        # with:
+        #   compiler: gcc
+        #   version: 11
 
       # - name: Install boost
       #   uses: MarkusJx/install-boost@v2.4.1
