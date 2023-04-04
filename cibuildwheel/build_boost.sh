@@ -6,11 +6,14 @@ PYUNICODE=$([ ${PYMAJOR} -eq 3 -a ${PYMINOR} -le 7 ] && echo "m" || echo "")
 TARGET=cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
 THREADS=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
 
-CFLAGS+=" $(python-config --cflags)"
-LDFLAGS+=" $(python-config --ldflags)"
+CFLAGS="${CFLAGS-} $(python-config --cflags)"
+LDFLAGS="${LDFLAGS-} $(python-config --ldflags)"
 
 echo "===> CFLAGS=${CFLAGS} <==="
 echo "===> LDFLAGS=${LDFLAGS} <==="
+
+find / -name pyconfig.h -ls
+exit 1
 
 # rm -rf /build
 # mkdir /build
@@ -21,7 +24,6 @@ cd ${BOOST_BUILD_DIR}/boost
   --with-python=/opt/python/${TARGET}/bin/python \
   --with-python-version=${PYMAJOR}.${PYMINOR} \
   --with-python-root=/opt/python/${TARGET}
-ls -l
 ./b2 -j${THREADS} \
   cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
   link=static,shared install
