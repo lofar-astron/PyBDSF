@@ -10,10 +10,10 @@ build = "cp*"
 skip = ["cp311-*", "pp*"]
 
 [tool.cibuildwheel.macos]
-before-all = [
-    "brew install gcc"
-    "cibuildwheel/download_boost.sh"
-]
+before-all = """
+    brew install gcc \
+    cibuildwheel/download_boost.sh \
+"""
 before-build = "cibuildwheel/build_boost.sh"
 build = "cp*-macosx_x86_64"
 build-verbosity = 1
