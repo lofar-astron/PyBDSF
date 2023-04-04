@@ -16,7 +16,7 @@ build = "cp*-macosx_x86_64"
 environment = """ \
     BOOST_VERSION="1.76.0" \
     BOOST_BUILD_DIR="/tmp/boost-build" \
-    BOOST_INSTALL_DIR="/opt/boost" \
+    BOOST_INSTALL_DIR="${HOME}/boost" \
     CFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
@@ -29,7 +29,7 @@ build-verbosity = 3
 environment = """ \
     BOOST_VERSION="1.76.0" \
     BOOST_BUILD_DIR="/tmp/boost-build" \
-    BOOST_INSTALL_DIR="/opt/boost" \
+    BOOST_INSTALL_DIR="${HOME}/boost" \
     CFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
