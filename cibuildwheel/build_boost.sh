@@ -11,11 +11,12 @@ PY_INC_DIR=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
 
 which python
 python --version
-# echo "===> CFLAGS=${CFLAGS} <==="
-# echo "===> LDFLAGS=${LDFLAGS} <==="
+echo "===> CFLAGS=${CFLAGS-} <==="
+echo "===> LDFLAGS=${LDFLAGS-} <==="
+echo "===> LD_LIBRARY_PATH=${LD_LIBRARY_PATH-} <==="
 
 # find / -name "*fortran*" -ls 2>/dev/null
-# exit 1
+exit 1
 
 # rm -rf /build
 # mkdir /build
@@ -35,5 +36,6 @@ cd ${BOOST_BUILD_DIR}/boost
 #   cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
 #   link=static,shared install
 
-find / -name "*libboost_python36*" -ls 2>/dev/null
-exit 1
+# find / -name "*libboost_python36*" -ls 2>/dev/null
+# output: /Users/runner/boost/lib/libboost_python36.dylib
+# exit 1
