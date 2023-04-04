@@ -4,7 +4,7 @@ PYMAJOR=$(python -c 'import sys; print(sys.version_info.major)')
 PYMINOR=$(python -c 'import sys; print(sys.version_info.minor)')
 PYUNICODE=$([ ${PYMAJOR} -eq 3 -a ${PYMINOR} -le 7 ] && echo "m" || echo "")
 TARGET=cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
-THREADS=$(nproc)
+THREADS=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
 
 # rm -rf /build
 # mkdir /build
