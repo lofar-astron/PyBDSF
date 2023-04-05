@@ -25,7 +25,7 @@ echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH-}"
 echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH-}"
 
 # # find / -name "*fortran*" -ls 2>/dev/null
-exit 1
+# exit 1
 
 # rm -rf /build
 # mkdir /build
