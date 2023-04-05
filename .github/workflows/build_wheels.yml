@@ -33,6 +33,13 @@ jobs:
         # env:
         #   BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
+      - name: Archive wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheelhouse
+          path: |
+            wheelhouse
+
       # - uses: actions/upload-artifact@v3
       #   with:
       #     path: ./wheelhouse/*.whl
