@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -ex
 
 PYMAJOR=$(python -c 'import sys; print(sys.version_info.major)')
 PYMINOR=$(python -c 'import sys; print(sys.version_info.minor)')
@@ -11,9 +11,12 @@ PY_INC_DIR=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
 
 which python
 python --version
-echo "===> CFLAGS=${CFLAGS-} <==="
-echo "===> LDFLAGS=${LDFLAGS-} <==="
-echo "===> LD_LIBRARY_PATH=${LD_LIBRARY_PATH-} <==="
+
+echo "BOOST_VERSION=${BOOST_VERSION}"
+echo "BOOST_BUILD_DIR=${BOOST_BUILD_DIR}"
+echo "BOOST_INSTALL_DIR=${BOOST_INSTALL_DIR}"
+echo "CFLAGS=${CFLAGS}"
+echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
 
 # find / -name "*fortran*" -ls 2>/dev/null
 exit 1
