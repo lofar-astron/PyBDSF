@@ -7,19 +7,25 @@ TARGET=cp${PYMAJOR}${PYMINOR}-cp${PYMAJOR}${PYMINOR}${PYUNICODE}
 THREADS=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
 
 PY_INC_DIR=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
+PLATFORM=$(python -c 'import sys; print(sys.platform)')
+
+echo "PLATFORM=${PLATFORM}"
+
 # LDFLAGS="${LDFLAGS-} $(python-config --ldflags)"
 
-# which python
-# python --version
+which python
+python --version
 
-# echo "BOOST_VERSION=${BOOST_VERSION}"
-# echo "BOOST_BUILD_DIR=${BOOST_BUILD_DIR}"
-# echo "BOOST_INSTALL_DIR=${BOOST_INSTALL_DIR}"
-# echo "CFLAGS=${CFLAGS}"
-# echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}"
+echo "BOOST_VERSION=${BOOST_VERSION-}"
+echo "BOOST_BUILD_DIR=${BOOST_BUILD_DIR-}"
+echo "BOOST_INSTALL_DIR=${BOOST_INSTALL_DIR-}"
+echo "CFLAGS=${CFLAGS-}"
+echo "LDFLAGS=${LDFLAGS-}"
+echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH-}"
+echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH-}"
 
 # # find / -name "*fortran*" -ls 2>/dev/null
-# exit 1
+exit 1
 
 # rm -rf /build
 # mkdir /build
