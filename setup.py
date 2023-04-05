@@ -230,8 +230,8 @@ def main():
             "src/c++/num_util/num_util.cpp"
         ],
         libraries=libraries,
-        include_dirs=["src/c++", boost_python_includedir, boost_numpy_includedir, numpy.get_include()],
-        library_dirs=[join(srcpath, "minpack"), join(srcpath, "port3"), boost_python_libdir, boost_numpy_libdir]
+        include_dirs=[item for item in ("src/c++", boost_python_includedir, boost_numpy_includedir, numpy.get_include()) if item],
+        library_dirs=[item for item in (join(srcpath, "minpack"), join(srcpath, "port3"), boost_python_libdir, boost_numpy_libdir) if item],
     ))
 
     extensions.append(Extension(
