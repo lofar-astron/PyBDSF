@@ -24,7 +24,7 @@ function build_boost_python
     install
 }
 
-find /usr -name "libgfortran*" -ls 2>/dev/null
+find /usr -name "libgfortran*" -ls 2>/dev/null || true
 
 set -o pipefail
 install_numpy
