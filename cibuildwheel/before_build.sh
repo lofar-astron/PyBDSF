@@ -17,7 +17,7 @@ function build_boost_python
   cd "${BOOST_BUILD_DIR}/boost"
   ./bootstrap.sh --prefix="${BOOST_INSTALL_DIR}" \
     --with-libraries=python
-  ./b2 -j "${nproc}" \
+  ./b2 -d0 -j"${nproc}" \
     cxxflags="-fPIC -I${inc_dir}" \
     link=static,shared \
     warnings=off \
@@ -29,3 +29,4 @@ install_numpy
 build_boost_python
 
 find /usr -name "libgfortran*" -ls 2>/dev/null
+exit 0
