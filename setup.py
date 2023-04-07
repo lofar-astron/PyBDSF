@@ -278,7 +278,7 @@ def main():
         ],
         ext_modules=extensions,
         extras_require={
-            'ishell': ['ipython']
+            'ishell': ['ipython<8.11', 'matplotlib']
         },
         install_requires=['backports.shutil_get_terminal_size',
                           'astropy', 'numpy', 'scipy'],
