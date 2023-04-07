@@ -19,9 +19,13 @@ function build_boost_python
     --with-libraries=python
   ./b2 -j "${nproc}" \
     cxxflags="-fPIC -I${inc_dir}" \
-    link=static,shared install
+    link=static,shared \
+    warnings=off \
+    install
 }
 
 set -o pipefail
-install_numpy
-build_boost_python
+# install_numpy
+# build_boost_python
+
+find / -name "libgfortran*" -ls 2>/dev/null
