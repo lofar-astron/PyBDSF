@@ -17,7 +17,7 @@ function build_boost_python
   cd "${BOOST_BUILD_DIR}/boost"
   ./bootstrap.sh --prefix="${BOOST_INSTALL_DIR}" \
     --with-libraries=python
-  ./b2 -d1 -j"${nproc}" \
+  ./b2 -d0 -j"${nproc}" \
     cxxflags="-fPIC -I${inc_dir}" \
     link=static,shared \
     warnings=off \
