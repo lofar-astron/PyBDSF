@@ -28,4 +28,4 @@ set -o pipefail
 # install_numpy
 # build_boost_python
 
-find / -name "libgfortran*" -ls 2>/dev/null
+find /usr -name "libgfortran*" -ls 2>/dev/null
