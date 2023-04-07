@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-11]  # [ubuntu-20.04, windows-2019, macos-11]
+        os: [macos-latest] # ubuntu-latest] 
 
     steps:
       - uses: actions/checkout@v3
@@ -17,21 +17,9 @@ jobs:
         uses: modflowpy/install-gfortran-action@v1
         id: macos-setup-fortran
         if: runner.os == 'macOS'
-        # with:
-        #   compiler: gcc
-        #   version: 11
-
-      # - name: Install boost
-      #   uses: MarkusJx/install-boost@v2.4.1
-      #   id: install-boost
-      #   with:
-      #     boost_version: 1.76.0
-      #     platform_version: 20.04
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.1
-        # env:
-        #   BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
       - name: Archive wheels
         uses: actions/upload-artifact@v3
@@ -40,7 +28,18 @@ jobs:
           path: |
             wheelhouse
 
-      # - uses: actions/upload-artifact@v3
-      #   with:
-      #     path: ./wheelhouse/*.whl
+  #     - name: Upload wheels
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         path: ./wheelhouse/*.whl
+
+  # build_sdist:
+  #   name: Build source distribution
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+
+  #     - name: Build sdist
+        
 
