@@ -1,7 +1,11 @@
 #!/bin/bash -eux
 #
-# This script should be called by `cibuildwheel` in the `before-build` stage.
-# Environment variables `BOOST_VERSION` and `BOOST_BUILD_DIR` must be set.
+# This script should be called by `cibuildwheel` in the `before-all` stage.
+#
+# This script will download and untar the Boost C++ source files.
+# `${BOOST_VERSION}` should be set as `x.y.z`; the untarred sources can be
+# found in the directory `${BOOST_BUILD_DIR}/boost`.
+# Both environment variables must have been set.
 
 # Download and untar the Boost C++ source files
 # Rename the source directory to `boost`

@@ -27,10 +27,7 @@ echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH-}"
 # # find / -name "*fortran*" -ls 2>/dev/null
 # exit 1
 
-# rm -rf /build
-# mkdir /build
 cd ${BOOST_BUILD_DIR}/boost
-# tar xjf /src/boost.tar.bz2
 ./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} \
   --with-libraries=python
 ./b2 -j${THREADS} \
@@ -44,7 +41,3 @@ cd ${BOOST_BUILD_DIR}/boost
 # ./b2 -j${THREADS} \
 #   cxxflags="-fPIC -I/opt/python/${TARGET}/include/python${PYMAJOR}.${PYMINOR}${PYUNICODE}/" \
 #   link=static,shared install
-
-# find / -name "*libboost_python36*" -ls 2>/dev/null
-# output: /Users/runner/boost/lib/libboost_python36.dylib
-# exit 1
