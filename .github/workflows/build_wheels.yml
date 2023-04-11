@@ -9,26 +9,26 @@ jobs:
     strategy:
       matrix:
         # os: [macos-latest] # ubuntu-latest
-        os: [macos-10.15] # [macos-11, ubuntu-20.04]
+        os: [macos-11] # [macos-10.15] # [macos-11, ubuntu-20.04]
 
     steps:
       - uses: actions/checkout@v3
 
-      # - name: Setup GNU Fortran
-      #   uses: modflowpy/install-gfortran-action@v1
-      #   id: macos-setup-fortran
-      #   if: runner.os == 'macOS'
-
-      - name: Symlink gfortran (macOS)
+      - name: Setup GNU Fortran
+        uses: modflowpy/install-gfortran-action@v1
+        id: macos-setup-fortran
         if: runner.os == 'macOS'
-        run: |
-          # make sure gfortran is available
-          # https://github.com/actions/virtual-environments/issues/2524
-          # https://github.com/cbg-ethz/dce/blob/master/.github/workflows/pkgdown.yaml
-          sudo ln -s /usr/local/bin/gfortran-10 /usr/local/bin/gfortran
-          sudo mkdir /usr/local/gfortran
-          sudo ln -s /usr/local/Cellar/gcc@10/*/lib/gcc/10 /usr/local/gfortran/lib
-          gfortran --version
+
+      # - name: Symlink gfortran (macOS)
+      #   if: runner.os == 'macOS'
+      #   run: |
+      #     # make sure gfortran is available
+      #     # https://github.com/actions/virtual-environments/issues/2524
+      #     # https://github.com/cbg-ethz/dce/blob/master/.github/workflows/pkgdown.yaml
+      #     sudo ln -s /usr/local/bin/gfortran-10 /usr/local/bin/gfortran
+      #     sudo mkdir /usr/local/gfortran
+      #     sudo ln -s /usr/local/Cellar/gcc@10/*/lib/gcc/10 /usr/local/gfortran/lib
+      #     gfortran --version
 
       - name: Build and test wheels
         uses: pypa/cibuildwheel@v2.12.1
