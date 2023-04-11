@@ -281,7 +281,7 @@ def main():
             'ishell': ['ipython<8.11', 'matplotlib']
         },
         install_requires=['backports.shutil_get_terminal_size',
-                          'astropy', 'numpy', 'scipy'],
+                          'astropy', 'oldest_supported_numpy', 'scipy'],
         entry_points = {
             'console_scripts': [
                 'pybdsf = bdsf.pybdsf:main [ishell]',
