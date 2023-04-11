@@ -17,6 +17,11 @@ environment = """ \
     CFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
+# test-command = "cd test && python tbdsf_process_image.py"
+test-command = [
+    "cd {package}/test",
+    "python tbdsf_process_image.py"
+]
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = """\
