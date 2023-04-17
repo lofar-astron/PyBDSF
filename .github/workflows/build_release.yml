@@ -13,34 +13,34 @@ jobs:
       - name: Build sdist
 
 
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04, macos-11]
+  # build_wheels:
+  #   name: Build wheels on ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     matrix:
+  #       os: [ubuntu-20.04, macos-11]
 
-    steps:
-      - uses: actions/checkout@v3
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Setup GNU Fortran
-        uses: modflowpy/install-gfortran-action@v1
-        id: macos-setup-fortran
-        if: runner.os == 'macOS'
+  #     - name: Setup GNU Fortran
+  #       uses: modflowpy/install-gfortran-action@v1
+  #       id: macos-setup-fortran
+  #       if: runner.os == 'macOS'
 
-      - name: Build and test wheels
-        uses: pypa/cibuildwheel@v2.12.1
+  #     - name: Build and test wheels
+  #       uses: pypa/cibuildwheel@v2.12.1
 
-      - name: Archive wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheelhouse
-          path: |
-            wheelhouse
+  #     - name: Archive wheels
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: wheelhouse
+  #         path: |
+  #           wheelhouse
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
+  #     - name: Upload wheels
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         path: ./wheelhouse/*.whl
 
 
