@@ -17,9 +17,9 @@ environment = """ \
     BOOST_INSTALL_DIR="${HOME}/boost" \
     CFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
-    CC=gcc
-    CXX=g++
-    FC=gfortran
+    CC=gcc \
+    CXX=g++ \
+    FC=gfortran \
 """
 test-command = "cd {package}/test && python tbdsf_process_image.py"
 
