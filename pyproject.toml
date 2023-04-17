@@ -1,8 +1,9 @@
 [build-system]
 requires = [
+    "build",
+    "oldest-supported-numpy",
     "setuptools<65.6",
     "wheel",
-    "oldest-supported-numpy"
 ]
 
 [tool.cibuildwheel]
