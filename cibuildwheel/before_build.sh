@@ -25,7 +25,6 @@ function build_boost_python
   ./b2 -d0 -j"${nproc}" \
     cxxflags="-fPIC -I${inc_dir}" \
     link=static,shared \
-    warnings=off \
     install
 }
 
