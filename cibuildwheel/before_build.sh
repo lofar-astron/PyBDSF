@@ -21,8 +21,8 @@ function build_boost_python
   inc_dir=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
   cd "${BOOST_BUILD_DIR}/boost"
   ./bootstrap.sh --prefix="${BOOST_INSTALL_DIR}" \
-    --tool-set=gcc \
-    --with-libraries=python
+    --with-libraries=python \
+    --with-toolset=gcc
   ./b2 -j"${nproc}" \
     cxxflags="-fPIC -I${inc_dir}" \
     link=static,shared \
@@ -30,6 +30,14 @@ function build_boost_python
 }
 
 # find /usr -name "libgfortran*" -ls 2>/dev/null || true
+
+echo "CC=${CC}"
+echo "CXX=${CXX}"
+echo "FC=${FC}"
+
+${CC} --version
+${CXX} --version
+${FC} --version
 
 set -o pipefail
 install_numpy
