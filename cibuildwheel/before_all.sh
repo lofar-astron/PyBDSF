@@ -30,7 +30,5 @@ function download_and_untar_boost
   mv "${long_name}" "${name}"
 }
 
-# find /usr -name "*gfortran*" -ls 2>/dev/null || true
-
 set -o pipefail
 download_and_untar_boost

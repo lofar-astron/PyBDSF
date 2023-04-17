@@ -29,16 +29,6 @@ function build_boost_python
     install
 }
 
-# find /usr -name "libgfortran*" -ls 2>/dev/null || true
-
-echo "CC=${CC}"
-echo "CXX=${CXX}"
-echo "FC=${FC}"
-
-${CC} --version
-${CXX} --version
-${FC} --version
-
 set -o pipefail
 install_numpy
 build_boost_python

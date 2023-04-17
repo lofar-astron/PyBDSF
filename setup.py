@@ -126,13 +126,6 @@ def find_library_file(libname):
         lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
 
     compiler = ccompiler.new_compiler()
-
-    print("===> compiler:", compiler)
-    print("compiler.find_library_file(", lib_dirs, ",", libname, ")")
-    result = compiler.find_library_file(lib_dirs, libname)
-    print("result:", result, "<===")
-    return result
-
     return compiler.find_library_file(lib_dirs, libname)
 
 
