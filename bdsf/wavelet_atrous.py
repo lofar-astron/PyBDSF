@@ -171,6 +171,7 @@ class Op_wavelet_atrous(Op):
               wimg.bbspatchnum = img.bbspatchnum
               wimg.waveletimage = True
               wimg.j = j
+              wimg.indir = img.indir
               if hasattr(img, '_adapt_rms_isl_pos'):
                   wimg._adapt_rms_isl_pos = img._adapt_rms_isl_pos
 
