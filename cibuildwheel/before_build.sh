@@ -24,7 +24,6 @@ function build_boost_python
     --with-libraries=python \
     --with-toolset=gcc
   ./b2 -j"${nproc}" \
-    architecture="arm" \
     cxxflags="-fPIC -I${inc_dir}" \
     link=static,shared \
     install
