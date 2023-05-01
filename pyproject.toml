@@ -9,7 +9,7 @@ requires = [
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
-build = "cp3{6,7,8,9,10}-*_x86_64"
+build = "cp3{6,7,8,9,10}-*_arm64"
 build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.76.0" \
