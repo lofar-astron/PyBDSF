@@ -15,11 +15,10 @@ environment = """ \
     BOOST_VERSION="1.76.0" \
     BOOST_BUILD_DIR="/tmp/boost-build" \
     BOOST_INSTALL_DIR="${HOME}/boost" \
-    CC=clang \
-    CXX=clang++ \
+    CC=gcc \
+    CXX=g++ \
     CXXFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" \
     FC=gfortran \
-    LDFLAGS="-L/usr/local/Cellar/gcc/12.2.0/lib/gcc/current" \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
 test-command = "cd {package}/test && python tbdsf_process_image.py"
