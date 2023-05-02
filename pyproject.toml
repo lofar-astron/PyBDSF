@@ -21,7 +21,6 @@ environment = """ \
     FC=gfortran \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
-skip = ["cp3{6,7,9,10}-*"]
 test-command = "cd {package}/test && python tbdsf_process_image.py"
 
 [tool.cibuildwheel.macos]
@@ -32,5 +31,5 @@ repair-wheel-command = """\
 # skip = ["cp3{6,7,9,10}-*"]
 
 [tool.cibuildwheel.linux]
-skip = ["*-musllinux_*"]
-# skip = ["cp3{6,7,9,10}-*", "*-musllinux_*"]
+# skip = ["*-musllinux_*"]
+skip = ["cp3{6,7,9,10}-*", "*-musllinux_*"]
