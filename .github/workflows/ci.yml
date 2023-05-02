@@ -1,10 +1,6 @@
 name: Build and test PyBDSF
 
-# on: [push, pull_request]
-on:
-  push:
-    branches:
-      - master
+on: [push, pull_request]
 
 jobs:
   build:
