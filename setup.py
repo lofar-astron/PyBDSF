@@ -10,15 +10,15 @@ from skbuild import setup  # This line replaces 'from setuptools import setup'
 # import sys
 # from ctypes.util import find_library
 from os.path import join, realpath, dirname
-# import subprocess
-# import glob
-# import distutils.cmd
-# import distutils.log
-# from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
-# from distutils.command.clean import clean as distutils_clean
-# from distutils import ccompiler
-# import os
-# import warnings
+# # import subprocess
+# # import glob
+# # import distutils.cmd
+# # import distutils.log
+# # from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
+# # from distutils.command.clean import clean as distutils_clean
+# # from distutils import ccompiler
+# # import os
+# # import warnings
 
 
 no_boost_error = """
