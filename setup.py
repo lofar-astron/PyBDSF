@@ -230,8 +230,8 @@ def main():
             "src/c++/num_util/num_util.cpp"
         ],
         libraries=libraries,
-        include_dirs=["src/c++", boost_python_includedir, boost_numpy_includedir, numpy.get_include()],
-        library_dirs=[join(srcpath, "minpack"), join(srcpath, "port3"), boost_python_libdir, boost_numpy_libdir]
+        include_dirs=[item for item in ("src/c++", boost_python_includedir, boost_numpy_includedir, numpy.get_include()) if item],
+        library_dirs=[item for item in (join(srcpath, "minpack"), join(srcpath, "port3"), boost_python_libdir, boost_numpy_libdir) if item],
     ))
 
     extensions.append(Extension(
@@ -247,7 +247,7 @@ def main():
 
     setup(
         name='bdsf',
-        version='1.10.2',
+        version='1.10.3a2',
         author='David Rafferty',
         author_email='drafferty@hs.uni-hamburg.de',
         url='https://github.com/lofar-astron/PyBDSF',
@@ -262,7 +262,6 @@ def main():
             'Programming Language :: C++',
             'Programming Language :: Fortran',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
@@ -271,7 +270,7 @@ def main():
         ],
         ext_modules=extensions,
         extras_require={
-            'ishell': ['ipython']
+            'ishell': ['ipython<8.11', 'matplotlib']
         },
         install_requires=['backports.shutil_get_terminal_size',
                           'astropy', 'numpy', 'scipy'],

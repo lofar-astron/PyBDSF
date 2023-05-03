@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.10.2'
+__version__ = '1.10.3a2'
 
 
 # Changelog
@@ -12,6 +12,11 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2023/xx/yy - Version 1.10.3
+
+    2023/05/xx - Use `cibuildwheel` to build binary wheels for Linux and
+        MacOS (Intel). Drop support for Python 3.6
+
     2023/02/10 - Version 1.10.2
 
     2023/02/10 - Fix issues with numpy versions >= 1.24 (#193)
