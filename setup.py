@@ -10,24 +10,24 @@ from skbuild import setup  # This line replaces 'from setuptools import setup'
 # import sys
 # from ctypes.util import find_library
 from os.path import join, realpath, dirname
-# # import subprocess
-# # import glob
-# # import distutils.cmd
-# # import distutils.log
-# # from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
-# # from distutils.command.clean import clean as distutils_clean
-# # from distutils import ccompiler
-# # import os
-# # import warnings
+# import subprocess
+# import glob
+# import distutils.cmd
+# import distutils.log
+# from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
+# from distutils.command.clean import clean as distutils_clean
+# from distutils import ccompiler
+# import os
+# import warnings
 
 
-no_boost_error = """
-Could not find a Python boost library! Please use your package manager to install boost.
+# no_boost_error = """
+# Could not find a Python boost library! Please use your package manager to install boost.
 
-Or install it manually:
+# Or install it manually:
 
-http://boostorg.github.io/python/doc/html/index.html
-"""
+# http://boostorg.github.io/python/doc/html/index.html
+# """
 
 # minpack_src = ["lmder.f", "lmpar.f", "qrfac.f", "qrsolv.f", "enorm.f", "dpmpar.f"]
 # port3_src = ["dnsg.f", "dn2g.f", "drnsg.f", "drn2g.f", "d1mach.f", "da7sst.f",
@@ -248,7 +248,7 @@ http://boostorg.github.io/python/doc/html/index.html
 
 setup(
     name='bdsf',
-    version='1.10.3a1',
+    version='1.11.0a1',
     author='David Rafferty',
     author_email='drafferty@hs.uni-hamburg.de',
     url='https://github.com/lofar-astron/PyBDSF',
@@ -263,7 +263,6 @@ setup(
         'Programming Language :: C++',
         'Programming Language :: Fortran',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
