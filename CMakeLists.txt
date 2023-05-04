@@ -1,24 +1,19 @@
 cmake_minimum_required(VERSION 3.11)
 project(PyBDSF C CXX Fortran)
-find_package(PythonExtensions REQUIRED)
-# include(FindPythonExtensions)
-include(UsePythonExtensions)
-find_package(Python3 REQUIRED COMPONENTS Development)
-# find_package(NumPy REQUIRED)
-find_package(F2PY)
-find_package(Boost COMPONENTS python numpy)
 
-# include_directories(${Python3_INCLUDE_DIRS})
-# include_directories(${Boost_INCLUDE_DIRS})
+find_package(PythonExtensions REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Development)
+find_package(F2PY REQUIRED)
+find_package(Boost REQUIRED COMPONENTS python numpy)
 
 if(SKBUILD)
-  message(STATUS "The project is built using scikit-build")
+    message(STATUS "The project is built using scikit-build")
+else()
+    # For some reason this variable needs to be set when not using scikit-build
+    set(PYTHON_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
 endif()
 
-
-# find_package(Python REQUIRED Development NumPy)
-# message(STATUS "Python_INCLUDE_DIRS=${Python_INCLUDE_DIRS}")
-
+## -- Static library: minpack -- ##
 set(MINPACK_SRC
     src/minpack/lmder.f
     src/minpack/lmpar.f
@@ -30,6 +25,7 @@ set(MINPACK_SRC
 add_library(minpack STATIC ${MINPACK_SRC})
 set_target_properties(minpack PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
+## -- Static library: port3 -- ##
 set(PORT3_SRC
     src/port3/dnsg.f
     src/port3/dn2g.f
@@ -84,36 +80,23 @@ set(PORT3_SRC
 add_library(port3 STATIC ${PORT3_SRC})
 set_target_properties(port3 PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
-# message(STATUS "NumPy_INCLUDE_DIRS=${NumPy_INCLUDE_DIRS}")
-# include_directories(${Numpy_INCLUDE_DIRS})
-
-# set(PYTESSELATE_MODULE_NAME "_pytesselate")
+## -- F2py module: pytesselate -- ##
+set(F2PY_MODULE_NAME "_pytesselate")
+set(F2PY_MODULE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${F2PY_MODULE_NAME}${PYTHON_EXTENSION_MODULE_SUFFIX})
 set(PYTESSELATE_SRC
-    src/fortran/pytess_simple.f
-    src/fortran/pytess_roundness.f
+    ${CMAKE_SOURCE_DIR}/src/fortran/pytess_roundness.f
+    ${CMAKE_SOURCE_DIR}/src/fortran/pytess_simple.f
 )
-set(PYTESSELATE_MODULE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PYTESSELATE_MODULE_NAME}${PYTHON_EXTENSION_MODULE_SUFFIX})
-add_custom_target(${PYTESSELATE_MODULE_NAME} ALL
-  DEPENDS ${PYTESSELATE_MODULE_FILE}
+add_custom_target(${F2PY_MODULE_NAME} ALL
+    DEPENDS ${F2PY_MODULE_FILE}
 )
 add_custom_command(
-  OUTPUT ${PYTESSELATE_MODULE_FILE}
-  COMMAND ${F2PY_EXECUTABLE}
-    -m ${PYTESSELATE_MODULE_NAME}
-    -c
-    ${PYTESSELATE_SRC}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
-# add_library(_pytesselate MODULE ${PYTESSELATE_SRC})
-# target_link_libraries(_pytesselate ${Boost_LIBRARIES})
-# set_target_properties(_pytesselate PROPERTIES PREFIX "")
-python_extension_module(_pytesselate)
-# add_python_extension(_pytesselate
-#     SOURCES ${PYTESSELATE_SRC}
-# )
-# install(TARGETS _pytesselate LIBRARY DESTINATION bdsf)
-install(TARGETS ${PYTESSELATE_MODULE_NAME} LIBRARY DESTINATION bdsf)
+    OUTPUT ${F2PY_MODULE_FILE}
+    COMMAND ${F2PY_EXECUTABLE} -m ${F2PY_MODULE_NAME} -c ${PYTESSELATE_SRC}
+)
+install(FILES ${F2PY_MODULE_FILE} DESTINATION bdsf)
 
+## -- Python module: _cbdsm -- ##
 set(CBDSM_SRC
     src/c++/Fitter_dn2g.cc
     src/c++/Fitter_dnsg.cc
@@ -124,18 +107,17 @@ set(CBDSM_SRC
     src/c++/stat.cc
     src/c++/num_util/num_util.cpp
 )
-include_directories(
+add_library(_cbdsm MODULE ${CBDSM_SRC})
+target_include_directories(_cbdsm PRIVATE
     ${Python3_INCLUDE_DIRS}
     ${Python3_NumPy_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/c++
 )
-add_library(_cbdsm MODULE ${CBDSM_SRC})
-# target_include_directories(_cbdsm PUBLIC ${Python3_INCLUDE_DIRS})
 target_link_libraries(_cbdsm minpack port3 gfortran ${Boost_LIBRARIES})
-# set_target_properties(_cbdsm PROPERTIES PREFIX "")
 python_extension_module(_cbdsm)
 install(TARGETS _cbdsm LIBRARY DESTINATION bdsf)
 
+## -- Python module: natgrid -- ##
 set(NATGRID_SRC
     natgrid/Src/natgrid.c
     natgrid/Src/natgridd.c
@@ -149,7 +131,6 @@ set(NATGRID_SRC
     natgrid/Src/nnuserd.c
     natgrid/Src/nnusers.c
 )
-
 add_library(natgridmodule MODULE ${NATGRID_SRC})
 target_include_directories(natgridmodule PRIVATE natgrid/Include)
 python_extension_module(natgridmodule)
