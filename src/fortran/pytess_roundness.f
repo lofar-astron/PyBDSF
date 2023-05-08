@@ -67,8 +67,8 @@ c! if code='s' then each pt belongs to one bin. If not then fuzzy tesselation
      /                 (j-ygens(k))*(j-ygens(k)))/wts
            if (dist.lt.dumr) then
             dumr=dist
-            minind(i,j)=k
-           end if               ! minind(i,j) is number of nearest generator
+            minind(i,j)=k       ! minind(i,j) is number of nearest generator
+           end if
           end do
          end do
         end do
