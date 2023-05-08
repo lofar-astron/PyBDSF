@@ -18,9 +18,9 @@ RUN /opt/python/${TARGET}/bin/pip install oldest-supported-numpy "setuptools<65.
 
 # download and build boost
 WORKDIR /build
-RUN curl https://ufpr.dl.sourceforge.net/project/boost/boost/1.76.0/boost_1_76_0.tar.bz2 --output boost.tar.bz2
+RUN curl https://ufpr.dl.sourceforge.net/project/boost/boost/1.81.0/boost_1_81_0.tar.bz2 --output boost.tar.bz2
 RUN tar jxf boost.tar.bz2
-WORKDIR /build/boost_1_76_0
+WORKDIR /build/boost_1_81_0
 RUN ./bootstrap.sh --prefix=/opt/boost \
     --with-libraries=python \
     --with-python=/opt/python/${TARGET}/bin/python \
