@@ -204,8 +204,8 @@ def main():
     fext = Extension(
         name="bdsf._pytesselate",
         sources=[
-            "src/fortran/pytess_simple.f",
-            "src/fortran/pytess_roundness.f"
+            "src/fortran/pytess_roundness.f",
+            "src/fortran/pytess_simple.f"
         ]
     )
     fext.f2py_options = [""]
