@@ -22,13 +22,13 @@ cf2py   intent(out) volrank
      /               (j-ygens(k))*(j-ygens(k)))/wts(k)
            if (dist.lt.dumr) then
             dumr=dist
-            minind(i,j)=k
-           end if               ! minind(i,j) is number of nearest generator
+            minind(i,j)=k       ! minind(i,j) is number of nearest generator
+           end if
           end do
          end do
-        end do      
+        end do
 c!
-        if (code.eq.'s') then   
+        if (code.eq.'s') then
          do j=1,m
           do i=1,n
            volrank(i,j)=1.d0*minind(i,j)
@@ -46,7 +46,7 @@ c!
      /                    (j-ygens(l))*(j-ygens(l)))/wts(l)
              if (dist.le.(1.d0+eps)*distmin)
      /           volrank(i,j)=volrank(i,j)+1.d0*(l+k)
-            end if           
+            end if
            end do
           end do
          end do
