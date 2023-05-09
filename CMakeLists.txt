@@ -2,15 +2,16 @@ cmake_minimum_required(VERSION 3.11)
 project(PyBDSF C CXX Fortran)
 
 find_package(PythonExtensions REQUIRED)
-find_package(Python3 REQUIRED COMPONENTS Development)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(F2PY REQUIRED)
-find_package(Boost REQUIRED COMPONENTS python numpy)
+find_package(Boost COMPONENTS python numpy REQUIRED)
 
 if(SKBUILD)
     message(STATUS "The project is built using scikit-build")
-else()
-    # For some reason this variable needs to be set when not using scikit-build
-    set(PYTHON_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
+    set(PYTHON_INCLUDE_DIRS
+        ${Python_INCLUDE_DIR}
+        ${Python_NumPy_INCLUDE_DIRS}
+    )
 endif()
 
 ## -- Static library: minpack -- ##
@@ -108,11 +109,7 @@ set(CBDSM_SRC
     src/c++/num_util/num_util.cpp
 )
 add_library(_cbdsm MODULE ${CBDSM_SRC})
-target_include_directories(_cbdsm PRIVATE
-    ${Python3_INCLUDE_DIRS}
-    ${Python3_NumPy_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/c++
-)
+target_include_directories(_cbdsm PRIVATE src/c++)
 target_link_libraries(_cbdsm minpack port3 gfortran ${Boost_LIBRARIES})
 python_extension_module(_cbdsm)
 install(TARGETS _cbdsm LIBRARY DESTINATION bdsf)
