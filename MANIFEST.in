@@ -1,3 +1,6 @@
+# Required scikit-build files
+include CMakeLists.txt
+
 # Required minpack sources
 include src/minpack/lmder.f
 include src/minpack/lmpar.f
