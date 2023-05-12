@@ -35,4 +35,3 @@ repair-wheel-command = """\
 
 [tool.cibuildwheel.linux]
 skip = ["*-musllinux_*"]
-
