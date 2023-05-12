@@ -1,5 +1,4 @@
 from skbuild import setup  # This line replaces 'from setuptools import setup'
-from os.path import join
 
 setup(
     name='bdsf',
@@ -12,7 +11,6 @@ setup(
     long_description_content_type='text/x-rst',
     platforms='Linux, Mac OS X',
     packages=['bdsf', 'bdsf.nat'],
-    package_dir={'bdsf.nat': join('bdsf', 'nat')},
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: C++',
