@@ -249,7 +249,8 @@ def avspc_blanks(c_list, image, rmsarr, c_wts, wtarr=None):
         r = rmsarr[ch]
         if c_wts == 'unity': wt = 1.0
         if c_wts == 'rms': wt = r
-        if r != 0:
+        if r > 1e-18 and r < 1e18:
+          # Set reasonable limits to avoid overflow of float32
           wt = 1.0/(wt*wt)
         else:
           wt = 0

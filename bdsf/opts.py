@@ -810,7 +810,7 @@ class Opts(object):
                              group = "multichan_opts")
     collapse_mode = Enum('average', 'single', 'file',
                              doc = "Collapse method: 'average', "\
-                                 "'single', or 'file'. If 'file', use a user-provided"\
+                                 "'single', or 'file'. If 'file', use a user-provided "\
                                  "file, else either average channels or take single "\
                                  "channel to perform source detection on\n"\
                                  "This parameter determines whether, when multiple "\
@@ -820,9 +820,9 @@ class Opts(object):
                              group = 'multichan_opts')
 
     collapse_file = String(None,
-                             doc = "If collapse_mode is 'file' then use this file"\
+                             doc = "If collapse_mode is 'file' then use this file "\
                                  "as the ch0 image. The image supplied can be a FITS or CASA 2-, "\
-                                 "3-, or 4-D cube. The detection image and the main"\
+                                 "3-, or 4-D cube. The detection image and the main "\
                                  "image must have the same size and be registered.",
                              group = 'multichan_opts')
 
