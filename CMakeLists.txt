@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.18)
 project(PyBDSF C CXX Fortran)
 
 find_package(PythonExtensions REQUIRED)
@@ -12,6 +12,8 @@ if(SKBUILD)
         ${Python_INCLUDE_DIR}
         ${Python_NumPy_INCLUDE_DIRS}
     )
+else()
+    set(PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 endif()
 
 ## -- Static library: minpack -- ##
