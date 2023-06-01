@@ -1078,6 +1078,8 @@ The options for this module are as follows:
 
     spectralindex_do ...... True : Calculate spectral indices (for multi-channel
                                    image)
+      :term:`flagchan_list` ......... [] : List of channels to flag before (averaging and)
+                                   extracting spectral index
       :term:`flagchan_rms` ........ True : Flag channels before (averaging and) extracting
                                    spectral index, if their rms if more than 5
                                    (clipped) sigma outside the median rms over all
@@ -1092,6 +1094,13 @@ The options for this module are as follows:
                                    are averaged to obtain the target SNR
 
 .. glossary::
+
+    flagchan_list
+        This parameter is a list of integers (default is ``[]``) that specifies the channels
+        to flag before (averaging and) extracting the spectral indices. Flagged channels
+        will not be used during fitting. If the value is an empty list (``[]``), then all
+        channels are used. Otherwise, the value is a Python list of channel numbers, starting
+        from 0 (i.e., the first channel has number 0, the second has number 1, etc.).
 
     flagchan_rms
         This parameter is a Boolean (default is ``True``). If ``True``, then the clipped rms and median (r and m) of the clipped rms of
