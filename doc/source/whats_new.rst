@@ -4,6 +4,16 @@
 What's New
 **********
 
+Version 1.10.3 (2023/05/22):
+
+    * Fix build issue with Python 3.11 (#205)
+
+    * Use cibuildwheel to build binary wheels for Linux and MacOS (Intel); drop support for Python 3.6 (#203)
+
+    * Fix #198. Use the new method call `canvas.manager.set_window_title` (#199)
+
+    * Replace Travis CI with GitHub actions (#196)
+
 Version 1.10.2 (2023/02/10):
     * Fix issues with numpy versions >= 1.24 (#193)
 
