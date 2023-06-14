@@ -16,6 +16,10 @@ else()
     set(PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 endif()
 
+# Use address sanitizer for debugging
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -ggdb")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -ggdb")
+
 ## -- Static library: minpack -- ##
 set(MINPACK_SRC
     src/minpack/lmder.f
