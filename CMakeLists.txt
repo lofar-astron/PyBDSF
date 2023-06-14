@@ -17,8 +17,11 @@ else()
 endif()
 
 # Use address sanitizer for debugging
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -ggdb")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -ggdb")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -ggdb")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fsanitize=address -ggdb")
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ## -- Static library: minpack -- ##
 set(MINPACK_SRC
