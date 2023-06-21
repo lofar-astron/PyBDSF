@@ -139,7 +139,7 @@ class Op_islands(Op):
 
             ch0_map = img.ch0_arr
             ch0_shape = ch0_map.shape
-            pyrank = N.zeros(ch0_shape, dtype=int)
+            pyrank = N.zeros(ch0_shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
                 pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
@@ -208,7 +208,7 @@ class Op_islands(Op):
         img.island_labels = labels
 
         ### apply cuts on island size and peak value
-        pyrank = N.zeros(image.shape, dtype=int)
+        pyrank = N.zeros(image.shape, dtype=N.int32)
         res = []
         islid = 0
         for idx, s in enumerate(slices):

@@ -203,7 +203,6 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     if weights is None or numcores == size:
         # No grouping specified (or there are as many cores as
         # processes), so divide into equal chunks
-        sequence = numpy.array(sequence, dtype=object)
         sequence = numpy.array_split(sequence, numcores)
     else:
         # Group so that each group has roughly an equal sum of weights
