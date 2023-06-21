@@ -1,3 +1,6 @@
+# Required scikit-build files
+include CMakeLists.txt
+
 # Required minpack sources
 include src/minpack/lmder.f
 include src/minpack/lmpar.f
@@ -57,9 +60,14 @@ include src/port3/i1mach.f
 include src/port3/i7mdcn.f
 include src/port3/stopx.f
 
-# Other fortran include files
+# Required pytesselate sources
 include src/fortran/constants.inc
+include src/fortran/pytess_*.f
 
-# Header files for natgrid
+# Required natgrid sources
+include natgrid/Src/*.c
 include natgrid/Include/*.h
 
+# Required cbdsm sources
+include src/c++/*
+include src/c++/num_util/*

@@ -1,4 +1,37 @@
 [build-system]
-requires = ["setuptools<65.6",
-            "wheel", 
-            "oldest-supported-numpy"]
+requires = [
+    "build",
+    "cmake>=3.18",
+    "ninja",
+    "oldest-supported-numpy",
+    "scikit-build>=0.13",
+    "setuptools<65.6",
+    "wheel",
+]
+
+[tool.cibuildwheel]
+before-all = "cibuildwheel/before_all.sh"
+before-build = "cibuildwheel/before_build.sh"
+build = "cp3{7,8,9,10,11}-*_x86_64"
+build-verbosity = 1
+environment = """ \
+    BOOST_VERSION="1.81.0" \
+    BOOST_BUILD_DIR="/tmp/boost-build" \
+    BOOST_INSTALL_DIR="${HOME}/boost" \
+    BOOST_ROOT="${BOOST_INSTALL_DIR}" \
+    CC=gcc \
+    CXX=g++ \
+    CXXFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" \
+    FC=gfortran \
+    LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
+"""
+test-command = "cd {package}/test && python tbdsf_process_image.py"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = """\
+    DYLD_LIBRARY_PATH=${BOOST_INSTALL_DIR}/lib delocate-wheel \
+    --require-archs {delocate_archs} -w {dest_dir} -v {wheel}\
+"""
+
+[tool.cibuildwheel.linux]
+skip = ["*-musllinux_*"]

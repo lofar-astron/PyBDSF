@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.10.2'
+__version__ = '1.11.0a1'
 
 
 # Changelog
@@ -12,6 +12,19 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2023/05/22 - Version 1.10.3
+
+    2023/05/08 - Fix build issue with Python 3.11 (#205)
+
+    2023/05/03 - Use cibuildwheel to build binary wheels (#203)
+        Build binary wheels for Linux and MacOS (Intel).
+        Drop support for Python 3.6.
+
+    2023/05/02 - Fix #198 (#199)
+        Use the new method call `canvas.manager.set_window_title`
+
+    2023/04/28 - Replace Travis CI with GitHub actions (#196)
+
     2023/02/10 - Version 1.10.2
 
     2023/02/10 - Fix issues with numpy versions >= 1.24 (#193)

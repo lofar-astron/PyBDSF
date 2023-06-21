@@ -8,7 +8,7 @@ SCRIPT_DIR=$(cd $(dirname $0) && pwd)
 ROOT_DIR=$(git rev-parse --show-toplevel)
 
 py_major=3
-for py_minor in $(seq 6 10); do
+for py_minor in $(seq 7 11); do
     echo -e "\n\n******** Building wheel for python ${py_major}.${py_minor} ********\n"
     py_version=${py_major}${py_minor}
     [ ${py_minor} -le 7 ] && py_unicode="m" || py_unicode=
