@@ -7,14 +7,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as N
-from .image import *
+from .image import Op
 from . import mylogger
 from copy import deepcopy as cp
-from . import _cbdsm
-from . import collapse
-import sys
 from . import functions as func
-import time
 from . import statusbar
 
 
@@ -399,7 +395,6 @@ class Op_spectralindex(Op):
         do_log is True/False implies you fit spectral index in logFlux vs logFreq space or not."""
         from . import functions as func
         import math
-        from scipy.optimize import leastsq
 
         x = freqarr
         flux = fluxarr
@@ -448,8 +443,6 @@ class Op_spectralindex(Op):
         """
         from math import sqrt
         from .collapse import avspc_blanks
-
-        nchan = imagein.shape[0]
 
         # chan_list is a list of lists of channels to average. E.g., if we have
         # 5 channels and we want to average only the first 2:
