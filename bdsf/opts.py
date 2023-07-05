@@ -33,7 +33,6 @@ Opts.my_new_opt = Float(33, doc="docstring")
 """
 from __future__ import absolute_import
 
-import sys
 from .tc import Int, Float, Bool, String, Tuple, Enum, \
     Option, NArray, Instance, tInstance, List, Any, TCInit, tcError
 
@@ -578,8 +577,15 @@ class Opts(object):
                              group = "advanced_opts")
     rmsmean_map_filename = List(None,
                              doc = "Filenames of FITS files to use as the mean and rms maps, "\
-                                 "given as a list [<mean_map.fits>, <rms_map.fits>]. If "\
-                                 "supplied, the internally generated mean and rms maps "\
+                                 "given as a list [<mean_map.fits>, <rms_map.fits>]\n"\
+                                 "If supplied, the internally generated mean and rms maps "\
+                                 "are not used.",
+                             group = 'advanced_opts')
+    rmsmean_map_filename_det = List(None,
+                             doc = "Filenames of FITS files to use as the mean and rms maps "\
+                                 "when a detection image is specified, "\
+                                 "given as a list [<mean_map.fits>, <rms_map.fits>]\n"\
+                                 "If supplied, the internally generated mean and rms maps "\
                                  "are not used.",
                              group = 'advanced_opts')
     do_mc_errors = Bool(False,
@@ -928,6 +934,12 @@ class Opts(object):
                              group = "output_opts")
     savefits_meanim = Bool(False,
                              doc = "Save background mean image as fits file",
+                             group = "output_opts")
+    savefits_det_rmsim = Bool(False,
+                             doc = "Save detection background rms image as fits file",
+                             group = "output_opts")
+    savefits_det_meanim = Bool(False,
+                             doc = "Save detection background mean image as fits file",
                              group = "output_opts")
     savefits_rankim = Bool(False,
                              doc = "Save island rank image as fits file",
@@ -1459,7 +1471,6 @@ class Opts(object):
 
     def info(self):
         """Pretty-print current values of options"""
-        from . import tc
         ## enumerate all options
         opts = self.to_list()
         res = ""

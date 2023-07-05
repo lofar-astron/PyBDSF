@@ -358,9 +358,10 @@ The advanced options are:
                                    attempt to fit peaks separately (if
                                    peak_fit=True). Min value is 30
       :term:`rmsmean_map_filename`  None : Filenames of FITS files to use as the mean and rms maps,
-                                   given as a list [<mean_map.fits>, <rms_map.fits>]. If
-                                   supplied, the internally generated mean and rms maps
-                                   are not used
+                                   given as a list [<mean_map.fits>, <rms_map.fits>]
+      :term:`rmsmean_map_filename_det`  None : Filenames of FITS files to use as the mean and rms maps
+                                   when a detection image is specified, given as a list
+                                   [<mean_map.fits>, <rms_map.fits>]
       :term:`rms_value` ........... None : Value of constant rms in Jy/beam to use if rms_map
                                    = False. None => calculate inside program
       :term:`spline_rank` ............ 3 : Rank of the interpolating function for rms/mean
@@ -580,6 +581,12 @@ The advanced options are:
         [<mean_map.fits>, <rms_map.fits>]. If supplied, the internally generated
         mean and rms maps are not used.
 
+    rmsmean_map_filename_det
+        This parameter is a list (default is ``None``) that sets the filenames
+        of FITS files to use as the mean and rms maps when a detection image is
+        specified, given as a list [<mean_map.fits>, <rms_map.fits>]. If
+        supplied, the internally generated mean and rms maps are not used.
+
     rms_value
         This parameter is a float (default is ``None``) that sets the value of
         constant rms in Jy/beam to use if ``rms_map = False``. If ``None``, the
@@ -747,6 +754,8 @@ The output options are:
       :term:`print_timing` ....... False : Print basic timing information
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
                                    sent to the log file as usual
+      :term:`savefits_det_meanim`  False : Save detection background mean image as fits file
+      :term:`savefits_det_rmsim` . False : Save detection background rms image as fits file
       :term:`savefits_meanim` .... False : Save background mean image as fits file
       :term:`savefits_normim` .... False : Save norm image as fits file
       :term:`savefits_rankim` .... False : Save island rank image as fits file
@@ -795,6 +804,12 @@ The output options are:
     quiet
         This parameter is a Boolean (default is ``False``). If ``True``\, suppress text output to screen. Output is still
         sent to the log file as usual.
+
+    savefits_det_rmsim
+        This parameter is a Boolean (default is ``False``). If ``True``\, save detection background rms image as a FITS file.
+
+    savefits_det_meanim
+        This parameter is a Boolean (default is ``False``). If ``True``\, save detection background mean image as a FITS file.
 
     savefits_meanim
         This parameter is a Boolean (default is ``False``). If ``True``\, save background mean image as a FITS file.
