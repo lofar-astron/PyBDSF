@@ -16,7 +16,7 @@ The documentation is currently hosted at https://pybdsf.readthedocs.io
 Installation
 ------------
 Installation can be done in a number of ways. In order of preference (read:
-easy of use):
+ease of use):
 
 * Install the latest release from PyPI::
 
