@@ -33,9 +33,8 @@ Opts.my_new_opt = Float(33, doc="docstring")
 """
 from __future__ import absolute_import
 
-import sys
 from .tc import Int, Float, Bool, String, Tuple, Enum, \
-    Option, NArray, Instance, tInstance, List, Any, TCInit, tcError
+    Option, Instance, tInstance, List, Any, TCInit, tcError
 
 try:
     # For Python 2
@@ -1472,7 +1471,6 @@ class Opts(object):
 
     def info(self):
         """Pretty-print current values of options"""
-        from . import tc
         ## enumerate all options
         opts = self.to_list()
         res = ""

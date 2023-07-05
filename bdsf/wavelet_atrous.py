@@ -11,7 +11,6 @@ import os
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
-from . import _cbdsm
 from math import log, floor, sqrt
 from .const import fwsig
 from copy import deepcopy as cp
@@ -19,7 +18,6 @@ from . import functions as func
 import gc
 from numpy import array, product
 import scipy.signal
-from .readimage import Op_readimage
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
 from .threshold import Op_threshold
@@ -27,10 +25,7 @@ from .islands import Op_islands
 from .gausfit import Op_gausfit, Gaussian
 from .gaul2srl import Op_gaul2srl
 from .make_residimage import Op_make_residimage
-from .output import Op_outlist
 from .interface import raw_input_no_history
-from . import multi_proc as mp
-import itertools
 from . import statusbar
 try:
     import pyfftw.interfaces
@@ -224,7 +219,6 @@ class Op_wavelet_atrous(Op):
                           gaus_id = -1
                       else:
                           gaus_id = img.gaussians[-1].gaus_num
-                      wvgaul = []
                       for g in gaul:
                           if not hasattr(g, 'valid'):
                               g.valid = False
@@ -306,7 +300,6 @@ class Op_wavelet_atrous(Op):
           pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
           img.pyrank = pyrank
 
-          pdir = img.basedir + '/misc/'
           img.ngaus += ntot_wvgaus
           img.total_flux_gaus += total_flux
           mylogger.userinfo(mylog, "Total flux density in model on all scales" , '%.3f Jy' % img.total_flux_gaus)
@@ -457,7 +450,7 @@ class Op_wavelet_atrous(Op):
             isls = img.atrous_islands[i]
             for isl in isls:
               if i != ind[0]:
-                status = False; dumr = []
+                dumr = []
                 for pyrsrc in lpyr:
                   belongs = pyrsrc.belongs(img, isl)
                   if belongs: dumr.append(pyrsrc.pyr_id)
@@ -508,7 +501,6 @@ class Pyramid_source(object):
                                                 # get centroid of island (as integer)
             mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
             cen = N.array(mom[1:3]) + isl.origin
-            icen = (int(round(cen[0])), int(round(cen[1])))
             belong = False
                                                 # check if lies within any island of self
             for i, pyrisl in enumerate(self.islands):

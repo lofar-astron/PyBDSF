@@ -17,10 +17,6 @@ import numpy as N
 import scipy.ndimage as nd
 from .image import *
 from . import mylogger
-try:
-    from astropy.io import fits as pyfits
-except ImportError as err:
-    import pyfits
 from . import functions as func
 from .output import write_islands
 from .readimage import Op_readimage
@@ -112,15 +108,13 @@ class Op_islands(Op):
                 func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', img.pyrank, img)
             if opts.savefits_det_rmsim or opts.output_all:
                 resdir = img.basedir + '/background/'
-                if not os.path.exists(resdir):
-                    os.makedirs(resdir)
+                os.makedirs(resdir, exist_ok=True)
                 func.write_image_to_file(img.use_io, img.imagename + '.detection_rmsd_I.fits',
                                          img.detection_rms_arr, img, resdir)
                 mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.detection_rmsd_I.fits'))
             if opts.savefits_det_meanim or opts.output_all:
                 resdir = img.basedir + '/background/'
-                if not os.path.exists(resdir):
-                    os.makedirs(resdir)
+                os.makedirs(resdir, exist_ok=True)
                 func.write_image_to_file(img.use_io, img.imagename + '.detection_mean_I.fits',
                                          img.detection_mean_arr, img, resdir)
                 mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.detection_mean_I.fits'))
@@ -187,8 +181,6 @@ class Op_islands(Op):
         mean = img.mean_arr
         thresh_isl = opts.thresh_isl
         thresh_pix = img.thresh_pix
-        clipped_mean = img.clipped_mean
-        saverank = opts.savefits_rankim
 
                         # act_pixels is true if significant emission
         if img.masked:
@@ -210,7 +202,6 @@ class Op_islands(Op):
         ### apply cuts on island size and peak value
         pyrank = N.zeros(image.shape, dtype=N.int32)
         res = []
-        islid = 0
         for idx, s in enumerate(slices):
             idx += 1 # nd.labels indices are counted from 1
                         # number of pixels inside bounding box which are in island
