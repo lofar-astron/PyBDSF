@@ -7,14 +7,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as N
-from .image import *
+from .image import Op
 from . import mylogger
 from copy import deepcopy as cp
-from . import _cbdsm
-from . import collapse
-import sys
 from . import functions as func
-import time
 from . import statusbar
 
 
@@ -60,7 +56,7 @@ class Op_spectralindex(Op):
                 unav_freqs = freqin[good_chans]
                 nmax_to_avg = img.opts.specind_maxchan
                 nchan = unav_image.shape[0]
-                mylog.info('After initial flagging of channels by rms, %i good channels remain' % (nchan,))
+                mylogger.userinfo(mylog, 'Number of channels remaining after initial flagging', str(nchan))
                 if nmax_to_avg == 0:
                     nmax_to_avg = nchan
 
@@ -143,6 +139,7 @@ class Op_spectralindex(Op):
                             fluxes_to_fit = total_flux[:, ig][good_fluxes_ind]
                             e_fluxes_to_fit = e_total_flux[:, ig][good_fluxes_ind]
                             freqs_to_fit = freq_av[good_fluxes_ind]
+
                             fit_res = self.fit_specindex(freqs_to_fit, fluxes_to_fit, e_fluxes_to_fit)
                             gaussian.spec_norm, gaussian.spec_indx, gaussian.e_spec_indx = fit_res
                             gaussian.specin_flux = fluxes_to_fit.tolist()
@@ -252,7 +249,7 @@ class Op_spectralindex(Op):
         """
         # crms_rms and median dont include rms=0 channels
         nchan = len(crms)
-        mean, rms, cmean, crms_rms, cnt = _cbdsm.bstat(crms, zeroflags, cutoff)
+        mean, rms, cmean, crms_rms, cnt = func.bstat(crms, zeroflags, cutoff)
         zeroind = N.where(crms==0)[0]
         median = N.median(N.delete(crms, zeroind))
         badind = N.where(N.abs(N.delete(crms, zeroind) - median)/crms_rms >=cutoff)[0]
@@ -277,10 +274,17 @@ class Op_spectralindex(Op):
         zeroflags = N.zeros(nchan, bool)
         crms = img.channel_clippedrms
 
+        # First, check whether user has specified any channels to flag
+        if img.opts.flagchan_list is not None:
+            for chan in img.opts.flagchan_list:
+                zeroflags[chan] = True
+
+        # Next, flag channels with rms = 0
         for ichan in range(nchan):
             if crms[ichan] == 0: zeroflags[ichan] = True
         iniflags = cp(zeroflags)
 
+        # Lastly, flag outliers
         if img.opts.flagchan_rms:
             iniflags = self.flagchans_rmschan(crms, zeroflags, iniflags, 4.0)
 
@@ -359,7 +363,8 @@ class Op_spectralindex(Op):
                 if bar1.started:
                     bar1.increment()
                 dumi = Op_rmsimage()
-                Op_rmsimage.map_2d(dumi, image[ichan], mean, rms, None, *map_opts)
+                mask = N.isnan(image[ichan])
+                Op_rmsimage.map_2d(dumi, image[ichan], mean, rms, mask, *map_opts)
                 rms_spec[ichan,:,:] = rms
                 median_rms[ichan] = N.median(rms)
         else:
@@ -390,13 +395,14 @@ class Op_spectralindex(Op):
         do_log is True/False implies you fit spectral index in logFlux vs logFreq space or not."""
         from . import functions as func
         import math
-        from scipy.optimize import leastsq
 
         x = freqarr
         flux = fluxarr
         eflux = efluxarr
         f0 = N.median(x)
         mask = N.zeros(len(fluxarr), dtype=bool)
+        nan_errors = N.isnan(efluxarr)
+        mask[nan_errors] = 1
 
         if do_log:
           x = N.log10(x/f0); y = N.log10(flux); sig = N.abs(eflux/flux)/2.303
@@ -436,15 +442,13 @@ class Op_spectralindex(Op):
             [[0, 1], [2], [3, 4]]
         """
         from math import sqrt
-        from .collapse import avspc_direct, avspc_blanks
-
-        nchan = imagein.shape[0]
+        from .collapse import avspc_blanks
 
         # chan_list is a list of lists of channels to average. E.g., if we have
         # 5 channels and we want to average only the first 2:
         #     chan_list = [[0,1], [2], [3], [4]]
         if len(chanrms.shape) ==3:
-            crms = N.mean(N.mean(chanrms, axis=1), axis=1)
+            crms = N.mean(N.nanmean(chanrms, axis=1), axis=1)
         else:
             crms = chanrms
         chan_list = self.get_avg_chan_list(rms_desired, crms, nmax_to_avg)
@@ -454,14 +458,9 @@ class Op_spectralindex(Op):
         crms_av = N.zeros(n_new)
         freq_av = N.zeros(n_new)
         imageout = N.zeros((n_new, imagein.shape[1], imagein.shape[2]), dtype=N.float32)
-        blank = N.isnan(imagein[0])
-        hasblanks = blank.any()
         for ichan, avg_list in enumerate(chan_list):
             if len(avg_list) > 1:
-                if not hasblanks:
-                    imageout[ichan], dum = avspc_direct(avg_list, imagein, crms, c_wts)
-                else:
-                    imageout[ichan], dum = avspc_blanks(avg_list, imagein, crms, c_wts)
+                imageout[ichan], dum = avspc_blanks(avg_list, imagein, crms, c_wts)
                 chan_slice = slice(avg_list[0], avg_list[1]+1)
                 beamlist.append(tuple(N.mean(sbeam[chan_slice], axis=0)))
                 freq_av[ichan] = N.mean(freqin[chan_slice])
@@ -562,8 +561,13 @@ class Op_spectralindex(Op):
             for ig in range(len(fitfix)):
                 total_flux[cind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
             p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[cind])
-            rms_isl = N.mean(clip_rms[cind])
-            errors[cind] = func.get_errors(img, p, rms_isl, bm_pix=(bm_pix[0]*fwsig, bm_pix[1]*fwsig, bm_pix[2]))[6]
+            rms_isl = N.nanmean(clip_rms[cind])
+            if N.isnan(rms_isl):
+                # If the channel rms is all NaNs, use the average rms value over all
+                # channels instead
+                rms_isl = N.nanmean(clip_rms)
+            if not N.isnan(rms_isl):
+                errors[cind] = func.get_errors(img, p, rms_isl, bm_pix=(bm_pix[0]*fwsig, bm_pix[1]*fwsig, bm_pix[2]))[6]
             self.reset_size(gg)
 
         return total_flux, errors

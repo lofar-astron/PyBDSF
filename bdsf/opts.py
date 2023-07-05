@@ -816,7 +816,7 @@ class Opts(object):
                              group = "multichan_opts")
     collapse_mode = Enum('average', 'single', 'file',
                              doc = "Collapse method: 'average', "\
-                                 "'single', or 'file'. If 'file', use a user-provided"\
+                                 "'single', or 'file'. If 'file', use a user-provided "\
                                  "file, else either average channels or take single "\
                                  "channel to perform source detection on\n"\
                                  "This parameter determines whether, when multiple "\
@@ -824,15 +824,12 @@ class Opts(object):
                                  "done on a single channel or an average of many "\
                                  "channels.",
                              group = 'multichan_opts')
-
     collapse_file = String(None,
-                             doc = "If collapse_mode is 'file' then use this file"\
+                             doc = "If collapse_mode is 'file' then use this file "\
                                  "as the ch0 image. The image supplied can be a FITS or CASA 2-, "\
-                                 "3-, or 4-D cube. The detection image and the main"\
+                                 "3-, or 4-D cube. The detection image and the main "\
                                  "image must have the same size and be registered.",
                              group = 'multichan_opts')
-
-
     collapse_ch0 = Int(0,
                              doc = "Number of the channel for source extraction, "\
                                  "if collapse_mode = 'single', starting from 0",
@@ -1186,6 +1183,16 @@ class Opts(object):
                                  "total number of these bad channels does not exceed "\
                                  "10% of the total number of channels themselves.",
                              group = "spectralindex_do")
+    flagchan_list = List(None,
+                             doc = "List of channels to flag before (averaging and) "\
+                                 "extracting spectral index\n"\
+                                 "This parameter is a list of channels to be flagged. "\
+                                 "Flagged channels will not be used during fitting. If the "\
+                                 "value is an empty list ([]), then all channels are used. Else, the "\
+                                 "value is a Python list of channel numbers, starting "\
+                                 "from 0 (i.e., the first channel has number 0, the "\
+                                 "second has number 1, etc.).",
+                             group = 'spectralindex_do')
     flagchan_snr = Bool(True,
                              doc = "Flag channels that do not meet SNR criterion "\
                                  "set by specind_snr\n"\
