@@ -34,7 +34,7 @@ Opts.my_new_opt = Float(33, doc="docstring")
 from __future__ import absolute_import
 
 from .tc import Int, Float, Bool, String, Tuple, Enum, \
-    Option, Instance, tInstance, List, Any, TCInit, tcError
+    Option, NArray, Instance, tInstance, List, Any, TCInit, tcError
 
 try:
     # For Python 2
