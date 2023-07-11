@@ -793,7 +793,7 @@ def get_errors(img, p, stdav, bm_pix=None):
         dumrr2 = 1.0 + bm_pix[0] * bm_pix[1] / (size[1] * size[1])
         dumrr3 = dumr * pp[0] / stdav
         d1 = sqrt(8.0 * log(2.0))
-        d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[0])
+        d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[1])
         try:
             e_peak = pp[0] * sq2 / (dumrr3 * pow(dumrr1, 0.75) * pow(dumrr2, 0.75))
             e_maj = size[0] * sq2 / (dumrr3 * pow(dumrr1, 1.25) * pow(dumrr2, 0.25))
