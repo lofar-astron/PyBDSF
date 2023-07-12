@@ -753,7 +753,7 @@ def deconv2(gaus_bm, gaus_c):
     return (bmaj, bmin, bpa), ifail
 
 
-def get_errors(img, p, stdav, bm_pix=None):
+def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
     """ Returns errors from Condon 1997
 
     Returned list includes errors on:
@@ -812,7 +812,17 @@ def get_errors(img, p, stdav, bm_pix=None):
             e_min = 0.0
             e_pa = 0.0
             e_tot = 0.0
-        if abs(e_pa) > 180.0: e_pa=180.0  # dont know why i did this
+        if abs(e_pa) > 180.0:
+            e_pa = 180.0
+        if fixed_to_beam:
+            # When the size was fixed to that of the beam during the fit, set
+            # uncertainties on the size to zero and reduce the error in the fluxes
+            # by sqrt(2) (see Eq. 25 of Condon 1997)
+            e_maj = 0.0
+            e_min = 0.0
+            e_pa = 0.0
+            e_peak /= sq2
+            e_tot /= sq2
         errors = errors + [e_peak, e_x0, e_y0, e_maj, e_min, e_pa, e_tot]
 
     return errors

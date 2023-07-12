@@ -481,7 +481,11 @@ The advanced options are:
         This parameter is a Boolean (default is ``False``). If True, then during
         fitting the major and minor axes and PA of the Gaussians are fixed to
         the beam. Only the amplitude and position are fit. If False, all
-        parameters are fit.
+        parameters are fit. Note that when this option is activated, as a
+        consequence of using fewer free parameters, the estimated errors on the
+        peak and total flux densities are a factor of sqrt(2) lower compared to
+        the case in which all parameters are fit (see Condon 1997). Additionally,
+        the reported errors on the major and minor axes and the PA are zero.
 
     group_by_isl
         This parameter is a Boolean (default is ``False``). If True, all

@@ -241,25 +241,30 @@ class Op_readimage(Op):
                 transform is desired
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North.
+            Set is_error = True when x gives the errors on the parameters instead of
+                the parameters themselves.
             """
             if use_wcs:
                 s1, s2, th = x
                 if s1 == 0.0 and s2 == 0.0:
                     return (0.0, 0.0, 0.0)
-                brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
 
                 th_rad = th / 180.0 * N.pi
                 bmaj = self.pixdist2angdist(img, s1, th, location=location)
                 bmin = self.pixdist2angdist(img, s2, th + 90.0, location=location)
+                bpa = th
                 if not is_error:
+                    # Adjust the PA by the rotation delta and fix cases where
+                    # major and minor axes are swapped
+                    brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
                     bpa = th - brot
-                if bmaj < bmin:
-                    bmaj, bmin = bmin, bmaj
-                    bpa += 90.0
-                bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
+                    if bmaj < bmin:
+                        bmaj, bmin = bmin, bmaj
+                        bpa += 90.0
+                    bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
                 return (bmaj, bmin, bpa)
             else:
-                return img.pix2beam(x)
+                return img.pix2beam(x, is_error=is_error)
 
         def pix2coord(pix, location=None, use_wcs=True):
             """Converts size along x and y (in pixels) to size in RA and Dec (in degrees)
@@ -330,21 +335,24 @@ class Op_readimage(Op):
             th = bpa
             return (s1, s2, th)
 
-        def pix2beam(x):
+        def pix2beam(x, is_error=False):
             """ Converts beam in pixels to deg. Use when no dependence on
             position is appropriate.
 
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North at image center.
+            Set is_error = True when x gives the errors on the parameters instead of
+                the parameters themselves.
             """
             s1, s2, th = x
             bmaj = abs(s1 * cdelt1)
             bmin = abs(s2 * cdelt2)
             bpa = th
-            if bmaj < bmin:
-                bmaj, bmin = bmin, bmaj
-                bpa += 90.0
-            bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
+            if not is_error:
+                if bmaj < bmin:
+                    bmaj, bmin = bmin, bmaj
+                    bpa += 90.0
+                bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
             return [bmaj, bmin, bpa]
 
         def pixel_beam():
