@@ -233,7 +233,7 @@ class Op_readimage(Op):
             else:
                 return img.beam2pix(x)
 
-        def pix2gaus(x, location=None, use_wcs=True):
+        def pix2gaus(x, location=None, use_wcs=True, is_error=False):
             """ Converts Gaussian parameters in pixels to deg.
 
             x - (maj [pix], min [pix], pa [deg])
@@ -251,7 +251,8 @@ class Op_readimage(Op):
                 th_rad = th / 180.0 * N.pi
                 bmaj = self.pixdist2angdist(img, s1, th, location=location)
                 bmin = self.pixdist2angdist(img, s2, th + 90.0, location=location)
-                bpa = th - brot
+                if not is_error:
+                    bpa = th - brot
                 if bmaj < bmin:
                     bmaj, bmin = bmin, bmaj
                     bpa += 90.0
