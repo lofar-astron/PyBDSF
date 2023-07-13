@@ -335,7 +335,7 @@ class Op_readimage(Op):
 
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North at image center.
-            Set is_error = True when x gives the errors on the parameters instead of
+            Set is_error = True when x contains the errors on the parameters instead of
                 the parameters themselves.
             """
             s1, s2, th = x

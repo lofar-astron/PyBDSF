@@ -762,7 +762,7 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
     img: Image object (needed for pixel beam info)
     p: list of Gaussian parameters: [peak, x0, y0, maj, min, pa, tot]
     stdav: estimate of the image noise at the Gaussian's position
-    bm_pix: optional pixel beam to used instead of that in img
+    bm_pix: optional pixel beam to be used instead of that in img
     fixed_to_beam: True if the fits were done with the
         size fixed to that of the beam, False otherwise
 
