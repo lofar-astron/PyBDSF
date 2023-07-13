@@ -46,7 +46,7 @@ order:
    deconvolved size is computed assuming the theoretical beam, and the
    statistics in the source area and in the island are computed and
    stored. Errors on each of the fitted parameters are computed using the
-   formulae in Condon (1997) [#f1]_.
+   formulae in Condon (1997) [#f1]_ and Condon et al. (1998) [#f2]_.
 
 #. Groups nearby Gaussians within an island into sources. See :ref:`grouping`
    for details. Fluxes for the grouped Gaussians are summed to obtain the
@@ -56,7 +56,7 @@ order:
    output). The total source size is measured using moment analysis (see
    http://en.wikipedia.org/wiki/Image_moment for a nice overview of moment
    analysis). Errors on the source position and size are estimated using
-   Condon (1997), but additional uncertainties due to uncertainties in the
+   Condon (1997) and Condon et al. (1998), but additional uncertainties due to uncertainties in the
    constituent Gaussians may be estimated using a Monte Carlo technique.
 
 #. Continues with further processing, if the user has specified that one or more of the following modules be used:
@@ -462,7 +462,7 @@ The advanced options are:
     fdr_alpha
         This parameter is a float (default is 0.05) that sets the value of alpha
         for the FDR algorithm for thresholding. If ``thresh`` is ``'fdr'``, then
-        the estimate of ``fdr_alpha`` (see Hopkins et al. 2002 [#f2]_ for
+        the estimate of ``fdr_alpha`` (see Hopkins et al. 2002 [#f3]_ for
         details) is stored in this parameter.
 
     fdr_ratio
@@ -1142,14 +1142,14 @@ The options for this module are as follows:
 
 Polarization module
 -------------------
-If ``polarisation_do = True``, then the polarization properties of the sources are calculated. First, if ``pi_fit = True``, source detection is performed on the polarized intensity (PI) image [#f3]_ to detect sources without Stokes I counterparts. The polarization module then calculates the I, Q, U, and V flux densities, the total, linear, and circular polarisation fractions and the linear polarisation angle of each Gaussian and source. The linear polarisation angle is defined from North, with positive angles towards East. Flux densities are calculated by fitting the normalization of the Gaussians found using the Stokes I or PI images.
+If ``polarisation_do = True``, then the polarization properties of the sources are calculated. First, if ``pi_fit = True``, source detection is performed on the polarized intensity (PI) image [#f4]_ to detect sources without Stokes I counterparts. The polarization module then calculates the I, Q, U, and V flux densities, the total, linear, and circular polarisation fractions and the linear polarisation angle of each Gaussian and source. The linear polarisation angle is defined from North, with positive angles towards East. Flux densities are calculated by fitting the normalization of the Gaussians found using the Stokes I or PI images.
 
 For linearly polarised emission, the signal and noise add vectorially, giving a
 Rice distribution instead of a Gaussian one. To correct for this, a bias
 is estimated and removed from the polarisation fraction using the same method used for the
 NVSS catalog (see ftp://ftp.cv.nrao.edu/pub/nvss/catalog.ps). Errors on the linear and total
 polarisation fractions and polarisation angle are estimated using the debiased polarised flux density
-and standard error propagation. See Sparks & Axon (1999) [#f4]_ for a more detailed treatment.
+and standard error propagation. See Sparks & Axon (1999) [#f5]_ for a more detailed treatment.
 
 The options for this module are as follows:
 
@@ -1191,7 +1191,7 @@ The options for this module are as follows:
 
 Shapelet decomposition module
 -----------------------------
-If ``shapelet_do = True``, then islands are decomposed into shapelets. Shapelets are a set of 2-D basis functions (for details, see Refregier 2003 [#f5]_) that can be used to completely model any source, typically with far fewer parameters than pixels in the source. Shapelets are useful in particular for modeling complex islands that are not well modeled by Gaussians alone. PyBDSF can currently fit cartesian shapelets to an image. The shapelet parameters can be written to a catalog using ``write_catalog`` (see :ref:`write_catalog`).
+If ``shapelet_do = True``, then islands are decomposed into shapelets. Shapelets are a set of 2-D basis functions (for details, see Refregier 2003 [#f6]_) that can be used to completely model any source, typically with far fewer parameters than pixels in the source. Shapelets are useful in particular for modeling complex islands that are not well modeled by Gaussians alone. PyBDSF can currently fit cartesian shapelets to an image. The shapelet parameters can be written to a catalog using ``write_catalog`` (see :ref:`write_catalog`).
 
 For each island of emission, a shapelet decomposition is done after estimating the best values of the
 center, the scale :math:`\beta`, and nmax in the following way. First, an initial guess of :math:`\beta` is taken as :math:`2\sqrt{[m2(x)m2(y)]}`,
@@ -1248,10 +1248,12 @@ The options for this module are as follows:
 
 .. [#f1] Condon, J. J. 1997, PASP, 109, 166
 
-.. [#f2] Hopkins, A. M., Miller, C. J., Connolly, A. J., et al.  2002, AJ, 123, 1086
+.. [#f2] Condon, J. J., et al. 1998, ApJ, 115, 1693
 
-.. [#f3] The polarized intensity image is calculated as :math:`\sqrt{(Q^2 + U^2)}`.
+.. [#f3] Hopkins, A. M., Miller, C. J., Connolly, A. J., et al.  2002, AJ, 123, 1086
 
-.. [#f4] Sparks, W. B., & Axon, D. J. 1999, PASP, 111, 1298
+.. [#f4] The polarized intensity image is calculated as :math:`\sqrt{(Q^2 + U^2)}`.
 
-.. [#f5] Refregier, A. 2003, MNRAS, 338, 35.
+.. [#f5] Sparks, W. B., & Axon, D. J. 1999, PASP, 111, 1298
+
+.. [#f6] Refregier, A. 2003, MNRAS, 338, 35.

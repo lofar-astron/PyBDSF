@@ -46,6 +46,11 @@ the maximum pixel in the residue is greater than the threshold for this former r
 located at least 0.5 beams (and :math:`\sqrt{5}` pixels) away from all previous peaks, then this residual
 peak is identified as a new one.
 
+Errors on the Gaussian parameters
+---------------------------------
+Errors on each of the fitted parameters are computed using the
+formulae in Condon (1997) [#f2]_ and Condon et al. (1998) [#f3]_.
+
 .. _grouping:
 
 Grouping of Gaussians into sources
@@ -88,5 +93,11 @@ No color correction is performed when averaging channels. However, as is shown b
    The fractional error made in the spectral index while calculating with the incorrect frequency, with a second frequency which is 10 MHz different.
 
 
+.. rubric:: Footnotes
 
 .. [#f1] Katgert, P., Oort, M. J. A., & Windhorst, R. A. 1988, A&A, 195, 21
+
+.. [#f2] Condon, J. J. 1997, PASP, 109, 166
+
+.. [#f3] Condon, J. J., et al. 1998, ApJ, 115, 1693
+

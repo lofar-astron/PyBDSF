@@ -241,7 +241,7 @@ class Op_readimage(Op):
                 transform is desired
             Input beam angle should be degrees CCW from the +y axis of the image.
             The output beam angle is degrees CCW from North.
-            Set is_error = True when x gives the errors on the parameters instead of
+            Set is_error = True when x contains the errors on the parameters instead of
                 the parameters themselves.
             """
             if use_wcs:
