@@ -2356,3 +2356,15 @@ def set_up_output_paths(opts):
                            "write permission using the 'outdir' option.".format(output_basedir))
 
     return parentname, output_basedir
+
+def fix_gaussian_axes(major, minor, pa):
+    """Check a Gaussian for switched axes and fix if found
+
+    Returns corrected (major, minor, pa)
+    """
+    if major < minor:
+        major, minor = minor, major
+        pa += 90.0
+    pa = divmod(pa, 180)[1]  # restrict to range [0, 180)
+
+    return (major, minor, pa)

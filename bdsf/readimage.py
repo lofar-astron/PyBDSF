@@ -15,7 +15,7 @@ from __future__ import absolute_import
 
 import numpy as N
 from .image import *
-from .functions import read_image_from_file, set_up_output_paths
+from . import functions as func
 from . import mylogger
 import sys
 import shutil
@@ -53,7 +53,7 @@ class Op_readimage(Op):
             img.indir = img.opts.indir
 
         # Set up output paths, etc.
-        parentname, basedir = set_up_output_paths(img.opts)
+        parentname, basedir = func.set_up_output_paths(img.opts)
         img.parentname = parentname  # root name for constructing output files
         img.imagename = img.parentname + '.pybdsf'  # root name of output images (e.g., rms image)
         img.outdir = basedir  # path of parent output directory
@@ -65,7 +65,7 @@ class Op_readimage(Op):
         # Read in data and header
         img.use_io = ''
         image_file = os.path.basename(img.opts.filename)
-        result = read_image_from_file(image_file, img, img.indir)
+        result = func.read_image_from_file(image_file, img, img.indir)
         if result is None:
             raise RuntimeError("Cannot open file " + repr(image_file) + ". " + img._reason)
         else:
@@ -225,10 +225,7 @@ class Op_readimage(Op):
                 s1 = self.angdist2pixdist(img, bmaj, bpa, location=location)
                 s2 = self.angdist2pixdist(img, bmin, bpa + 90.0, location=location)
                 th = bpa + brot
-                if s1 < s2:
-                    s1, s2 = s2, s1
-                    th += 90.0
-                th = divmod(th, 180)[1] ### th lies between 0 and 180
+                s1, s2, th = func.fix_gaussian_axes(s1, s2, th)
                 return (s1, s2, th)
             else:
                 return img.beam2pix(x)
@@ -258,10 +255,7 @@ class Op_readimage(Op):
                     # major and minor axes are swapped
                     brot = self.get_rot(img, location) # rotation delta CCW (in degrees) between N and +y axis of image
                     bpa = th - brot
-                    if bmaj < bmin:
-                        bmaj, bmin = bmin, bmaj
-                        bpa += 90.0
-                    bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
+                    bmaj, bmin, bpa = func.fix_gaussian_axes(bmaj, bmin, bpa)
                 return (bmaj, bmin, bpa)
             else:
                 return img.pix2beam(x, is_error=is_error)
@@ -349,10 +343,7 @@ class Op_readimage(Op):
             bmin = abs(s2 * cdelt2)
             bpa = th
             if not is_error:
-                if bmaj < bmin:
-                    bmaj, bmin = bmin, bmaj
-                    bpa += 90.0
-                bpa = divmod(bpa, 180)[1] ### bpa lies between 0 and 180
+                bmaj, bmin, bpa = func.fix_gaussian_axes(bmaj, bmin, bpa)
             return [bmaj, bmin, bpa]
 
         def pixel_beam():
@@ -567,8 +558,6 @@ class Op_readimage(Op):
         pa - position angle in degrees east of north
         location - x and y location of center
         """
-        from . import functions as func
-
         if location is None:
             x1 = int(img.image_arr.shape[2] / 2.0)
             y1 = int(img.image_arr.shape[3] / 2.0)
@@ -599,8 +588,6 @@ class Op_readimage(Op):
         pa - position angle in degrees CCW from +y axis
         location - x and y location of center
         """
-        from . import functions as func
-
         if location is None:
             x1 = int(img.image_arr.shape[2] / 2.0)
             y1 = int(img.image_arr.shape[3] / 2.0)
