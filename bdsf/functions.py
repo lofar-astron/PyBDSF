@@ -753,8 +753,18 @@ def deconv2(gaus_bm, gaus_c):
     return (bmaj, bmin, bpa), ifail
 
 
-def get_errors(img, p, stdav, bm_pix=None):
-    """ Returns errors from Condon 1997
+def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
+    """ Returns errors on the fitted Gaussian parameters, using the
+    equations from Condon 1997 (PASP, 109, 166) and Condon et al.
+    1998 (ApJ, 115, 1693)
+
+    Parameters:
+    img: Image object (needed for pixel beam info)
+    p: list of Gaussian parameters: [peak, x0, y0, maj, min, pa, tot]
+    stdav: estimate of the image noise at the Gaussian's position
+    bm_pix: optional pixel beam to be used instead of that in img
+    fixed_to_beam: True if the fits were done with the
+        size fixed to that of the beam, False otherwise
 
     Returned list includes errors on:
         peak flux [Jy/beam]
@@ -788,22 +798,31 @@ def get_errors(img, p, stdav, bm_pix=None):
         sq2 = sqrt(2.0)
         if bm_pix is None:
             bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
-        dumr = sqrt(abs(size[0] * size[1] / (4.0 * bm_pix[0] * bm_pix[1])))
-        dumrr1 = 1.0 + bm_pix[0] * bm_pix[1] / (size[0] * size[0])
-        dumrr2 = 1.0 + bm_pix[0] * bm_pix[1] / (size[1] * size[1])
-        dumrr3 = dumr * pp[0] / stdav
+        dumr = sqrt(abs(size[0] * size[1] / (4.0 * bm_pix[0] * bm_pix[1])))  # first term of Eq. 26 of Condon+ (1998)
+        dumrr1 = 1.0 + bm_pix[0] * bm_pix[1] / (size[0] * size[0])  # second term of Eq. 26 of Condon+ (1998)
+        dumrr2 = 1.0 + bm_pix[0] * bm_pix[1] / (size[1] * size[1])  # third term of Eq. 26 of Condon+ (1998)
+        dumrr3 = dumr * pp[0] / stdav  # product of first and fourth terms of Eq. 26 of Condon+ (1998)
         d1 = sqrt(8.0 * log(2.0))
-        d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[0])
+        d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[1])  # last term of Eq. 30 of Condon+ (1998)
         try:
+            # The following three errors are calculated using Eq. 21 of Condon (1997),
+            # using Eq. 26 of Condon+ (1998) for rho
             e_peak = pp[0] * sq2 / (dumrr3 * pow(dumrr1, 0.75) * pow(dumrr2, 0.75))
             e_maj = size[0] * sq2 / (dumrr3 * pow(dumrr1, 1.25) * pow(dumrr2, 0.25))
-            e_min = size[1] * sq2 / (dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))  # in fw
+            e_min = size[1] * sq2 / (dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
+
+            # The following two errors are calculated using Eq. 27 of Condon+ (1998)
             pa_rad = size[2] * pi / 180.0
             e_x0 = sqrt( (e_maj * N.sin(pa_rad))**2 + (e_min * N.cos(pa_rad))**2 ) / d1
             e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
+
+            # The following error is calculated using Eq. 30 of Condon+ (1998)
             e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
             e_pa = e_pa * 180.0/pi
-            e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) * (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
+
+            # The following error is calculated using Eq. 36 of Condon+ (1998)
+            e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
+                    (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
         except:
             e_peak = 0.0
             e_x0 = 0.0
@@ -812,7 +831,17 @@ def get_errors(img, p, stdav, bm_pix=None):
             e_min = 0.0
             e_pa = 0.0
             e_tot = 0.0
-        if abs(e_pa) > 180.0: e_pa=180.0  # dont know why i did this
+        if abs(e_pa) > 180.0:
+            e_pa = 180.0
+        if fixed_to_beam:
+            # When the size was fixed to that of the beam during the fit, set
+            # uncertainties on the size to zero and reduce the error in the fluxes
+            # by sqrt(2) (see Eq. 25 of Condon 1997)
+            e_maj = 0.0
+            e_min = 0.0
+            e_pa = 0.0
+            e_peak /= sq2
+            e_tot /= sq2
         errors = errors + [e_peak, e_x0, e_y0, e_maj, e_min, e_pa, e_tot]
 
     return errors
@@ -2327,3 +2356,15 @@ def set_up_output_paths(opts):
                            "write permission using the 'outdir' option.".format(output_basedir))
 
     return parentname, output_basedir
+
+def fix_gaussian_axes(major, minor, pa):
+    """Check a Gaussian for switched axes and fix if found
+
+    Returns corrected (major, minor, pa)
+    """
+    if major < minor:
+        major, minor = minor, major
+        pa += 90.0
+    pa = divmod(pa, 180)[1]  # restrict to range [0, 180)
+
+    return (major, minor, pa)

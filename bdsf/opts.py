@@ -492,7 +492,13 @@ class Opts(object):
                                  "If True, then during fitting the major and minor axes "\
                                  "and PA of the Gaussians are fixed to the beam. Only the "\
                                  "amplitude and position are fit. If False, all parameters "\
-                                 "are fit.",
+                                 "are fit.\n"\
+                                 "Note that when this option is activated, as a "\
+                                 "consequence of using fewer free parameters, the estimated errors on the "\
+                                 "peak and total flux densities are a factor of sqrt(2) lower "\
+                                 "compared to the case in which all parameters are fit (see "\
+                                 "Condon 1997). Additionally, the reported errors on the major "\
+                                 "and minor axes and the PA are zero.",
                              group = "advanced_opts")
     fittedimage_clip = Float(0.1,
                              doc = "Sigma for clipping Gaussians " \

@@ -1022,10 +1022,10 @@ class Gaussian(object):
                 func.approx_equal(size[1], img.pixel_beam()[1]) and \
                 func.approx_equal(size[2], img.pixel_beam()[2]+90.0) or \
                 img.opts.fix_to_beam:
-            # Check whether fitted Gaussian is just the distorted pixel beam
-            # given as an initial guess or if size was fixed to the beam. If so,
-            # reset the size to the undistorted beam.
-            # Note: these are sigma sizes, not FWHM sizes.
+            # Check whether fitted Gaussian is just the distorted pixel beam given as an
+            # initial guess (always set to [bm_maj*1.1, bm_min, bm_pa+90]) or if size was
+            # fixed to the beam. If so, reset the size to the undistorted beam. Note:
+            # these are sigma sizes, not FWHM sizes.
             size = img.pixel_beam()
             size = (size[0], size[1], size[2]+90.0) # adjust angle so that corrected_size() works correctly
         size = func.corrected_size(size)  # gives fwhm and P.A.
@@ -1043,18 +1043,18 @@ class Gaussian(object):
         tot = p[0]*size[0]*size[1]/(bm_pix[0]*bm_pix[1])
         if flg == 0:
             # These are good Gaussians
-            errors = func.get_errors(img, p+[tot], img.islands[isl_idx].rms)
+            errors = func.get_errors(img, p+[tot], img.islands[isl_idx].rms, fixed_to_beam=img.opts.fix_to_beam)
             self.centre_sky = img.pix2sky(p[1:3])
             self.centre_skyE = img.pix2coord(errors[1:3], self.centre_pix, use_wcs=use_wcs)
             self.size_sky = img.pix2gaus(size, self.centre_pix, use_wcs=use_wcs) # FWHM in degrees and P.A. east from north
             self.size_sky_uncorr = img.pix2gaus(size, self.centre_pix, use_wcs=False) # FWHM in degrees and P.A. east from +y axis
-            self.size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs)
-            self.size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False)
+            self.size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
+            self.size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
             gaus_dc, err = func.deconv2(bm_pix, size)
             self.deconv_size_sky = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=use_wcs)
             self.deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=False)
-            self.deconv_size_skyE  = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs)
-            self.deconv_size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False)
+            self.deconv_size_skyE  = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
+            self.deconv_size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
         else:
             # These are flagged Gaussians, so don't calculate sky values or errors
             errors = [0]*7
