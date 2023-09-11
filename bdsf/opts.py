@@ -938,6 +938,9 @@ class Opts(object):
     savefits_meanim = Bool(False,
                              doc = "Save background mean image as fits file",
                              group = "output_opts")
+    savefits_modelim = Bool(False,
+                             doc = "Save Gaussian model image as fits file",
+                             group = "output_opts")
     savefits_det_rmsim = Bool(False,
                              doc = "Save detection background rms image as fits file",
                              group = "output_opts")
