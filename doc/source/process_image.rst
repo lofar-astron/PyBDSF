@@ -761,6 +761,7 @@ The output options are:
       :term:`savefits_det_meanim`  False : Save detection background mean image as fits file
       :term:`savefits_det_rmsim` . False : Save detection background rms image as fits file
       :term:`savefits_meanim` .... False : Save background mean image as fits file
+      :term:`savefits_modelim` ... False : Save Gaussian model image as fits file
       :term:`savefits_normim` .... False : Save norm image as fits file
       :term:`savefits_rankim` .... False : Save island rank image as fits file
       :term:`savefits_residim` ... False : Save residual image as fits file
@@ -817,6 +818,9 @@ The output options are:
 
     savefits_meanim
         This parameter is a Boolean (default is ``False``). If ``True``\, save background mean image as a FITS file.
+
+    savefits_modelim
+        This parameter is a Boolean (default is ``False``). If ``True``\, save Gaussian model image as a FITS file.
 
     savefits_normim
         This parameter is a Boolean (default is ``False``). If ``True``\, save norm image as a FITS file.
