@@ -1105,7 +1105,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import os
     import numpy as N
     from copy import deepcopy as cp
-    from distutils.version import StrictVersion
+    from packaging.version import Version
     import warnings
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
@@ -1129,10 +1129,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 use_sections = True
             except ImportError as err:
                 import pyfits
-                if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
+                if Version(pyfits.__version__) < Version('2.2'):
                     old_pyfits = True
                     use_sections = False
-                elif StrictVersion(pyfits.__version__) < StrictVersion('2.4'):
+                elif Version(pyfits.__version__) < Version('2.4'):
                     old_pyfits = False
                     use_sections = False
                 else:
@@ -1163,10 +1163,10 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 use_sections = True
             except ImportError as err:
                 import pyfits
-                if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
+                if Version(pyfits.__version__) < Version('2.2'):
                     old_pyfits = True
                     use_sections = False
-                elif StrictVersion(pyfits.__version__) < StrictVersion('2.4'):
+                elif Version(pyfits.__version__) < Version('2.4'):
                     old_pyfits = False
                     use_sections = False
                 else:
@@ -1517,7 +1517,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, ymin=0,
                     is_mask=False, shape=None):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
-    from distutils.version import StrictVersion
+    from packaging.version import Version
     try:
         from astropy.io import fits as pyfits
         use_header_update = False
@@ -1527,7 +1527,7 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
         # Due to changes in the way pyfits handles headers from version 3.1 on,
         # we need to check for older versions and change the setting of header
         # keywords accordingly.
-        if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+        if Version(pyfits.__version__) < Version('3.1'):
             use_header_update = True
         else:
             use_header_update = False
