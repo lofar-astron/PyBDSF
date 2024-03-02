@@ -87,16 +87,17 @@ set_target_properties(port3 PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 set(F2PY_MODULE_NAME "_pytesselate")
 set(F2PY_MODULE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${F2PY_MODULE_NAME}${PYTHON_EXTENSION_MODULE_SUFFIX})
 set(PYTESSELATE_SRC
-    ${CMAKE_SOURCE_DIR}/src/fortran/constants.h
     ${CMAKE_SOURCE_DIR}/src/fortran/pytess_roundness.f
     ${CMAKE_SOURCE_DIR}/src/fortran/pytess_simple.f
-)
+    ${CMAKE_SOURCE_DIR}/src/fortran/constants.h
+    )
 add_custom_target(${F2PY_MODULE_NAME} ALL
     DEPENDS ${F2PY_MODULE_FILE}
 )
 add_custom_command(
     OUTPUT ${F2PY_MODULE_FILE}
     COMMAND ${F2PY_EXECUTABLE} -m ${F2PY_MODULE_NAME} -c ${PYTESSELATE_SRC}
+    COMMENT "[F2PY] Building python extension module ${F2PY_MODULE_NAME}"
 )
 install(FILES ${F2PY_MODULE_FILE} DESTINATION bdsf)
 
