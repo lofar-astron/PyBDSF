@@ -24,7 +24,10 @@ setup(
         'Topic :: Scientific/Engineering :: Astronomy'
     ],
     extras_require={
-        'ishell': ['ipython<8.11', 'matplotlib']
+        'ishell': [
+            'ipython!=8.11.*,!=8.12.*,!=8.13.*,!=8.14.*,!=8.15.*',
+            'matplotlib',
+        ],
     },
     install_requires=['backports.shutil_get_terminal_size',
                         'astropy', 'numpy', 'scipy'],
