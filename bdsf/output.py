@@ -366,7 +366,10 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     """ Write as FITS binary table.
     """
     from . import mylogger
-    from packaging.version import Version
+    try:
+        from packaging.version import Version
+    except ImportError:
+        from distutils.version import StrictVersion as Version
     try:
         from astropy.io import fits as pyfits
         use_header_update = False

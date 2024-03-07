@@ -697,7 +697,10 @@ def main():
     # greater is in common use.
     try:
         # IPython >= 0.11
-        from packaging.version import Version
+        try:
+            from packaging.version import Version
+        except ImportError:
+            from distutils.version import LooseVersion as Version
         from IPython import __version__ as ipython_version
         if Version(ipython_version) < Version('1.0.0'):
             from IPython.frontend.terminal.embed import InteractiveShellEmbed

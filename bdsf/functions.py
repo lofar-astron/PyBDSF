@@ -1105,8 +1105,11 @@ def read_image_from_file(filename, img, indir, quiet=False):
     import os
     import numpy as N
     from copy import deepcopy as cp
-    from packaging.version import Version
     import warnings
+    try:
+        from packaging.version import Version
+    except ImportError:
+        from distutils.version import StrictVersion as Version
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir is None or indir == './':
@@ -1517,7 +1520,10 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, ymin=0,
                     is_mask=False, shape=None):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
-    from packaging.version import Version
+    try:
+        from packaging.version import Version
+    except ImportError:
+        from distutils.version import StrictVersion as Version
     try:
         from astropy.io import fits as pyfits
         use_header_update = False

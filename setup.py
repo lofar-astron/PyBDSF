@@ -28,6 +28,7 @@ setup(
     },
     install_requires=['backports.shutil_get_terminal_size',
                         'astropy', 'numpy', 'scipy'],
+    python_requires=">=3.7",
     entry_points = {
         'console_scripts': [
             'pybdsf = bdsf.pybdsf:main [ishell]',
