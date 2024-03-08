@@ -366,14 +366,17 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     """ Write as FITS binary table.
     """
     from . import mylogger
-    from distutils.version import StrictVersion
+    try:
+        from packaging.version import Version
+    except ImportError:
+        from distutils.version import StrictVersion as Version
     try:
         from astropy.io import fits as pyfits
         use_header_update = False
         use_from_columns = True
     except ImportError:
         import pyfits
-        if StrictVersion(pyfits.__version__) < StrictVersion('3.1'):
+        if Version(pyfits.__version__) < Version('3.1'):
             use_header_update = True
             use_from_columns = False
         else:
