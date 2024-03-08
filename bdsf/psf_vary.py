@@ -43,9 +43,12 @@ class Op_psf_vary(Op):
             from astropy.io import fits as pyfits
             old_pyfits = False
         except ImportError as err:
-            from distutils.version import StrictVersion
+            try:
+                from packaging.version import Version
+            except ImportError:
+                from distutils.version import StrictVersion as Version
             import pyfits
-            if StrictVersion(pyfits.__version__) < StrictVersion('2.2'):
+            if Version(pyfits.__version__) < Version('2.2'):
                 old_pyfits = True
             else:
                 old_pyfits = False
