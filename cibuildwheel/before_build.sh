@@ -8,6 +8,13 @@
 # `${BOOST_BUILD_DIR}/boost`. The libraries will be installed in the directory
 # `${BOOST_INSTALL_DIR}`. Both environment variables must have been set.
 
+# Ensure we start with a clean slate
+function cleanup
+{
+  rm -rf "${BOOST_BUILD_DIR}/boost/bin.v2" 
+  rm -rf "${BOOST_INSTALL_DIR}"
+}
+
 # Install oldest supported numpy
 function install_numpy
 {
@@ -20,7 +27,6 @@ function build_boost_python
   nproc=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
   inc_dir=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
   cd "${BOOST_BUILD_DIR}/boost"
-  rm -rf "${BOOST_INSTALL_DIR}"
   ./bootstrap.sh --prefix="${BOOST_INSTALL_DIR}" \
     --with-libraries=python \
     --with-toolset=gcc
@@ -31,5 +37,6 @@ function build_boost_python
 }
 
 set -o pipefail
+cleanup
 install_numpy
 build_boost_python
