@@ -61,7 +61,7 @@ include src/port3/i7mdcn.f
 include src/port3/stopx.f
 
 # Required pytesselate sources
-include src/fortran/constants.inc
+include src/fortran/constants.h
 include src/fortran/pytess_*.f
 
 # Required natgrid sources

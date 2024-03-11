@@ -2,17 +2,18 @@
 requires = [
     "build",
     "cmake>=3.18",
+    "meson",
     "ninja",
     "oldest-supported-numpy",
     "scikit-build>=0.13",
-    "setuptools<65.6",
+    "setuptools",
     "wheel",
 ]
 
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
-build = "cp3{7,8,9,10,11}-*_x86_64"
+build = "cp3{7,8,9,10,11,12}-*_x86_64"
 build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.81.0" \
