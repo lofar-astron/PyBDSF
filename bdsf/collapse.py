@@ -60,6 +60,16 @@ class Op_collapse(Op):
             if pol == 'I':
               ch0 = img.image_arr[0, chan0]
               img.ch0_arr = ch0
+
+              # Construct weights so that desired channel has weight of 1 and all
+              # others have weight of 0.  The init_freq_collapse function will then
+              # select the intended frequency
+              c_list = img.opts.collapse_av
+              if c_list == []:
+                c_list = N.arange(img.image_arr.shape[1])
+              wtarr = N.zeros(len(c_list))
+              wtarr[chan0] = 1.0
+              init_freq_collapse(img, wtarr)
               mylogger.userinfo(mylog, 'Source extraction will be ' \
                                     'done on channel', '%i (%.3f MHz)' % \
                                     (chan0, img.frequency/1e6))

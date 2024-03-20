@@ -57,6 +57,11 @@ class Op_psf_vary(Op):
             mylog.warning('PyFITS version is too old: psf_vary module skipped')
             return
 
+        if img.nisl == 0:
+            mylog.warning("No islands found. Skipping PSF variation estimation.")
+            img.completed_Ops.append('psf_vary')
+            return
+
         if opts.psf_fwhm is not None:
             # User has specified a constant PSF to use, so skip PSF fitting/etc.
             psf_maj = opts.psf_fwhm[0] # FWHM in deg
