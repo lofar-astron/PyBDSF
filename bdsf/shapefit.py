@@ -29,6 +29,11 @@ class Op_shapelets(Op):
         bar = statusbar.StatusBar('Decomposing islands into shapelets ...... : ', 0, img.nisl)
         opts = img.opts
         if img.opts.shapelet_do:
+            if img.nisl == 0:
+                mylog.warning("No islands found. Skipping shapelet decomposition.")
+                img.completed_Ops.append('shapelets')
+                return
+
             if not opts.quiet:
                 bar.start()
 

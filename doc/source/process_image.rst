@@ -884,6 +884,10 @@ The options concerning multichannel images are:
         scale accordingly to calculate the beam per channel. If ``False``, then a
         constant value of the beam (that given in the header or specified with the ``beam`` parameter) is taken instead.
 
+        .. note::
+
+            This parameter is used only in the :ref:`spectralindex_do` module.
+
     beam_spectrum
         This parameter is a list of tuples (default is ``None``) that sets the FWHM of synthesized beam per channel. Specify as [(bmaj_ch1, bmin_ch1,
         bpa_ch1), (bmaj_ch2, bmin_ch2, bpa_ch2), etc.] in degrees. E.g.,
@@ -893,6 +897,11 @@ The options concerning multichannel images are:
         If ``None``, then the channel-dependent restoring beam is searched for in the header.
         If not found, the beam is either assumed to be a constant or to scale with frequency,
         depending on whether the parameter ``beam_sp_derive`` is ``False`` or ``True``.
+
+        .. note::
+
+            This parameter is used only in the :ref:`spectralindex_do` module. For normal fitting (outside of the spectral index module), a
+            constant value of the beam (that given in the header or specified with the ``beam`` parameter) is taken instead.
 
     collapse_av
         This parameter is a list of integers (default is ``[]``) that specifies the channels to be averaged to produce the

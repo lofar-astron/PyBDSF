@@ -32,7 +32,8 @@ class Op_collapse(Op):
         chan0 = img.opts.collapse_ch0
         c_list = img.opts.collapse_av
         c_wts = img.opts.collapse_wt
-        if c_list == []: c_list = N.arange(img.shape[1])
+        if not c_list:
+            c_list = N.arange(img.shape[1])
         if len(c_list) == 1 and c_mode=='average':
             c_mode = 'single'
             chan0 = c_list[0]
@@ -42,6 +43,12 @@ class Op_collapse(Op):
           ch0images = ['ch0_arr', 'ch0_Q_arr', 'ch0_U_arr', 'ch0_V_arr']
         else:
           ch0images = ['ch0_arr']
+
+        # Check whether the collapse channel index is sensible
+        if chan0 < 0 or chan0 >= len(c_list):
+            raise RuntimeError('The channel index (set with the "collapse_ch0" option) '
+                               'must be greater than zero and less than the number of '
+                               'channels ({}).'.format(len(c_list)))
 
         # assume all Stokes images have the same blank pixels as I:
         blank = N.isnan(img.image_arr[0])
@@ -60,6 +67,13 @@ class Op_collapse(Op):
             if pol == 'I':
               ch0 = img.image_arr[0, chan0]
               img.ch0_arr = ch0
+
+              # Construct weights so that desired channel has weight of 1 and all
+              # others have weight of 0.  The init_freq_collapse function will then
+              # select the intended frequency
+              wtarr = N.zeros(len(c_list))
+              wtarr[chan0] = 1.0
+              init_freq_collapse(img, wtarr)
               mylogger.userinfo(mylog, 'Source extraction will be ' \
                                     'done on channel', '%i (%.3f MHz)' % \
                                     (chan0, img.frequency/1e6))
