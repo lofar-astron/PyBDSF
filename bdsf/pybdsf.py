@@ -692,62 +692,33 @@ def main():
     # after startup will almost always be process_image).
     _set_current_cmd(process_image)
 
-    # Now start the ipython shell. Due to (non-backward-compatible) changes in
-    # ipython with version 0.11, we must support both versions until 0.11 or
-    # greater is in common use.
-    try:
-        # IPython >= 0.11
-        try:
-            from packaging.version import Version
-        except ImportError:
-            from distutils.version import LooseVersion as Version
-        from IPython import __version__ as ipython_version
-        if Version(ipython_version) < Version('1.0.0'):
-            from IPython.frontend.terminal.embed import InteractiveShellEmbed
-        else:
-            from IPython.terminal.embed import InteractiveShellEmbed
-        try:
-            # Use the traitlets config
-            from traitlets.config.loader import Config
-            from IPython.terminal.prompts import Prompts, Token
-            cfg = Config()
+    from IPython.terminal.embed import InteractiveShellEmbed
+    # Use the traitlets config
+    from traitlets.config.loader import Config
+    from IPython.terminal.prompts import Prompts, Token
+    cfg = Config()
 
-            class CustomPrompt(Prompts):
+    class CustomPrompt(Prompts):
 
-                def in_prompt_tokens(self, cli=None):
+        def in_prompt_tokens(self, cli=None):
 
-                   return [
-                        (Token.Prompt, 'BDSF ['),
-                        (Token.PromptNum, str(self.shell.execution_count)),
-                        (Token.Prompt, ']: '),
-                        ]
+            return [
+                (Token.Prompt, 'BDSF ['),
+                (Token.PromptNum, str(self.shell.execution_count)),
+                (Token.Prompt, ']: '),
+                ]
 
-                def out_prompt_tokens(self):
-                   return [
-                        (Token.OutPrompt, ''),
-                    ]
+        def out_prompt_tokens(self):
+            return [
+                (Token.OutPrompt, ''),
+            ]
 
-            cfg.TerminalInteractiveShell.prompts_class = CustomPrompt
-        except ImportError:
-            # fall back to old config
-            from IPython.config.loader import Config
-            cfg = Config()
-            prompt_config = cfg.PromptManager
-            if ipython_version == '0.11':
-                cfg.InteractiveShellEmbed.prompt_in1 = "BDSF [\#]: "
-            else:
-                prompt_config.in_template = "BDSF [\#]: "
+    cfg.TerminalInteractiveShell.prompts_class = CustomPrompt
 
-        cfg.InteractiveShellEmbed.autocall = 2
-        user_ns = globals()
-        user_ns.update(locals())
-        ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
-                                        user_ns=user_ns)
-        ipshell.set_hook('complete_command', _opts_completer, re_key = '.*')
-    except ImportError:
-        # IPython < 0.11
-        from IPython.Shell import IPShellEmbed
-        argv = ['-prompt_in1','BDSF [\#]: ','-autocall','2']
-        ipshell = IPShellEmbed(argv=argv, banner=banner, user_ns=user_ns)
-        ipshell.IP.set_hook('complete_command', _opts_completer, re_key = '.*')
+    cfg.InteractiveShellEmbed.autocall = 2
+    user_ns = globals()
+    user_ns.update(locals())
+    ipshell = InteractiveShellEmbed(config=cfg, banner1=banner,
+                                    user_ns=user_ns)
+    ipshell.set_hook('complete_command', _opts_completer, re_key = '.*')
     ipshell()

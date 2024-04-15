@@ -1104,12 +1104,17 @@ def read_image_from_file(filename, img, indir, quiet=False):
     from . import mylogger
     import os
     import numpy as N
+    from astropy.io import fits as pyfits
+    from astropy.wcs import WCS
     from copy import deepcopy as cp
     import warnings
+
+    # Check if casacore is available, which is needed for 'rap' type of image I/O.
     try:
-        from packaging.version import Version
-    except ImportError:
-        from distutils.version import StrictVersion as Version
+        import casacore.images as pim
+        has_casacore = True
+    except ImportError as err:
+        has_casacore = False
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
     if indir is None or indir == './':
@@ -1120,80 +1125,36 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
     # Check that file exists
     if not os.path.exists(image_file):
-        img._reason = 'File does not exist'
+        img._reason = f'File {image_file} does not exist'
         return None
 
     # If img.use_io is set, then use appropriate io module
-    if img.use_io != '':
+    if img.use_io:
+        # Sanity check: only 'fits' and 'rap' are supported image I/O types
+        if img.use_io not in ('fits', 'rap'):
+            raise ValueError("Invalid image I/O type '{img.use_io}'. "
+                             "Supported types are: 'fits' and 'rap'")
         if img.use_io == 'fits':
             try:
-                from astropy.io import fits as pyfits
-                old_pyfits = False
-                use_sections = True
-            except ImportError as err:
-                import pyfits
-                if Version(pyfits.__version__) < Version('2.2'):
-                    old_pyfits = True
-                    use_sections = False
-                elif Version(pyfits.__version__) < Version('2.4'):
-                    old_pyfits = False
-                    use_sections = False
-                else:
-                    old_pyfits = False
-            try:
-                if not old_pyfits:
-                    fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-                else:
-                    fits = pyfits.open(image_file, mode="readonly")
+                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             except IOError as err:
-                img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
+                img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
         if img.use_io == 'rap':
-            import casacore.images as pim
+            if not has_casacore:
+                img._reason = f'Problem reading {image_file}.\nCasacore is unavailable'
+                return None
             try:
                 inputimage = pim.image(image_file)
             except IOError as err:
-                img._reason = 'Problem reading file.\nOriginal error: {0}'.format(str(err))
+                img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
     else:
-        # Simple check of whether casacore and pyfits are available
-        # We need pyfits version 2.2 or greater to use the
-        # "ignore_missing_end" argument to pyfits.open().
-        try:
-            try:
-                from astropy.io import fits as pyfits
-                old_pyfits = False
-                use_sections = True
-            except ImportError as err:
-                import pyfits
-                if Version(pyfits.__version__) < Version('2.2'):
-                    old_pyfits = True
-                    use_sections = False
-                elif Version(pyfits.__version__) < Version('2.4'):
-                    old_pyfits = False
-                    use_sections = False
-                else:
-                    old_pyfits = False
-                    use_sections = True
-            has_pyfits = True
-        except ImportError as err:
-            raise RuntimeError("Astropy or PyFITS is required.")
-        try:
-            import casacore.images as pim
-            has_casacore = True
-        except ImportError as err:
-            has_casacore = False
-            e_casacore = str(err)
-
-        # First assume image is a fits file, and use pyfits to open it (if
-        # available). If that fails, try to use casacore if available.
+        # First assume image is a fits file, and use pyfits to open it.
+        # If that fails, try to use casacore if available.
         failed_read = False
-        reason = 0
         try:
-            if not old_pyfits:
-                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            else:
-                fits = pyfits.open(image_file, mode="readonly")
+            fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             img.use_io = 'fits'
         except IOError as err:
             e_pyfits = str(err)
@@ -1208,9 +1169,9 @@ def read_image_from_file(filename, img, indir, quiet=False):
             else:
                 failed_read = True
                 e_casacore = "Casacore unavailable"
-                img._reason = 'Problem reading file.'
+                img._reason = f'Problem reading {image_file}.'
         if failed_read:
-            img._reason += '\nOriginal error: {0}\n {1}'.format(e_pyfits, e_casacore)
+            img._reason += f'\nOriginal error: {e_pyfits}\n {e_casacore}'
             return None
 
     # Now that image has been read in successfully, get header (data is loaded
@@ -1275,20 +1236,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
     # Make sure that the spectral axis has been identified properly
     if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
-        try:
-            from astropy.wcs import FITSFixedWarning
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore",category=DeprecationWarning)
-                warnings.filterwarnings("ignore",category=FITSFixedWarning)
-                from astropy.wcs import WCS
-                t = WCS(hdr)
-                t.wcs.fix()
-        except ImportError as err:
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore",category=DeprecationWarning)
-                from pywcs import WCS
-                t = WCS(hdr)
-                t.wcs.fix()
+        from astropy.wcs import FITSFixedWarning
+        # TODO: Is it still needed and/or desirable to filter warnings?
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",category=DeprecationWarning)
+            warnings.filterwarnings("ignore",category=FITSFixedWarning)
+            t = WCS(hdr)
+            t.wcs.fix()
         spec_indx = t.wcs.spec
         if spec_indx != -1:
             ctype_in[spec_indx] = 'FREQ'
@@ -1339,23 +1293,20 @@ def read_image_from_file(filename, img, indir, quiet=False):
             for i in range(naxis-2):
                 s_array.append(sn)
             s_array.reverse() # to match ordering of data array returned by PyFITS
-            if not old_pyfits and use_sections:
-                if naxis == 2:
-                    data = fits[0].section[s_array[0], s_array[1]]
-                elif naxis == 3:
-                    data = fits[0].section[s_array[0], s_array[1], s_array[2]]
-                elif naxis == 4:
-                    data = fits[0].section[s_array[0], s_array[1], s_array[2], s_array[3]]
-                else:
-                    # If more than 4 axes, just read in the whole image and
-                    # do the trimming after reordering.
-                    data = fits[0].data
+            if naxis == 2:
+                data = fits[0].section[s_array[0], s_array[1]]
+            elif naxis == 3:
+                data = fits[0].section[s_array[0], s_array[1], s_array[2]]
+            elif naxis == 4:
+                data = fits[0].section[s_array[0], s_array[1], s_array[2], s_array[3]]
             else:
+                # If more than 4 axes, just read in the whole image and
+                # do the trimming after reordering.
                 data = fits[0].data
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
             data.shape = data.shape[0:4] # trim unused dimensions (if any)
-            if naxis > 4 or not use_sections:
+            if naxis > 4:
                 data = data.reshape(shape_out_untrimmed) # Add axes if needed
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
             else:
@@ -1520,24 +1471,9 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, ymin=0,
                     is_mask=False, shape=None):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
-    try:
-        from packaging.version import Version
-    except ImportError:
-        from distutils.version import StrictVersion as Version
-    try:
-        from astropy.io import fits as pyfits
-        use_header_update = False
-    except ImportError as err:
-        import pyfits
-
-        # Due to changes in the way pyfits handles headers from version 3.1 on,
-        # we need to check for older versions and change the setting of header
-        # keywords accordingly.
-        if Version(pyfits.__version__) < Version('3.1'):
-            use_header_update = True
-        else:
-            use_header_update = False
     import numpy as np
+    from astropy.io import fits as pyfits
+    use_header_update = False
 
     # If mask, expand to all channels and Stokes for compatibility with casa
     if is_mask and shape is not None:
@@ -1549,84 +1485,45 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
     header = hdulist[0].header
 
     # Add WCS info
-    if use_header_update:
-        header.update('CRVAL1', wcsobj.wcs.crval[0])
-        header.update('CDELT1', wcsobj.wcs.cdelt[0])
-        header.update('CRPIX1', wcsobj.wcs.crpix[0] + xmin)
-        header.update('CUNIT1', str(wcsobj.wcs.cunit[0]).strip().lower()) # needed due to bug in pywcs/astropy
-        header.update('CTYPE1', wcsobj.wcs.ctype[0])
-        header.update('CRVAL2', wcsobj.wcs.crval[1])
-        header.update('CDELT2', wcsobj.wcs.cdelt[1])
-        header.update('CRPIX2', wcsobj.wcs.crpix[1] + ymin)
-        header.update('CUNIT2', str(wcsobj.wcs.cunit[1]).strip().lower())
-        header.update('CTYPE2', wcsobj.wcs.ctype[1])
-    else:
-        header['CRVAL1'] = wcsobj.wcs.crval[0]
-        header['CDELT1'] = wcsobj.wcs.cdelt[0]
-        header['CRPIX1'] = wcsobj.wcs.crpix[0] + xmin
-        header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).strip().lower() # needed due to bug in pywcs/astropy
-        header['CTYPE1'] = wcsobj.wcs.ctype[0]
-        header['CRVAL2'] = wcsobj.wcs.crval[1]
-        header['CDELT2'] = wcsobj.wcs.cdelt[1]
-        header['CRPIX2'] = wcsobj.wcs.crpix[1] + ymin
-        header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).strip().lower()
-        header['CTYPE2'] = wcsobj.wcs.ctype[1]
+    header['CRVAL1'] = wcsobj.wcs.crval[0]
+    header['CDELT1'] = wcsobj.wcs.cdelt[0]
+    header['CRPIX1'] = wcsobj.wcs.crpix[0] + xmin
+    header['CUNIT1'] = str(wcsobj.wcs.cunit[0]).strip().lower() # needed due to bug in pywcs/astropy
+    header['CTYPE1'] = wcsobj.wcs.ctype[0]
+    header['CRVAL2'] = wcsobj.wcs.crval[1]
+    header['CDELT2'] = wcsobj.wcs.cdelt[1]
+    header['CRPIX2'] = wcsobj.wcs.crpix[1] + ymin
+    header['CUNIT2'] = str(wcsobj.wcs.cunit[1]).strip().lower()
+    header['CTYPE2'] = wcsobj.wcs.ctype[1]
 
     # Add STOKES info
-    if use_header_update:
-        header.update('CRVAL3', 1.0)
-        header.update('CDELT3', 1.0)
-        header.update('CRPIX3', 1.0)
-        header.update('CUNIT3', ' ')
-        header.update('CTYPE3', 'STOKES')
-    else:
-        header['CRVAL3'] = 1.0
-        header['CDELT3'] = 1.0
-        header['CRPIX3'] = 1.0
-        header['CUNIT3'] = ''
-        header['CTYPE3'] = 'STOKES'
+    header['CRVAL3'] = 1.0
+    header['CDELT3'] = 1.0
+    header['CRPIX3'] = 1.0
+    header['CUNIT3'] = ''
+    header['CTYPE3'] = 'STOKES'
 
     # Add frequency info
-    if use_header_update:
-        header.update('RESTFRQ', freq)
-        header.update('CRVAL4', freq)
-        header.update('CDELT4', 3e8)
-        header.update('CRPIX4', 1.0)
-        header.update('CUNIT4', 'HZ')
-        header.update('CTYPE4', 'FREQ')
-        header.update('SPECSYS', 'TOPOCENT')
-    else:
-        header['RESTFRQ'] = freq
-        header['CRVAL4'] = freq
-        header['CDELT4'] = 3e8
-        header['CRPIX4'] = 1.0
-        header['CUNIT4'] = 'HZ'
-        header['CTYPE4'] = 'FREQ'
-        header['SPECSYS'] = 'TOPOCENT'
+    header['RESTFRQ'] = freq
+    header['CRVAL4'] = freq
+    header['CDELT4'] = 3e8
+    header['CRPIX4'] = 1.0
+    header['CUNIT4'] = 'HZ'
+    header['CTYPE4'] = 'FREQ'
+    header['SPECSYS'] = 'TOPOCENT'
 
     # Add beam info
     if not is_mask:
-        if use_header_update:
-            header.update('BMAJ', beam[0])
-            header.update('BMIN', beam[1])
-            header.update('BPA', beam[2])
-        else:
-            header['BMAJ'] = beam[0]
-            header['BMIN'] = beam[1]
-            header['BPA'] = beam[2]
+        header['BMAJ'] = beam[0]
+        header['BMIN'] = beam[1]
+        header['BPA'] = beam[2]
 
     # Add equinox
-    if use_header_update:
-        header.update('EQUINOX', equinox)
-    else:
-        header['EQUINOX'] = equinox
+    header['EQUINOX'] = equinox
 
     # Add telescope
     if telescope is not None:
-        if use_header_update:
-            header.update('TELESCOP', telescope)
-        else:
-            header['TELESCOP'] = telescope
+        header['TELESCOP'] = telescope
 
     hdulist[0].header = header
     return hdulist
