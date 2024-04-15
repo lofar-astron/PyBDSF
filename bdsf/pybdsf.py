@@ -716,16 +716,16 @@ def main():
 
                 def in_prompt_tokens(self, cli=None):
 
-                   return [
-                        (Token.Prompt, 'BDSF ['),
-                        (Token.PromptNum, str(self.shell.execution_count)),
-                        (Token.Prompt, ']: '),
-                        ]
+                    return [
+                         (Token.Prompt, 'BDSF ['),
+                         (Token.PromptNum, str(self.shell.execution_count)),
+                         (Token.Prompt, ']: '),
+                         ]
 
                 def out_prompt_tokens(self):
-                   return [
-                        (Token.OutPrompt, ''),
-                    ]
+                    return [
+                         (Token.OutPrompt, ''),
+                     ]
 
             cfg.TerminalInteractiveShell.prompts_class = CustomPrompt
         except ImportError:

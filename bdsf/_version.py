@@ -205,14 +205,14 @@ def changelog():
         ignored when format='fits' in the write_catalog task.
 
     2013/12/05 - Enabled output of images in CASA format in the export_image
-    	task (img_format = 'casa'). Added an option to export_image task to
-    	export an island-mask image, with ones where there is emission and
-    	zeros elsewhere (image_type = 'island_mask'). Features in the island
-    	mask may be optionally dilated by specifying the number of dilation
-    	iterations with the mask_dilation parameter. Added an option to
-    	write a CASA region file to the write_catalog task (format =
-    	'casabox'). Added an option to write a CSV catalog to the
-    	write_catalog task (format = 'csv').
+        task (img_format = 'casa'). Added an option to export_image task to
+        export an island-mask image, with ones where there is emission and
+        zeros elsewhere (image_type = 'island_mask'). Features in the island
+        mask may be optionally dilated by specifying the number of dilation
+        iterations with the mask_dilation parameter. Added an option to
+        write a CASA region file to the write_catalog task (format =
+        'casabox'). Added an option to write a CSV catalog to the
+        write_catalog task (format = 'csv').
 
     2013/11/04 - Added error message when the rms is zero in some part of the
         rms map.
@@ -220,11 +220,11 @@ def changelog():
     2013/10/16 - Version 1.8.0
 
     2013/10/16 - Improved wavelet fitting. Added option so that wavelet
-    	fitting can be done to the sum of images on the remaining wavelet
-    	scales, improving the signal for fitting (controlled with the
-    	atrous_sum option). Added option so that user can choose whether to
-    	include new islands found only in the wavelet images in the final
-    	fit or not (controlled with the atrous_orig_isl option).
+        fitting can be done to the sum of images on the remaining wavelet
+        scales, improving the signal for fitting (controlled with the
+        atrous_sum option). Added option so that user can choose whether to
+        include new islands found only in the wavelet images in the final
+        fit or not (controlled with the atrous_orig_isl option).
 
     2013/10/10 - Fixed a bug that could lead to incomplete fitting of
         some islands. Improved overall convergence of fits.
@@ -291,8 +291,8 @@ def changelog():
         (replaced scipy.signal.fftconvolve with a custom function).
 
     2013/08/11 - Added option to use disk caching for internally derived
-    	images (do_cache). Caching can reduce memory usage and is
-    	therefore useful when processing large images.
+        images (do_cache). Caching can reduce memory usage and is
+        therefore useful when processing large images.
 
     2013/07/11 - Implemented a variable operation chain for process_image
         (and img.process()) that allows unneeded steps to be skipped if
@@ -302,9 +302,9 @@ def changelog():
         during iterative fitting of large islands.
 
     2013/06/24 - Added option (fix_to_beam) to fix the size and position
-    	angle of Gaussians to the restoring beam during fitting. Fix to
-    	bug that caused the position angle used to initialize fitting to
-    	be incorrect.
+        angle of Gaussians to the restoring beam during fitting. Fix to
+        bug that caused the position angle used to initialize fitting to
+        be incorrect.
 
     2013/03/22 - Version 1.6.1
 
@@ -427,9 +427,9 @@ def changelog():
         no Gaussians were fit to the ch0 image.
 
     2012/09/19 - Added option (broadcast) to show_fit task to send
-    	coordinates and row highlight request to a SAMP hub when a Gaussian
-    	is clicked. Fixed bug in aperture flux masking that sometimes caused
-    	the mask to be the wrong shape.
+        coordinates and row highlight request to a SAMP hub when a Gaussian
+        is clicked. Fixed bug in aperture flux masking that sometimes caused
+        the mask to be the wrong shape.
 
     2012/09/18 - Added option to send images and catalogs to a SAMP hub
         (activated by setting outfile = 'SAMP' in the export_image and
@@ -514,196 +514,196 @@ def changelog():
         Changed code that determines terminal width to be more robust.
 
     2012/05/07 - Removed dependencies on matplotlib -- if matplotlib is
-    	not available, plotting is disabled. Corrected inconsistencies,
-    	spelling mistakes, etc. in help text and documentation. Cleaned
-    	up unneeded modules and files.
+        not available, plotting is disabled. Corrected inconsistencies,
+        spelling mistakes, etc. in help text and documentation. Cleaned
+        up unneeded modules and files.
 
     2012/05/02 - Added option to output flux densities for every channel
-    	found by the spectral index module. Added option to spectral index
-    	module to allow use of flux densities that do not meet the desired
-    	SNR. Changed flag_maxsnr criterion to also flag if the peak flux
-    	density per beam of the Gaussian exceeds the value at its center.
-    	Removed incl_wavelet option.
+        found by the spectral index module. Added option to spectral index
+        module to allow use of flux densities that do not meet the desired
+        SNR. Changed flag_maxsnr criterion to also flag if the peak flux
+        density per beam of the Gaussian exceeds the value at its center.
+        Removed incl_wavelet option.
 
     2012/04/20 - Promoted the adaptive_rms_box parameter to the main options
-    	listing and added the rms_box_bright option so that the user can
-    	specify either (or both) of the rms_boxes. Fixed bug in wavelet
-    	module so that invalid Gaussians (i.e., those that lie outside of
-    	islands in the ch0 image) are not used when making the residual
-    	images at each scale. Improved speed of Gaussian fitting to wavelet
-    	images. Fixed bug that resulted in pixels found to be outside the
-    	universe (check is enabled with the check_outsideuniv option) not
-    	being masked properly.
+        listing and added the rms_box_bright option so that the user can
+        specify either (or both) of the rms_boxes. Fixed bug in wavelet
+        module so that invalid Gaussians (i.e., those that lie outside of
+        islands in the ch0 image) are not used when making the residual
+        images at each scale. Improved speed of Gaussian fitting to wavelet
+        images. Fixed bug that resulted in pixels found to be outside the
+        universe (check is enabled with the check_outsideuniv option) not
+        being masked properly.
 
     2012/04/17 - Fixed bug in psf_vary module that resulted in PSF major and
-    	minor axis maps in terms of sigma instead of FWHM. Added option
-    	(psf_stype_only) to allow PSF fitting to non- S-type sources
-    	(useful if sources are very distorted).
+        minor axis maps in terms of sigma instead of FWHM. Added option
+        (psf_stype_only) to allow PSF fitting to non- S-type sources
+        (useful if sources are very distorted).
 
     2012/04/12 - Fixed bug in adaptive scaling code that could cause
-    	incorrect small-scale rms_box size. Added a parameter
-    	(adaptive_thresh) that controls the minimum threshold for sources
-    	used to set the small-scale rms_box size.
+        incorrect small-scale rms_box size. Added a parameter
+        (adaptive_thresh) that controls the minimum threshold for sources
+        used to set the small-scale rms_box size.
 
     2012/04/02 - Implemented an adaptive scaling scheme for the rms_box
-    	parameter that shrinks the box size near bright sources and expands
-    	it far from them (enabled with the adaptive_rms_box option when
-    	rms_box=None). This scheme generally results in improved rms and
-    	mean maps when both strong artifacts and extended sources are
-    	present. Fixed bug that prevented plotting of results during wavelet
-    	decomposition when interactive = True.
+        parameter that shrinks the box size near bright sources and expands
+        it far from them (enabled with the adaptive_rms_box option when
+        rms_box=None). This scheme generally results in improved rms and
+        mean maps when both strong artifacts and extended sources are
+        present. Fixed bug that prevented plotting of results during wavelet
+        decomposition when interactive = True.
 
     2012/03/29 - Fixed bug in wavelet module that could cause incorrect
-    	associations of Gaussians. Fixed bug in show_fit that displayed
-    	incorrect model and residual images when wavelets were used.
+        associations of Gaussians. Fixed bug in show_fit that displayed
+        incorrect model and residual images when wavelets were used.
 
     2012/03/28 - Version 1.1
 
     2012/03/28 - Fixed bug that caused mask to be ignored when determining
-    	whether variations in rms and mean maps is significant. Fixed bug
-    	that caused internally derived rms_box value to be ignored.
+        whether variations in rms and mean maps is significant. Fixed bug
+        that caused internally derived rms_box value to be ignored.
 
     2012/03/27 - Modified calculation of rms_box parameter (when rms_box
-    	option is None) to work better with fields composed mainly of point
-    	sources when strong artifacts are present. Tweaked flagging on FWHM
-    	to prevent over-flagging of Gaussians in small islands. Changed
-    	wavelet module to flag Gaussians whose centers fall outside of
-    	islands found in the original image and removed atrous_orig_isl
-    	option (as redundant).
+        option is None) to work better with fields composed mainly of point
+        sources when strong artifacts are present. Tweaked flagging on FWHM
+        to prevent over-flagging of Gaussians in small islands. Changed
+        wavelet module to flag Gaussians whose centers fall outside of
+        islands found in the original image and removed atrous_orig_isl
+        option (as redundant).
 
     2012/03/26 - Modified fitting of large islands to adopt an iterative
-    	fitting scheme that limits the number of Gaussians fit
-    	simultaneously per iteration to 10. This change speeds up fitting of
-    	large islands considerably. The options peak_fit and peak_maxsize
-    	control whether iterative fitting is done. Added new Gaussian
-    	flagging condition (flag_maxsize_fwhm) that flags Gaussians whose
-    	sigma contour times factor extends beyond the island boundary. This
-    	flag prevents fitting of Gaussians that extend far beyond the island
-    	boundary.
+        fitting scheme that limits the number of Gaussians fit
+        simultaneously per iteration to 10. This change speeds up fitting of
+        large islands considerably. The options peak_fit and peak_maxsize
+        control whether iterative fitting is done. Added new Gaussian
+        flagging condition (flag_maxsize_fwhm) that flags Gaussians whose
+        sigma contour times factor extends beyond the island boundary. This
+        flag prevents fitting of Gaussians that extend far beyond the island
+        boundary.
 
     2012/03/23 - Tweaked settings that affect fitting of Gaussians to
-    	improve fitting in general.
+        improve fitting in general.
 
     2012/03/19 - Added output of shapelet parameters to FITS tables. Fixed
-    	issue with resizing of sources in spectral index module.
+        issue with resizing of sources in spectral index module.
 
     2012/03/16 - Fixed bugs in polarisation module that caused incorrect
-    	polarization fractions.
+        polarization fractions.
 
     2012/03/13 - Improved plotting speed (by factor of ~ 4) in show_fit when
-    	there is a large number of islands. Simplified the spectral index
-    	module to make it more user friendly and stable. Added the option to
-    	use a "detection" image for island detection (the detection_image
-    	option); source properties are still measured from the main input
-    	image.
+        there is a large number of islands. Simplified the spectral index
+        module to make it more user friendly and stable. Added the option to
+        use a "detection" image for island detection (the detection_image
+        option); source properties are still measured from the main input
+        image.
 
     2012/03/01 - Fixed a bug in the polarisation module that could result in
-    	incorrect flux densities. Changed logging module to suppress output
-    	of ANSI color codes to the log file.
+        incorrect flux densities. Changed logging module to suppress output
+        of ANSI color codes to the log file.
 
     2012/02/27 - Implemented fitting of Gaussians in polarisation module,
-    	instead of simple summation of pixel values, to determine polarized
-    	flux densities.
+        instead of simple summation of pixel values, to determine polarized
+        flux densities.
 
     2012/02/17 - In scripts, process_image() will now accept a dictionary of
-    	parameters as input.
+        parameters as input.
 
     2012/02/10 - Sources that appear only in Stokes Q or U (and hence not in
-    	Stokes I) are now identified and included in the polarisation
-    	module. This identification is done using the polarized intensity
-    	(PI) image. show_fit() and export_image() were updated to allow
-    	display and export of the PI image.
+        Stokes I) are now identified and included in the polarisation
+        module. This identification is done using the polarized intensity
+        (PI) image. show_fit() and export_image() were updated to allow
+        display and export of the PI image.
 
     2012/02/06 - Fixed bug in island splitting code that could result in
-    	duplicate Gaussians.
+        duplicate Gaussians.
 
     2012/02/02 - Improved polarisation module. Polarization quantities are
-    	now calculated for Gaussians as well as sources.
+        now calculated for Gaussians as well as sources.
 
     2012/01/27 - Fixed bug in psf_vary module that affected tesselation.
-    	Fixed many small typos in parameter descriptions.
+        Fixed many small typos in parameter descriptions.
 
     2012/01/18 - Fixed a bug that resulted in incorrect coordinates when the
-    	trim_box option was used with a CASA image. Added option
-    	(blank_zeros) to blank pixels in the input image that are exactly
-    	zero.
+        trim_box option was used with a CASA image. Added option
+        (blank_zeros) to blank pixels in the input image that are exactly
+        zero.
 
     2012/01/13 - Fixed minor bugs in the interactive shell and updated
-    	pybdsm.py to support IPython 0.12.
+        pybdsm.py to support IPython 0.12.
 
     2011/12/21 - Fixed bug in gaul2srl module due to rare cases in which an
-    	island has a negative rms value. Fixed a memory issue in which
-    	memory was not released after using show_fit.
+        island has a negative rms value. Fixed a memory issue in which
+        memory was not released after using show_fit.
 
     2011/11/28 - Added option to have minpix_isl estimated automatically as
-    	1/3 of the beam area. This estimate should help exclude false
-    	islands that are much smaller than the beam. This estimate is not
-    	let to fall below 6 pixels.
+        1/3 of the beam area. This estimate should help exclude false
+        islands that are much smaller than the beam. This estimate is not
+        let to fall below 6 pixels.
 
     2011/11/11 - Fixed bugs in source generation that would lead to masking
-    	of all pixels for certain sources during moment analysis. Adjusted
-    	calculation of jmax in wavelet module to use island sizes (instead
-    	of image size) if opts.atrous_orig_isl is True.
+        of all pixels for certain sources during moment analysis. Adjusted
+        calculation of jmax in wavelet module to use island sizes (instead
+        of image size) if opts.atrous_orig_isl is True.
 
     2011/11/04 - Implemented new island fitting routine (enabled with the
-    	peak_fit option) that can speed up fitting of large islands. Changed
-    	plotting of Gaussians in show_fit to use Ellipse artists to improve
-    	plotting speed.
+        peak_fit option) that can speed up fitting of large islands. Changed
+        plotting of Gaussians in show_fit to use Ellipse artists to improve
+        plotting speed.
 
     2011/11/03 - Altered reading of images to correctly handle 4D cubes.
-    	Fixed bug in readimage that affected filenames.
+        Fixed bug in readimage that affected filenames.
 
     2011/10/26 - Extended psf_vary module to include fitting of stacked PSFs
-    	with Gaussians, interpolation of the resulting parameters across the
-    	image, and correction of the de- convolved source sizes using the
-    	interpolated PSFs. Changed plotting of Gaussians in show_fit() to
-    	use the FWHM instead of sigma. Modified error calculation of M
-    	sources to be more robust when sources are small. Fixed spelling of
-    	"gaussian" in bbs_patches option list.
+        with Gaussians, interpolation of the resulting parameters across the
+        image, and correction of the de- convolved source sizes using the
+        interpolated PSFs. Changed plotting of Gaussians in show_fit() to
+        use the FWHM instead of sigma. Modified error calculation of M
+        sources to be more robust when sources are small. Fixed spelling of
+        "gaussian" in bbs_patches option list.
 
     2011/10/24 - Many small bug fixes to the psf_vary module. Fixed use of
-    	input directory so that input files not in the current directory are
-    	handled correctly.
+        input directory so that input files not in the current directory are
+        handled correctly.
 
     2011/10/14 - Added residual rms and mean values to sources and source
-    	list catalogs. These values can be compared to background rms and
-    	mean values as a quick check of fit quality.
+        list catalogs. These values can be compared to background rms and
+        mean values as a quick check of fit quality.
 
     2011/10/13 - Modified deconvolution to allow 1-D Gaussians and sources.
-    	Added FREQ0, EQUINOX, INIMAGE keywords to output fits catalogs.
-    	Fixed bug in source position angles. Adjusted column names of output
-    	catalogs slightly to be more descriptive.
+        Added FREQ0, EQUINOX, INIMAGE keywords to output fits catalogs.
+        Fixed bug in source position angles. Adjusted column names of output
+        catalogs slightly to be more descriptive.
 
     2011/10/12 - Added errors to source properties (using a Monte Carlo
-    	method for M sources). Fixed bug in output column names.
+        method for M sources). Fixed bug in output column names.
 
     2011/10/11 - Tweaked autocomplete to support IPython shell commands
-    	(e.g., "!more file.txt"). Fixed bug in gaul2srl that resulted in
-    	some very nearby Gaussians being placed into different sources.
-    	Added group_tol option so that user can adjust the tolerance of how
-    	Gaussians are grouped into sources.
+        (e.g., "!more file.txt"). Fixed bug in gaul2srl that resulted in
+        some very nearby Gaussians being placed into different sources.
+        Added group_tol option so that user can adjust the tolerance of how
+        Gaussians are grouped into sources.
 
     2011/10/05 - Added output of source lists. Changed name of write_gaul
-    	method to write_catalog (more general).
+        method to write_catalog (more general).
 
     2011/10/04 - Added option to force source grouping by island
-    	(group_by_isl). Added saving of parameters to a PyBDSM save file to
-    	Op_output.
+        (group_by_isl). Added saving of parameters to a PyBDSM save file to
+        Op_output.
 
     2011/09/21 - Fixed issue with shapelet centering failing: it now falls
-    	back to simple moment when this happens. Fixed issue with
-    	plotresults when shapelets are fit.
+        back to simple moment when this happens. Fixed issue with
+        plotresults when shapelets are fit.
 
     2011/09/14 - Placed output column names and units in TC properties of
-    	Gaussians. This allows easy standardization of the column names and
-    	units.
+        Gaussians. This allows easy standardization of the column names and
+        units.
 
     2011/09/13 - Fixes to trim_box and resetting of Image objects in
-    	interface.process(). Changed thr1 --> thr2 in fit_iter in
-    	guasfit.py, as bright sources are often "overfit" when using thr1,
-    	leading to large negative residuals. Restricted fitting of Gaussians
-    	to wavelet images to be only in islands found in the original image
-    	if opts.atrous_orig_isl is True.
+        interface.process(). Changed thr1 --> thr2 in fit_iter in
+        guasfit.py, as bright sources are often "overfit" when using thr1,
+        leading to large negative residuals. Restricted fitting of Gaussians
+        to wavelet images to be only in islands found in the original image
+        if opts.atrous_orig_isl is True.
 
     2011/09/08 - Version 1.0
 

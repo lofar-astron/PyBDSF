@@ -268,10 +268,10 @@ class Op_islands(Op):
 
         ops = []
         for op in chain:
-          if isinstance(op, type):
-            ops.append(op())
-          else:
-            ops.append(op)
+            if isinstance(op, type):
+                ops.append(op())
+            else:
+                ops.append(op)
 
         return ops, opts
 
@@ -306,7 +306,7 @@ class Island(object):
                                       colname='Coeff_matrix', units=None)
 
         if not copy:
-            ### we make bbox slightly bigger
+                ### we make bbox slightly bigger
             self.oldbbox = bbox
             self.oldidx = idx
             bbox = self.__expand_bbox(bbox, img.shape)
