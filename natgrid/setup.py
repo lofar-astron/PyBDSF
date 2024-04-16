@@ -10,7 +10,7 @@ setup (name = "natgrid",
        url = "http://cdat.sf.net",
        packages = [''],
        package_dir = {'': 'Lib'},
-       include_dirs = ['Include',], 
+       include_dirs = ['Include',],
        ext_modules = [Extension('natgridmodule', sources),
-		     ]
+                     ]
       )

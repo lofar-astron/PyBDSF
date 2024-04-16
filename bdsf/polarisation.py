@@ -56,271 +56,271 @@ class Op_polarisation(Op):
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Polarisatn")
         if img.opts.polarisation_do:
-          mylog.info('Extracting polarisation properties for all sources')
-          pols = ['I', 'Q', 'U', 'V']
+            mylog.info('Extracting polarisation properties for all sources')
+            pols = ['I', 'Q', 'U', 'V']
 
-          # Run gausfit and gual2srl on PI image to look for polarized sources
-          # undetected in I
-          fit_PI = img.opts.pi_fit
-          n_new = 0
-          ch0_pi = N.sqrt(img.ch0_Q_arr**2 + img.ch0_U_arr**2)
-          img.ch0_pi_arr = ch0_pi
+            # Run gausfit and gual2srl on PI image to look for polarized sources
+            # undetected in I
+            fit_PI = img.opts.pi_fit
+            n_new = 0
+            ch0_pi = N.sqrt(img.ch0_Q_arr**2 + img.ch0_U_arr**2)
+            img.ch0_pi_arr = ch0_pi
 
-          if fit_PI:
-              from . import _run_op_list
-              mylogger.userinfo(mylog, "\nChecking PI image for new sources")
+            if fit_PI:
+                from . import _run_op_list
+                mylogger.userinfo(mylog, "\nChecking PI image for new sources")
 
-              mask = img.mask_arr
+                mask = img.mask_arr
 
-              # Set up image object for PI image.
-              pi_chain, pi_opts = self.setpara_bdsm(img)
-              pimg = Image(pi_opts)
-              pimg.beam = img.beam
-              pimg.pixel_beam = img.pixel_beam
-              pimg.pixel_beamarea = img.pixel_beamarea
-              pimg.log = 'PI.'
-              pimg.basedir = img.basedir
-              pimg.imagename = img.imagename
-              pimg.frequency = img.frequency
-              pimg.equinox = img.equinox
-              pimg.shape = img.shape
-              pimg.pix2beam = img.pix2beam
-              pimg.beam2pix = img.beam2pix
-              pimg.pix2gaus = img.pix2gaus
-              pimg.gaus2pix = img.gaus2pix
-              pimg.pix2sky = img.pix2sky
-              pimg.sky2pix = img.sky2pix
-              pimg.pix2coord = img.pix2coord
-              pimg.wcs_obj = img.wcs_obj
-              pimg.mask_arr = mask
-              pimg.masked = img.masked
-              pimg.ch0_arr = ch0_pi
-              pimg._pi = True
+                # Set up image object for PI image.
+                pi_chain, pi_opts = self.setpara_bdsm(img)
+                pimg = Image(pi_opts)
+                pimg.beam = img.beam
+                pimg.pixel_beam = img.pixel_beam
+                pimg.pixel_beamarea = img.pixel_beamarea
+                pimg.log = 'PI.'
+                pimg.basedir = img.basedir
+                pimg.imagename = img.imagename
+                pimg.frequency = img.frequency
+                pimg.equinox = img.equinox
+                pimg.shape = img.shape
+                pimg.pix2beam = img.pix2beam
+                pimg.beam2pix = img.beam2pix
+                pimg.pix2gaus = img.pix2gaus
+                pimg.gaus2pix = img.gaus2pix
+                pimg.pix2sky = img.pix2sky
+                pimg.sky2pix = img.sky2pix
+                pimg.pix2coord = img.pix2coord
+                pimg.wcs_obj = img.wcs_obj
+                pimg.mask_arr = mask
+                pimg.masked = img.masked
+                pimg.ch0_arr = ch0_pi
+                pimg._pi = True
 
-              success = _run_op_list(pimg, pi_chain)
-              if not success:
-                  return
+                success = _run_op_list(pimg, pi_chain)
+                if not success:
+                    return
 
-              img.pi_islands = pimg.islands
-              img.pi_gaussians = pimg.gaussians
-              img.pi_sources = pimg.sources
+                img.pi_islands = pimg.islands
+                img.pi_gaussians = pimg.gaussians
+                img.pi_sources = pimg.sources
 
-              # Now check for new sources in the PI image that are not
-              # found in the Stokes I image. If any new sources are found,
-              # adjust their IDs to follow after those found in I.
-              new_isl = []
-              new_src = []
-              new_gaus = []
-              n_new_src = 0
-              if len(img.islands) == 0:
-                  isl_id = 0
-                  src_id = 0
-                  gaus_id = 0
-              else:
-                  isl_id = img.islands[-1].island_id
-                  src_id = img.sources[-1].source_id
-                  gaus_id = img.gaussians[-1].gaus_num
-              for pi_isl in pimg.islands:
-                  new_sources = []
-                  for pi_src in pi_isl.sources:
-                      if img.pyrank[int(img.sky2pix(pi_src.posn_sky_max)[0]),
-                                    int(img.sky2pix(pi_src.posn_sky_max)[1])] == -1:
-                          src_id += 1
-                          pi_src._pi = True
-                          pi_src.island_id = isl_id
-                          pi_src.source_id = src_id
-                          pi_src.spec_indx = N.NaN
-                          pi_src.e_spec_indx = N.NaN
-                          pi_src.spec_norm = N.NaN
-                          pi_src.specin_flux = [N.NaN]
-                          pi_src.specin_fluxE = [N.NaN]
-                          pi_src.specin_freq = [N.NaN]
-                          pi_src.specin_freq0 = N.NaN
-                          for gaus in pi_src.gaussians:
-                              gaus.island_id = isl_id
-                              gaus.source_id = src_id
-                              gaus.spec_indx = N.NaN
-                              gaus.e_spec_indx = N.NaN
-                              gaus.spec_norm = N.NaN
-                              gaus.specin_flux = [N.NaN]
-                              gaus.specin_fluxE = [N.NaN]
-                              gaus.specin_freq = [N.NaN]
-                              gaus.specin_freq0 = N.NaN
-                          new_sources.append(pi_src)
-                          new_src.append(pi_src)
-                          n_new_src += 1
-                          for g in pi_src.gaussians:
-                              gaus_id += 1
-                              new_gaus.append(g)
-                              g.gaus_num = gaus_id
-                  if len(new_sources) > 0:
-                      isl_id += 1
-                      pi_isl.sources = new_sources
-                      pi_isl.island_id = isl_id
-                      pi_isl._pi = True
-                      new_isl.append(pi_isl)
+                # Now check for new sources in the PI image that are not
+                # found in the Stokes I image. If any new sources are found,
+                # adjust their IDs to follow after those found in I.
+                new_isl = []
+                new_src = []
+                new_gaus = []
+                n_new_src = 0
+                if len(img.islands) == 0:
+                    isl_id = 0
+                    src_id = 0
+                    gaus_id = 0
+                else:
+                    isl_id = img.islands[-1].island_id
+                    src_id = img.sources[-1].source_id
+                    gaus_id = img.gaussians[-1].gaus_num
+                for pi_isl in pimg.islands:
+                    new_sources = []
+                    for pi_src in pi_isl.sources:
+                        if img.pyrank[int(img.sky2pix(pi_src.posn_sky_max)[0]),
+                                      int(img.sky2pix(pi_src.posn_sky_max)[1])] == -1:
+                            src_id += 1
+                            pi_src._pi = True
+                            pi_src.island_id = isl_id
+                            pi_src.source_id = src_id
+                            pi_src.spec_indx = N.NaN
+                            pi_src.e_spec_indx = N.NaN
+                            pi_src.spec_norm = N.NaN
+                            pi_src.specin_flux = [N.NaN]
+                            pi_src.specin_fluxE = [N.NaN]
+                            pi_src.specin_freq = [N.NaN]
+                            pi_src.specin_freq0 = N.NaN
+                            for gaus in pi_src.gaussians:
+                                gaus.island_id = isl_id
+                                gaus.source_id = src_id
+                                gaus.spec_indx = N.NaN
+                                gaus.e_spec_indx = N.NaN
+                                gaus.spec_norm = N.NaN
+                                gaus.specin_flux = [N.NaN]
+                                gaus.specin_fluxE = [N.NaN]
+                                gaus.specin_freq = [N.NaN]
+                                gaus.specin_freq0 = N.NaN
+                            new_sources.append(pi_src)
+                            new_src.append(pi_src)
+                            n_new_src += 1
+                            for g in pi_src.gaussians:
+                                gaus_id += 1
+                                new_gaus.append(g)
+                                g.gaus_num = gaus_id
+                    if len(new_sources) > 0:
+                        isl_id += 1
+                        pi_isl.sources = new_sources
+                        pi_isl.island_id = isl_id
+                        pi_isl._pi = True
+                        new_isl.append(pi_isl)
 
-              n_new = len(new_isl)
-              mylogger.userinfo(mylog, "New sources found in PI image", '%i (%i total)' %
-                                (n_new, img.nsrc+n_new))
+                n_new = len(new_isl)
+                mylogger.userinfo(mylog, "New sources found in PI image", '%i (%i total)' %
+                                  (n_new, img.nsrc+n_new))
 
-          if n_new > 0:
-              img.islands += new_isl
-              img.sources += new_src
-              img.gaussians += new_gaus
-              img.nsrc += n_new_src
-              renumber_islands(img)
+            if n_new > 0:
+                img.islands += new_isl
+                img.sources += new_src
+                img.gaussians += new_gaus
+                img.nsrc += n_new_src
+                renumber_islands(img)
 
-          bar = statusbar.StatusBar('Calculating polarisation properties ....  : ', 0, img.nsrc)
-          if img.opts.quiet == False:
-              bar.start()
+            bar = statusbar.StatusBar('Calculating polarisation properties ....  : ', 0, img.nsrc)
+            if img.opts.quiet == False:
+                bar.start()
 
-          for isl in img.islands:
-            isl_bbox = isl.bbox
-            ch0_I = img.ch0_arr[tuple(isl_bbox)]
-            ch0_Q = img.ch0_Q_arr[tuple(isl_bbox)]
-            ch0_U = img.ch0_U_arr[tuple(isl_bbox)]
-            ch0_V = img.ch0_V_arr[tuple(isl_bbox)]
-            ch0_images = [ch0_I, ch0_Q, ch0_U, ch0_V]
+            for isl in img.islands:
+                isl_bbox = isl.bbox
+                ch0_I = img.ch0_arr[tuple(isl_bbox)]
+                ch0_Q = img.ch0_Q_arr[tuple(isl_bbox)]
+                ch0_U = img.ch0_U_arr[tuple(isl_bbox)]
+                ch0_V = img.ch0_V_arr[tuple(isl_bbox)]
+                ch0_images = [ch0_I, ch0_Q, ch0_U, ch0_V]
 
-            for i, src in enumerate(isl.sources):
-                # For each source, assume the morphology does not change
-                # across the Stokes cube. This assumption allows us to fit
-                # the Gaussians of each source to each Stokes image by
-                # simply fitting only the overall normalizations of the
-                # individual Gaussians.
-                #
-                # First, fit all source Gaussians to each Stokes image:
-                x, y = N.mgrid[isl_bbox]
-                gg = src.gaussians
-                fitfix = N.ones(len(gg)) # fit only normalization
-                srcmask = isl.mask_active
-                total_flux = N.zeros((4, len(fitfix)), dtype=N.float32) # array of fluxes: N_Stokes x N_Gaussians
-                errors = N.zeros((4, len(fitfix)), dtype=N.float32) # array of fluxes: N_Stokes x N_Gaussians
+                for i, src in enumerate(isl.sources):
+                    # For each source, assume the morphology does not change
+                    # across the Stokes cube. This assumption allows us to fit
+                    # the Gaussians of each source to each Stokes image by
+                    # simply fitting only the overall normalizations of the
+                    # individual Gaussians.
+                    #
+                    # First, fit all source Gaussians to each Stokes image:
+                    x, y = N.mgrid[isl_bbox]
+                    gg = src.gaussians
+                    fitfix = N.ones(len(gg)) # fit only normalization
+                    srcmask = isl.mask_active
+                    total_flux = N.zeros((4, len(fitfix)), dtype=N.float32) # array of fluxes: N_Stokes x N_Gaussians
+                    errors = N.zeros((4, len(fitfix)), dtype=N.float32) # array of fluxes: N_Stokes x N_Gaussians
 
-                for sind, image in enumerate(ch0_images):
-                    if (sind==0 and hasattr(src, '_pi')) or sind > 0: # Fit I only for PI sources
-                        p, ep = func.fit_mulgaus2d(image, gg, x, y, srcmask, fitfix)
-                        for ig in range(len(fitfix)):
-                            bm_pix = N.array([img.pixel_beam()[0], img.pixel_beam()[1], img.pixel_beam()[2]])
-                            total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
-                        p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
-                        if sind > 0:
-                            rms_img = img.__getattribute__('rms_'+pols[sind]+'_arr')
-                        else:
-                            rms_img = img.rms_arr
-                        if len(rms_img.shape) > 1:
-                            rms_isl = rms_img[tuple(isl.bbox)].mean()
-                        else:
-                            rms_isl = rms_img
-                        errors[sind] = func.get_errors(img, p, rms_isl)[6]
+                    for sind, image in enumerate(ch0_images):
+                        if (sind==0 and hasattr(src, '_pi')) or sind > 0: # Fit I only for PI sources
+                            p, ep = func.fit_mulgaus2d(image, gg, x, y, srcmask, fitfix)
+                            for ig in range(len(fitfix)):
+                                bm_pix = N.array([img.pixel_beam()[0], img.pixel_beam()[1], img.pixel_beam()[2]])
+                                total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
+                            p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
+                            if sind > 0:
+                                rms_img = img.__getattribute__('rms_'+pols[sind]+'_arr')
+                            else:
+                                rms_img = img.rms_arr
+                            if len(rms_img.shape) > 1:
+                                rms_isl = rms_img[tuple(isl.bbox)].mean()
+                            else:
+                                rms_isl = rms_img
+                            errors[sind] = func.get_errors(img, p, rms_isl)[6]
 
-                # Now, assign fluxes to each Gaussian.
-                src_flux_I = 0.0
-                src_flux_Q = 0.0
-                src_flux_U = 0.0
-                src_flux_V = 0.0
-                src_flux_I_err_sq = 0.0
-                src_flux_Q_err_sq = 0.0
-                src_flux_U_err_sq = 0.0
-                src_flux_V_err_sq = 0.0
+                    # Now, assign fluxes to each Gaussian.
+                    src_flux_I = 0.0
+                    src_flux_Q = 0.0
+                    src_flux_U = 0.0
+                    src_flux_V = 0.0
+                    src_flux_I_err_sq = 0.0
+                    src_flux_Q_err_sq = 0.0
+                    src_flux_U_err_sq = 0.0
+                    src_flux_V_err_sq = 0.0
 
-                for ig, gaussian in enumerate(src.gaussians):
-                    init_gaus_attr(gaussian)
-                    flux_I = total_flux[0, ig]
-                    flux_I_err = abs(errors[0, ig])
-                    flux_Q = total_flux[1, ig]
-                    flux_Q_err = abs(errors[1, ig])
-                    flux_U = total_flux[2, ig]
-                    flux_U_err = abs(errors[2, ig])
-                    flux_V = total_flux[3, ig]
-                    flux_V_err = abs(errors[3, ig])
+                    for ig, gaussian in enumerate(src.gaussians):
+                        init_gaus_attr(gaussian)
+                        flux_I = total_flux[0, ig]
+                        flux_I_err = abs(errors[0, ig])
+                        flux_Q = total_flux[1, ig]
+                        flux_Q_err = abs(errors[1, ig])
+                        flux_U = total_flux[2, ig]
+                        flux_U_err = abs(errors[2, ig])
+                        flux_V = total_flux[3, ig]
+                        flux_V_err = abs(errors[3, ig])
 
+                        if hasattr(src, '_pi'):
+                            gaussian.total_flux = flux_I
+                            gaussian.total_fluxE = flux_I_err
+                        gaussian.total_flux_Q = flux_Q
+                        gaussian.total_flux_U = flux_U
+                        gaussian.total_flux_V = flux_V
+                        gaussian.total_fluxE_Q = flux_Q_err
+                        gaussian.total_fluxE_U = flux_U_err
+                        gaussian.total_fluxE_V = flux_V_err
+
+                        if hasattr(src, '_pi'):
+                            src_flux_I += flux_I
+                            src_flux_I_err_sq += flux_I_err**2
+                        src_flux_Q += flux_Q
+                        src_flux_U += flux_U
+                        src_flux_V += flux_V
+                        src_flux_Q_err_sq += flux_Q_err**2
+                        src_flux_U_err_sq += flux_U_err**2
+                        src_flux_V_err_sq += flux_V_err**2
+
+                        # Calculate and store polarisation fractions and angle for each Gaussian in the island
+                        # For this we need the I flux, which we can just take from g.total_flux and src.total_flux
+                        flux_I = gaussian.total_flux
+                        flux_I_err = gaussian.total_fluxE
+                        stokes = [flux_I, flux_Q, flux_U, flux_V]
+                        stokes_err = [flux_I_err, flux_Q_err, flux_U_err, flux_V_err]
+
+                        lpol_frac, lpol_frac_loerr, lpol_frac_hierr = self.calc_lpol_fraction(stokes, stokes_err) # linear pol fraction
+                        lpol_ang, lpol_ang_err = self.calc_lpol_angle(stokes, stokes_err) # linear pol angle
+                        cpol_frac, cpol_frac_loerr, cpol_frac_hierr = self.calc_cpol_fraction(stokes, stokes_err) # circular pol fraction
+                        tpol_frac, tpol_frac_loerr, tpol_frac_hierr = self.calc_tpol_fraction(stokes, stokes_err) # total pol fraction
+
+                        gaussian.lpol_fraction = lpol_frac
+                        gaussian.lpol_fraction_loerr = lpol_frac_loerr
+                        gaussian.lpol_fraction_hierr = lpol_frac_hierr
+                        gaussian.cpol_fraction = cpol_frac
+                        gaussian.cpol_fraction_loerr = cpol_frac_loerr
+                        gaussian.cpol_fraction_hierr = cpol_frac_hierr
+                        gaussian.tpol_fraction = tpol_frac
+                        gaussian.tpol_fraction_loerr = tpol_frac_loerr
+                        gaussian.tpol_fraction_hierr = tpol_frac_hierr
+                        gaussian.lpol_angle = lpol_ang
+                        gaussian.lpol_angle_err = lpol_ang_err
+
+                    # Store fluxes for each source in the island
+                    init_src_attr(src)
                     if hasattr(src, '_pi'):
-                        gaussian.total_flux = flux_I
-                        gaussian.total_fluxE = flux_I_err
-                    gaussian.total_flux_Q = flux_Q
-                    gaussian.total_flux_U = flux_U
-                    gaussian.total_flux_V = flux_V
-                    gaussian.total_fluxE_Q = flux_Q_err
-                    gaussian.total_fluxE_U = flux_U_err
-                    gaussian.total_fluxE_V = flux_V_err
+                        src.total_flux = src_flux_I
+                        src.total_fluxE = N.sqrt(src_flux_I_err_sq)
+                    src.total_flux_Q = src_flux_Q
+                    src.total_flux_U = src_flux_U
+                    src.total_flux_V = src_flux_V
+                    src.total_fluxE_Q = N.sqrt(src_flux_Q_err_sq)
+                    src.total_fluxE_U = N.sqrt(src_flux_U_err_sq)
+                    src.total_fluxE_V = N.sqrt(src_flux_V_err_sq)
 
-                    if hasattr(src, '_pi'):
-                        src_flux_I += flux_I
-                        src_flux_I_err_sq += flux_I_err**2
-                    src_flux_Q += flux_Q
-                    src_flux_U += flux_U
-                    src_flux_V += flux_V
-                    src_flux_Q_err_sq += flux_Q_err**2
-                    src_flux_U_err_sq += flux_U_err**2
-                    src_flux_V_err_sq += flux_V_err**2
-
-                    # Calculate and store polarisation fractions and angle for each Gaussian in the island
+                    # Calculate and store polarisation fractions and angle for each source in the island
                     # For this we need the I flux, which we can just take from g.total_flux and src.total_flux
-                    flux_I = gaussian.total_flux
-                    flux_I_err = gaussian.total_fluxE
-                    stokes = [flux_I, flux_Q, flux_U, flux_V]
-                    stokes_err = [flux_I_err, flux_Q_err, flux_U_err, flux_V_err]
+                    src_flux_I = src.total_flux
+                    src_flux_I_err = src.total_fluxE
+                    stokes = [src_flux_I, src_flux_Q, src_flux_U, src_flux_V]
+                    stokes_err = [src_flux_I_err, N.sqrt(src_flux_Q_err_sq), N.sqrt(src_flux_U_err_sq), N.sqrt(src_flux_V_err_sq)]
 
                     lpol_frac, lpol_frac_loerr, lpol_frac_hierr = self.calc_lpol_fraction(stokes, stokes_err) # linear pol fraction
                     lpol_ang, lpol_ang_err = self.calc_lpol_angle(stokes, stokes_err) # linear pol angle
                     cpol_frac, cpol_frac_loerr, cpol_frac_hierr = self.calc_cpol_fraction(stokes, stokes_err) # circular pol fraction
                     tpol_frac, tpol_frac_loerr, tpol_frac_hierr = self.calc_tpol_fraction(stokes, stokes_err) # total pol fraction
 
-                    gaussian.lpol_fraction = lpol_frac
-                    gaussian.lpol_fraction_loerr = lpol_frac_loerr
-                    gaussian.lpol_fraction_hierr = lpol_frac_hierr
-                    gaussian.cpol_fraction = cpol_frac
-                    gaussian.cpol_fraction_loerr = cpol_frac_loerr
-                    gaussian.cpol_fraction_hierr = cpol_frac_hierr
-                    gaussian.tpol_fraction = tpol_frac
-                    gaussian.tpol_fraction_loerr = tpol_frac_loerr
-                    gaussian.tpol_fraction_hierr = tpol_frac_hierr
-                    gaussian.lpol_angle = lpol_ang
-                    gaussian.lpol_angle_err = lpol_ang_err
+                    src.lpol_fraction = lpol_frac
+                    src.lpol_fraction_loerr = lpol_frac_loerr
+                    src.lpol_fraction_hierr = lpol_frac_hierr
+                    src.cpol_fraction = cpol_frac
+                    src.cpol_fraction_loerr = cpol_frac_loerr
+                    src.cpol_fraction_hierr = cpol_frac_hierr
+                    src.tpol_fraction = tpol_frac
+                    src.tpol_fraction_loerr = tpol_frac_loerr
+                    src.tpol_fraction_hierr = tpol_frac_hierr
+                    src.lpol_angle = lpol_ang
+                    src.lpol_angle_err = lpol_ang_err
+                    if bar.started:
+                        bar.increment()
+            bar.stop()
+            img.completed_Ops.append('polarisation')
 
-                # Store fluxes for each source in the island
-                init_src_attr(src)
-                if hasattr(src, '_pi'):
-                    src.total_flux = src_flux_I
-                    src.total_fluxE = N.sqrt(src_flux_I_err_sq)
-                src.total_flux_Q = src_flux_Q
-                src.total_flux_U = src_flux_U
-                src.total_flux_V = src_flux_V
-                src.total_fluxE_Q = N.sqrt(src_flux_Q_err_sq)
-                src.total_fluxE_U = N.sqrt(src_flux_U_err_sq)
-                src.total_fluxE_V = N.sqrt(src_flux_V_err_sq)
-
-                # Calculate and store polarisation fractions and angle for each source in the island
-                # For this we need the I flux, which we can just take from g.total_flux and src.total_flux
-                src_flux_I = src.total_flux
-                src_flux_I_err = src.total_fluxE
-                stokes = [src_flux_I, src_flux_Q, src_flux_U, src_flux_V]
-                stokes_err = [src_flux_I_err, N.sqrt(src_flux_Q_err_sq), N.sqrt(src_flux_U_err_sq), N.sqrt(src_flux_V_err_sq)]
-
-                lpol_frac, lpol_frac_loerr, lpol_frac_hierr = self.calc_lpol_fraction(stokes, stokes_err) # linear pol fraction
-                lpol_ang, lpol_ang_err = self.calc_lpol_angle(stokes, stokes_err) # linear pol angle
-                cpol_frac, cpol_frac_loerr, cpol_frac_hierr = self.calc_cpol_fraction(stokes, stokes_err) # circular pol fraction
-                tpol_frac, tpol_frac_loerr, tpol_frac_hierr = self.calc_tpol_fraction(stokes, stokes_err) # total pol fraction
-
-                src.lpol_fraction = lpol_frac
-                src.lpol_fraction_loerr = lpol_frac_loerr
-                src.lpol_fraction_hierr = lpol_frac_hierr
-                src.cpol_fraction = cpol_frac
-                src.cpol_fraction_loerr = cpol_frac_loerr
-                src.cpol_fraction_hierr = cpol_frac_hierr
-                src.tpol_fraction = tpol_frac
-                src.tpol_fraction_loerr = tpol_frac_loerr
-                src.tpol_fraction_hierr = tpol_frac_hierr
-                src.lpol_angle = lpol_ang
-                src.lpol_angle_err = lpol_ang_err
-                if bar.started:
-                    bar.increment()
-          bar.stop()
-          img.completed_Ops.append('polarisation')
-
-  ####################################################################################
+    ####################################################################################
     def calc_lpol_fraction(self, stokes, err):
         """ Calculate linear polarisation fraction and error from:
             stokes = [I, Q, U, V] and err = [Ierr, Qerr, Uerr, Verr]
@@ -353,7 +353,7 @@ class Op_polarisation(Op):
         return lfrac, loerr, uperr
 
 
-  ####################################################################################
+    ####################################################################################
     def calc_cpol_fraction(self, stokes, err):
         """ Calculate circular polarisation fraction and error from:
             stokes = [I, Q, U, V] and err = [Ierr, Qerr, Uerr, Verr]
@@ -377,7 +377,7 @@ class Op_polarisation(Op):
         return cfrac, loerr, uperr
 
 
-  ####################################################################################
+    ####################################################################################
     def calc_tpol_fraction(self, stokes, err):
         """ Calculate total polarisation fraction and error from:
             stokes = [I, Q, U, V] and err = [Ierr, Qerr, Uerr, Verr]
@@ -409,7 +409,7 @@ class Op_polarisation(Op):
         return tfrac, loerr, uperr
 
 
-  ####################################################################################
+    ####################################################################################
     def calc_lpol_angle(self, stokes, err, sig=3.0):
         """ Calculate linear polarisation angle and error (in degrees) from:
             stokes = [I, Q, U, V] and err = [Ierr, Qerr, Uerr, Verr]
@@ -426,7 +426,7 @@ class Op_polarisation(Op):
         return ang, dang
 
 
-  ####################################################################################
+    ####################################################################################
     def debias(self, pflux, QUerr):
         """ Debiases the linearly polarised flux using the same method
             used for the NVSS catalog (see ftp://ftp.cv.nrao.edu/pub/nvss/catalog.ps).
@@ -469,7 +469,7 @@ class Op_polarisation(Op):
             uperr = 1.0 - frac
         return frac, loerr, uperr
 
-  ####################################################################################
+    ####################################################################################
     def setpara_bdsm(self, img):
         chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
                  Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
@@ -487,10 +487,10 @@ class Op_polarisation(Op):
 
         ops = []
         for op in chain:
-          if isinstance(op, type):
-            ops.append(op())
-          else:
-            ops.append(op)
+            if isinstance(op, type):
+                ops.append(op())
+            else:
+                ops.append(op)
 
         return ops, opts
 

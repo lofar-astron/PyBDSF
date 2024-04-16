@@ -16,4 +16,3 @@ if img and all(oper in img.completed_Ops for oper in operations):
     sys.exit(0)
 else:
     sys.exit(1)
-

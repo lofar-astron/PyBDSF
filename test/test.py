@@ -27,7 +27,7 @@ def call_pybdsm(version, parameters):
     img = bdsm.execute(bdsm.fits_chain, parameters)
 
     return img, bdsm
- 
+
 
 #img, bdsm = call_pybdsm('test', {'fits_name': "subim.fits", 'beam' : (0.0015, 0.0015, 0.0), 'thresh':"hard", 'atrous_do' : False})
 
@@ -93,4 +93,3 @@ img, bdsm = call_pybdsm('test' ,{'fits_name': "Cyg_A-P-cut.pybdsm.atrous.w12.fit
 #        'polarisation_do': True, 'atrous_do' : True})
 
 #img = bdsm.execute(bdsm.fits_chain,{'fits_name': "try.fits", 'beam': (.056, .028, 160.0), 'thresh':"hard", 'thresh_pix':20.})
-

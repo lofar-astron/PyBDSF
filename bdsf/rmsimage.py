@@ -219,162 +219,162 @@ class Op_rmsimage(Op):
             map_opts = (kappa, img.rms_box, opts.spline_rank)
 
         for ipol, pol in enumerate(pols):
-          data = ch0_images[ipol]
-          mean = N.zeros(data.shape, dtype=N.float32)
-          rms  = N.zeros(data.shape, dtype=N.float32)
-          if len(pols) > 1:
-              pol_txt = ' (' + pol + ')'
-          else:
-              pol_txt = ''
+            data = ch0_images[ipol]
+            mean = N.zeros(data.shape, dtype=N.float32)
+            rms  = N.zeros(data.shape, dtype=N.float32)
+            if len(pols) > 1:
+                pol_txt = ' (' + pol + ')'
+            else:
+                pol_txt = ''
 
-          ## calculate rms/mean maps if needed
-          if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(image.shape)/4.0:
+            ## calculate rms/mean maps if needed
+            if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(image.shape)/4.0:
             # rms box is too large - just use constant rms and mean
-            self.output_rmsbox_size(img)
-            mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
-            mylogger.userinfo(mylog, 'Using constant background rms and mean')
-            img.use_rms_map = False
-            img.mean_map_type = 'const'
-          else:
-            if opts.rmsmean_map_filename is not None and len(opts.rmsmean_map_filename)!=0:
+                self.output_rmsbox_size(img)
+                mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
+                mylogger.userinfo(mylog, 'Using constant background rms and mean')
+                img.use_rms_map = False
+                img.mean_map_type = 'const'
+            else:
+                if opts.rmsmean_map_filename is not None and len(opts.rmsmean_map_filename)!=0:
                 # from astropy.io import fits as pyfits
-                def CheckShape(A):
-                    if len(A.shape)!=4:
-                        raise RuntimeError("Array shape should be len 4 (nch,npol,nx,ny)")
-                    if A.shape[0]!=1:
-                        raise RuntimeError("Array should be single channel")
-                    if A.shape[1]!=1:
-                        raise RuntimeError("Array should be single pol")
+                    def CheckShape(A):
+                        if len(A.shape)!=4:
+                            raise RuntimeError("Array shape should be len 4 (nch,npol,nx,ny)")
+                        if A.shape[0]!=1:
+                            raise RuntimeError("Array should be single channel")
+                        if A.shape[1]!=1:
+                            raise RuntimeError("Array should be single pol")
 
-                mean_fits_name,rms_fits_name=opts.rmsmean_map_filename
+                    mean_fits_name,rms_fits_name=opts.rmsmean_map_filename
 
-                mylogger.userinfo(mylog, "Skipping mean and rms image computation as external images supplied")
-                mylogger.userinfo(mylog, "   Opening mean image: %s"%mean_fits_name)
-                # mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
-                mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
-                CheckShape(mean); mean = mean[0,0]
-                mylogger.userinfo(mylog, "   Opening rms image: %s"%rms_fits_name)
-                # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
-                rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
-                CheckShape(rms); rms = rms[0,0]
+                    mylogger.userinfo(mylog, "Skipping mean and rms image computation as external images supplied")
+                    mylogger.userinfo(mylog, "   Opening mean image: %s"%mean_fits_name)
+                    # mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
+                    mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
+                    CheckShape(mean); mean = mean[0,0]
+                    mylogger.userinfo(mylog, "   Opening rms image: %s"%rms_fits_name)
+                    # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
+                    rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
+                    CheckShape(rms); rms = rms[0,0]
 
-            elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
-              if len(data.shape) == 2:   ## 2d case
-                mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
-                                bright_pt_coords=isl_pos, rms_box2=img.rms_box,
-                                logname="PyBDSM."+img.log, ncores=img.opts.ncores)
-              elif len(data.shape) == 3: ## 3d case
-                if not isinstance(mask, N.ndarray):
-                  mask = N.zeros(data.shape[0], dtype=bool)
-                for i in range(data.shape[0]):
-                    ## iterate each plane
-                    mean, rms = self.calculate_maps(img, data[i], mean[i], rms[i], mask[i], map_opts,
-                                    do_adapt=do_adapt, bright_pt_coords=isl_pos,
-                                    rms_box2=img.rms_box, logname="PyBDSM."+img.log,
-                                    ncores=img.opts.ncores)
-              else:
-                mylog.critical('Image shape not handleable' + pol_txt)
-                raise RuntimeError("Can't handle array of this shape" + pol_txt)
-              self.output_rmsbox_size(img)
-              if do_adapt:
-                  mylogger.userinfo(mylog, 'Number of sources using small scale', str(len(isl_pos)))
-              mylog.info('Background rms and mean images computed' + pol_txt)
-
-            ## check if variation of rms/mean maps is significant enough:
-            #       check_rmsmap() sets img.use_rms_map
-            #       check_meanmap() sets img.mean_map_type
-            if pol == 'I':
-                if opts.rms_map is None and img.use_rms_map is None:
-                    if do_adapt and len(isl_pos) > 0:
-                        # Always use 2d map if there is at least one bright
-                        # source and adaptive scaling is desired
-                        img.use_rms_map = True
+                elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
+                    if len(data.shape) == 2:   ## 2d case
+                        mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
+                                        bright_pt_coords=isl_pos, rms_box2=img.rms_box,
+                                        logname="PyBDSM."+img.log, ncores=img.opts.ncores)
+                    elif len(data.shape) == 3: ## 3d case
+                        if not isinstance(mask, N.ndarray):
+                            mask = N.zeros(data.shape[0], dtype=bool)
+                        for i in range(data.shape[0]):
+                        ## iterate each plane
+                            mean, rms = self.calculate_maps(img, data[i], mean[i], rms[i], mask[i], map_opts,
+                                            do_adapt=do_adapt, bright_pt_coords=isl_pos,
+                                            rms_box2=img.rms_box, logname="PyBDSM."+img.log,
+                                            ncores=img.opts.ncores)
                     else:
-                        self.check_rmsmap(img, rms)
-                elif opts.rms_map is not None:
-                    img.use_rms_map = opts.rms_map
-                if img.use_rms_map is False:
-                    mylogger.userinfo(mylog, 'Using constant background rms')
+                        mylog.critical('Image shape not handleable' + pol_txt)
+                        raise RuntimeError("Can't handle array of this shape" + pol_txt)
+                    self.output_rmsbox_size(img)
+                    if do_adapt:
+                        mylogger.userinfo(mylog, 'Number of sources using small scale', str(len(isl_pos)))
+                    mylog.info('Background rms and mean images computed' + pol_txt)
+
+                ## check if variation of rms/mean maps is significant enough:
+                #       check_rmsmap() sets img.use_rms_map
+                #       check_meanmap() sets img.mean_map_type
+                if pol == 'I':
+                    if opts.rms_map is None and img.use_rms_map is None:
+                        if do_adapt and len(isl_pos) > 0:
+                            # Always use 2d map if there is at least one bright
+                            # source and adaptive scaling is desired
+                            img.use_rms_map = True
+                        else:
+                            self.check_rmsmap(img, rms)
+                    elif opts.rms_map is not None:
+                        img.use_rms_map = opts.rms_map
+                    if img.use_rms_map is False:
+                        mylogger.userinfo(mylog, 'Using constant background rms')
+                    else:
+                        mylogger.userinfo(mylog, 'Using 2D map for background rms')
+
+                    if opts.mean_map == 'default' and img.mean_map_type is None:
+                        self.check_meanmap(img, rms)
+                    elif opts.mean_map != 'default':
+                        img.mean_map_type = opts.mean_map
+                    if img.mean_map_type != 'map':
+                        mylogger.userinfo(mylog, 'Using constant background mean')
+                    else:
+                        mylogger.userinfo(mylog, 'Using 2D map for background mean')
+
+            ## if rms map is insignificant, or rms_map==False use const value
+            if img.use_rms_map is False:
+                if opts.rms_value is None:
+                    rms[:]  = crmss[ipol]
                 else:
-                    mylogger.userinfo(mylog, 'Using 2D map for background rms')
+                    rms[:]  = opts.rms_value
+                mylogger.userinfo(mylog, 'Value of background rms' + pol_txt,
+                                  '%.2e Jy/beam' % rms[0][0])
+            else:
+                rms_min = N.nanmin(rms)
+                rms_max = N.nanmax(rms)
+                mylogger.userinfo(mylog, 'Min/max values of background rms map' + pol_txt,
+                                  '(%.2e, %.2e) Jy/beam' % (rms_min, rms_max))
 
-                if opts.mean_map == 'default' and img.mean_map_type is None:
-                    self.check_meanmap(img, rms)
-                elif opts.mean_map != 'default':
-                    img.mean_map_type = opts.mean_map
-                if img.mean_map_type != 'map':
-                    mylogger.userinfo(mylog, 'Using constant background mean')
+            if img.mean_map_type != 'map':
+                if opts.mean_map == 'zero':
+                    val = 0.0
                 else:
-                    mylogger.userinfo(mylog, 'Using 2D map for background mean')
-
-          ## if rms map is insignificant, or rms_map==False use const value
-          if img.use_rms_map is False:
-            if opts.rms_value is None:
-              rms[:]  = crmss[ipol]
+                    val = img.clipped_mean
+                mean[:] = val
+                mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
+                                  str(round(val,5))+' Jy/beam')
             else:
-              rms[:]  = opts.rms_value
-            mylogger.userinfo(mylog, 'Value of background rms' + pol_txt,
-                              '%.2e Jy/beam' % rms[0][0])
-          else:
-            rms_min = N.nanmin(rms)
-            rms_max = N.nanmax(rms)
-            mylogger.userinfo(mylog, 'Min/max values of background rms map' + pol_txt,
-                              '(%.2e, %.2e) Jy/beam' % (rms_min, rms_max))
+                mean_min = N.nanmin(mean)
+                mean_max = N.nanmax(mean)
+                mylogger.userinfo(mylog, 'Min/max values of background mean map' + pol_txt,
+                                  '(%.2e, %.2e) Jy/beam' % (mean_min, mean_max))
 
-          if img.mean_map_type != 'map':
-            if opts.mean_map == 'zero':
-                val = 0.0
+            if pol == 'I':
+                # Apply mask to mean_map and rms_map by setting masked values to NaN
+                if isinstance(mask, N.ndarray):
+                    pix_masked = N.where(mask == True)
+                    mean[pix_masked] = N.nan
+                    rms[pix_masked] = N.nan
+
+                img.mean_arr = mean
+                img.rms_arr = rms
+
+                if opts.savefits_rmsim or opts.output_all:
+                    if img.waveletimage:
+                        resdir = img.basedir + '/wavelet/background/'
+                    else:
+                        resdir = img.basedir + '/background/'
+                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', rms, img, resdir)
+                    mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.rmsd_I.fits'))
+                if opts.savefits_meanim or opts.output_all:
+                    if img.waveletimage:
+                        resdir = img.basedir + '/wavelet/background/'
+                    else:
+                        resdir = img.basedir + '/background/'
+                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', mean, img, resdir)
+                    mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.mean_I.fits'))
+                if opts.savefits_normim or opts.output_all:
+                    if img.waveletimage:
+                        resdir = img.basedir + '/wavelet/background/'
+                    else:
+                        resdir = img.basedir + '/background/'
+                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    zero_pixels = N.where(rms <= 0.0)
+                    rms_nonzero = rms.copy()
+                    rms_nonzero[zero_pixels] = N.NaN
+                    func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
+                    mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
             else:
-                val = img.clipped_mean
-            mean[:] = val
-            mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
-                              str(round(val,5))+' Jy/beam')
-          else:
-            mean_min = N.nanmin(mean)
-            mean_max = N.nanmax(mean)
-            mylogger.userinfo(mylog, 'Min/max values of background mean map' + pol_txt,
-                              '(%.2e, %.2e) Jy/beam' % (mean_min, mean_max))
-
-          if pol == 'I':
-            # Apply mask to mean_map and rms_map by setting masked values to NaN
-            if isinstance(mask, N.ndarray):
-                pix_masked = N.where(mask == True)
-                mean[pix_masked] = N.nan
-                rms[pix_masked] = N.nan
-
-            img.mean_arr = mean
-            img.rms_arr = rms
-
-            if opts.savefits_rmsim or opts.output_all:
-              if img.waveletimage:
-                  resdir = img.basedir + '/wavelet/background/'
-              else:
-                  resdir = img.basedir + '/background/'
-              if not os.path.exists(resdir): os.makedirs(resdir)
-              func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', rms, img, resdir)
-              mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.rmsd_I.fits'))
-            if opts.savefits_meanim or opts.output_all:
-              if img.waveletimage:
-                  resdir = img.basedir + '/wavelet/background/'
-              else:
-                  resdir = img.basedir + '/background/'
-              if not os.path.exists(resdir): os.makedirs(resdir)
-              func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', mean, img, resdir)
-              mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.mean_I.fits'))
-            if opts.savefits_normim or opts.output_all:
-              if img.waveletimage:
-                  resdir = img.basedir + '/wavelet/background/'
-              else:
-                  resdir = img.basedir + '/background/'
-              if not os.path.exists(resdir): os.makedirs(resdir)
-              zero_pixels = N.where(rms <= 0.0)
-              rms_nonzero = rms.copy()
-              rms_nonzero[zero_pixels] = N.NaN
-              func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
-              mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
-          else:
-              img.__setattr__('mean_'+pol+'_arr', mean)
-              img.__setattr__('rms_'+pol+'_arr', rms)
+                img.__setattr__('mean_'+pol+'_arr', mean)
+                img.__setattr__('rms_'+pol+'_arr', rms)
 
         img.completed_Ops.append('rmsimage')
         return img
@@ -435,14 +435,14 @@ class Op_rmsimage(Op):
         # For mean map, use a higher threshold than for the rms map, as radio images
         # should rarely, if ever, have significant variations in the mean
         if stdsub > 5.0*rms_expect:
-          img.mean_map_type = 'map'
-          mylogger.userinfo(mylog, 'Variation in mean image significant')
+            img.mean_map_type = 'map'
+            mylogger.userinfo(mylog, 'Variation in mean image significant')
         else:
-          if img.confused:
-            img.mean_map_type = 'zero'
-          else:
-            img.mean_map_type = 'const'
-          mylogger.userinfo(mylog, 'Variation in mean image not significant')
+            if img.confused:
+                img.mean_map_type = 'zero'
+            else:
+                img.mean_map_type = 'const'
+            mylogger.userinfo(mylog, 'Variation in mean image not significant')
 
         return img
 
@@ -468,7 +468,7 @@ class Op_rmsimage(Op):
             if test:
                 rms_ok = False
                 if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
-                    # Increase box by 20%
+                        # Increase box by 20%
                     if do_adapt:
                         new_width = int(img.rms_box_bright[0]*1.2)
                         if new_width == img.rms_box_bright[0]:
@@ -781,14 +781,14 @@ class Op_rmsimage(Op):
                 rms_map[co] = cr
 
         if bounds.all():
-                if use_extrapolation:
-                    ind = [-BS,arr.shape[0], -BS,arr.shape[1]]
-                    self.for_masked(mean_map, rms_map, mask, arr, ind,
-                                    kappa, [-2, -2])
-                else:
-                    ind = [-BS,arr_pad.shape[0], -BS,arr_pad.shape[1]]
-                    self.for_masked(mean_map, rms_map, mask_pad, arr_pad, ind,
-                                    kappa, [-1, -1])
+            if use_extrapolation:
+                ind = [-BS,arr.shape[0], -BS,arr.shape[1]]
+                self.for_masked(mean_map, rms_map, mask, arr, ind,
+                                kappa, [-2, -2])
+            else:
+                ind = [-BS,arr_pad.shape[0], -BS,arr_pad.shape[1]]
+                self.for_masked(mean_map, rms_map, mask_pad, arr_pad, ind,
+                                kappa, [-1, -1])
 
         # Step 3: correct(extrapolate) borders of the image
         def correct_borders(map):
@@ -913,23 +913,23 @@ class Op_rmsimage(Op):
         bstat = func.bstat#_cbdsm.bstat
         a, b, c, d = ind; i, j = co
         if mask is None:
-          m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
-          if cnt > 198: cm = m; cr = r
-          mean_map[i, j], rms_map[i, j] = cm, cr
-        else:
-          pix_unmasked = N.where(mask[a:b, c:d] == False)
-          npix_unmasked = N.size(pix_unmasked,1)
-          if npix_unmasked > 20: # find clipped mean/rms
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
             mean_map[i, j], rms_map[i, j] = cm, cr
-          else:
-            if npix_unmasked > 5: # just find simple mean/rms
-              cm = N.mean(arr[pix_unmasked])
-              cr = N.std(arr[pix_unmasked])
-              mean_map[i, j], rms_map[i, j] = cm, cr
-            else: # too few unmasked pixels --> set mean/rms to inf
-              mean_map[i, j], rms_map[i, j] = N.inf, N.inf
+        else:
+            pix_unmasked = N.where(mask[a:b, c:d] == False)
+            npix_unmasked = N.size(pix_unmasked,1)
+            if npix_unmasked > 20: # find clipped mean/rms
+                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                if cnt > 198: cm = m; cr = r
+                mean_map[i, j], rms_map[i, j] = cm, cr
+            else:
+                if npix_unmasked > 5: # just find simple mean/rms
+                    cm = N.mean(arr[pix_unmasked])
+                    cr = N.std(arr[pix_unmasked])
+                    mean_map[i, j], rms_map[i, j] = cm, cr
+                else: # too few unmasked pixels --> set mean/rms to inf
+                    mean_map[i, j], rms_map[i, j] = N.inf, N.inf
 
 
     def for_masked_mp(self, mask, arr, ind, kappa):
@@ -937,21 +937,21 @@ class Op_rmsimage(Op):
         bstat = func.bstat #_cbdsm.bstat
         a, b, c, d = ind
         if mask is None:
-          m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
-          if cnt > 198: cm = m; cr = r
-        else:
-          pix_unmasked = N.where(mask[a:b, c:d] == False)
-          npix_unmasked = N.size(pix_unmasked,1)
-          if npix_unmasked > 20: # find clipped mean/rms
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
-          else:
-            if npix_unmasked > 5: # just find simple mean/rms
-              cm = N.mean(arr[pix_unmasked])
-              cr = N.std(arr[pix_unmasked])
-            else: # too few unmasked pixels --> set mean/rms to inf
-              cm = N.inf
-              cr = N.inf
+        else:
+            pix_unmasked = N.where(mask[a:b, c:d] == False)
+            npix_unmasked = N.size(pix_unmasked,1)
+            if npix_unmasked > 20: # find clipped mean/rms
+                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                if cnt > 198: cm = m; cr = r
+            else:
+                if npix_unmasked > 5: # just find simple mean/rms
+                    cm = N.mean(arr[pix_unmasked])
+                    cr = N.std(arr[pix_unmasked])
+                else: # too few unmasked pixels --> set mean/rms to inf
+                    cm = N.inf
+                    cr = N.inf
 
         return cm, cr
 
@@ -1023,29 +1023,29 @@ class Op_rmsimage(Op):
         do_adapt = opts.adaptive_rms_box
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"RMSimage")
         if (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
-          if do_adapt:
-              if opts.rms_box_bright is None:
-                  mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
-                                    '(' + str(img.rms_box_bright[0]) + ', ' +
-                                    str(img.rms_box_bright[1]) + ') pixels (small scale)')
-              else:
-                  mylogger.userinfo(mylog, 'Using user-specified rms_box',
-                                    '(' + str(img.rms_box_bright[0]) + ', ' +
-                                    str(img.rms_box_bright[1]) + ') pixels (small scale)')
-              if opts.rms_box is None:
-                  mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
-                                    '(' + str(img.rms_box[0]) + ', ' +
-                                    str(img.rms_box[1]) + ') pixels (large scale)')
-              else:
-                  mylogger.userinfo(mylog, 'Using user-specified rms_box',
-                                    '(' + str(img.rms_box[0]) + ', ' +
-                                    str(img.rms_box[1]) + ') pixels (large scale)')
-          else:
-              if opts.rms_box is None:
-                  mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
-                                '(' + str(img.rms_box[0]) + ', ' +
-                                str(img.rms_box[1]) + ') pixels')
-              else:
-                  mylogger.userinfo(mylog, 'Using user-specified rms_box',
-                                    '(' + str(img.rms_box[0]) + ', ' +
-                                    str(img.rms_box[1]) + ') pixels')
+            if do_adapt:
+                if opts.rms_box_bright is None:
+                    mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
+                                      '(' + str(img.rms_box_bright[0]) + ', ' +
+                                      str(img.rms_box_bright[1]) + ') pixels (small scale)')
+                else:
+                    mylogger.userinfo(mylog, 'Using user-specified rms_box',
+                                      '(' + str(img.rms_box_bright[0]) + ', ' +
+                                      str(img.rms_box_bright[1]) + ') pixels (small scale)')
+                if opts.rms_box is None:
+                    mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
+                                      '(' + str(img.rms_box[0]) + ', ' +
+                                      str(img.rms_box[1]) + ') pixels (large scale)')
+                else:
+                    mylogger.userinfo(mylog, 'Using user-specified rms_box',
+                                      '(' + str(img.rms_box[0]) + ', ' +
+                                      str(img.rms_box[1]) + ') pixels (large scale)')
+            else:
+                if opts.rms_box is None:
+                    mylogger.userinfo(mylog, 'Derived rms_box (box size, step size)',
+                                  '(' + str(img.rms_box[0]) + ', ' +
+                                  str(img.rms_box[1]) + ') pixels')
+                else:
+                    mylogger.userinfo(mylog, 'Using user-specified rms_box',
+                                      '(' + str(img.rms_box[0]) + ', ' +
+                                      str(img.rms_box[1]) + ') pixels')

@@ -25,12 +25,12 @@ class Op_cleanup(Op):
             pl.title('All gaussians including wavelet images')
             allgaus = img.gaussians
             if hasattr(img, 'atrous_gaussians'):
-              for gg in img.atrous_gaussians:
-                allgaus += gg
+                for gg in img.atrous_gaussians:
+                    allgaus += gg
 
             for g in allgaus:
-              ellx, elly = func.drawellipse(g)
-              pl.plot(ellx, elly, 'r')
+                ellx, elly = func.drawellipse(g)
+                pl.plot(ellx, elly, 'r')
 
             from math import log10
             bdir = img.basedir + '/misc/'
@@ -50,6 +50,3 @@ class Op_cleanup(Op):
             pl.close()
 
         img.completed_Ops.append('cleanup')
-
-
-

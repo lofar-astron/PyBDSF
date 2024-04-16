@@ -1,26 +1,26 @@
 # Adapted for numpy/ma/cdms2 by convertcdms.py
 
 """Documentation for module natgridtest: an automatic test for natgrid, an interface to the ngmath NATGRID
-  
-   TESTING 
- 
-        Typing 
-         
+
+   TESTING
+
+        Typing
+
             cdat natgridtest.py
-         
-        generates some testing of the natgridmodule using analytical functions as fields. It also writes a 
-        hard copy of the documentation to the file natgridmodule.doc and a copy of the information describing 
+
+        generates some testing of the natgridmodule using analytical functions as fields. It also writes a
+        hard copy of the documentation to the file natgridmodule.doc and a copy of the information describing
         the nature of the tests to test.asc. For the single and the double precision interpolations from
         randomly spaced data to a rectangular grid on a sphere, the numerical results are written to netCDF files
         if there is access to the module cdms.
-         
+
    DOCUMENTATION
-  
+
         Without conducting the tests, documentation written to the file natgridmodule.doc can be produced after
-        importing the natgridtest module by typing 
-  
-               natgridtest.document() 
-  
+        importing the natgridtest module by typing
+
+               natgridtest.document()
+
 """
 import sys, numpy, math, random, nat, natgridmodule
 
@@ -34,11 +34,11 @@ except ImportError:
 def document():
     #-------------------------------------------------------------------------------
     #
-    #    purpose:   'document' writes documentation for the user to a file 
+    #    purpose:   'document' writes documentation for the user to a file
     #
     #    usage:     import natgridtest
     #               natgridtest.document()
-    #    
+    #
     #    passed :   nothing
     #
     #    returned:  nothing
@@ -49,9 +49,9 @@ def document():
     std = sys.stdout                                             # save sys.stout to allow reassigning later
     sys.stdout = open( 'natgridmodule.doc', 'w')
 
-    print '**********************************************************************************************\n'  
+    print '**********************************************************************************************\n'
     print '*************************** Overview of the CDAT interface to natgrid ************************\n'
-    print '**********************************************************************************************\n'  
+    print '**********************************************************************************************\n'
     print nat.__doc__
     print
     print
@@ -69,15 +69,15 @@ def sendOutput(msg, value = None, screen = 'no'):
     #------------------------------------------------------------------------------
     #
     #    purpose: send a message and optionally a value a file and if screen is not 'no'
-    #             send the same thing to the screen 
-    # 
+    #             send the same thing to the screen
+    #
     #    usage:   sendOutput(msg, value = number, screen = 'yes')
-    # 
+    #
     #    passed :  msg    - the string to write to the output media
     #              value  - a number
-    #              screen - a string set to something different from 'no' if the output also 
+    #              screen - a string set to something different from 'no' if the output also
     #                       goes to the screen
-    #             
+    #
     #    returned: None
     #
     #------------------------------------------------------------------------------
@@ -95,10 +95,10 @@ def sendOutput(msg, value = None, screen = 'no'):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++ Autotest Calls ++++++++++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 
+
 def runtests():
     #-----------------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: call test cases
     #
     #-----------------------------------------------------------------------------
@@ -108,22 +108,22 @@ def runtests():
 
     testError = 0
     for n in range(1,8):
-       err = choose(n)
-       if err != 0:
-           #print 'test number with error :',n,err
-           testError = testError + 1
+        err = choose(n)
+        if err != 0:
+            #print 'test number with error :',n,err
+            testError = testError + 1
     return testError
 
 def choose(case):
     #-------------------------------------------------------------------------------
-    #                                      
-    #     purpose:  check out natgrid 
     #
-    #     case 1: a simple 2D interpolation using y32 -- single precision 
+    #     purpose:  check out natgrid
+    #
+    #     case 1: a simple 2D interpolation using y32 -- single precision
     #---------------------------------------------------------------------------------
     err = 0
 
-    if case == 1:   
+    if case == 1:
         sendOutput('\n******* natural neighbor linear interpolation -- single precision *****\n')
 
         # array dimensions
@@ -131,7 +131,7 @@ def choose(case):
         nxo = 21
         nyo = 21
 
-        # input arrays and data 
+        # input arrays and data
 
         xiList = [0.00, 1.00, 0.00, 1.00,  0.40, 0.75]
         yiList = [0.00, 0.00, 1.00, 1.00,  0.20, 0.65]
@@ -141,17 +141,17 @@ def choose(case):
         yi = numpy.array(yiList, numpy.float32)
         dataIn = numpy.array(dataInList, numpy.float32)
 
-        # output array 
+        # output array
 
         xo = uniformGrid(nxo, 1.0, 0.0)
         yo = uniformGrid(nyo, 1.0, 0.0)
 
-        r = nat.Natgrid(xi, yi, xo, yo)  
+        r = nat.Natgrid(xi, yi, xo, yo)
 
-        dataOut = r.rgrd(dataIn) 
+        dataOut = r.rgrd(dataIn)
 
         sendOutput('*** writing single precision linear interpolation test case to the netCDF file SingleLinearRegrid.nc')
-        write1D_4DField('SingleLinearRegrid', dataOut, xo, yo) 
+        write1D_4DField('SingleLinearRegrid', dataOut, xo, yo)
 
         dataCheck = storedAnswers('linearRegrid')
         dataCheck = numpy.reshape(dataCheck, (nxo,nyo))
@@ -166,7 +166,7 @@ def choose(case):
 
         return err
 
-    elif case == 2:   
+    elif case == 2:
         sendOutput('\n******* natural neighbor linear interpolation -- double precision *****\n')
 
         # array dimensions
@@ -174,7 +174,7 @@ def choose(case):
         nxo = 21
         nyo = 21
 
-        # input arrays and data 
+        # input arrays and data
 
         xiList = [0.00, 1.00, 0.00, 1.00,  0.40, 0.75]
         yiList = [0.00, 0.00, 1.00, 1.00,  0.20, 0.65]
@@ -184,7 +184,7 @@ def choose(case):
         yi = numpy.array(yiList, numpy.float64)
         dataIn = numpy.array(dataInList, numpy.float64)
 
-        # output array 
+        # output array
 
         xo = uniformGrid(nxo, 1.0, 0.0)
         yo = uniformGrid(nyo, 1.0, 0.0)
@@ -192,16 +192,16 @@ def choose(case):
         xo = xo.astype(numpy.float64)
         yo = yo.astype(numpy.float64)
 
-        r = nat.Natgrid(xi, yi, xo, yo)  
+        r = nat.Natgrid(xi, yi, xo, yo)
 
-        dataOut = r.rgrd(dataIn) 
+        dataOut = r.rgrd(dataIn)
 
         xo = xo.astype(numpy.float32)                            # convert back to single precision
         yo = yo.astype(numpy.float32)
         dataOut = dataOut.astype(numpy.float32)
 
         sendOutput('*** writing double precision linear interpolation test case to the netCDF file DoubleLinearRegrid.nc')
-        write1D_4DField('DoubleLinearRegrid', dataOut, xo, yo) 
+        write1D_4DField('DoubleLinearRegrid', dataOut, xo, yo)
 
         dataCheck = storedAnswers('linearRegrid')
         dataCheck = numpy.reshape(dataCheck, (nxo,nyo))
@@ -216,7 +216,7 @@ def choose(case):
 
         return err
 
-    elif case == 3:   
+    elif case == 3:
         sendOutput('\n******* natural neighbor nonlinear interpolation -- single precision *****\n')
 
         # array dimensions
@@ -224,7 +224,7 @@ def choose(case):
         nxo = 21
         nyo = 21
 
-        # input arrays and data 
+        # input arrays and data
 
         xiList = [0.00, 1.00, 0.00, 1.00,  0.40, 0.75]
         yiList = [0.00, 0.00, 1.00, 1.00,  0.20, 0.65]
@@ -234,18 +234,18 @@ def choose(case):
         yi = numpy.array(yiList, numpy.float32)
         dataIn = numpy.array(dataInList, numpy.float32)
 
-        # output array 
+        # output array
 
         xo = uniformGrid(nxo, 1.0, 0.0)
         yo = uniformGrid(nyo, 1.0, 0.0)
 
-        r = nat.Natgrid(xi, yi, xo, yo)  
+        r = nat.Natgrid(xi, yi, xo, yo)
         r.igr = 1                                       # choose nonlinear interpolation
 
-        dataOut = r.rgrd(dataIn) 
+        dataOut = r.rgrd(dataIn)
 
         sendOutput('*** writing single precision nonlinear interpolation test case to the netCDF file SingleNonlinearRegrid.nc')
-        write1D_4DField('SingleNonlinearRegrid', dataOut, xo, yo) 
+        write1D_4DField('SingleNonlinearRegrid', dataOut, xo, yo)
 
         dataCheck = storedAnswers('nonlinearRegrid')
         dataCheck = numpy.reshape(dataCheck, (nxo,nyo))
@@ -260,7 +260,7 @@ def choose(case):
 
         return err
 
-    elif case == 4:   
+    elif case == 4:
         sendOutput('\n******* natural neighbor nonlinear interpolation -- double precision *****\n')
 
         # array dimensions
@@ -268,7 +268,7 @@ def choose(case):
         nxo = 21
         nyo = 21
 
-        # input arrays and data 
+        # input arrays and data
 
         xiList = [0.00, 1.00, 0.00, 1.00,  0.40, 0.75]
         yiList = [0.00, 0.00, 1.00, 1.00,  0.20, 0.65]
@@ -278,7 +278,7 @@ def choose(case):
         yi = numpy.array(yiList, numpy.float64)
         dataIn = numpy.array(dataInList, numpy.float64)
 
-        # output array 
+        # output array
 
         xo = uniformGrid(nxo, 1.0, 0.0)
         yo = uniformGrid(nyo, 1.0, 0.0)
@@ -286,17 +286,17 @@ def choose(case):
         xo = xo.astype(numpy.float64)
         yo = yo.astype(numpy.float64)
 
-        r = nat.Natgrid(xi, yi, xo, yo)  
+        r = nat.Natgrid(xi, yi, xo, yo)
         r.igr = 1                                       # choose nonlinear interpolation
 
-        dataOut = r.rgrd(dataIn) 
+        dataOut = r.rgrd(dataIn)
 
         xo = xo.astype(numpy.float32)                            # convert back to single precision
         yo = yo.astype(numpy.float32)
         dataOut = dataOut.astype(numpy.float32)
 
         sendOutput('*** writing double precision nonlinear interpolation test case to the netCDF file DoubleNonlinearRegrid.nc')
-        write1D_4DField('DoubleNonlinearRegrid', dataOut, xo, yo) 
+        write1D_4DField('DoubleNonlinearRegrid', dataOut, xo, yo)
 
         dataCheck = storedAnswers('nonlinearRegrid')
         dataCheck = numpy.reshape(dataCheck, (nxo,nyo))
@@ -312,7 +312,7 @@ def choose(case):
         return err
 
 
-    elif case == 5:   
+    elif case == 5:
         sendOutput('\n******* interpolation and computation of aspects and slopes -- single precision *******\n')
 
         # array dimensions
@@ -320,7 +320,7 @@ def choose(case):
         nxo = 21
         nyo = 21
 
-        # input array and data 
+        # input array and data
 
         xisort, xi = randomGrid(ni, 1.2, -0.2)                            # xisort has random numbers monotonically increasing
         yisort, yi = randomGrid(ni, 1.2, -0.2)
@@ -329,18 +329,18 @@ def choose(case):
         for i in range(ni):
             dataIn[i] = (xi[i] - 0.25)*(xi[i] - 0.25) + (yi[i] - 0.50)*(yi[i] - 0.50)
 
-        # output array 
+        # output array
 
         xo = uniformGrid(nxo, 1.0, 0.0)
         yo = uniformGrid(nyo, 1.0, 0.0)
 
-        r = nat.Natgrid(xi, yi, xo, yo)  
+        r = nat.Natgrid(xi, yi, xo, yo)
 
-        dataOut, aspect, slope = r.rgrd(dataIn, aspectSlope = 'yes') 
+        dataOut, aspect, slope = r.rgrd(dataIn, aspectSlope = 'yes')
 
 
         sendOutput('*** writing single precision linear interpolation test case to the netCDF file AspectSlopeRegrid.nc')
-        write1D_4DField('AspectSlopeRegrid', dataOut, xo, yo) 
+        write1D_4DField('AspectSlopeRegrid', dataOut, xo, yo)
 
         # Calculate the exact answer
         dataCheck = numpy.zeros((nxo, nyo), numpy.float32)
@@ -349,7 +349,7 @@ def choose(case):
                 dataCheck[i,j] = (xo[i] - 0.25)*(xo[i] - 0.25) + (yo[j] - 0.50)*(yo[j] - 0.50)
 
         sendOutput('*** writing exact answer to single precision interpolation test case to the netCDF file AspectSlopeExact.nc')
-        write1D_4DField('AspectSlopeExact', dataOut, xo, yo) 
+        write1D_4DField('AspectSlopeExact', dataOut, xo, yo)
 
         error = rmserror(dataOut, dataCheck)                                 # find the rms error
         sendOutput('\n******* compare results\n')
@@ -368,15 +368,15 @@ def choose(case):
 
         sendOutput('*** writing the cosine of the aspect to xaspect.nc')
         sendOutput('*** writing the sine of the aspect to yaspect.nc')
-        write1D_4DField('xaspect', u, xo, yo) 
-        write1D_4DField('yaspect', v, xo, yo) 
+        write1D_4DField('xaspect', u, xo, yo)
+        write1D_4DField('yaspect', v, xo, yo)
 
         if error > .01:
             err = 1
 
         return err
 
-    elif case == 6:   
+    elif case == 6:
         sendOutput('\n******* single point mode -- single precision *****\n')
 
         # array dimensions
@@ -384,7 +384,7 @@ def choose(case):
         nxo = 21
         nyo = 21
 
-        # input arrays and data 
+        # input arrays and data
 
         xisort, xi = randomGrid(ni, 1.2, -0.2)                 # xisort has random numbers monotonically increasing
         yisort, yi = randomGrid(ni, 1.2, -0.2)
@@ -393,19 +393,19 @@ def choose(case):
         for i in range(ni):
             dataIn[i] = (xi[i] - 0.25)*(xi[i] - 0.25) + (yi[i] - 0.50)*(yi[i] - 0.50)
 
-        # output array 
+        # output array
         xo = uniformGrid(nxo, 1.0, 0.0)
         yo = uniformGrid(nyo, 1.0, 0.0)
         xn, yn = grid2Dto1D(xo, yo)
 
-        r = nat.Natgrid(xi, yi, xn, yn, listOutput = 'yes')  
+        r = nat.Natgrid(xi, yi, xn, yn, listOutput = 'yes')
         r.igr = 1                                       # choose nonlinear interpolation
 
-        zn = r.rgrd(dataIn) 
+        zn = r.rgrd(dataIn)
         xo, yo, dataOut = c1Dto2D(nxo, nyo, xn, yn, zn)
 
         sendOutput('*** writing single precision single point mode test case to the netCDF file SinglePointMode.nc')
-        write1D_4DField('SinglePointMode', dataOut, xo, yo) 
+        write1D_4DField('SinglePointMode', dataOut, xo, yo)
 
         dataCheck = numpy.zeros((nxo,nyo), numpy.float32)
         for i in range(nxo):
@@ -413,7 +413,7 @@ def choose(case):
                 dataCheck[i,j] = (xo[i] - 0.25)*(xo[i] - 0.25) + (yo[j] - 0.50)*(yo[j] - 0.50)
 
         sendOutput('*** writing exact answer to single precision single point mode test case to the netCDF file SinglePointExact.nc')
-        write1D_4DField('SinglePointExact', dataOut, xo, yo) 
+        write1D_4DField('SinglePointExact', dataOut, xo, yo)
 
         error = rmserror(dataOut, dataCheck)                                 # find the rms error
         sendOutput('\n******* compare results\n')
@@ -426,10 +426,10 @@ def choose(case):
         return err
 
 
-    elif case == 7:   
+    elif case == 7:
         sendOutput('\n******* nonlinear interpolation of y32 with a wrap -- single precision *****\n')
 
-        # input arrays and data 
+        # input arrays and data
 
         lati,latiSort,loni,loniSort  = storedGrids()
 
@@ -437,10 +437,10 @@ def choose(case):
 
         newOrder = (1,0)
         y32 = numpy.transpose(y32, newOrder)
-        lonLinear, latLinear, y32Linear = c2Dto1D(loni, lati, y32)           # change to the linear list format 
+        lonLinear, latLinear, y32Linear = c2Dto1D(loni, lati, y32)           # change to the linear list format
 
 
-        # output array 
+        # output array
 
         nlato = 71
         nlono = 144
@@ -448,17 +448,17 @@ def choose(case):
         lono = uniformGrid(nlono, 357.5, 0.0)               # start at 0.
 
 
-        r = nat.Natgrid(latLinear, lonLinear, lato, lono)  
+        r = nat.Natgrid(latLinear, lonLinear, lato, lono)
         #r.igr = 1                                                        # choose nonlinear interpolation
 
-        dataOut = r.rgrd(y32Linear, wrap = 'yes') 
+        dataOut = r.rgrd(y32Linear, wrap = 'yes')
 
         dataCheck = YData(lono, lato)                                      # longitude varies the fastest
         sendOutput('*** writing exact answer to single precision y32 interpolatiion test case to the netCDF file y32Exact.nc')
         write1D_4DField('y32Exact', dataCheck, lato, lono)               # lono varies the fastest. Shape is(nlati, nloni)
 
         sendOutput('*** writing single precision y32 interpolation test case to the netCDF file y32Regrid.nc')
-        write1D_4DField('y32Regrid', dataOut, lato, lono) 
+        write1D_4DField('y32Regrid', dataOut, lato, lono)
 
         error = rmserror(dataOut, dataCheck)                               # find the rms error
         sendOutput('\n******* compare results\n')
@@ -480,11 +480,11 @@ def choose(case):
 
         print 'making instance for case 8'
 
-        r = nat.Natgrid(latLinear, lonLinear, lato, lono)  
+        r = nat.Natgrid(latLinear, lonLinear, lato, lono)
 
         print 'call rgrd method for case 8'
 
-        dataOut = r.rgrd(y32Linear, wrap = 'yes') 
+        dataOut = r.rgrd(y32Linear, wrap = 'yes')
 
         print 'returning from call rgrd method for case 8'
 
@@ -502,7 +502,7 @@ def choose(case):
 
 def randomGrid(number, vmax, vmin):
     #----------------------------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: to construct a grid coordinate which is random but monotonically increasing
     #
     #     usage: vsort, vraw = randomGrid(number, vmax, vmin)
@@ -531,12 +531,12 @@ def randomGrid(number, vmax, vmin):
 
 def storedAnswers(choice):
     #----------------------------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: to store the answers to selected test cases
     #
     #     usage: data = storedAnswers(choice)
     #
-    #     passed : choice -- a string idetifying the desired data 
+    #     passed : choice -- a string idetifying the desired data
     #
     #     returned:  data
     #
@@ -669,7 +669,7 @@ def storedAnswers(choice):
 
 def uniformGrid(number, vend, vstart):
     #----------------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: to construct a grid coordinate which is uniform
     #
     #     usage:  v = uniformGrid(number, vend, vstart)
@@ -690,15 +690,15 @@ def uniformGrid(number, vend, vstart):
 
 def storedGrids():
     """    #-------------------------------------------------------------------
-    #                                      
-    #     purpose: to construct a grid coordinate which is random 
     #
-    #     passed : nothing 
+    #     purpose: to construct a grid coordinate which is random
+    #
+    #     passed : nothing
     #
     #     returned: lati --  a 60 element latitude grid from -90. to +90. degrees
-    #               latiSort -- lati sorted to be montonically decreasing 
+    #               latiSort -- lati sorted to be montonically decreasing
     #               loni --  a 120 element longitude grid from 0. to 360. degrees
-    #               loniSort -- loni sorted to be montonically increasing 
+    #               loniSort -- loni sorted to be montonically increasing
     #
     #------------------------------------------------------------------------"""
     latiList = [
@@ -765,15 +765,15 @@ def storedGrids():
 
 def grid2Dto1D(x, y):
     """    #-------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: to construct a linear grid from a rectangular one
     #
-    #     passed : x[i] and y[j] 
+    #     passed : x[i] and y[j]
     #
     #     returned: xn[n], yn[n]
     #
     #------------------------------------------------------------------------"""
- 
+
     numberx = len(x)
     numbery = len(y)
     size =numberx*numbery
@@ -790,15 +790,15 @@ def grid2Dto1D(x, y):
 
 def c1Dto2D(numberx, numbery, xn, yn, zn):
     """    #-------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: to construct  2D z[i,j] 1D zn[n] format
     #
     #     passed: xn[n], yn[n], zn[n]
     #
-    #     returned : x[i], y[j] and z[i,j] 
+    #     returned : x[i], y[j] and z[i,j]
     #
     #------------------------------------------------------------------------"""
- 
+
     x = numpy.zeros(numberx, numpy.float32)
     y = numpy.zeros(numbery, numpy.float32)
 
@@ -813,13 +813,13 @@ def c1Dto2D(numberx, numbery, xn, yn, zn):
     return (x, y, z)
 def c2Dto1D(x, y, z):
     #---------------------------------------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: to construct 1D zn[n] from 2D z[i,j] format
     #
     #     usage: xn, yn, zn  = c2Dto1D(x, y, z)
     #
-    #     passed: x - the array which describes the rectangular grid associated with the first z index 
-    #             y - the array which describes the rectangular grid associated with the second z index 
+    #     passed: x - the array which describes the rectangular grid associated with the first z index
+    #             y - the array which describes the rectangular grid associated with the second z index
     #             z - the 2D data associated with the x, y grid
     #
     #     returned: xn  - a list form of the x array
@@ -827,7 +827,7 @@ def c2Dto1D(x, y, z):
     #               zn  - a list form of the data array (this array has the same length as xn and yn
     #
     #---------------------------------------------------------------------------------------------------
- 
+
     numberx = len(x)
     numbery = len(y)
     size =numberx*numbery
@@ -844,46 +844,46 @@ def c2Dto1D(x, y, z):
 
     return (xn, yn, zn)
 
-def write1D_4DField(varname, dataField, x, y = None, z = None, t = None): 
+def write1D_4DField(varname, dataField, x, y = None, z = None, t = None):
 
     #------------------------------------------------------------------------------
-    #                                      
+    #
     #     purpose: write an output field which may be 1D, 2D, 3D or 4D to a NetCDF file
     #
-    #     usage:  write1D_4DField(varname, dataField, x, y, z = None, t = None) for a 2D write 
+    #     usage:  write1D_4DField(varname, dataField, x, y, z = None, t = None) for a 2D write
     #
     #     passed :  varname   - name of the variable and the file id
     #               x,y,z,t   - dimension vectors
     #               dataField - the data
     #
-    #     returned: None 
+    #     returned: None
     #
     #-------------------------------------------------------------------------------
     import cdms2
 
-    fileObj = cdms2.createDataset(varname + '.nc')  
+    fileObj = cdms2.createDataset(varname + '.nc')
 
     # construct the axis tuple
 
     x = x.astype(numpy.float64)
-    x_axis = fileObj.createAxis('x', x)  
+    x_axis = fileObj.createAxis('x', x)
     axisList = [x_axis]
 
     if y is not None:
         y = y.astype(numpy.float64)
-        y_axis = fileObj.createAxis('y', y)  
+        y_axis = fileObj.createAxis('y', y)
         axisList.append(y_axis)
 
     if z is not None:
         z = z.astype(numpy.float64)
-        z_axis = fileObj.createAxis('z', z)  
+        z_axis = fileObj.createAxis('z', z)
         axisList.append(z_axis)
 
     if t is not None:
         t = t.astype(numpy.float64)
-        t_axis = fileObj.createAxis('t', t)  
+        t_axis = fileObj.createAxis('t', t)
         axisList.append(t_axis)
-  
+
     if len(axisList) == 1:
         axisTuple = (x_axis,)
     else:
@@ -895,7 +895,7 @@ def write1D_4DField(varname, dataField, x, y = None, z = None, t = None):
 
     var[:] = dataField                                                                   # copy in the data
 
-    fileObj.close() 
+    fileObj.close()
 
     return None
 
@@ -903,15 +903,15 @@ def write1D_4DField(varname, dataField, x, y = None, z = None, t = None):
 
 def YData(lonvals, latvals, data_name = 'Y32'):
     #----------------------------------------------------------------------------
-    #                                      
-    #     purpose: construct Y33, Y32, Y31 or Y30 data 
+    #
+    #     purpose: construct Y33, Y32, Y31 or Y30 data
     #
     #     usage:   data = YData(lonvals, latvals, data_name = 'Y32'):
     #
-    #     passed :   lonvals -- longitude vactor 
-    #                latvals -- latitude vactor 
+    #     passed :   lonvals -- longitude vactor
+    #                latvals -- latitude vactor
     #
-    #     returned:  data 
+    #     returned:  data
     #-----------------------------------------------------------------------------
 
     if data_name[:3] == 'Y33':
@@ -931,22 +931,22 @@ def YData(lonvals, latvals, data_name = 'Y32'):
 
 def Y33(lonvals, latvals):
     #------------------------------------------------------------------------------
-    #                                      
-    #     purpose: construct Y33 data 
+    #
+    #     purpose: construct Y33 data
     #
     #     usage:   y33 = Y33(lonvals, latvals)
     #
-    #     passed :   lonvals -- longitude vactor 
-    #                latvals -- latitude vactor 
+    #     passed :   lonvals -- longitude vactor
+    #                latvals -- latitude vactor
     #
-    #     returned:  data 
+    #     returned:  data
     #------------------------------------------------------------------------------
 
     nlon = len(lonvals)
     nlat = len(latvals)
-    phi = (math.pi/180.)*lonvals  
+    phi = (math.pi/180.)*lonvals
     theta = (math.pi/180.)*latvals
-  
+
     y33 = numpy.zeros( (nlat,nlon), numpy.float32)     # memory
 
     fac = -(1./4.)*math.sqrt( (35./(4.*math.pi)) )
@@ -961,22 +961,22 @@ def Y33(lonvals, latvals):
 
 def Y32(lonvals, latvals):
     #-------------------------------------------------------------------------------
-    #                                      
-    #     purpose: construct Y32 data 
+    #
+    #     purpose: construct Y32 data
     #
     #     usage:   y32 = Y32(lonvals, latvals)
     #
-    #     passed :   lonvals -- longitude vactor 
-    #                latvals -- latitude vactor 
+    #     passed :   lonvals -- longitude vactor
+    #                latvals -- latitude vactor
     #
-    #     returned:  data 
+    #     returned:  data
     #-------------------------------------------------------------------------------
 
     nlon = len(lonvals)
     nlat = len(latvals)
-    phi = (math.pi/180.)*lonvals  
+    phi = (math.pi/180.)*lonvals
     theta = (math.pi/180.)*latvals
-  
+
     y32 = numpy.zeros( (nlat,nlon), numpy.float32)     # memory
 
     fac = (1./4.)*math.sqrt( (105./(4.*math.pi)) )
@@ -991,22 +991,22 @@ def Y32(lonvals, latvals):
 
 def Y31(lonvals, latvals):
     #--------------------------------------------------------------------------------
-    #                                      
-    #     purpose: construct Y31 data 
+    #
+    #     purpose: construct Y31 data
     #
     #     usage:   y31 = Y31(lonvals, latvals)
     #
-    #     passed :   lonvals -- longitude vactor 
-    #                latvals -- latitude vactor 
+    #     passed :   lonvals -- longitude vactor
+    #                latvals -- latitude vactor
     #
-    #     returned:  data 
+    #     returned:  data
     #--------------------------------------------------------------------------------
 
     nlon = len(lonvals)
     nlat = len(latvals)
-    phi = (math.pi/180.)*lonvals  
+    phi = (math.pi/180.)*lonvals
     theta = (math.pi/180.)*latvals
-  
+
     y31 = numpy.zeros( (nlat,nlon), numpy.float32)     # memory
 
     fac = -(1./4.)*math.sqrt( (21./(4.*math.pi)) )
@@ -1021,30 +1021,30 @@ def Y31(lonvals, latvals):
 
 def Y30(lonvals, latvals):
     #----------------------------------------------------------------------------------
-    #                                      
-    #     purpose: construct Y30 data 
+    #
+    #     purpose: construct Y30 data
     #
     #     usage:   y30 = Y30(lonvals, latvals)
     #
-    #     passed :   lonvals -- longitude vactor 
-    #                latvals -- latitude vactor 
+    #     passed :   lonvals -- longitude vactor
+    #                latvals -- latitude vactor
     #
-    #     returned:  data 
+    #     returned:  data
     #-----------------------------------------------------------------------------------
 
     nlon = len(lonvals)
     nlat = len(latvals)
-    phi = (math.pi/180.)*lonvals  
+    phi = (math.pi/180.)*lonvals
     theta = (math.pi/180.)*latvals
 
     lonvals = makelon(nlon)
-    phi = lonvals  
-    phi = (math.pi/180.)*lonvals  
+    phi = lonvals
+    phi = (math.pi/180.)*lonvals
 
     latvals, colatvals = makelat(nlat, grid_type)
     latvals, colatvals = makelat(nlat)
     theta = (math.pi/180.)*colatvals
-  
+
     y30 = numpy.zeros( (nlat,nlon), numpy.float32)     # memory
 
     fac = math.sqrt( (7./(4.*math.pi)) )
@@ -1062,9 +1062,9 @@ def rmserror(data1, data2):
     #---------------------------------------------------------------------------------
     #
     #    purpose: compute the rms error for two data sets having the same shape
-    # 
-    #    passed : the two data sets 
-    #             
+    #
+    #    passed : the two data sets
+    #
     #    returned: rms error
     #
     #---------------------------------------------------------------------------------
@@ -1089,7 +1089,7 @@ if __name__ == "__main__":
     output = open('test.asc', 'w')               # global file name
 
     print 'Running the test computations'
-    testError = runtests() 
+    testError = runtests()
     write = document()
 
     sendOutput(' ')

@@ -54,14 +54,14 @@ class Op_gaul2srl(Op):
                     g_list.append(g)
 
             if len(g_list) > 0:
-              if len(g_list) == 1:
-                src_index, source = self.process_single_gaussian(img, g_list, src_index, code = 'S')
-                sources.append(source)
-                isl_sources.append(source)
-              else:
-                src_index, source = self.process_CM(img, g_list, isl, src_index)
-                sources.extend(source)
-                isl_sources.extend(source)
+                if len(g_list) == 1:
+                    src_index, source = self.process_single_gaussian(img, g_list, src_index, code = 'S')
+                    sources.append(source)
+                    isl_sources.append(source)
+                else:
+                    src_index, source = self.process_CM(img, g_list, isl, src_index)
+                    sources.extend(source)
+                    isl_sources.extend(source)
             else:
                 if not img.waveletimage:
                     dg = isl.dgaul[0]
@@ -179,36 +179,36 @@ class Op_gaul2srl(Op):
         for pair in index:
             same_island = self.in_same_island(pair, img, g_list, isl, subim, subn, subm, delc)
             if same_island:
-              nsrc -= 1
-              mmax, mmin = max(src_id[pair[0]],src_id[pair[1]]), min(src_id[pair[0]],src_id[pair[1]])
-              arr = N.where(src_id == mmax)[0]; src_id[arr] = mmin
-                            # now reorder src_id so that it is contiguous
+                nsrc -= 1
+                mmax, mmin = max(src_id[pair[0]],src_id[pair[1]]), min(src_id[pair[0]],src_id[pair[1]])
+                arr = N.where(src_id == mmax)[0]; src_id[arr] = mmin
+                              # now reorder src_id so that it is contiguous
         for i in range(ngau):
             ind1 = N.where(src_id==i)[0]
             if len(ind1) == 0:
                 arr = N.where(src_id > i)[0]
                 if len(arr) > 0:
-                  decr =  N.min(src_id[arr])-i
-                  for j in arr: src_id[j] -= decr
+                    decr =  N.min(src_id[arr])-i
+                    for j in arr: src_id[j] -= decr
         nsrc = N.max(src_id)+1
         # now do whats in sub_calc_para_source
 
         source_list = []
         for isrc in range(nsrc):
-          posn = N.where(src_id == isrc)[0]
-          g_sublist=[]
-          for i in posn:
-              g_sublist.append(g_list[i])
-          ngau_insrc = len(posn)
-                                # Do source type C
-          if ngau_insrc == 1:
-              src_index, source = self.process_single_gaussian(img, g_sublist, src_index, code = 'C')
-          else:
-              # make mask and subim. Invalid mask value is -1 since 0 is valid srcid
-              mask = self.make_mask(isl, subn, subm, 1, isrc, g_sublist, delc)
-              src_index, source = self.process_Multiple(img, g_sublist, mask, src_index, isrc, subim, \
-                                  isl, delc, subn, subm)
-          source_list.append(source)
+            posn = N.where(src_id == isrc)[0]
+            g_sublist=[]
+            for i in posn:
+                g_sublist.append(g_list[i])
+            ngau_insrc = len(posn)
+                                  # Do source type C
+            if ngau_insrc == 1:
+                src_index, source = self.process_single_gaussian(img, g_sublist, src_index, code = 'C')
+            else:
+                # make mask and subim. Invalid mask value is -1 since 0 is valid srcid
+                mask = self.make_mask(isl, subn, subm, 1, isrc, g_sublist, delc)
+                src_index, source = self.process_Multiple(img, g_sublist, mask, src_index, isrc, subim, \
+                                    isl, delc, subn, subm)
+            source_list.append(source)
 
         return src_index, source_list
 
@@ -243,35 +243,35 @@ class Op_gaul2srl(Op):
             same_island_min = False
             same_island_cont = False
             if maxline == 1:
-              same_island_min = True
-              same_island_cont = True
-            else:
-              if abs(pixdif[0]) > abs(pixdif[1]):
-                xline = N.round(min(pix1[0],pix2[0])+N.arange(maxline))
-                yline = N.round((pix1[1]-pix2[1])/(pix1[0]-pix2[0])* \
-                       (min(pix1[0],pix2[0])+N.arange(maxline)-pix1[0])+pix1[1])
-              else:
-                yline = N.round(min(pix1[1],pix2[1])+N.arange(maxline))
-                xline = N.round((pix1[0]-pix2[0])/(pix1[1]-pix2[1])* \
-                       (min(pix1[1],pix2[1])+N.arange(maxline)-pix1[1])+pix1[0])
-              rpixval = N.zeros(maxline, dtype=N.float32)
-              xbig = N.where(xline >= N.size(subim,0))
-              xline[xbig] = N.size(subim,0) - 1
-              ybig = N.where(yline >= N.size(subim,1))
-              yline[ybig] = N.size(subim,1) - 1
-              for i in range(maxline):
-                pixval = subim[int(xline[i]), int(yline[i])]
-                rpixval[i] = pixval
-              min_pixval = N.min(rpixval)
-              minind_p = N.argmin(rpixval)
-              maxind_p = N.argmax(rpixval)
-
-              if minind_p in (0, maxline-1) and maxind_p in (0, maxline-1):
+                same_island_min = True
                 same_island_cont = True
-              if min_pixval >= min(flux1, flux2):
-                same_island_min = True
-              elif abs(min_pixval-min(flux1,flux2)) <= tol*isl.rms*img.opts.thresh_isl:
-                same_island_min = True
+            else:
+                if abs(pixdif[0]) > abs(pixdif[1]):
+                    xline = N.round(min(pix1[0],pix2[0])+N.arange(maxline))
+                    yline = N.round((pix1[1]-pix2[1])/(pix1[0]-pix2[0])* \
+                           (min(pix1[0],pix2[0])+N.arange(maxline)-pix1[0])+pix1[1])
+                else:
+                    yline = N.round(min(pix1[1],pix2[1])+N.arange(maxline))
+                    xline = N.round((pix1[0]-pix2[0])/(pix1[1]-pix2[1])* \
+                           (min(pix1[1],pix2[1])+N.arange(maxline)-pix1[1])+pix1[0])
+                rpixval = N.zeros(maxline, dtype=N.float32)
+                xbig = N.where(xline >= N.size(subim,0))
+                xline[xbig] = N.size(subim,0) - 1
+                ybig = N.where(yline >= N.size(subim,1))
+                yline[ybig] = N.size(subim,1) - 1
+                for i in range(maxline):
+                    pixval = subim[int(xline[i]), int(yline[i])]
+                    rpixval[i] = pixval
+                min_pixval = N.min(rpixval)
+                minind_p = N.argmin(rpixval)
+                maxind_p = N.argmax(rpixval)
+
+                if minind_p in (0, maxline-1) and maxind_p in (0, maxline-1):
+                    same_island_cont = True
+                if min_pixval >= min(flux1, flux2):
+                    same_island_min = True
+                elif abs(min_pixval-min(flux1,flux2)) <= tol*isl.rms*img.opts.thresh_isl:
+                    same_island_min = True
 
             return same_island_min, same_island_cont
 
@@ -293,9 +293,9 @@ class Op_gaul2srl(Op):
             dist = sqrt(dy*dy + dx*dx)
 
             if dist <= tol*(fwhm1+fwhm2):
-              same_island = True
+                same_island = True
             else:
-              same_island = False
+                same_island = False
 
             return same_island
 
@@ -353,16 +353,16 @@ class Op_gaul2srl(Op):
         x_ax, y_ax = N.indices(data.shape)
 
         if N.sum(~rmask) >=6:
-          para, ierr = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
-          if (0.0<para[1]<s_imsize[0]) and (0.0<para[2]<s_imsize[1]) and \
-            para[3]<s_imsize[0] and para[4]<s_imsize[1]:
-            maxpeak = para[0]
-          else:
-            maxpeak = maxv
-          posn = para[1:3]-(0.5*N.sum(s_imsize)-1)/2.0+N.array([maxx, maxy])-1+delc
+            para, ierr = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
+            if (0.0<para[1]<s_imsize[0]) and (0.0<para[2]<s_imsize[1]) and \
+              para[3]<s_imsize[0] and para[4]<s_imsize[1]:
+                maxpeak = para[0]
+            else:
+                maxpeak = maxv
+            posn = para[1:3]-(0.5*N.sum(s_imsize)-1)/2.0+N.array([maxx, maxy])-1+delc
         else:
-          maxpeak = maxv
-          posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
+            maxpeak = maxv
+            posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
 
         # calculate peak by bilinear interpolation around centroid
         # First check that moment analysis gave a valid position. If not, use
@@ -479,11 +479,11 @@ class Op_gaul2srl(Op):
             if mompara5E > 2.0*mompara[5]:
                 mompara5E = 2.0*mompara[5] # Don't let errors get too large
         else:
-             mompara1E = 0.0
-             mompara2E = 0.0
-             mompara3E = 0.0
-             mompara4E = 0.0
-             mompara5E = 0.0
+            mompara1E = 0.0
+            mompara2E = 0.0
+            mompara3E = 0.0
+            mompara4E = 0.0
+            mompara5E = 0.0
 
         # Now add MC errors in quadrature with Condon (1997) errors
         size_skyE = [sqrt(mompara3E**2 + errors[3]**2) * sqrt(cdeltsq),

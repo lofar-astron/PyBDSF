@@ -130,7 +130,7 @@ def run_tasks(procs, err_q, out_q, num):
     # Remove extra dimension added by array_split
     result_list = []
     for result in results:
-            result_list += result
+        result_list += result
 
     return result_list
 

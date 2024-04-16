@@ -378,15 +378,15 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                     pl.title('Pyramidal Sources for\nWavelet Scale J = ' +
                              str(j_with_gaus[j]))
             for pyr in img.pyrsrcs:
-              for iisl, isl in enumerate(pyr.islands):
-                jj = pyr.jlevels[iisl]
-                jindx = j_with_gaus.index(jj)
-                col = colours[pyr.pyr_id % 6]
-                ind = N.where(~isl.mask_active)
-                cmd = "ax" + str(jindx + index_first_waveplot + 1) + \
-                    ".plot(ind[0]+isl.origin[0], "\
-                    "ind[1]+isl.origin[1], '.', color=col)"
-                exec(cmd)
+                for iisl, isl in enumerate(pyr.islands):
+                    jj = pyr.jlevels[iisl]
+                    jindx = j_with_gaus.index(jj)
+                    col = colours[pyr.pyr_id % 6]
+                    ind = N.where(~isl.mask_active)
+                    cmd = "ax" + str(jindx + index_first_waveplot + 1) + \
+                        ".plot(ind[0]+isl.origin[0], "\
+                        "ind[1]+isl.origin[1], '.', color=col)"
+                    exec(cmd)
 
     fig.canvas.mpl_connect('key_press_event', on_press)
     fig.canvas.mpl_connect('pick_event', on_pick)
