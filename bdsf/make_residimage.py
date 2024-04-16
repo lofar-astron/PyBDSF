@@ -37,9 +37,9 @@ class Op_make_residimage(Op):
         for g in img.gaussians:
             C1, C2 = g.centre_pix
             if hasattr(g, 'wisland_id') and img.waveletimage:
-              isl = img.islands[g.wisland_id]
+                isl = img.islands[g.wisland_id]
             else:
-              isl = img.islands[g.island_id]
+                isl = img.islands[g.island_id]
             b = self.find_bbox(thresh*isl.rms, g)
 
             bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
@@ -105,14 +105,14 @@ class Op_make_residimage(Op):
             fimg = N.zeros(shape, dtype=N.float32)
 
             for isl in img.islands:
-              if  hasattr(isl, 'shapelet_beta'):
-                  if isl.shapelet_beta > 0: # make sure shapelet has nonzero scale for this island
-                    mask=isl.mask_active
-                    cen=isl.shapelet_centre-N.array(isl.origin)
-                    basis, beta, nmax, cf = isl.shapelet_basis, isl.shapelet_beta, \
-                                            isl.shapelet_nmax, isl.shapelet_cf
-                    image_recons=reconstruct_shapelets(isl.shape, mask, basis, beta, cen, nmax, cf)
-                    fimg[tuple(isl.bbox)] += image_recons
+                if  hasattr(isl, 'shapelet_beta'):
+                    if isl.shapelet_beta > 0: # make sure shapelet has nonzero scale for this island
+                        mask=isl.mask_active
+                        cen=isl.shapelet_centre-N.array(isl.origin)
+                        basis, beta, nmax, cf = isl.shapelet_basis, isl.shapelet_beta, \
+                                                isl.shapelet_nmax, isl.shapelet_cf
+                        image_recons=reconstruct_shapelets(isl.shape, mask, basis, beta, cen, nmax, cf)
+                        fimg[tuple(isl.bbox)] += image_recons
 
             model_shap = fimg
             resid_shap = img.ch0_arr - fimg

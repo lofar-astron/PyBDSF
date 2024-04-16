@@ -236,8 +236,8 @@ class Op_spectralindex(Op):
                     bar2.stop()
                 img.completed_Ops.append('spectralindex')
             else:
-              mylog.warning('Image has only one channel. Spectral index module disabled.')
-              img.opts.spectralindex_do = False
+                mylog.warning('Image has only one channel. Spectral index module disabled.')
+                img.opts.spectralindex_do = False
 
 ####################################################################################
     def flagchans_rmschan(self, crms, zeroflags, iniflags, cutoff):
@@ -370,9 +370,9 @@ class Op_spectralindex(Op):
         else:
             rms_spec = N.zeros(image.shape, dtype=N.float32)
             for ichan in range(nchan):
-              if bar1.started:
-                  bar1.increment()
-              rms_spec[ichan,:,:] = img.channel_clippedrms[ichan]
+                if bar1.started:
+                    bar1.increment()
+                rms_spec[ichan,:,:] = img.channel_clippedrms[ichan]
             median_rms = rms_spec
         if bar1.started:
             bar1.stop()
@@ -405,17 +405,17 @@ class Op_spectralindex(Op):
         mask[nan_errors] = 1
 
         if do_log:
-          x = N.log10(x/f0); y = N.log10(flux); sig = N.abs(eflux/flux)/2.303
-          funct = func.poly
+            x = N.log10(x/f0); y = N.log10(flux); sig = N.abs(eflux/flux)/2.303
+            funct = func.poly
         else:
-          x = x/f0; y = flux; sig = eflux
-          funct = func.sp_in
+            x = x/f0; y = flux; sig = eflux
+            funct = func.sp_in
 
         spin, espin = func.fit_mask_1d(x, y, sig, mask, funct, do_err=True, order=1)
 
         if do_log:
-          spin[0] = math.pow(10.0, spin[0])
-          espin[0] = spin[0]*math.log(10.0)*espin[0]
+            spin[0] = math.pow(10.0, spin[0])
+            espin[0] = spin[0]*math.log(10.0)*espin[0]
 
         return spin[0], spin[1], espin[1]
 

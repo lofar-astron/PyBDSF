@@ -366,23 +366,23 @@ class Op_readimage(Op):
                 found = True
             except:
                 ### try see if AIPS as put the beam in HISTORY as usual
-               for h in hdr['HISTORY']:
-                  # Check if h is a string or a FITS Card object (long headers are
-                  # split into Cards as of PyFITS 3.0.4)
-                  if not isinstance(h, str):
-                    hstr = h.value
-                  else:
-                    hstr = h
-                  if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
-                    try:
-                        dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
-                    except ValueError:
+                for h in hdr['HISTORY']:
+                    # Check if h is a string or a FITS Card object (long headers are
+                    # split into Cards as of PyFITS 3.0.4)
+                    if not isinstance(h, str):
+                        hstr = h.value
+                    else:
+                        hstr = h
+                    if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
                         try:
-                            dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
+                            dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
                         except ValueError:
-                            break
-                    beam = (float(bmaj), float(bmin), float(bpa))
-                    found = True
+                            try:
+                                dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
+                            except ValueError:
+                                break
+                        beam = (float(bmaj), float(bmin), float(bpa))
+                        found = True
             if not found: raise RuntimeError("No beam information found in image header.")
 
         ### convert beam into pixels (at image center)

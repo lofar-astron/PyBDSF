@@ -28,13 +28,13 @@ class Op_preprocess(Op):
             kappa = img.opts.kappa_clip
 
         if img.opts.polarisation_do:
-          pols = ['I', 'Q', 'U', 'V']
-          ch0images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
-          img.clipped_mean_QUV = []
-          img.clipped_rms_QUV = []
+            pols = ['I', 'Q', 'U', 'V']
+            ch0images = [img.ch0_arr, img.ch0_Q_arr, img.ch0_U_arr, img.ch0_V_arr]
+            img.clipped_mean_QUV = []
+            img.clipped_rms_QUV = []
         else:
-          pols = ['I'] # assume I is always present
-          ch0images = [img.ch0_arr]
+            pols = ['I'] # assume I is always present
+            ch0images = [img.ch0_arr]
 
         if hasattr(img, 'rms_mask'):
             mask = img.rms_mask
@@ -43,29 +43,29 @@ class Op_preprocess(Op):
         opts = img.opts
 
         for ipol, pol in enumerate(pols):
-          image = ch0images[ipol]
+            image = ch0images[ipol]
 
-          ### basic stats
-          mean, rms, cmean, crms, cnt = bstat(image, mask, kappa)
-          if cnt > 198: cmean = mean; crms = rms
-          if pol == 'I':
-            if func.approx_equal(crms, 0.0, rel=None):
-                raise RuntimeError('Clipped rms appears to be zero. Check for regions '\
-                                       'with values of 0 and\nblank them (with NaNs) '\
-                                       'or use trim_box to exclude them.')
-            img.raw_mean    = mean
-            img.raw_rms     = rms
-            img.clipped_mean= cmean
-            img.clipped_rms = crms
-            mylog.info('%s %.4f %s %.4f %s ' % ("Raw mean (Stokes I) = ", mean*1000.0, \
-                       'mJy and raw rms = ',rms*1000.0, 'mJy'))
-            mylog.info('%s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes I) = ", cmean*1000.0, \
-                       'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
-          else:
-            img.clipped_mean_QUV.append(cmean)
-            img.clipped_rms_QUV.append(crms)
-            mylog.info('%s %s %s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
-                       'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
+            ### basic stats
+            mean, rms, cmean, crms, cnt = bstat(image, mask, kappa)
+            if cnt > 198: cmean = mean; crms = rms
+            if pol == 'I':
+                if func.approx_equal(crms, 0.0, rel=None):
+                    raise RuntimeError('Clipped rms appears to be zero. Check for regions '\
+                                           'with values of 0 and\nblank them (with NaNs) '\
+                                           'or use trim_box to exclude them.')
+                img.raw_mean    = mean
+                img.raw_rms     = rms
+                img.clipped_mean= cmean
+                img.clipped_rms = crms
+                mylog.info('%s %.4f %s %.4f %s ' % ("Raw mean (Stokes I) = ", mean*1000.0, \
+                           'mJy and raw rms = ',rms*1000.0, 'mJy'))
+                mylog.info('%s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes I) = ", cmean*1000.0, \
+                           'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
+            else:
+                img.clipped_mean_QUV.append(cmean)
+                img.clipped_rms_QUV.append(crms)
+                mylog.info('%s %s %s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
+                           'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
 
         image = img.ch0_arr
         # Check if pixels are outside the universe
@@ -94,11 +94,11 @@ class Op_preprocess(Op):
         if mask is not None:
             img.blankpix = N.sum(mask)
         if img.blankpix == 0:
-          max_idx = image.argmax()
-          min_idx = image.argmin()
+            max_idx = image.argmax()
+            min_idx = image.argmin()
         else:
-          max_idx = N.nanargmax(image)
-          min_idx = N.nanargmin(image)
+            max_idx = N.nanargmax(image)
+            min_idx = N.nanargmin(image)
 
         img.maxpix_coord = N.unravel_index(max_idx, shape)
         img.minpix_coord = N.unravel_index(min_idx, shape)
@@ -126,25 +126,25 @@ class Op_preprocess(Op):
         ### if image seems confused, then take background mean as zero instead
         alpha_sourcecounts = 2.5  # approx diff src count slope. 2.2?
         if opts.bmpersrc_th is None:
-          if mask is not None:
-              unmasked = N.where(~img.mask_arr)
-              n = (image[unmasked] >= 5.*crms).sum()
-          else:
-              n = (image >= 5.*crms).sum()
-          if n <= 0:
-            n = 1
-            mylog.info('No pixels in image > 5-sigma.')
-            mylog.info('Taking number of pixels above 5-sigma as 1.')
-          img.bmpersrc_th = N.product(shape)/((alpha_sourcecounts-1.)*n)
-          mylog.info('%s %6.2f' % ('Estimated bmpersrc_th = ', img.bmpersrc_th))
+            if mask is not None:
+                unmasked = N.where(~img.mask_arr)
+                n = (image[unmasked] >= 5.*crms).sum()
+            else:
+                n = (image >= 5.*crms).sum()
+            if n <= 0:
+                n = 1
+                mylog.info('No pixels in image > 5-sigma.')
+                mylog.info('Taking number of pixels above 5-sigma as 1.')
+            img.bmpersrc_th = N.product(shape)/((alpha_sourcecounts-1.)*n)
+            mylog.info('%s %6.2f' % ('Estimated bmpersrc_th = ', img.bmpersrc_th))
         else:
-          img.bmpersrc_th = opts.bmpersrc_th
-          mylog.info('%s %6.2f' % ('Taking default bmpersrc_th = ', img.bmpersrc_th))
+            img.bmpersrc_th = opts.bmpersrc_th
+            mylog.info('%s %6.2f' % ('Taking default bmpersrc_th = ', img.bmpersrc_th))
 
         confused = False
         if opts.mean_map == 'default':
-          if img.bmpersrc_th <= 25. or cmean/crms >= 0.1:
-            confused = True
+            if img.bmpersrc_th <= 25. or cmean/crms >= 0.1:
+                confused = True
         img.confused = confused
         mylog.info('Parameter confused is '+str(img.confused))
 
@@ -158,19 +158,19 @@ class Op_preprocess(Op):
         noutside = 0
         n, m = img.ch0_arr.shape
         for i in range(n):
-          for j in range(m):
-            out = False
-            err = ''
-            pix1 = (i,j)
-            try:
-              skyc = img.pix2sky(pix1)
-              pix2 = img.sky2pix(skyc)
-              if abs(pix1[0]-pix2[0]) > 0.5 or abs(pix1[1]-pix2[1]) > 0.5: out=True
-            except RuntimeError as err:
-              pass
-            if out or ("8" in str(err)):
-              noutside += 1
-              ch0 = img.ch0_arr
-              ch0[pix1] = float("NaN")
-              img.ch0_arr = ch0
+            for j in range(m):
+                out = False
+                err = ''
+                pix1 = (i,j)
+                try:
+                    skyc = img.pix2sky(pix1)
+                    pix2 = img.sky2pix(skyc)
+                    if abs(pix1[0]-pix2[0]) > 0.5 or abs(pix1[1]-pix2[1]) > 0.5: out=True
+                except RuntimeError as err:
+                    pass
+                if out or ("8" in str(err)):
+                    noutside += 1
+                    ch0 = img.ch0_arr
+                    ch0[pix1] = float("NaN")
+                    img.ch0_arr = ch0
         return noutside

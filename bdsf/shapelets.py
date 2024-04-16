@@ -38,12 +38,12 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
         cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
-      npix = N.product(image.shape)-N.sum(mask)
-      npara = (nmax+1)*(nmax+2)*0.5
-      cfnew = fit_shapeletbasis(image, mask, cf, Bset)
-      recon1 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cf)
-      recon2 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cfnew)
-      if N.std(recon2) < 1.2*N.std(recon1): cf = cfnew
+        npix = N.product(image.shape)-N.sum(mask)
+        npara = (nmax+1)*(nmax+2)*0.5
+        cfnew = fit_shapeletbasis(image, mask, cf, Bset)
+        recon1 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cf)
+        recon2 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cfnew)
+        if N.std(recon2) < 1.2*N.std(recon1): cf = cfnew
 
     return cf
 
@@ -185,15 +185,15 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
         smask2=N.array([r == 0 for r in xft2])
         cen=[0.]*2
         if sum(smask1)<len(yft1) and sum(smask2)<len(xft2):
-          [c1, m1], errors = func.fit_mask_1d(xft1, yft1, sig, smask1, func.poly, do_err=False, order=1)
-          [c2, m2], errors = func.fit_mask_1d(xft2, yft2, sig, smask2, func.poly, do_err=False, order=1)
-          if m2-m1 == 0:
-            cen[0] = cen[1] = 0.0
-          else:
-            cen[0]=(c1-c2)/(m2-m1)
-            cen[1]=c1+m1*cen[0]
+            [c1, m1], errors = func.fit_mask_1d(xft1, yft1, sig, smask1, func.poly, do_err=False, order=1)
+            [c2, m2], errors = func.fit_mask_1d(xft2, yft2, sig, smask2, func.poly, do_err=False, order=1)
+            if m2-m1 == 0:
+                cen[0] = cen[1] = 0.0
+            else:
+                cen[0]=(c1-c2)/(m2-m1)
+                cen[1]=c1+m1*cen[0]
         else:
-          cen[0] = cen[1] = 0.0
+            cen[0] = cen[1] = 0.0
 
         # check if estimated centre makes sense
         error=shapelet_check_centre(image, mask, cen, beam_pix)
@@ -226,34 +226,34 @@ def getzeroes_matrix(mask, cf, cen, cenx):
 
         #print 'npts = ',npts
     if npts > 3 and not N.isnan(cf[i,cen]):
-      mrow=mask[i,:]
-      if sum(l) == 0:
-        low=0
-        up=cf.shape[1]-1
-      else:
-        low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
-        #print 'mrow = ',i, mrow, low,
-        try:
-          up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
-          #print 'up1= ', up
-        except IndexError:
-          if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
-            up = len(mrow)
-            #print 'up2= ', up,
-          else:
-            raise
-          #print
-      low += 1; up -= 1
-      npoint = up-low+1
-      xfn = N.arange(npoint)+low
-      yfn = cf[i,xfn]
-      root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
-      if error != 1:
-        y[i] = root
-      else:
-        y[i] = 0.0
+        mrow=mask[i,:]
+        if sum(l) == 0:
+            low=0
+            up=cf.shape[1]-1
+        else:
+            low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
+            #print 'mrow = ',i, mrow, low,
+            try:
+                up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
+                #print 'up1= ', up
+            except IndexError:
+                if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
+                    up = len(mrow)
+                    #print 'up2= ', up,
+                else:
+                    raise
+                #print
+        low += 1; up -= 1
+        npoint = up-low+1
+        xfn = N.arange(npoint)+low
+        yfn = cf[i,xfn]
+        root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
+        if error != 1:
+            y[i] = root
+        else:
+            y[i] = 0.0
     else:
-          y[i] = 0.0
+        y[i] = 0.0
 
     return x,y
 
@@ -274,14 +274,14 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
     minint=0; minintold=0
     for i in range(1,npoint):
         if yfn[i-1]*yfn[i] < 0.:
-          if minintold == 0:  # so take nearest to centre
-            if abs(yfn[i-1]) < abs(yfn[i]):
-              minint=i-1
+            if minintold == 0:  # so take nearest to centre
+                if abs(yfn[i-1]) < abs(yfn[i]):
+                    minint=i-1
+                else:
+                    minint=i
             else:
-              minint=i
-          else:
-            dnew=func.dist_2pt([xco,xfn[i]], [xcen,ycen])
-            dold=func.dist_2pt([xco,xfn[minintold]], [xcen,ycen])
+                dnew=func.dist_2pt([xco,xfn[i]], [xcen,ycen])
+                dold=func.dist_2pt([xco,xfn[minintold]], [xcen,ycen])
         if dnew <= dold:
             minint=i
         else:
@@ -290,18 +290,18 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
 
     if minint < 1 or minint > npoint: error=1
     if error != 1:
-      low=minint-min(2,minint)#-1)
-      up=minint+min(2,npoint-1-minint)   # python array indexing rubbish
-      nfit=up-low+1
-      xfit=xfn[low:low+nfit]
-      yfit=yfn[low:low+nfit]
-      sig=N.ones(nfit)
-      smask=N.zeros(nfit, dtype=bool)
-      xx=[i for i in range(low,low+nfit)]
+        low=minint-min(2,minint)#-1)
+        up=minint+min(2,npoint-1-minint)   # python array indexing rubbish
+        nfit=up-low+1
+        xfit=xfn[low:low+nfit]
+        yfit=yfn[low:low+nfit]
+        sig=N.ones(nfit)
+        smask=N.zeros(nfit, dtype=bool)
+        xx=[i for i in range(low,low+nfit)]
 
-      [c, m], errors = func.fit_mask_1d(xfit, yfit, sig, smask, func.poly, do_err=False, order=1)
-      root=-c/m
-      if root < xfn[low] or root > xfn[up]: error=1
+        [c, m], errors = func.fit_mask_1d(xfit, yfit, sig, smask, func.poly, do_err=False, order=1)
+        root=-c/m
+        if root < xfn[low] or root > xfn[up]: error=1
 
     return root, error
 
@@ -367,7 +367,7 @@ def shapelet_coeff(nmax=20,basis='cartesian'):
 
     order=nmax+1
     if basis == 'polar':
-       raise NotImplementedError("Polar shapelets not yet implemented.")
+        raise NotImplementedError("Polar shapelets not yet implemented.")
 
     hc=N.zeros([order,order])
     hnm1=N.zeros(order); hn=N.zeros(order)

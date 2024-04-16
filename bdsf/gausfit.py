@@ -324,8 +324,8 @@ class Op_gausfit(Op):
                 ng1=0
                 ngmax=25
         if ini_gausfit == 'nobeam' and not opts.fix_to_beam:
-          gaul = self.inigaus_nobeam(isl, thr0, beam, img)
-          ng1 = len(gaul); ngmax = ng1+2
+            gaul = self.inigaus_nobeam(isl, thr0, beam, img)
+            ng1 = len(gaul); ngmax = ng1+2
         if verbose:
             print('Initializing, ini_gausfit is',ini_gausfit,'gaul =',gaul,'ngmax =',ngmax)
         while iter < 5:
@@ -349,14 +349,14 @@ class Op_gausfit(Op):
             ng1 = 0
             ngmax = 25
             while iter < 5:
-               iter += 1
-               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
-               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                 beam, thr0, peak, shape, isl.mask_active,
-                                                 isl.image, size)
-               ng1 = len(gaul)
-               if fitok and len(fgaul) == 0:
-                   break
+                iter += 1
+                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
+                                                  beam, thr0, peak, shape, isl.mask_active,
+                                                  isl.image, size)
+                ng1 = len(gaul)
+                if fitok and len(fgaul) == 0:
+                    break
         sm_isl = nd.binary_dilation(isl.mask_active)
         if (not fitok or len(gaul) == 0) and N.sum(~sm_isl) >= img.minpix_isl:
             if verbose: print('Fit still not OK, shrinking')
@@ -367,14 +367,14 @@ class Op_gausfit(Op):
             ng1 = 0
             ngmax = 25
             while iter < 5:
-               iter += 1
-               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
-               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                 beam, thr0, peak, shape, isl.mask_active,
-                                                 isl.image, size)
-               ng1 = len(gaul)
-               if fitok and len(fgaul) == 0:
-                   break
+                iter += 1
+                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
+                                                  beam, thr0, peak, shape, isl.mask_active,
+                                                  isl.image, size)
+                ng1 = len(gaul)
+                if fitok and len(fgaul) == 0:
+                    break
         lg_isl = nd.binary_erosion(isl.mask_active)
         if (not fitok or len(gaul) == 0) and N.sum(~lg_isl) >= img.minpix_isl:
             if verbose: print('Fit still not OK, expanding')
@@ -385,14 +385,14 @@ class Op_gausfit(Op):
             ng1 = 0
             ngmax = 25
             while iter < 5:
-               iter += 1
-               fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
-               gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                 beam, thr0, peak, shape, isl.mask_active,
-                                                 isl.image, size)
-               ng1 = len(gaul)
-               if fitok and len(fgaul) == 0:
-                   break
+                iter += 1
+                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
+                                                  beam, thr0, peak, shape, isl.mask_active,
+                                                  isl.image, size)
+                ng1 = len(gaul)
+                if fitok and len(fgaul) == 0:
+                    break
 
         if not fitok or len(gaul) == 0:
             # If all else fails, try to use moment analysis
@@ -520,24 +520,24 @@ class Op_gausfit(Op):
         av = img.clipped_mean
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
-          av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
-          inipeak = [maxv]; iniposn = [maxp]
+            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+            inipeak = [maxv]; iniposn = [maxp]
         nmulsrc1 = len(iniposn)
 
         domore = True
         while domore:
-          domore = False
-          av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im1, mask)
-          if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
-            domore = True
-            x1, y1 = N.array(iniposn).transpose()
-            dumr = N.sqrt((maxp[0]-x1)*(maxp[0]-x1)+(maxp[1]-y1)*(maxp[1]-y1))
-            distbm = dumr/sqrt(beam[0]*beam[1]*fwsig*fwsig)
-            if N.any((distbm < 0.5) + (dumr < 2.2)):
-              domore = False
-            if domore:
-              iniposn.append(N.array(maxp)); inipeak.append(maxv)
-              im1 = func.mclean(im1, maxp, beam)
+            domore = False
+            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im1, mask)
+            if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
+                domore = True
+                x1, y1 = N.array(iniposn).transpose()
+                dumr = N.sqrt((maxp[0]-x1)*(maxp[0]-x1)+(maxp[1]-y1)*(maxp[1]-y1))
+                distbm = dumr/sqrt(beam[0]*beam[1]*fwsig*fwsig)
+                if N.any((distbm < 0.5) + (dumr < 2.2)):
+                    domore = False
+                if domore:
+                    iniposn.append(N.array(maxp)); inipeak.append(maxv)
+                    im1 = func.mclean(im1, maxp, beam)
 
         inipeak = N.array(inipeak); iniposn = N.array(iniposn)
         ind = list(N.argsort(inipeak)); ind.reverse()
@@ -545,8 +545,8 @@ class Op_gausfit(Op):
         iniposn = iniposn[ind]
         gaul = []
         for i in range(len(inipeak)):
-          g = (float(inipeak[i]), int(iniposn[i][0]), int(iniposn[i][1])) + beam
-          gaul.append(g)
+            g = (float(inipeak[i]), int(iniposn[i][0]), int(iniposn[i][1])) + beam
+            gaul.append(g)
 
         return gaul, nmulsrc1, len(inipeak)
 
@@ -586,69 +586,69 @@ class Op_gausfit(Op):
         av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
         mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
         if npeak <= 1:
-          g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig, \
-                                  mom[4]/fwsig, mom[5])
-          gaul.append(g)
+            g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig, \
+                                    mom[4]/fwsig, mom[5])
+            gaul.append(g)
 
         if npeak > 1:                   # markers start from 1=background, watershed starts from 1=background
-          watershed, markers = func.watershed(im, mask=isl.mask_active)
-          nshed = N.max(markers)-1      # excluding background
-          xm, ym = N.transpose([N.where(markers==i) for i in range(1,nshed+2)])[0]
-          coords = [c for c in N.transpose([xm,ym])[1:]]
-          alldists = [func.dist_2pt(c1, c2) for c1 in coords for c2 in coords if N.any(c1!=c2)]  # has double
-          meandist = N.mean(alldists)    # mean dist between all pairs of markers
-          # find at least some 'compact' sources
-          cscale = 3.0
-          while True:
-              compact = []; invmask = []
-              for ished in range(nshed):
-                shedmask = N.where(watershed==ished+2, False, True) + isl.mask_active # good unmasked pixels = 0
-                imm = nd.binary_dilation(~shedmask, N.ones((3,3), int))
-                xbad, ybad = N.where((imm==1)*(im>im[xm[ished+1], ym[ished+1]]))
-                imm[xbad, ybad] = 0
-                invmask.append(imm); x, y = N.where(imm); xcen, ycen = N.mean(x), N.mean(y) # good pixels are now = 1
-                dist = func.dist_2pt([xcen, ycen], [xm[ished+1], ym[ished+1]])
-                if dist < max(cscale, meandist/4.0):
-                  compact.append(True)  # if not compact, break source + diffuse
+            watershed, markers = func.watershed(im, mask=isl.mask_active)
+            nshed = N.max(markers)-1      # excluding background
+            xm, ym = N.transpose([N.where(markers==i) for i in range(1,nshed+2)])[0]
+            coords = [c for c in N.transpose([xm,ym])[1:]]
+            alldists = [func.dist_2pt(c1, c2) for c1 in coords for c2 in coords if N.any(c1!=c2)]  # has double
+            meandist = N.mean(alldists)    # mean dist between all pairs of markers
+            # find at least some 'compact' sources
+            cscale = 3.0
+            while True:
+                compact = []; invmask = []
+                for ished in range(nshed):
+                    shedmask = N.where(watershed==ished+2, False, True) + isl.mask_active # good unmasked pixels = 0
+                    imm = nd.binary_dilation(~shedmask, N.ones((3,3), int))
+                    xbad, ybad = N.where((imm==1)*(im>im[xm[ished+1], ym[ished+1]]))
+                    imm[xbad, ybad] = 0
+                    invmask.append(imm); x, y = N.where(imm); xcen, ycen = N.mean(x), N.mean(y) # good pixels are now = 1
+                    dist = func.dist_2pt([xcen, ycen], [xm[ished+1], ym[ished+1]])
+                    if dist < max(cscale, meandist/4.0):
+                        compact.append(True)  # if not compact, break source + diffuse
+                    else:
+                        compact.append(False)
+                if N.any(compact):
+                    break
                 else:
-                  compact.append(False)
-              if N.any(compact):
-                  break
-              else:
-                  # rescale to search for more compact sources
-                  cscale*=1.5
+                    # rescale to search for more compact sources
+                    cscale*=1.5
 
-          if not N.all(compact):
-           o_avsize = []
-           ind = N.where(compact)[0]
-           for i in ind: o_avsize.append(N.sum(invmask[i]))
-           avsize = sqrt(N.mean(N.array(o_avsize)))
-           for i in range(len(compact)):
-             if not compact[i]:                         # make them all compact
-               newmask = N.zeros(imm.shape, bool)
-               newmask[max(0,int(xm[i+1]-avsize/2)):min(im.shape[0],int(xm[i+1]+avsize/2)), \
-                       max(0,int(ym[i+1]-avsize/2)):min(im.shape[1],int(ym[i+1]+avsize/2))] = True
-               invmask[i] = invmask[i]*newmask
-          resid = N.zeros(im.shape, dtype=N.float32)                    # approx fit all compact ones
-          for i in range(nshed):
-            mask1 = ~invmask[i]
-            size = sqrt(N.sum(invmask))/fwsig
-            xf, yf = coords[i][0], coords[i][1]
-            p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
-            x, y = N.indices(im.shape)
-            p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
-            resid = resid + func.gaus_2d(p, x, y)
-            gaul.append(p)
-          resid = im - resid
-          if not N.all(compact):                        # just add one gaussian to fit whole unmasked island
-            maxv = N.max(resid)                         # assuming resid has only diffuse emission. can be false
-            x, y = N.where(~isl.mask_active); xcen = N.mean(x); ycen = N.mean(y)
-            invm = ~isl.mask_active
-            #bound = invm - nd.grey_erosion(invm, footprint = N.ones((3,3), int)) # better to use bound for ellipse fitting
-            mom = func.momanalmask_gaus(invm, N.zeros(invm.shape, dtype=N.int16), 0, 1.0, True)
-            g = (maxv, xcen, ycen, mom[3]/fwsig, mom[4]/fwsig, mom[5]-90.)
-            gaul.append(g)
-            coords.append([xcen, ycen])
+            if not N.all(compact):
+                o_avsize = []
+                ind = N.where(compact)[0]
+                for i in ind: o_avsize.append(N.sum(invmask[i]))
+                avsize = sqrt(N.mean(N.array(o_avsize)))
+                for i in range(len(compact)):
+                    if not compact[i]:                         # make them all compact
+                        newmask = N.zeros(imm.shape, bool)
+                        newmask[max(0,int(xm[i+1]-avsize/2)):min(im.shape[0],int(xm[i+1]+avsize/2)), \
+                                max(0,int(ym[i+1]-avsize/2)):min(im.shape[1],int(ym[i+1]+avsize/2))] = True
+                        invmask[i] = invmask[i]*newmask
+            resid = N.zeros(im.shape, dtype=N.float32)                    # approx fit all compact ones
+            for i in range(nshed):
+                mask1 = ~invmask[i]
+                size = sqrt(N.sum(invmask))/fwsig
+                xf, yf = coords[i][0], coords[i][1]
+                p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
+                x, y = N.indices(im.shape)
+                p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
+                resid = resid + func.gaus_2d(p, x, y)
+                gaul.append(p)
+            resid = im - resid
+            if not N.all(compact):                        # just add one gaussian to fit whole unmasked island
+                maxv = N.max(resid)                         # assuming resid has only diffuse emission. can be false
+                x, y = N.where(~isl.mask_active); xcen = N.mean(x); ycen = N.mean(y)
+                invm = ~isl.mask_active
+                #bound = invm - nd.grey_erosion(invm, footprint = N.ones((3,3), int)) # better to use bound for ellipse fitting
+                mom = func.momanalmask_gaus(invm, N.zeros(invm.shape, dtype=N.int16), 0, 1.0, True)
+                g = (maxv, xcen, ycen, mom[3]/fwsig, mom[4]/fwsig, mom[5]-90.)
+                gaul.append(g)
+                coords.append([xcen, ycen])
 
         return gaul
 
@@ -675,33 +675,33 @@ class Op_gausfit(Op):
         ### no error-checking here, they MUST fit
         fcn.reset()
         for ig in range(ng1):
-          g = gaul[ig]
-          self.add_gaussian(fcn, g, dof, g3_only)
+            g = gaul[ig]
+            self.add_gaussian(fcn, g, dof, g3_only)
 
         ### do a round of fitting if any initials were provided
         if verbose: print('About to call C++ wrapper')
         fitok = True
         if len(gaul) != 0:
-          fitok = fit(fcn, final=0, verbose=verbose)
+            fitok = fit(fcn, final=0, verbose=verbose)
 
         if verbose: print('Returned from the fit')
         ### iteratively add gaussians while there are high peaks
         ### in the image and fitting converges
         while fitok:
-          peak, coords = fcn.find_peak()
-          if peak < thr:  ### no good peaks left
-              break
-          if len(fcn.parameters) < ngmax and iter == 1 and inifit == 'default' and len(gaul) >= ng1+1:
-             ng1 = ng1 + 1
-             g = gaul[ng1-1]
-          else:
-            if len(fcn.parameters) < ngmax:
-              g = [peak, coords[0], coords[1]] + beam
+            peak, coords = fcn.find_peak()
+            if peak < thr:  ### no good peaks left
+                break
+            if len(fcn.parameters) < ngmax and iter == 1 and inifit == 'default' and len(gaul) >= ng1+1:
+                ng1 = ng1 + 1
+                g = gaul[ng1-1]
             else:
-              break
-          fitok &= self.add_gaussian(fcn, g, dof, g3_only)
+                if len(fcn.parameters) < ngmax:
+                    g = [peak, coords[0], coords[1]] + beam
+                else:
+                    break
+            fitok &= self.add_gaussian(fcn, g, dof, g3_only)
 
-          fitok &= fit(fcn, final=0, verbose=verbose)
+            fitok &= fit(fcn, final=0, verbose=verbose)
 
         ### and one last fit with higher precision
         ### make sure we return False when fitok==False due to lack
@@ -790,12 +790,12 @@ class Op_gausfit(Op):
             th1 = divmod(th, 180)[1]
         th1 = th1/180.0*pi
         if ss1 > 1e4 and ss2 > 1e4:
-          xbox = 1e9; ybox = 1e9
+            xbox = 1e9; ybox = 1e9
         else:
-          xbox = 2.0*(abs(ss1*cos(th1)*cos(th1))+abs(ss2*ss2/ss1*sin(th1)*sin(th1)))/ \
-                 sqrt(cos(th1)*cos(th1)+ss2*ss2/ss1/ss1*sin(th1)*sin(th1))
-          ybox = 2.0*(abs(ss1*sin(th1)*sin(th1))+abs(ss2*ss2/ss1*cos(th1)*cos(th1)))/ \
-                 sqrt(sin(th1)*sin(th1)+ss2*ss2/ss1/ss1*cos(th1)*cos(th1))
+            xbox = 2.0*(abs(ss1*cos(th1)*cos(th1))+abs(ss2*ss2/ss1*sin(th1)*sin(th1)))/ \
+                   sqrt(cos(th1)*cos(th1)+ss2*ss2/ss1/ss1*sin(th1)*sin(th1))
+            ybox = 2.0*(abs(ss1*sin(th1)*sin(th1))+abs(ss2*ss2/ss1*cos(th1)*cos(th1)))/ \
+                   sqrt(sin(th1)*sin(th1)+ss2*ss2/ss1/ss1*cos(th1)*cos(th1))
 
         ### now check all conditions
         border = opts.flag_bordersize
@@ -817,7 +817,7 @@ class Op_gausfit(Op):
                 # Check image value at Gaussian center
                 im_val_at_cen = nd.map_coordinates(image, [N.array([x1]), N.array([x2])])
                 if A > opts.flag_maxsnr*im_val_at_cen:
-                   flag += 2
+                    flag += 2
             borx1_1 = x1 - border
             if borx1_1 < 0: borx1_1 = 0
             borx1_2 = x1 + border + 1
@@ -834,9 +834,9 @@ class Op_gausfit(Op):
         if ybox > opts.flag_maxsize_isl*shape[1]: flag += 32
         if s1*s2 > opts.flag_maxsize_bm*beam[0]*beam[1]: flag += 64
         if opts.flag_smallsrc:
-          if s1*s2 < opts.flag_minsize_bm*beam[0]*beam[1]: flag += 128
+            if s1*s2 < opts.flag_minsize_bm*beam[0]*beam[1]: flag += 128
         if not opts.flag_smallsrc:
-                if s1*s2 == 0.: flag += 128
+            if s1*s2 == 0.: flag += 128
 
         if ss1/ss2 > 2.0:
             # Only check for fairly elliptical Gaussians, as this condition

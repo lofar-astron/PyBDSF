@@ -22,12 +22,12 @@ def sp_in(c, x):
 
     order = len(c)-1
     if order == 1:
-      y = c[0]*N.power(x, c[1])
+        y = c[0]*N.power(x, c[1])
     else:
-      if order == 2:
-        y = c[0]*N.power(x, c[1])*N.power(x, c[2]*N.log(x))
-      else:
-        print('Not yet implemented')
+        if order == 2:
+            y = c[0]*N.power(x, c[1])*N.power(x, c[2]*N.log(x))
+        else:
+            print('Not yet implemented')
 
     return y
 
@@ -45,9 +45,9 @@ def nanmean(x):
     n = N.sum(~N.isnan(x))
 
     if n > 0:
-      mean = sum/n
+        mean = sum/n
     else:
-      mean = float("NaN")
+        mean = float("NaN")
 
     return mean
 
@@ -223,15 +223,15 @@ def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     val = N.zeros(x.shape)
     indx = N.array(ind)
     if len(indx) % 6 != 0:
-      print(" Something wrong with the parameters passed - need multiples of 6 !")
+        print(" Something wrong with the parameters passed - need multiples of 6 !")
     else:
-      ngaus = int(len(indx)/6)
-      params = N.zeros(6*ngaus)
-      params[N.where(indx==1)[0]] = c
-      params[N.where(indx==0)[0]] = p_tofix
-      for i in range(ngaus):
-        gau = params[i*6:i*6+6]
-        val = val + gaus_2d(gau, x, y)
+        ngaus = int(len(indx)/6)
+        params = N.zeros(6*ngaus)
+        params[N.where(indx==1)[0]] = c
+        params[N.where(indx==0)[0]] = p_tofix
+        for i in range(ngaus):
+            gau = params[i*6:i*6+6]
+            val = val + gaus_2d(gau, x, y)
 
     return val
 
@@ -290,12 +290,12 @@ def drawellipse(g):
 
     rad = 180.0/N.pi
     if isinstance(g, Gaussian):
-      param = g2param(g)
+        param = g2param(g)
     else:
-      if isinstance(g, list) and len(g)>=6:
-        param = g
-      else:
-        raise RuntimeError("Input to drawellipse neither Gaussian nor list")
+        if isinstance(g, list) and len(g)>=6:
+            param = g
+        else:
+            raise RuntimeError("Input to drawellipse neither Gaussian nor list")
 
     size = [param[3], param[4], param[5]]
     size_fwhm = corrected_size(size)
@@ -431,54 +431,54 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
 
     ind=N.where(~N.array(mask))[0]
     if len(ind) > 1:
-      n=sum(mask)
+        n=sum(mask)
 
-      if isinstance(x, list): x = N.array(x)
-      if isinstance(y, list): y = N.array(y)
-      if isinstance(sig, list): sig = N.array(sig)
-      xfit=x[ind]; yfit=y[ind]; sigfit=sig[ind]
+        if isinstance(x, list): x = N.array(x)
+        if isinstance(y, list): y = N.array(y)
+        if isinstance(sig, list): sig = N.array(sig)
+        xfit=x[ind]; yfit=y[ind]; sigfit=sig[ind]
 
-      if p0 is None:
-        if funct == poly:
-           p0=N.array([0]*(order+1))
-           p0[1]=(yfit[0]-yfit[-1])/(xfit[0]-xfit[-1])
-           p0[0]=yfit[0]-p0[1]*xfit[0]
-        if funct == wenss_fit:
-           p0=N.array([yfit[N.argmax(xfit)]] + [1.])
-        if funct == sp_in:
-           ind1 = N.where(yfit > 0.)[0]
-           if len(ind1) >= 2:
-             low = ind1[0]; hi = ind1[-1]
-             sp = N.log(yfit[low]/yfit[hi])/N.log(xfit[low]/xfit[hi])
-             p0=N.array([yfit[low]/pow(xfit[low], sp), sp] + [0.]*(order-1))
-           elif len(ind1) == 1:
-             p0=N.array([ind1[0], -0.8] + [0.]*(order-1))
-           else:
-             return [0, 0], [0, 0]
-      res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
-      try:
-        (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
-      except TypeError:
-        # This error means no warning argument is available, so redirect stdout to a null device
-        # to suppress printing of (unnecessary) warning messages
-        original_stdout = sys.stdout  # keep a reference to STDOUT
-        sys.stdout = NullDevice()  # redirect the real STDOUT
-        (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
-        sys.stdout = original_stdout  # turn STDOUT back on
+        if p0 is None:
+            if funct == poly:
+                p0=N.array([0]*(order+1))
+                p0[1]=(yfit[0]-yfit[-1])/(xfit[0]-xfit[-1])
+                p0[0]=yfit[0]-p0[1]*xfit[0]
+            if funct == wenss_fit:
+                p0=N.array([yfit[N.argmax(xfit)]] + [1.])
+            if funct == sp_in:
+                ind1 = N.where(yfit > 0.)[0]
+                if len(ind1) >= 2:
+                    low = ind1[0]; hi = ind1[-1]
+                    sp = N.log(yfit[low]/yfit[hi])/N.log(xfit[low]/xfit[hi])
+                    p0=N.array([yfit[low]/pow(xfit[low], sp), sp] + [0.]*(order-1))
+                elif len(ind1) == 1:
+                    p0=N.array([ind1[0], -0.8] + [0.]*(order-1))
+                else:
+                    return [0, 0], [0, 0]
+        res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
+        try:
+            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
+        except TypeError:
+            # This error means no warning argument is available, so redirect stdout to a null device
+            # to suppress printing of (unnecessary) warning messages
+            original_stdout = sys.stdout  # keep a reference to STDOUT
+            sys.stdout = NullDevice()  # redirect the real STDOUT
+            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
+            sys.stdout = original_stdout  # turn STDOUT back on
 
-      if do_err:
-        if cov is not None:
-          if N.sum(sig != 1.) > 0:
-            err = N.array([sqrt(abs(cov[i,i])) for i in range(len(p))])
-          else:
-            chisq=sum(info["fvec"]*info["fvec"])
-            dof=len(info["fvec"])-len(p)
-            err = N.array([sqrt(abs(cov[i,i])*chisq/dof) for i in range(len(p))])
-        else:
-          p, err = [0, 0], [0, 0]
-      else: err = [0]
+        if do_err:
+            if cov is not None:
+                if N.sum(sig != 1.) > 0:
+                    err = N.array([sqrt(abs(cov[i,i])) for i in range(len(p))])
+                else:
+                    chisq=sum(info["fvec"]*info["fvec"])
+                    dof=len(info["fvec"])-len(p)
+                    err = N.array([sqrt(abs(cov[i,i])*chisq/dof) for i in range(len(p))])
+            else:
+                p, err = [0, 0], [0, 0]
+        else: err = [0]
     else:
-      p, err = [0, 0], [0, 0]
+        p, err = [0, 0], [0, 0]
 
     return p, err
 
@@ -580,17 +580,17 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     mompara[1:3] = m1/tot
 
     if allpara:
-      for coord in index:
-          co = N.array(coord)
-          m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
-          m11 += N.product(co - mompara[1:3])*subim[coord]
+        for coord in index:
+            co = N.array(coord)
+            m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
+            m11 += N.product(co - mompara[1:3])*subim[coord]
 
-      mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-      mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-      dumr = atan(abs(2.0*m11/(m2[0]-m2[1])))
-      dumr = atanproper(dumr, m2[0]-m2[1], 2.0*m11)
-      mompara[5] = 0.5*dumr*180.0/pi - 90.0
-      if mompara[5] < 0.0: mompara[5] += 180.0
+        mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+        mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+        dumr = atan(abs(2.0*m11/(m2[0]-m2[1])))
+        dumr = atanproper(dumr, m2[0]-m2[1], 2.0*m11)
+        mompara[5] = 0.5*dumr*180.0/pi - 90.0
+        if mompara[5] < 0.0: mompara[5] += 180.0
     return mompara
 
 def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
@@ -646,11 +646,11 @@ def deconv(gaus_bm, gaus_c):
 
     rhoc = (maj2_c-min2_c)*cost-(maj2_bm-min2_bm)
     if rhoc == 0.0:
-      sigic = 0.0
-      rhoa = 0.0
+        sigic = 0.0
+        rhoa = 0.0
     else:
-      sigic = atan((maj2_c-min2_c)*sint/rhoc)   # in radians
-      rhoa = ((maj2_bm-min2_bm)-(maj2_c-min2_c)*cost)/(2.0*cos(sigic))
+        sigic = atan((maj2_c-min2_c)*sint/rhoc)   # in radians
+        rhoa = ((maj2_bm-min2_bm)-(maj2_c-min2_c)*cost)/(2.0*cos(sigic))
 
     gaus_d[2] = sigic*rad/2.0+phi_bm
     dumr = ((maj2_c+min2_c)-(maj2_bm+min2_bm))/2.0
@@ -665,21 +665,21 @@ def deconv(gaus_bm, gaus_c):
     gaus_d[0] = sqrt(abs(gaus_d[0]))
     gaus_d[1] = sqrt(abs(gaus_d[1]))
     if gaus_d[0] < gaus_d[1]:
-      sint = gaus_d[0]
-      gaus_d[0] = gaus_d[1]
-      gaus_d[1] = sint
-      gaus_d[2] = gaus_d[2]+90.0
+        sint = gaus_d[0]
+        gaus_d[0] = gaus_d[1]
+        gaus_d[1] = sint
+        gaus_d[2] = gaus_d[2]+90.0
 
     gaus_d[2] = gaus_d[2]+900.0 % 180
     if gaus_d[0] == 0.0:
-      gaus_d[2] = 0.0
+        gaus_d[2] = 0.0
     else:
-      if gaus_d[1] == 0.0:
-        if (abs(gaus_d[2]-phi_c) > 45.0) and (abs(gaus_d[2]-phi_c) < 135.0):
-          gaus_d[2] = gaus_d[2]+450.0 % 180
+        if gaus_d[1] == 0.0:
+            if (abs(gaus_d[2]-phi_c) > 45.0) and (abs(gaus_d[2]-phi_c) < 135.0):
+                gaus_d[2] = gaus_d[2]+450.0 % 180
 
 # errors
-     #if rhoc == 0.0:
+           #if rhoc == 0.0:
     #if gaus_d[0] != 0.0:
     #  ed_1 = gaus_c[0]/gaus_d[0]*e_1
     #else:
@@ -784,65 +784,65 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
     mylog = mylogger.logging.getLogger("PyBDSM.Compute")
 
     if len(p) % 7 > 0:
-      mylog.error("Gaussian parameters passed have to have 7n numbers")
+        mylog.error("Gaussian parameters passed have to have 7n numbers")
     ngaus = int(len(p)/7)
     errors = []
     for i in range(ngaus):
-      pp = p[i*7:i*7+7]
-      ### Now do error analysis as in Condon (and fBDSM)
-      size = pp[3:6]
-      size = corrected_size(size) # angle is now degrees CCW from +y-axis
-      if size[0] == 0.0 or size[1] == 0.0:
-        errors = errors + [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-      else:
-        sq2 = sqrt(2.0)
-        if bm_pix is None:
-            bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
-        dumr = sqrt(abs(size[0] * size[1] / (4.0 * bm_pix[0] * bm_pix[1])))  # first term of Eq. 26 of Condon+ (1998)
-        dumrr1 = 1.0 + bm_pix[0] * bm_pix[1] / (size[0] * size[0])  # second term of Eq. 26 of Condon+ (1998)
-        dumrr2 = 1.0 + bm_pix[0] * bm_pix[1] / (size[1] * size[1])  # third term of Eq. 26 of Condon+ (1998)
-        dumrr3 = dumr * pp[0] / stdav  # product of first and fourth terms of Eq. 26 of Condon+ (1998)
-        d1 = sqrt(8.0 * log(2.0))
-        d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[1])  # last term of Eq. 30 of Condon+ (1998)
-        try:
-            # The following three errors are calculated using Eq. 21 of Condon (1997),
-            # using Eq. 26 of Condon+ (1998) for rho
-            e_peak = pp[0] * sq2 / (dumrr3 * pow(dumrr1, 0.75) * pow(dumrr2, 0.75))
-            e_maj = size[0] * sq2 / (dumrr3 * pow(dumrr1, 1.25) * pow(dumrr2, 0.25))
-            e_min = size[1] * sq2 / (dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
+        pp = p[i*7:i*7+7]
+        ### Now do error analysis as in Condon (and fBDSM)
+        size = pp[3:6]
+        size = corrected_size(size) # angle is now degrees CCW from +y-axis
+        if size[0] == 0.0 or size[1] == 0.0:
+            errors = errors + [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        else:
+            sq2 = sqrt(2.0)
+            if bm_pix is None:
+                bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
+            dumr = sqrt(abs(size[0] * size[1] / (4.0 * bm_pix[0] * bm_pix[1])))  # first term of Eq. 26 of Condon+ (1998)
+            dumrr1 = 1.0 + bm_pix[0] * bm_pix[1] / (size[0] * size[0])  # second term of Eq. 26 of Condon+ (1998)
+            dumrr2 = 1.0 + bm_pix[0] * bm_pix[1] / (size[1] * size[1])  # third term of Eq. 26 of Condon+ (1998)
+            dumrr3 = dumr * pp[0] / stdav  # product of first and fourth terms of Eq. 26 of Condon+ (1998)
+            d1 = sqrt(8.0 * log(2.0))
+            d2 = (size[0] * size[0] - size[1] * size[1]) / (size[0] * size[1])  # last term of Eq. 30 of Condon+ (1998)
+            try:
+                # The following three errors are calculated using Eq. 21 of Condon (1997),
+                # using Eq. 26 of Condon+ (1998) for rho
+                e_peak = pp[0] * sq2 / (dumrr3 * pow(dumrr1, 0.75) * pow(dumrr2, 0.75))
+                e_maj = size[0] * sq2 / (dumrr3 * pow(dumrr1, 1.25) * pow(dumrr2, 0.25))
+                e_min = size[1] * sq2 / (dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
 
-            # The following two errors are calculated using Eq. 27 of Condon+ (1998)
-            pa_rad = size[2] * pi / 180.0
-            e_x0 = sqrt( (e_maj * N.sin(pa_rad))**2 + (e_min * N.cos(pa_rad))**2 ) / d1
-            e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
+                # The following two errors are calculated using Eq. 27 of Condon+ (1998)
+                pa_rad = size[2] * pi / 180.0
+                e_x0 = sqrt( (e_maj * N.sin(pa_rad))**2 + (e_min * N.cos(pa_rad))**2 ) / d1
+                e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
 
-            # The following error is calculated using Eq. 30 of Condon+ (1998)
-            e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
-            e_pa = e_pa * 180.0/pi
+                # The following error is calculated using Eq. 30 of Condon+ (1998)
+                e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
+                e_pa = e_pa * 180.0/pi
 
-            # The following error is calculated using Eq. 36 of Condon+ (1998)
-            e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
-                    (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
-        except:
-            e_peak = 0.0
-            e_x0 = 0.0
-            e_y0 = 0.0
-            e_maj = 0.0
-            e_min = 0.0
-            e_pa = 0.0
-            e_tot = 0.0
-        if abs(e_pa) > 180.0:
-            e_pa = 180.0
-        if fixed_to_beam:
-            # When the size was fixed to that of the beam during the fit, set
-            # uncertainties on the size to zero and reduce the error in the fluxes
-            # by sqrt(2) (see Eq. 25 of Condon 1997)
-            e_maj = 0.0
-            e_min = 0.0
-            e_pa = 0.0
-            e_peak /= sq2
-            e_tot /= sq2
-        errors = errors + [e_peak, e_x0, e_y0, e_maj, e_min, e_pa, e_tot]
+                # The following error is calculated using Eq. 36 of Condon+ (1998)
+                e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
+                        (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
+            except:
+                e_peak = 0.0
+                e_x0 = 0.0
+                e_y0 = 0.0
+                e_maj = 0.0
+                e_min = 0.0
+                e_pa = 0.0
+                e_tot = 0.0
+            if abs(e_pa) > 180.0:
+                e_pa = 180.0
+            if fixed_to_beam:
+                # When the size was fixed to that of the beam during the fit, set
+                # uncertainties on the size to zero and reduce the error in the fluxes
+                # by sqrt(2) (see Eq. 25 of Condon 1997)
+                e_maj = 0.0
+                e_min = 0.0
+                e_pa = 0.0
+                e_peak /= sq2
+                e_tot /= sq2
+            errors = errors + [e_peak, e_x0, e_y0, e_maj, e_min, e_pa, e_tot]
 
     return errors
 
@@ -851,10 +851,10 @@ def fit_chisq(x, p, ep, mask, funct, order):
 
     ind = N.where(N.array(mask)==False)[0]
     if order == 0:
-      fit = [funct(p)]*len(p)
+        fit = [funct(p)]*len(p)
     else:
-      fitpara, efit = fit_mask_1d(x, p, ep, mask, funct, True, order)
-      fit = funct(fitpara, x)
+        fitpara, efit = fit_mask_1d(x, p, ep, mask, funct, True, order)
+        fit = funct(fitpara, x)
 
     dev = (p-fit)*(p-fit)/(ep*ep)
     num = order+1
@@ -866,9 +866,9 @@ def calc_chisq(x, y, ey, p, mask, funct, order):
     import numpy as N
 
     if order == 0:
-      fit = [funct(y)]*len(y)
+        fit = [funct(y)]*len(y)
     else:
-      fit = funct(p, x)
+        fit = funct(p, x)
 
     dev = (y-fit)*(y-fit)/(ey*ey)
     ind = N.where(~N.array(mask))
@@ -883,11 +883,11 @@ def get_windowsize_av(S_i, rms_i, chanmask, K, minchan):
     av_window = N.arange(2, int(len(S_i)/minchan)+1)
     win_size = 0
     for window in av_window:
-      fluxes, vars, mask = variance_of_wted_windowedmean(S_i, rms_i, chanmask, window)
-      minsnr = N.min(fluxes[~mask]/vars[~mask])
-      if minsnr > K*1.1:                ### K*1.1 since fitted peak can be less than wted peak
-        win_size = window  # is the size of averaging window
-        break
+        fluxes, vars, mask = variance_of_wted_windowedmean(S_i, rms_i, chanmask, window)
+        minsnr = N.min(fluxes[~mask]/vars[~mask])
+        if minsnr > K*1.1:                ### K*1.1 since fitted peak can be less than wted peak
+            win_size = window  # is the size of averaging window
+            break
 
     return win_size
 
@@ -901,20 +901,20 @@ def variance_of_wted_windowedmean(S_i, rms_i, chanmask, window_size):
     wt = wt/N.median(wt)
     fluxes = N.zeros(nwin); vars = N.zeros(nwin); mask = N.zeros(nwin, bool)
     for i in range(nwin):
-      strt = i*window_size; stp = (i+1)*window_size
-      if i == nwin-1: stp = nchan
-      ind = N.arange(strt,stp)
-      m = chanmask[ind]
-      index = [arg for ii,arg in enumerate(ind) if not m[ii]]
-      if len(index) > 0:
-        s = S_i[index]; r = rms_i[index]; w = wt[index]
-        fluxes[i] = N.sum(s*w)/N.sum(w)
-        vars[i] = 1.0/sqrt(N.sum(1.0/r/r))
-        mask[i] = N.product(m)
-      else:
-        fluxes[i] = 0
-        vars[i] = 0
-        mask[i] = True
+        strt = i*window_size; stp = (i+1)*window_size
+        if i == nwin-1: stp = nchan
+        ind = N.arange(strt,stp)
+        m = chanmask[ind]
+        index = [arg for ii,arg in enumerate(ind) if not m[ii]]
+        if len(index) > 0:
+            s = S_i[index]; r = rms_i[index]; w = wt[index]
+            fluxes[i] = N.sum(s*w)/N.sum(w)
+            vars[i] = 1.0/sqrt(N.sum(1.0/r/r))
+            mask[i] = N.product(m)
+        else:
+            fluxes[i] = 0
+            vars[i] = 0
+            mask[i] = True
 
     return fluxes, vars, mask
 
@@ -936,43 +936,43 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
 
     ngaus = len(gaus)
     if ngaus > 0:
-      p_ini = []
-      for g in gaus:
-        p_ini = p_ini + g2param(g, adj)
-      p_ini = N.array(p_ini)
+        p_ini = []
+        for g in gaus:
+            p_ini = p_ini + g2param(g, adj)
+        p_ini = N.array(p_ini)
 
-      if fitfix is None: fitfix = [0]*ngaus
-      ind = N.ones(6*ngaus)                                     # 1 => fit ; 0 => fix
-      for i in range(ngaus):
-        if fitfix[i] == 1: ind[i*6+1:i*6+6] = 0
-        if fitfix[i] == 2: ind[i*6+3:i*6+6] = 0
-        if fitfix[i] == 3: ind[i*6+1:i*6+3] = 0
-      ind = N.array(ind)
-      p_tofit = p_ini[N.where(ind==1)[0]]
-      p_tofix = p_ini[N.where(ind==0)[0]]
-      if err is None: err = N.ones(image.shape)
+        if fitfix is None: fitfix = [0]*ngaus
+        ind = N.ones(6*ngaus)                                     # 1 => fit ; 0 => fix
+        for i in range(ngaus):
+            if fitfix[i] == 1: ind[i*6+1:i*6+6] = 0
+            if fitfix[i] == 2: ind[i*6+3:i*6+6] = 0
+            if fitfix[i] == 3: ind[i*6+1:i*6+3] = 0
+        ind = N.array(ind)
+        p_tofit = p_ini[N.where(ind==1)[0]]
+        p_tofix = p_ini[N.where(ind==0)[0]]
+        if err is None: err = N.ones(image.shape)
 
-      errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
-                     N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
-      try:
-          p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-      except TypeError:
-          # This error means no warning argument is available, so redirect stdout to a null device
-          # to suppress printing of warning messages
-          original_stdout = sys.stdout  # keep a reference to STDOUT
-          sys.stdout = NullDevice()  # redirect the real STDOUT
-          p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-          sys.stdout = original_stdout  # turn STDOUT back on
+        errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
+                       N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
+        try:
+            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
+        except TypeError:
+            # This error means no warning argument is available, so redirect stdout to a null device
+            # to suppress printing of warning messages
+            original_stdout = sys.stdout  # keep a reference to STDOUT
+            sys.stdout = NullDevice()  # redirect the real STDOUT
+            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
+            sys.stdout = original_stdout  # turn STDOUT back on
     else:
-      p, sucess = None, 1
+        p, sucess = None, 1
 
     para = N.zeros(6*ngaus)
     para[N.where(ind==1)[0]] = p
     para[N.where(ind==0)[0]] = p_tofix
 
     for igaus in range(ngaus):
-      para[igaus*6+3] = abs(para[igaus*6+3])
-      para[igaus*6+4] = abs(para[igaus*6+4])
+        para[igaus*6+3] = abs(para[igaus*6+3])
+        para[igaus*6+4] = abs(para[igaus*6+4])
 
     return para, success
 
@@ -1050,45 +1050,45 @@ def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     iniposn = []
     inipeak = []
     for c in ind:
-      goodlist = [im_pos[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
-                   if i>=0 and i<n and j>=0 and j<m and (i,j) != c]
-      peak = N.sum(im_pos[c] > goodlist) == len(goodlist)
-      if peak:
-        iniposn.append(c)
-        inipeak.append(im[c])
-        im1 = mclean(im1, c, beam)
+        goodlist = [im_pos[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
+                     if i>=0 and i<n and j>=0 and j<m and (i,j) != c]
+        peak = N.sum(im_pos[c] > goodlist) == len(goodlist)
+        if peak:
+            iniposn.append(c)
+            inipeak.append(im[c])
+            im1 = mclean(im1, c, beam)
 
     return inipeak, iniposn, im1
 
 def watershed(image, mask=None, markers=None, beam=None, thr=None):
-      import numpy as N
-      from copy import deepcopy as cp
-      import scipy.ndimage as nd
-      #import matplotlib.pyplot as pl
-      #import pylab as pl
+    import numpy as N
+    from copy import deepcopy as cp
+    import scipy.ndimage as nd
+    #import matplotlib.pyplot as pl
+    #import pylab as pl
 
-      if thr is None: thr = -1e9
-      if mask is None: mask = N.zeros(image.shape, bool)
-      if beam is None: beam = (2.0, 2.0, 0.0)
-      if markers is None:
+    if thr is None: thr = -1e9
+    if mask is None: mask = N.zeros(image.shape, bool)
+    if beam is None: beam = (2.0, 2.0, 0.0)
+    if markers is None:
         inipeak, iniposn, im1 = get_maxima(image, mask, thr, image.shape, beam)
         ng = len(iniposn); markers = N.zeros(image.shape, int)
         for i in range(ng): markers[iniposn[i]] = i+2
         markers[N.unravel_index(N.argmin(image), image.shape)] = 1
 
-      im1 = cp(image)
-      if im1.min() < 0.: im1 = im1-im1.min()
-      im1 = 255 - im1/im1.max()*255
-      opw = nd.watershed_ift(N.array(im1, N.uint16), markers)
+    im1 = cp(image)
+    if im1.min() < 0.: im1 = im1-im1.min()
+    im1 = 255 - im1/im1.max()*255
+    opw = nd.watershed_ift(N.array(im1, N.uint16), markers)
 
-      return opw, markers
+    return opw, markers
 
 def get_kwargs(kwargs, key, typ, default):
     obj = True
     if key in kwargs:
-      obj = kwargs[key]
+        obj = kwargs[key]
     if not isinstance(obj, typ):
-      obj = default
+        obj = default
 
     return obj
 
@@ -1579,9 +1579,9 @@ def connect(mask):
     connectivity = nd.generate_binary_structure(2,2)
     labels, count = nd.label(mask, connectivity)
     if count > 1 :
-      connected = 'multiple'
+        connected = 'multiple'
     else:
-      connected = 'single'
+        connected = 'single'
 
     return connected, count
 
@@ -1596,9 +1596,9 @@ def area_polygon(points):
 
     area = 0.0
     for i in range(n_tri):
-      p1, p2, p3 = N.array([cenx, ceny]), N.array([x[i], y[i]]), N.array([x[i+1], y[i+1]])
-      t_area= N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
-      area += t_area
+        p1, p2, p3 = N.array([cenx, ceny]), N.array([x[i], y[i]]), N.array([x[i+1], y[i+1]])
+        t_area= N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
+        area += t_area
 
     return area
 
@@ -1700,12 +1700,12 @@ def check_1pixcontacts(open):
     connectivity = nd.generate_binary_structure(2,2)
     ind = N.transpose(N.where(open[1:-1,1:-1] > 0)) + [1,1]   # exclude boundary to make it easier
     for pixel in ind:
-      x, y = pixel
-      grid = cp(open[x-1:x+2, y-1:y+2]); grid[1,1] = 0
-      grid = N.where(grid == open[tuple(pixel)], 1, 0)
-      ll, nn = nd.label(grid, connectivity)
-      if nn > 1:
-        open[tuple(pixel)] = 0
+        x, y = pixel
+        grid = cp(open[x-1:x+2, y-1:y+2]); grid[1,1] = 0
+        grid = N.where(grid == open[tuple(pixel)], 1, 0)
+        ll, nn = nd.label(grid, connectivity)
+        if nn > 1:
+            open[tuple(pixel)] = 0
 
     return open
 
@@ -1728,29 +1728,29 @@ def assign_leftovers(mask, open, nisl, labels):
     npix = [len(N.where(labels==b)[0]) for b in range(1,nisl+1)]
 
     for i_subisl in range(count):
-      c_list = []    # is list of all bordering pixels of the sub island
-      ii = i_subisl+1
-      coords = N.transpose(N.where(mlabels==ii))  # the coordinates of island i of left-out pixels
-      for co in coords:
-        co8 = [[x,y] for x in range(co[0]-1,co[0]+2) for y in range(co[1]-1,co[1]+2) if x >=0 and y >=0 and x <n and y<m]
-        c_list.extend([tuple(cc) for cc in co8 if mlabels[tuple(cc)] == 0])
-      c_list = list(set(c_list))     # to avoid duplicates
-      vals = N.array([labels[c] for c in c_list])
-      belongs = list(set(vals[N.nonzero(vals)]))
-      if len(belongs) == 0:
-        # No suitable islands found => mask pixels
-        for cc in coords:
-            mask = (mlabels == ii)
+        c_list = []    # is list of all bordering pixels of the sub island
+        ii = i_subisl+1
+        coords = N.transpose(N.where(mlabels==ii))  # the coordinates of island i of left-out pixels
+        for co in coords:
+            co8 = [[x,y] for x in range(co[0]-1,co[0]+2) for y in range(co[1]-1,co[1]+2) if x >=0 and y >=0 and x <n and y<m]
+            c_list.extend([tuple(cc) for cc in co8 if mlabels[tuple(cc)] == 0])
+        c_list = list(set(c_list))     # to avoid duplicates
+        vals = N.array([labels[c] for c in c_list])
+        belongs = list(set(vals[N.nonzero(vals)]))
+        if len(belongs) == 0:
+            # No suitable islands found => mask pixels
+            for cc in coords:
+                mask = (mlabels == ii)
 #             mask[cc] = True
-            return None, mask
-      if len(belongs) == 1:
-        for cc in coords:
-          labels[tuple(cc)] = belongs[0]
-      else:                             # get the border pixels of the islands
-        nn = [npix[b-1] for b in belongs]
-        addto = belongs[N.argmin(nn)]
-        for cc in coords:
-          labels[tuple(cc)] = addto
+                return None, mask
+        if len(belongs) == 1:
+            for cc in coords:
+                labels[tuple(cc)] = belongs[0]
+        else:                             # get the border pixels of the islands
+            nn = [npix[b-1] for b in belongs]
+            addto = belongs[N.argmin(nn)]
+            for cc in coords:
+                labels[tuple(cc)] = addto
 
     return labels, mask
 
@@ -1828,17 +1828,17 @@ def isl_tosplit(isl, opts):
                                 # take open 3 or 5
     open3, open5 = False, False
     if n_subisl3 > 0 and isl_pixs3 is not None:                                 # open 3 breaks up island
-      max_sub3 = N.max(isl_pixs3)
-      if max_sub3 < frac_bigisl3 : open3 = True       # if biggest sub island isnt too big
+        max_sub3 = N.max(isl_pixs3)
+        if max_sub3 < frac_bigisl3 : open3 = True       # if biggest sub island isnt too big
     if n_subisl5 > 0 and isl_pixs5 is not None:                                 # open 5 breaks up island
-      max_sub5 = N.max(isl_pixs5)                     # if biggest subisl isnt too big OR smallest extra islands add upto 10 %
-      if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:len(isl_pixs5)-n_subisl3]) > size_extra5):
-        open5 = True
+        max_sub5 = N.max(isl_pixs5)                     # if biggest subisl isnt too big OR smallest extra islands add upto 10 %
+        if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:len(isl_pixs5)-n_subisl3]) > size_extra5):
+            open5 = True
                                 # index=0 => dont split
     if open5: index = 5; n_subisl = n_subisl5; labels = labels5
     else:
-      if open3: index = 3; n_subisl = n_subisl3; labels = labels3
-      else: index = 0
+        if open3: index = 3; n_subisl = n_subisl3; labels = labels3
+        else: index = 0
     convex_def =  convexhull_deficiency(isl)
     #print 'CONVEX = ',convex_def
 

@@ -1005,9 +1005,9 @@ def list_and_sort_gaussians(img, patch=None, root=None,
             # Unrecognized property --> Don't sort
             indx = list(range(len(gausindx)))
         for i, si in enumerate(indx):
-                outlist_sorted[0][i] = outlist[0][si]
-                outnames_sorted[0][i] = outnames[0][si]
-                patchnames_sorted = list(patchnames)
+            outlist_sorted[0][i] = outlist[0][si]
+            outnames_sorted[0][i] = outnames[0][si]
+            patchnames_sorted = list(patchnames)
     else:
         outlist_sorted = list(outlist)
         outnames_sorted = list(outnames)
@@ -1093,8 +1093,8 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
     for n, name in enumerate(names):
         if hasattr(obj, name):
             if name in ['specin_flux', 'specin_fluxE', 'specin_freq']:
-                # As these are variable length lists, they must
-                # (unfortunately) be treated differently.
+            # As these are variable length lists, they must
+            # (unfortunately) be treated differently.
                 val = obj.__getattribute__(name)
                 colname = obj.__dict__[name+'_def']._colname
                 units = obj.__dict__[name+'_def']._units

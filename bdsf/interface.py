@@ -606,7 +606,7 @@ def print_opts(grouped_opts_list, img, banner=None):
             else:
                 # Since this is the last entry in the options list and is a
                 # tuple, it cannot be an expandable option, so make it nc color
-                 parvalstr = nc + k + nc + ' ..'
+                parvalstr = nc + k + nc + ' ..'
             if "'" in valstr:
                 len_without_formatting = len(k) + len(str(val)) + 5
             else:
@@ -991,11 +991,11 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
         print('\033[91mERROR\033[0m: Image has not been fit. Please run process_image first.')
         return False
     if catalog_type == 'shap' and not 'shapelets' in img.completed_Ops:
-            print('\033[91mERROR\033[0m: Image has not been decomposed into shapelets. Please run process_image first.')
-            return False
+        print('\033[91mERROR\033[0m: Image has not been decomposed into shapelets. Please run process_image first.')
+        return False
     if catalog_type == 'srl' and not 'gaul2srl' in img.completed_Ops:
-            print('\033[91mERROR\033[0m: Gaussians have not been grouped into sources. Please run process_image first.')
-            return False
+        print('\033[91mERROR\033[0m: Gaussians have not been grouped into sources. Please run process_image first.')
+        return False
     format = format.lower()
     patch = bbs_patches
     filename = outfile

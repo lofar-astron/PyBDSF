@@ -1838,4 +1838,3 @@ def help(choice = None):
         print('Natgrid, parameters, table, regrid, aspectSlope, singlePoint, natgrids, seti, geti, setr, getr, setc, getc, getaspects, getslopes, pntinits, pnts, pntend, natgridd, setrd, getrd, getaspectd, getsloped, pntinitd, pntd, pntendd')
 
     return None
-
