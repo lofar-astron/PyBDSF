@@ -1473,7 +1473,6 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
     """Makes a simple FITS hdulist appropriate for single-channel images"""
     import numpy as np
     from astropy.io import fits as pyfits
-    use_header_update = False
 
     # If mask, expand to all channels and Stokes for compatibility with casa
     if is_mask and shape is not None:
