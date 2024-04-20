@@ -1132,7 +1132,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     if img.use_io:
         # Sanity check: only 'fits' and 'rap' are supported image I/O types
         if img.use_io not in ('fits', 'rap'):
-            raise ValueError("Invalid image I/O type '{img.use_io}'. "
+            raise ValueError(f"Invalid image I/O type '{img.use_io}'. "
                              "Supported types are: 'fits' and 'rap'")
         if img.use_io == 'fits':
             try:
