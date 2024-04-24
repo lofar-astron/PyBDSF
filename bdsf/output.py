@@ -366,24 +366,9 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     """ Write as FITS binary table.
     """
     from . import mylogger
-    try:
-        from packaging.version import Version
-    except ImportError:
-        from distutils.version import StrictVersion as Version
-    try:
-        from astropy.io import fits as pyfits
-        use_header_update = False
-        use_from_columns = True
-    except ImportError:
-        import pyfits
-        if Version(pyfits.__version__) < Version('3.1'):
-            use_header_update = True
-            use_from_columns = False
-        else:
-            use_header_update = False
-            use_from_columns = True
     import os
     import numpy as N
+    from astropy.io import fits as pyfits
     from ._version import __version__
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
@@ -428,10 +413,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     if len(col_list) == 0:
         col_list = [pyfits.Column(name='Blank', format='1J')]
 
-    if use_from_columns:
-        tbhdu = pyfits.BinTableHDU.from_columns(col_list)
-    else:
-        tbhdu = pyfits.new_table(col_list)
+    tbhdu = pyfits.BinTableHDU.from_columns(col_list)
 
     if objtype == 'gaul':
         tbhdu.header.add_comment('Gaussian list for '+img.filename)
@@ -444,14 +426,9 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     freq = "%.5e" % img.frequency
     tbhdu.header.add_comment('Reference frequency of the detection ("ch0") image: %s Hz' % freq)
     tbhdu.header.add_comment('Equinox : %s' % img.equinox)
-    if use_header_update:
-        tbhdu.header.update('INIMAGE', img.filename, 'Filename of image')
-        tbhdu.header.update('FREQ0', float(freq), 'Reference frequency')
-        tbhdu.header.update('EQUINOX', img.equinox, 'Equinox')
-    else:
-        tbhdu.header['INIMAGE'] = (img.filename, 'Filename of image')
-        tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
-        tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
+    tbhdu.header['INIMAGE'] = (img.filename, 'Filename of image')
+    tbhdu.header['FREQ0'] = (float(freq), 'Reference frequency')
+    tbhdu.header['EQUINOX'] = (img.equinox, 'Equinox')
 
     for key in img.header.keys():
         if key in ['HISTORY', 'COMMENT', '']:

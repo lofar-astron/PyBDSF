@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as N
+from astropy.io import fits as pyfits
 from .image import *
 from . import mylogger
 from copy import deepcopy as cp
@@ -38,24 +39,6 @@ class Op_psf_vary(Op):
             dir = img.basedir + '/misc/'
             plot = False # debug figures
             image = img.ch0_arr
-
-            try:
-                from astropy.io import fits as pyfits
-                old_pyfits = False
-            except ImportError as err:
-                try:
-                    from packaging.version import Version
-                except ImportError:
-                    from distutils.version import StrictVersion as Version
-                import pyfits
-                if Version(pyfits.__version__) < Version('2.2'):
-                    old_pyfits = True
-                else:
-                    old_pyfits = False
-
-            if old_pyfits:
-                mylog.warning('PyFITS version is too old: psf_vary module skipped')
-                return
 
             if img.nisl == 0:
                 mylog.warning("No islands found. Skipping PSF variation estimation.")
