@@ -1,3 +1,13 @@
+# Start with an empty slate
+prune *
+exclude .*
+
+# We need to include ourselves
+include MANIFEST.in
+
+# Python package files
+graft bdsf
+
 # Required scikit-build files
 include CMakeLists.txt
 
