@@ -4,6 +4,8 @@ PyBDSF Documentation
 
 PyBDSF (the **Py**\thon **B**\lob **D**\etector and **S**\ource **F**\inder) is a tool designed to decompose radio interferometry images into sources and make available their properties for further use. PyBDSF can decompose an image into a set of Gaussians, shapelets, or wavelets as well as calculate spectral indices and polarization properties of sources and measure the psf variation across an image. PyBDSF uses an interactive environment based on CASA [#f1]_ that will be familiar to most radio astronomers. Additionally, PyBDSF may also be used in Python scripts.
 
+Software version:
+|release|
 
 .. toctree::
    :caption: Introduction

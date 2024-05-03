@@ -662,7 +662,8 @@ def main():
     # Define the welcome banner to print on startup. Also check if there is a newer
     # version on the STRW ftp server. If there is, print a message to the user
     # asking them to update.
-    from bdsf._changelog import __version__, changelog
+    from bdsf._changelog import changelog
+    from bdsf._version import __version__
 
     divider1 = '=' * 72 + '\n'
     divider2 = '_' * 72 + '\n'

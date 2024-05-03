@@ -11,6 +11,20 @@ requires = [
     "wheel",
 ]
 
+[project]
+name = "bdsf"
+dynamic = [
+    "version",
+    "description",
+    "readme",
+    "requires-python",
+    "authors",
+    "classifiers",
+    "scripts",
+    "dependencies",
+    "optional-dependencies",
+]
+
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
@@ -37,3 +51,6 @@ repair-wheel-command = """\
 
 [tool.cibuildwheel.linux]
 skip = ["*-musllinux_*"]
+
+[tool.setuptools_scm]
+version_file = "bdsf/_version.py"

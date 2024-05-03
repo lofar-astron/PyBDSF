@@ -1,8 +1,9 @@
 from skbuild import setup  # This line replaces 'from setuptools import setup'
+from setuptools_scm import get_version
 
 setup(
     name='bdsf',
-    version='1.11.0a1',
+    version=get_version(),
     author='David Rafferty',
     author_email='drafferty@hs.uni-hamburg.de',
     url='https://github.com/lofar-astron/PyBDSF',
@@ -39,4 +40,5 @@ setup(
         ]
     },
     zip_safe=False,
+    include_package_data=False,
 )

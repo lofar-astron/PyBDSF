@@ -1,13 +1,9 @@
-"""Version module.
+"""Changelog module.
 
-This module simply stores the version number, as well as a changelog.
+This module records all the relevant changes made to the software.
+The change list must be kept up-to-date manually.
 """
 
-# Version number
-__version__ = '1.11.0a1'
-
-
-# Changelog
 def changelog():
     """
     PyBDSF Changelog.
