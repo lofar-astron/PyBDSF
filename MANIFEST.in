@@ -1,9 +1,8 @@
-# Start with an empty slate
+# Setuptools, when combined with setuptools_scm, puts all the files that are
+# under version control in the source distribution. We only want to distribute
+# the files needed to build a binary wheel. So, start with an empty slate.
 prune *
 exclude .*
-
-# We need to include ourselves
-include MANIFEST.in
 
 # Python package files
 graft bdsf
