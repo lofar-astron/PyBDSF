@@ -33,7 +33,7 @@ from .polarisation import Op_polarisation
 from .wavelet_atrous import Op_wavelet_atrous
 from .psf_vary import Op_psf_vary
 from .cleanup import Op_cleanup
-from ._version import __version__
+from ._changelog import __version__
 from .functions import set_up_output_paths
 import gc
 

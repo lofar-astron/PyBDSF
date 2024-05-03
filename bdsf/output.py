@@ -369,7 +369,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     import os
     import numpy as N
     from astropy.io import fits as pyfits
-    from ._version import __version__
+    from ._changelog import __version__
 
     mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Output")
     if objtype == 'gaul':
@@ -617,7 +617,7 @@ def make_lsm_str(img, glist, gnames, incl_empty=False):
     from .output import ra2hhmmss
     from .output import dec2ddmmss
     import numpy as N
-    from ._version import __version__
+    from ._changelog import __version__
 
     outstr_list = ["# SAGECAL sky model\n"]
     freq = "%.5e" % img.frequency
@@ -733,7 +733,7 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
 def make_ascii_str(img, glist, objtype='gaul', format='ascii', incl_empty=False,
                    incl_chan=False):
     """Makes a list of string entries for an ascii region file."""
-    from ._version import __version__
+    from ._changelog import __version__
     outstr_list = []
     freq = "%.5e" % img.frequency
 
