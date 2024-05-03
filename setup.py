@@ -1,9 +1,9 @@
 from skbuild import setup  # This line replaces 'from setuptools import setup'
-from setuptools_scm import get_version
+# from setuptools_scm import get_version
 
 setup(
-    name='bdsf',
-    version=get_version(),
+    # name='bdsf',
+    # version=get_version(),
     author='David Rafferty',
     author_email='drafferty@hs.uni-hamburg.de',
     url='https://github.com/lofar-astron/PyBDSF',

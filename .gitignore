@@ -95,3 +95,6 @@ ENV/
 
 # Visual Studio settings
 .vscode
+
+# Setuptools SCM
+bdsf/_version.py

@@ -7,9 +7,6 @@ exclude .*
 # Python package files
 graft bdsf
 
-# Generated files
-include bdsf/_version.py
-
 # Required scikit-build files
 include CMakeLists.txt
 
