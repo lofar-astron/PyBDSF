@@ -1,3 +1,7 @@
+#########################
+# build-system settings #
+#########################
+
 [build-system]
 requires = [
     "build",
@@ -7,8 +11,67 @@ requires = [
     "oldest-supported-numpy",
     "scikit-build>=0.13",
     "setuptools",
+    "setuptools_scm",
     "wheel",
 ]
+
+
+####################
+# project settings #
+####################
+
+[project]
+name = "bdsf"
+dynamic = ["version"]
+description = "Blob Detection and Source Finder"
+readme = "README.rst"
+requires-python = ">=3.7"
+authors = [
+    { name = "David Rafferty", email = "drafferty@hs.uni-hamburg.de" },
+]
+maintainers = [
+    { name = "Marcel Loose", email = "loose@astron.nl" },
+]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: C++",
+    "Programming Language :: Fortran",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+    "backports.shutil_get_terminal_size",
+    "astropy",
+    "numpy",
+    "scipy",
+]
+
+[project.optional-dependencies]
+"ishell" = [
+    "ipython!=8.11.*,!=8.12.*,!=8.13.*,!=8.14.*,!=8.15.*",
+    "matplotlib",
+]
+
+[project.scripts]
+pybdsf = "bdsf.pybdsf:main [ishell]"
+pybdsm = "bdsf.pybdsf:main [ishell]"
+
+[project.urls]
+Homepage = "https://github.com/lofar-astron/PyBDSF"
+Documentation = "https://pybdsf.readthedocs.io"
+
+
+#########################
+# cibuildwheel settings #
+#########################
 
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
@@ -36,3 +99,11 @@ repair-wheel-command = """\
 
 [tool.cibuildwheel.linux]
 skip = ["*-musllinux_*"]
+
+
+###########################
+# setuptools_scm settings #
+###########################
+
+[tool.setuptools_scm]
+version_file = "bdsf/_version.py"
