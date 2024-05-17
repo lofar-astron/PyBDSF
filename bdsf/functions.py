@@ -308,18 +308,18 @@ def drawellipse(g):
     return x2, y2
 
 def drawsrc(src):
-    import math
+    # import math
     import numpy as N
     import matplotlib.path as mpath
     Path = mpath.Path
-    paths = []
+    # paths = []
     xmin = []
     xmax = []
     ymin = []
     ymax = []
     ellx = []
     elly = []
-    for indx, g in enumerate(src.gaussians):
+    for _, g in enumerate(src.gaussians):
         gellx, gelly = drawellipse(g)
         ellx += gellx.tolist()
         elly += gelly.tolist()
@@ -431,7 +431,7 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
 
     ind=N.where(~N.array(mask))[0]
     if len(ind) > 1:
-        n=sum(mask)
+        # n=sum(mask)
 
         if isinstance(x, list): x = N.array(x)
         if isinstance(y, list): y = N.array(y)
@@ -457,13 +457,13 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
                     return [0, 0], [0, 0]
         res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
         try:
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
+            (p, cov, info, _, _)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
         except TypeError:
             # This error means no warning argument is available, so redirect stdout to a null device
             # to suppress printing of (unnecessary) warning messages
             original_stdout = sys.stdout  # keep a reference to STDOUT
             sys.stdout = NullDevice()  # redirect the real STDOUT
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
+            (p, cov, info, _, _)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
             sys.stdout = original_stdout  # turn STDOUT back on
 
         if do_err:
@@ -853,7 +853,7 @@ def fit_chisq(x, p, ep, mask, funct, order):
     if order == 0:
         fit = [funct(p)]*len(p)
     else:
-        fitpara, efit = fit_mask_1d(x, p, ep, mask, funct, True, order)
+        fitpara, _ = fit_mask_1d(x, p, ep, mask, funct, True, order)
         fit = funct(fitpara, x)
 
     dev = (p-fit)*(p-fit)/(ep*ep)
@@ -1346,7 +1346,7 @@ def convert_casacore_header(casacore_image, tmpdir):
     import shutil
     try:
         from astropy.io import fits as pyfits
-    except ImportError as err:
+    except ImportError:
         import pyfits
 
     if not os.path.exists(tmpdir):
@@ -1461,7 +1461,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                         outtable.putkeywords({'coords': img.coords_dict})
                         outtable.done()
 
-            except ImportError as err:
+            except ImportError:
                 import os
                 os.remove(outfile)
                 raise RuntimeError("Error importing python-casacore. CASA image could not "
@@ -1606,8 +1606,8 @@ def convexhull_deficiency(isl):
     Code taken from http://code.google.com/p/milo-lab/source/browse/trunk/src/toolbox/convexhull.py?spec=svn140&r=140
     """
 
-    import random
-    import time
+    # import random
+    # import time
     import numpy as N
     import scipy.ndimage as nd
 
