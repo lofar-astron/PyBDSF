@@ -15,10 +15,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from .image import *
-from copy import deepcopy as cp
+# from copy import deepcopy as cp
 from . import mylogger
-import sys
-import time
+# import sys
+# import time
 from . import statusbar
 from . import _cbdsm
 from . import has_pl
@@ -43,7 +43,7 @@ class Op_gausfit(Op):
     Prerequisites: module islands should be run first.
     """
     def __call__(self, img):
-        from time import time
+        # from time import time
         from . import functions as func
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gausfit")
@@ -448,10 +448,10 @@ class Op_gausfit(Op):
         if opts is None:
             opts = img.opts
         thresh_isl = opts.thresh_isl
-        thresh_pix = opts.thresh_pix
+        # thresh_pix = opts.thresh_pix
         thresh = opts.fittedimage_clip
         thr = isl.mean + thresh_isl * isl.rms
-        rms = isl.rms
+        # rms = isl.rms
 
         if opts.verbose_fitting:
             print('Iteratively fitting island ', isl.island_id)
@@ -520,14 +520,14 @@ class Op_gausfit(Op):
         av = img.clipped_mean
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im, mask)
             inipeak = [maxv]; iniposn = [maxp]
         nmulsrc1 = len(iniposn)
 
         domore = True
         while domore:
             domore = False
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im1, mask)
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
             if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
                 domore = True
                 x1, y1 = N.array(iniposn).transpose()
@@ -578,12 +578,12 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = -1e9
         mask = isl.mask_active
-        av = img.clipped_mean
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
+        # av = img.clipped_mean
+        _, iniposn, _ = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         npeak = len(iniposn)
         gaul = []
 
-        av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+        _, _, maxv, _, _, _ = func.arrstatmask(im, mask)
         mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
         if npeak <= 1:
             g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig, \
@@ -631,12 +631,12 @@ class Op_gausfit(Op):
                         invmask[i] = invmask[i]*newmask
             resid = N.zeros(im.shape, dtype=N.float32)                    # approx fit all compact ones
             for i in range(nshed):
-                mask1 = ~invmask[i]
+                # mask1 = ~invmask[i]
                 size = sqrt(N.sum(invmask))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
                 x, y = N.indices(im.shape)
-                p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
+                p, _ = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
                 resid = resid + func.gaus_2d(p, x, y)
                 gaul.append(p)
             resid = im - resid
@@ -943,7 +943,7 @@ class Gaussian(object):
         flg: flagging (if any)
         """
         from . import functions as func
-        from .const import fwsig
+        # from .const import fwsig
         import numpy as N
 
         # Add attribute definitions needed for output

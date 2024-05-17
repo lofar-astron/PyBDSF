@@ -355,7 +355,7 @@ def load_pars(filename):
     Returns None (and original error) if no file can be loaded successfully.
     """
     from .image import Image
-    from . import mylogger
+    # from . import mylogger
     try:
         import cPickle as pickle
     except ImportError:

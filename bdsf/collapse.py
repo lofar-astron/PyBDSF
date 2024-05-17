@@ -116,7 +116,7 @@ class Op_collapse(Op):
                         mylog.debug('%s %s %s' % ('Channel weights : ', str1, '; unity=zero if c_wts="rms"'))
                 elif c_mode=='file':
                     mylogger.userinfo(mylog, 'Reading ch0 image from file %s' % (img.opts.collapse_file))
-                    image,hdr=func.read_image_from_file(img.opts.collapse_file, img, None, quiet=False)
+                    image, _=func.read_image_from_file(img.opts.collapse_file, img, None, quiet=False)
                     if pol == 'I':
                         ch0 = image[0,0]
                         img.ch0_arr = ch0
