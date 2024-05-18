@@ -249,7 +249,7 @@ class Op_spectralindex(Op):
         """
         # crms_rms and median dont include rms=0 channels
         nchan = len(crms)
-        mean, rms, cmean, crms_rms, cnt = func.bstat(crms, zeroflags, cutoff)
+        _, _, _, crms_rms, _ = func.bstat(crms, zeroflags, cutoff)
         zeroind = N.where(crms==0)[0]
         median = N.median(N.delete(crms, zeroind))
         badind = N.where(N.abs(N.delete(crms, zeroind) - median)/crms_rms >=cutoff)[0]
@@ -297,7 +297,7 @@ class Op_spectralindex(Op):
         # Find the channel frequencies
         shp = img.image_arr.shape
         img.freq = N.zeros(shp[1])
-        crval, cdelt, crpix = img.freq_pars
+        # crval, cdelt, crpix = img.freq_pars
         if img.wcs_obj.wcs.spec == -1 and \
                 img.opts.frequency_sp is None:
             raise RuntimeError("Frequency info not found in header "\
@@ -422,6 +422,7 @@ class Op_spectralindex(Op):
 
 ########################################################################################
 
+    # n_min is not used
     def windowaverage_cube(self, imagein, rms_desired, chanrms, c_wts, sbeam,
                             freqin, n_min=2, nmax_to_avg=10):
         """Average neighboring channels of cube to obtain desired rms in at least n_min channels
@@ -460,7 +461,7 @@ class Op_spectralindex(Op):
         imageout = N.zeros((n_new, imagein.shape[1], imagein.shape[2]), dtype=N.float32)
         for ichan, avg_list in enumerate(chan_list):
             if len(avg_list) > 1:
-                imageout[ichan], dum = avspc_blanks(avg_list, imagein, crms, c_wts)
+                imageout[ichan], _ = avspc_blanks(avg_list, imagein, crms, c_wts)
                 chan_slice = slice(avg_list[0], avg_list[1]+1)
                 beamlist.append(tuple(N.mean(sbeam[chan_slice], axis=0)))
                 freq_av[ichan] = N.mean(freqin[chan_slice])

@@ -160,7 +160,7 @@ class Op_readimage(Op):
                 warnings.filterwarnings("ignore",category=FITSFixedWarning)
                 t = WCS(hdr)
                 t.wcs.fix()
-        except ImportError as err:
+        except ImportError:
             import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore",category=DeprecationWarning)
@@ -191,7 +191,7 @@ class Op_readimage(Op):
 
         def s2p(self, rd):
             rd = list(rd)
-            for i in range(self.naxis-2):
+            for _ in range(self.naxis-2):
                 rd.append(1) # For some reason, 0 gives nans with astropy in some situations
             if hasattr(self, 'wcs_world2pix'):
                 try:
@@ -246,7 +246,7 @@ class Op_readimage(Op):
                 if s1 == 0.0 and s2 == 0.0:
                     return (0.0, 0.0, 0.0)
 
-                th_rad = th / 180.0 * N.pi
+                # th_rad = th / 180.0 * N.pi
                 bmaj = self.pixdist2angdist(img, s1, th, location=location)
                 bmin = self.pixdist2angdist(img, s2, th + 90.0, location=location)
                 bpa = th
@@ -375,10 +375,10 @@ class Op_readimage(Op):
                         hstr = h
                     if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
                         try:
-                            dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
+                            _, _, _, bmaj, _, bmin, _, bpa = hstr.split()
                         except ValueError:
                             try:
-                                dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
+                                _, _, bmaj, _, bmin, _, bpa, _, _ = hstr.split()
                             except ValueError:
                                 break
                         beam = (float(bmaj), float(bmin), float(bpa))

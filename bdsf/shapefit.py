@@ -149,10 +149,10 @@ class Op_shapelets(Op):
                 #print 'First Centre = ',cen,N.array(cen)+ori
 
                 from time import time
-                t1 = time()
+                # t1 = time()
                 if fixed[0]==0:
-                    beta, err=shape_varybeta(image, mask, basis, beta, cen, nmax, betarange, plot=False)
-                t2 = time()
+                    beta, _=shape_varybeta(image, mask, basis, beta, cen, nmax, betarange, plot=False)
+                # t2 = time()
                 #print 'TIME ',t2-t1, '\n'
                 #print 'Final Beta = ',beta, err
 

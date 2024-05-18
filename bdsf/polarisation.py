@@ -18,7 +18,7 @@ from .islands import Op_islands
 from .gausfit import Op_gausfit
 from .gaul2srl import Op_gaul2srl
 from .make_residimage import Op_make_residimage
-from .const import fwsig
+# from .const import fwsig
 from . import mylogger
 import numpy as N
 from . import functions as func
@@ -359,12 +359,12 @@ class Op_polarisation(Op):
             stokes = [I, Q, U, V] and err = [Ierr, Qerr, Uerr, Verr]
 
         """
-        I, Q, U, V = stokes
-        Ierr, Qerr, Uerr, Verr = err
+        I, _, _, V = stokes
+        Ierr, _, _, Verr = err
         stokes_cpol = [I, 0.0, 0.0, V]
         err_cpol = [Ierr, 0.0, 0.0, Verr]
 
-        cfrac, loerr, uperr, Iup, Qup, Uup, Vup = self.estimate_err_frac_with_limits(stokes_cpol, err_cpol)
+        cfrac, loerr, uperr, Iup, _, _, Vup = self.estimate_err_frac_with_limits(stokes_cpol, err_cpol)
 
         # If all are detections, debias and use error propagation instead
         if not Iup and not Vup:
@@ -415,8 +415,8 @@ class Op_polarisation(Op):
             stokes = [I, Q, U, V] and err = [Ierr, Qerr, Uerr, Verr]
 
         """
-        I, Q, U, V = stokes
-        Ierr, Qerr, Uerr, Verr = err
+        _, Q, U, _ = stokes
+        _, Qerr, Uerr, _ = err
         if abs(Q) < sig*abs(Qerr) and abs(U) < sig*abs(Uerr):
             return 0.0, 0.0
 

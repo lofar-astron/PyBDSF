@@ -496,7 +496,7 @@ class Pyramid_source(object):
         self.islands = [island]
         self.jlevels = [level0]
 
-    def belongs(self, img, isl):
+    def belongs(self, _, isl):
         from . import functions as func
                                             # get centroid of island (as integer)
         mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
@@ -511,7 +511,7 @@ class Pyramid_source(object):
 
         return belong
 
-    def add_level(self, img, level, isl):
+    def add_level(self, _, level, isl):
         self.islands.append(isl)
         self.jlevels.append(level + 1)
 
@@ -608,7 +608,7 @@ def merge_islands(img, isl1, isl2):
         mean = img.mean_arr
         rank = len(image.shape)
         connectivity = nd.generate_binary_structure(rank, rank)
-        labels, count = nd.label(full_mask, connectivity)
+        labels, _ = nd.label(full_mask, connectivity)
         slices = nd.find_objects(labels)
         bbox = slices[0]
         new_bbox = rebase_bbox(bbox,-origin)
