@@ -1004,6 +1004,8 @@ class Gaussian(object):
         self.gresid_mean_def = Float(doc="Island mean in Gaussian residual image", colname='Resid_Isl_mean', units='Jy/beam')
         self.sresid_rms_def = Float(doc="Island rms in Shapelet residual image", colname='Resid_Isl_rms', units='Jy/beam')
         self.sresid_mean_def = Float(doc="Island mean in Shapelet residual image", colname='Resid_Isl_mean', units='Jy/beam')
+        self.wave_rms_def = Float(doc="Island rms in wavelet image, Jy/beam", colname='Wave_Isl_rms', units='Jy/beam')
+        self.wave_mean_def = Float(doc="Island mean in wavelet image, Jy/beam", colname='Wave_Isl_mean', units='Jy/beam')
         self.jlevel_def = Int(doc="Wavelet number to which Gaussian belongs", colname='Wave_id')
         self.spec_indx_def = Float(doc="Spectral index", colname='Spec_Indx', units=None)
         self.e_spec_indx_def = Float(doc="Error in spectral index", colname='E_Spec_Indx', units=None)
@@ -1081,5 +1083,7 @@ class Gaussian(object):
         self.size_pixE = errors[3:6]
         self.rms = img.islands[isl_idx].rms
         self.mean = img.islands[isl_idx].mean
+        self.wave_rms = 0.0  # set if needed in the wavelet operation
+        self.wave_mean = 0.0  # set if needed in the wavelet operation
         self.total_flux_isl = img.islands[isl_idx].total_flux
         self.total_flux_islE = img.islands[isl_idx].total_fluxE

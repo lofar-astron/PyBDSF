@@ -1048,7 +1048,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                  'deconv_size_sky', 'deconv_size_skyE',
                  'deconv_size_sky_uncorr', 'deconv_size_skyE_uncorr',
                  'total_flux_isl', 'total_flux_islE', 'rms',
-                 'mean', 'gresid_rms', 'gresid_mean',
+                 'mean', 'gresid_rms', 'gresid_mean', 'wave_rms', 'wave_mean',
                  'code']
     elif objtype == 'srl':
         if incl_aper:

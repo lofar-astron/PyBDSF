@@ -645,6 +645,15 @@ def copy_gaussians(img, isl1, isl2):
         gcp = Gaussian(img, g.parameters[:], isl1.island_id, gaus_id)
         gcp.gaus_num = gaus_id
         gcp.jlevel = g.jlevel
+        if g.jlevel > 0:
+            # Preserve the wavelet rms and mean values if the isl2 Gaussian was fit to
+            # a wavelet image
+            gcp.wave_rms = g.rms
+            gcp.wave_mean = g.mean
+        else:
+            gcp.wave_rms = 0.0
+            gcp.wave_mean = 0.0
+
         isl1.gaul.append(gcp)
         img.ngaus += 1
         img.gaussians.append(gcp)
