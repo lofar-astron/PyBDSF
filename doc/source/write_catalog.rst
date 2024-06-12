@@ -240,6 +240,10 @@ The information included in the Gaussian and source catalogs varies by format an
 
 * **Resid_Isl_mean:** the averge residual background mean value of the island (derived from the residual map, after subtraction of fitted Gaussians), in Jy/beam
 
+* **Wave_Isl_rms:** the average background rms value of the island in the wavelet image in which the Gaussian was fit (derived from the rms map), in Jy/beam (``'gaul'`` catalogs only). If the Gaussian is from the fit to the ch0 image (i.e., Wave_id = 0), a value of 0 is used.
+
+* **Wave_Isl_mean:** the averge background mean value of the island in the wavelet image in which the Gaussian was fit (derived from the mean map), in Jy/beam (``'gaul'`` catalogs only). If the Gaussian is from the fit to the ch0 image (i.e., Wave_id = 0), a value of 0 is used.
+
 * **S_Code:** a code that defines the source structure.
     * 'S' = a single-Gaussian source that is the only source in the island
     * 'C' = a single-Gaussian source in an island with other sources

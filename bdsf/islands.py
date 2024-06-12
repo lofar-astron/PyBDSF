@@ -48,11 +48,11 @@ class Op_islands(Op):
 
         minsize = opts.minpix_isl
         if minsize is None:
-            minsize = int(img.pixel_beamarea()/3.0) # 1/3 of beam area in pixels
+            minsize = int(img.pixel_beamarea()/3.0)  # 1/3 of beam area in pixels
             if minsize < 6:
-                minsize = 6 # Need at least 6 pixels to obtain good fits
+                minsize = 6  # Need at least 6 pixels to obtain good fits
             mylogger.userinfo(mylog, "Minimum number of pixels per island", '%i' %
-                          minsize)
+                              minsize)
         img.minpix_isl = minsize
         maxsize = opts.maxpix_isl
         if maxsize is None:
@@ -137,7 +137,7 @@ class Op_islands(Op):
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
                 pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
-            pyrank -= 1 # align pyrank values with island ids and set regions outside of islands to -1
+            pyrank -= 1  # align pyrank values with island ids and set regions outside of islands to -1
 
             if opts.output_all:
                 write_islands(img)
@@ -172,9 +172,7 @@ class Op_islands(Op):
 
         Function returns a list of Island objects.
         """
-        ### islands detection
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
-
+        # Islands detection
         image = img.ch0_arr
         mask = img.mask_arr
         rms = img.rms_arr
@@ -182,33 +180,32 @@ class Op_islands(Op):
         thresh_isl = opts.thresh_isl
         thresh_pix = img.thresh_pix
 
-                        # act_pixels is true if significant emission
+        # Here act_pixels is true if significant emission
         if img.masked:
             act_pixels = ~(mask.copy())
             act_pixels[~mask] = (image[~mask]-mean[~mask])/thresh_isl >= rms[~mask]
         else:
             act_pixels = (image-mean)/thresh_isl >= rms
 
-                        # dimension of image
+        # Find dimension of image
         rank = len(image.shape)
-                        # generates matrix for connectivity, in this case, 8-conn
+        # Generates matrix for connectivity, in this case, 8-conn
         connectivity = nd.generate_binary_structure(rank, rank)
-                        # labels = matrix with value = (initial) island number
+        # Here labels = matrix with value = (initial) island number
         labels, count = nd.label(act_pixels, connectivity)
-                        # slices has limits of bounding box of each such island
+        # Here slices has limits of bounding box of each such island
         slices = nd.find_objects(labels)
         img.island_labels = labels
 
-        ### apply cuts on island size and peak value
+        # Apply cuts on island size and peak value
         pyrank = N.zeros(image.shape, dtype=N.int32)
         res = []
         for idx, s in enumerate(slices):
-            idx += 1 # nd.labels indices are counted from 1
-                        # number of pixels inside bounding box which are in island
-            isl_size = (labels[s] == idx).sum()
+            idx += 1  # nd.labels indices are counted from 1
+            isl_size = (labels[s] == idx).sum()  # number of pixels inside bounding box which are in island
             isl_peak = nd.maximum(image[s], labels[s], idx)
-            isl_maxposn = tuple(N.array(N.unravel_index(N.nanargmax(image[s]), image[s].shape))+\
-                          N.array((s[0].start, s[1].start)))
+            isl_maxposn = tuple(N.array(N.unravel_index(N.nanargmax(image[s]), image[s].shape)) +
+                                N.array((s[0].start, s[1].start)))
             if (isl_size >= img.minpix_isl) and (isl_size <= img.maxpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
@@ -216,29 +213,25 @@ class Op_islands(Op):
 
         return res
 
-
     def coords_to_isl(self, img, opts):
         """Construct islands around given coordinates with given size.
 
         Returns a list of island objects.
         """
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
-
-        coords = opts.src_ra_dec # list of RA and Dec tuples
+        coords = opts.src_ra_dec  # list of RA and Dec tuples
         isl_radius_pix = opts.src_radius_pix
         if isl_radius_pix is None:
-            isl_radius_pix = img.beam2pix(img.beam)[0] # twice beam major axis radius at half max (= FWHM)
+            isl_radius_pix = img.beam2pix(img.beam)[0]  # twice beam major axis radius at half max (= FWHM)
 
         res = []
         for idx, coord in enumerate(coords):
-            idx += 1 # nd.labels indices are counted from 1
+            idx += 1  # nd.labels indices are counted from 1
             isl_posn_pix = img.sky2pix(coord)
             image = img.ch0_arr
             mask = img.mask_arr
             rms = img.rms_arr
             mean = img.mean_arr
-            labels = func.make_src_mask(image.shape,
-                        isl_posn_pix, isl_radius_pix)
+            labels = func.make_src_mask(image.shape, isl_posn_pix, isl_radius_pix)
             if img.masked:
                 aper_mask = N.where(labels.astype(bool) & ~mask)
             else:
@@ -249,16 +242,14 @@ class Op_islands(Op):
                      min(image.shape[0], isl_posn_pix[0] + isl_radius_pix + 1)),
                      slice(max(0, isl_posn_pix[1] - isl_radius_pix - 1),
                      min(image.shape[1], isl_posn_pix[1] + isl_radius_pix + 1))]
-                isl = Island(image, mask, mean, rms, labels, s, idx,
-                        img.pixel_beamarea())
+                isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
         return res
 
-
     def setpara_bdsm(self, img, det_file):
 
-        chain=[Op_readimage(), Op_collapse(), Op_preprocess, Op_rmsimage(),
-                Op_threshold(), Op_islands()]
+        chain = [Op_readimage(), Op_collapse(), Op_preprocess, Op_rmsimage(),
+                 Op_threshold(), Op_islands()]
         opts = img.opts.to_dict()
         opts['filename'] = det_file
         opts['detection_image'] = ''
@@ -275,8 +266,6 @@ class Op_islands(Op):
 
         return ops, opts
 
-
-from .image import *
 
 class Island(object):
     """Instances of this class represent islands of emission in the image.
@@ -306,7 +295,7 @@ class Island(object):
                                       colname='Coeff_matrix', units=None)
 
         if not copy:
-                ### we make bbox slightly bigger
+            # We make bbox slightly bigger
             self.oldbbox = bbox
             self.oldidx = idx
             bbox = self.__expand_bbox(bbox, img.shape)
@@ -315,7 +304,7 @@ class Island(object):
             bbox_rms_im = rms[tuple(bbox)]
             bbox_mean_im = mean[tuple(bbox)]
 
-            ### create (inverted) masks
+            # Create (inverted) masks
             # Note that mask_active is the island mask; mask_noisy marks only
             # the noisy pixels in the island image. If you want to mask the
             # noisy pixels, set the final mask to:
@@ -324,7 +313,7 @@ class Island(object):
             noise_mask = (labels[tuple(bbox)] == 0)
             N.logical_or(noise_mask, isl_mask, noise_mask)
 
-            ### invert masks
+            # Invert masks
             N.logical_not(isl_mask, isl_mask)
             N.logical_not(noise_mask, noise_mask)
             if isinstance(mask, N.ndarray):
@@ -342,7 +331,7 @@ class Island(object):
             self.oldbbox = bbox
             self.oldidx = idx
 
-        ### finish initialization
+        # Finish initialization
         isl_size = N.sum(~isl_mask)
         self.island_id = idx
         self.bbox = bbox
@@ -354,20 +343,19 @@ class Island(object):
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_rms_im))
-        self.rms  = bbox_rms_im[in_bbox_and_unmasked].mean()
+        self.rms = bbox_rms_im[in_bbox_and_unmasked].mean()
         in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
-        self.mean  = bbox_mean_im[in_bbox_and_unmasked].mean()
-        self.islmean  = bbox_mean_im[in_bbox_and_unmasked].mean()
+        self.mean = bbox_mean_im[in_bbox_and_unmasked].mean()
+        self.islmean = bbox_mean_im[in_bbox_and_unmasked].mean()
         self.total_flux = N.nansum(self.image[in_bbox_and_unmasked])/beamarea
-        pixels_in_isl = N.sum(~N.isnan(self.image[self.mask_active])) # number of unmasked pixels assigned to current island
-        self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea) # Jy
+        pixels_in_isl = N.sum(~N.isnan(self.image[self.mask_active]))  # number of unmasked pixels assigned to current island
+        self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
         self.border = self.get_border()
         self.gaul = []
         self.fgaul = []
         self.sources = []
         self.gresid_mean = 0.0
         self.gresid_rms = 0.0
-
 
     def __setstate__(self, state):
         """Needed for multiprocessing"""
@@ -401,7 +389,7 @@ class Island(object):
         state['bbox'] = self.bbox
         return state
 
-    ### do map etc in case of ndim image
+    # Do map etc in case of ndim image
     def __expand_bbox(self, bbox, shape):
         """Expand bbox of the image by 1 pixel"""
         def __expand(bbox, shape):
@@ -417,7 +405,7 @@ class Island(object):
         if mean is None:
             mean = N.zeros(mask.shape, dtype=N.float32) + self.mean
         if rms is None:
-            rms =  N.zeros(mask.shape, dtype=N.float32) + self.rms
+            rms = N.zeros(mask.shape, dtype=N.float32) + self.rms
 
         bbox = self.bbox
         idx = self.oldidx
