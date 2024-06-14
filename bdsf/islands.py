@@ -144,7 +144,8 @@ class Op_islands(Op):
             if opts.savefits_rankim or opts.output_all:
                 resdir = img.basedir + '/misc/'
                 os.makedirs(resdir, exist_ok=True)
-                func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', pyrank, img)
+                func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', pyrank, img, resdir)
+                mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'_pyrank.fits'))
 
             img.pyrank = pyrank
 
