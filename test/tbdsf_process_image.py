@@ -2,7 +2,7 @@ import bdsf
 import sys
 
 # Process the image
-img = bdsf.process_image('tbdsf_process_image.in', ncores=2)
+img = bdsf.process_image('tbdsf_process_image.in', ncores=2, output_all=True)
 
 # List of operations that must have been done on `img`.
 operations = [
