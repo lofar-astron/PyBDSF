@@ -14,7 +14,6 @@ import textwrap
 import warnings
 
 import astropy.io.fits
-import coloredlogs
 import numpy as np
 import difflib
 
@@ -370,15 +369,20 @@ def init_logger(verbosity):
     """
     global logger
     logger = logging.getLogger()
-    fmt = "%(levelname)s [%(name)s]: %(message)s"
+
+    ch = logging.StreamHandler()
     if verbosity == -1:
-        coloredlogs.install(fmt=fmt, level="ERROR")
+        ch.setLevel(logging.ERROR)
     elif verbosity == 0:
-        coloredlogs.install(fmt=fmt, level="WARNING")
+        ch.setLevel(logging.WARNING)
     elif verbosity == 1:
-        coloredlogs.install(fmt=fmt, level="INFO")
+        ch.setLevel(logging.INFO)
     elif verbosity >= 2:
-        coloredlogs.install(fmt=fmt, level="DEBUG")
+        ch.setLevel(logging.DEBUG)
+
+    fmt = "%(levelname)s [%(name)s]: %(message)s"
+    ch.setFormatter(logging.Formatter(fmt))
+    logger.addHandler(ch)
 
 
 def main(args):
