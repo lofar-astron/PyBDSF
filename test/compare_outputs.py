@@ -169,6 +169,9 @@ def compare_results(dcmp, rtol, verbosity):
     :param float rtol: relative tolerance threshold
     :param int verbosity: verbosity level, higher means more verbose
     """
+    # Initialize logger and set log level depending on verbosity level
+    init_logger(verbosity)
+
     logger.info("*** Comparing results in '%s' and '%s' ***", dcmp.left, dcmp.right)
     agree = True
     for dname, sub_dcmp in dcmp.subdirs.items():
@@ -389,9 +392,6 @@ def main(args):
     # Set level of verbosity to -1 if command-line option `-q` is given, else
     # to the number of times the command-line option `-v` is given.
     verbosity = -1 if args.quiet else args.verbose
-
-    # Initialize logger and set log level depending on verbosity level
-    init_logger(verbosity)
 
     agree = True
     if not compare_results(
