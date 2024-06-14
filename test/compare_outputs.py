@@ -2,7 +2,7 @@
 
 """
 Script to compare the output of two PyBDSF runs. The generated FITS images,
-FITS catalogs, and text files will be compared.
+FITS catalog, and text files will be compared.
 """
 
 import argparse
@@ -61,11 +61,12 @@ def text_files_are_similar(file1, file2, verbosity):
     logger.debug("Comparing '%s' and '%s'", file1, file2)
     d = difflib.Differ()
     with open(file1) as f1, open(file2) as f2:
-        diff = list(d.compare(f1.read(), f2.read()))
+        diff = list(d.compare(f1.readlines(), f2.readlines()))
     agree = True
     for line in diff:
         if line.startswith("- ") or line.startswith("+ "):
-            agree = False
+            if not line[2:].startswith("#"):  # ignore comments
+                agree = False
     if agree:
         logger.info("Text files '%s' and '%s' are similar", file1, file2)
     else:
@@ -74,7 +75,7 @@ def text_files_are_similar(file1, file2, verbosity):
                 "Text files '%s' and '%s' differ:\n%s",
                 file1,
                 file2,
-                list(diff)
+                [line for line in diff if line.startswith("- ") or line.startswith("+ ")]
             )
         else:
             logger.error(
@@ -95,7 +96,7 @@ def fits_files_are_similar(file1, file2, rtol, verbosity):
     :return bool: True if FITS files are similar, else False
     """
     logger.debug("Comparing '%s' and '%s'", file1, file2)
-    diff = astropy.io.fits.FITSDiff(file1, file2, rtol=rtol)
+    diff = astropy.io.fits.FITSDiff(file1, file2, rtol=rtol, ignore_keywords=["COMMENT"])
     agree = diff.identical
     if agree:
         logger.info("FITS files '%s' and '%s' are similar", file1, file2)
