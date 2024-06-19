@@ -161,7 +161,7 @@ def image_files_are_similar(file1, file2, rtol, verbosity):
     return agree
 
 
-def compare_results(dcmp, rtol, verbosity):
+def compare_results(dcmp, rtol, verbosity, check_images=True, check_catalogs=False, check_other=False):
     """
     Compare the results between the files produced by each PyBDSF run.
     :param dircmp dcmp: the directory contents of the two workflows
@@ -172,6 +172,9 @@ def compare_results(dcmp, rtol, verbosity):
     init_logger(verbosity)
 
     logger.info("*** Comparing results in '%s' and '%s' ***", dcmp.left, dcmp.right)
+    logger.info(f"Checking images: {check_images}")
+    logger.info(f"Checking catalogs: {check_catalogs}")
+    logger.info(f"Checking other: {check_other}")
     agree = True
     for dname, sub_dcmp in dcmp.subdirs.items():
         logger.debug(
@@ -186,18 +189,19 @@ def compare_results(dcmp, rtol, verbosity):
             right = os.path.join(sub_dcmp.right, fname)
             root, ext = os.path.splitext(fname)
             logger.debug("fname: %s, root: %s, ext: %s", fname, root, ext)
-            if "fits" in ext.lower():
-                if "catalogues" in dname:
-                    if not fits_files_are_similar(
-                        left, right, rtol=rtol, verbosity=verbosity
-                    ):
-                        agree = False
-                else:
+            if check_images:
+                if "fits" in ext.lower() and "catalogues" not in dname:
                     if not image_files_are_similar(
                         left, right, rtol=rtol, verbosity=verbosity
                     ):
                         agree = False
-            else:
+            if check_catalogs:
+                if "fits" in ext.lower() and "catalogues" in dname:
+                    if not fits_files_are_similar(
+                        left, right, rtol=rtol, verbosity=verbosity
+                    ):
+                        agree = False
+            if check_other:
                 if not text_files_are_similar(
                     left, right, verbosity=verbosity
                 ):
