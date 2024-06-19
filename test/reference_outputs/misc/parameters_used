@@ -83,7 +83,7 @@ multichan_opts                          False
 ncores                                  2
 opdir_overwrite                         'overwrite'
 outdir                                  None
-    Value used                          '/Users/rafferty/Downloads/test'
+    Value used                          '/home/runner/work/PyBDSF/PyBDSF/test'
 outfile                                 None
 output_all                              True
 output_opts                             False
