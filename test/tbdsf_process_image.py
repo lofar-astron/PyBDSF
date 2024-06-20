@@ -16,7 +16,7 @@ operations = [
 # Check if the outputs agree with the reference ones
 outputs_agree = compare_results(
     filecmp.dircmp("tbdsf_process_image.in_fits_pybdsf", "reference_outputs"),
-    1e-2,
+    1e-3,
     2
 )
 
