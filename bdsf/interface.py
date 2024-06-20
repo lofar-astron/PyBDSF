@@ -355,7 +355,7 @@ def load_pars(filename):
     Returns None (and original error) if no file can be loaded successfully.
     """
     from .image import Image
-    from . import mylogger
+    # from . import mylogger
     try:
         import cPickle as pickle
     except ImportError:
@@ -385,12 +385,13 @@ def save_pars(img, savefile=None, quiet=False):
         import cPickle as pickle
     except ImportError:
         import pickle
-    from . import tc
-    import sys
+    # from . import tc
+    # import sys
+    from os import path
 
     if savefile is None or savefile == '':
-        basename = os.path.basename(img.opts.filename) + '.pybdsf.sav'
-        savefile = os.path.join(img.basedir, basename)
+        basename = path.basename(img.opts.filename) + '.pybdsf.sav'
+        savefile = path.join(img.basedir, basename)
 
     # convert opts to dictionary
     pars = img.opts.to_dict()
@@ -409,8 +410,8 @@ def list_pars(img, opts_list=None, banner=None, use_groups=True):
     use_groups - whether to use the group information for each
                  parameter.
     """
-    from . import tc
-    import sys
+    # from . import tc
+    # import sys
 
     # Get all options as a list sorted by name
     opts = img.opts.to_list()
@@ -443,8 +444,8 @@ def set_pars(img, **kwargs):
     Allows partial names for parameters as long as they are unique. Parameters
     are set to default values if par = ''.
     """
-    import re
-    import sys
+    # import re
+    # import sys
     from .image import Image
 
     # Enumerate all options
@@ -487,7 +488,7 @@ def group_opts(opts):
     "hidden" group are excluded from the returned list (as defined in opts.py).
     """
     groups = []
-    gp = []
+    # gp = []
     for i in range(len(opts)):
         grp = opts[i][1].group()
         if grp is not None and grp not in groups:

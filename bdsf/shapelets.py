@@ -38,8 +38,8 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
         cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
-        npix = N.product(image.shape)-N.sum(mask)
-        npara = (nmax+1)*(nmax+2)*0.5
+        # npix = N.product(image.shape)-N.sum(mask)
+        # npara = (nmax+1)*(nmax+2)*0.5
         cfnew = fit_shapeletbasis(image, mask, cf, Bset)
         recon1 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cf)
         recon2 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cfnew)
@@ -81,6 +81,7 @@ def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
 
     return rimage
 
+# basis is not used
 def shapelet_image(basis, beta, centre, hc, nx, ny, size):
     """ Takes basis, beta, centre (2-tuple), hc matrix, x, y, size and returns the image of the shapelet of
     order nx,ny on an image of size size. Does what getcartim.f does in fBDSM. nx,ny -> 0-nmax
@@ -129,7 +130,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     we find intersection point of these two. This seems to work even for highly
     non-gaussian cases. """
     from . import functions as func
-    import sys
+    # import sys
 
     hc = []
     hc = shapelet_coeff(nmax, basis)

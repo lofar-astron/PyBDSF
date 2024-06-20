@@ -18,7 +18,7 @@ from __future__ import absolute_import
 
 from .image import *
 from .islands import *
-from .interface import wrap
+# from .interface import wrap
 from . import mylogger
 import numpy as N
 N.seterr(divide='raise')
@@ -322,7 +322,7 @@ class Op_gaul2srl(Op):
         """ Same as gaul_to_source.f. isrc is same as k in the fortran version. """
         from math import pi, sqrt
         from .const import fwsig
-        from scipy import ndimage
+        # from scipy import ndimage
         from . import functions as func
 
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gaul2Srl  ")
@@ -547,7 +547,7 @@ class Op_gaul2srl(Op):
         x, y = N.indices((subn, subm))
                                         # construct image of each source in the island
         src_image = N.zeros((subn, subm, nsrc), dtype=N.float32)
-        nn = 1
+        # nn = 1
         for isrc in range(nsrc):
             if nsrc == 1:
                 g_sublist = g_list
