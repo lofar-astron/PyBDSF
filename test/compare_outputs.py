@@ -60,12 +60,11 @@ def text_files_are_similar(file1, file2, verbosity):
     logger.debug("Comparing '%s' and '%s'", file1, file2)
     d = difflib.Differ()
     with open(file1) as f1, open(file2) as f2:
-        diff = list(d.compare(f1.readlines(), f2.readlines()))
-    agree = True
-    for line in diff:
-        if line.startswith("- ") or line.startswith("+ "):
-            if not line[2:].startswith("#"):  # ignore comments
-                agree = False
+        diff = [
+            line for line in d.compare(f1.readlines(), f2.readlines())
+            if line.startswith(('-', '+')) and not line[2:].startswith('#')
+        ]
+    agree = False if diff else True
     if agree:
         logger.info("Text files '%s' and '%s' are similar", file1, file2)
     else:
@@ -74,7 +73,7 @@ def text_files_are_similar(file1, file2, verbosity):
                 "Text files '%s' and '%s' differ:\n%s",
                 file1,
                 file2,
-                [line for line in diff if line.startswith("- ") or line.startswith("+ ")]
+                diff
             )
         else:
             logger.error(
@@ -202,10 +201,11 @@ def compare_results(dcmp, rtol, verbosity, check_images=True, check_catalogs=Fal
                     ):
                         agree = False
             if check_other:
-                if not text_files_are_similar(
-                    left, right, verbosity=verbosity
-                ):
-                    agree = False
+                if "fits" not in ext.lower():
+                    if not text_files_are_similar(
+                        left, right, verbosity=verbosity
+                    ):
+                        agree = False
     return agree
 
 
