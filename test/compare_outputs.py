@@ -213,6 +213,9 @@ class FITSImage(object):
     """
     The FITSImage class is used for processing/manipulation of FITS images
 
+    This class is a simplified version of the FITSImage class located at:
+        https://git.astron.nl/RD/rapthor/-/blob/master/rapthor/lib/fitsimage.py
+
     Parameters
     ----------
     imagefile : str
