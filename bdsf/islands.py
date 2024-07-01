@@ -102,22 +102,18 @@ class Op_islands(Op):
             img.pyrank = det_img.pyrank
             img.minpix_isl = det_img.minpix_isl
 
-            if opts.output_all:
-                write_islands(img)
-            if opts.savefits_rankim or opts.output_all:
-                func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', img.pyrank, img)
             if opts.savefits_det_rmsim or opts.output_all:
-                resdir = img.basedir + '/background/'
+                resdir = os.path.join(img.basedir, 'background')
                 os.makedirs(resdir, exist_ok=True)
                 func.write_image_to_file(img.use_io, img.imagename + '.detection_rmsd_I.fits',
                                          img.detection_rms_arr, img, resdir)
-                mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.detection_rmsd_I.fits'))
+                mylog.info('%s %s' % ('Writing ', os.path.join(resdir, img.imagename+'.detection_rmsd_I.fits')))
             if opts.savefits_det_meanim or opts.output_all:
-                resdir = img.basedir + '/background/'
+                resdir = os.path.join(img.basedir, 'background')
                 os.makedirs(resdir, exist_ok=True)
                 func.write_image_to_file(img.use_io, img.imagename + '.detection_mean_I.fits',
                                          img.detection_mean_arr, img, resdir)
-                mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.detection_mean_I.fits'))
+                mylog.info('%s %s' % ('Writing ', os.path.join(resdir, img.imagename+'.detection_mean_I.fits')))
 
             mylogger.userinfo(mylog, "\nContinuing processing using primary image")
         else:
@@ -139,12 +135,15 @@ class Op_islands(Op):
                 pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
             pyrank -= 1  # align pyrank values with island ids and set regions outside of islands to -1
 
-            if opts.output_all:
-                write_islands(img)
-            if opts.savefits_rankim or opts.output_all:
-                func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', pyrank, img)
-
             img.pyrank = pyrank
+
+        if opts.output_all:
+            write_islands(img)
+        if opts.savefits_rankim or opts.output_all:
+            resdir = os.path.join(img.basedir, 'misc')
+            os.makedirs(resdir, exist_ok=True)
+            func.write_image_to_file(img.use_io, img.imagename + '_pyrank.fits', img.pyrank, img, resdir)
+            mylog.info('%s %s' % ('Writing ', os.path.join(resdir, img.imagename+'_pyrank.fits')))
 
         img.completed_Ops.append('islands')
         return img
