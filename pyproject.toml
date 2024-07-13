@@ -50,7 +50,7 @@ classifiers = [
 dependencies = [
     "backports.shutil_get_terminal_size",
     "astropy",
-    "numpy",
+    "numpy<2",
     "scipy",
 ]
 
