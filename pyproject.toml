@@ -75,7 +75,8 @@ Documentation = "https://pybdsf.readthedocs.io"
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
-build = "cp3{8,9,10,11,12}-*_x86_64"
+# build = "cp3{8,9,10,11,12}-*_x86_64"
+build = "cp312-*_x86_64"
 build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.81.0" \
@@ -87,7 +88,6 @@ environment = """ \
     CXXFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" \
     FC=gfortran \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
-    MACOSX_DEPLOYMENT_TARGET="13.0" \
 """
 test-command = "cd {package}/test && python tbdsf_process_image.py"
 
