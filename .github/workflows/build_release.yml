@@ -12,10 +12,10 @@ on: [push] #, pull_request]
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       matrix:
-        runs-on: ${{ matrix.os }}
         # os: [ubuntu-latest]  #, macos-latest]
         os: [macos-12]
         include:
