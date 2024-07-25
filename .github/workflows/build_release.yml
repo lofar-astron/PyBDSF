@@ -18,9 +18,11 @@ jobs:
       matrix:
         # os: [ubuntu-latest]  #, macos-latest]
         os: [macos-12]
-        include:
-          - os: macos-12
-            toolchain: {compiler: gcc, version 12}
+        toolchain:
+          - {compiler: gcc, version 12}
+        # include:
+        #   - os: macos-12
+        #     toolchain: {compiler: gcc, version 12}
         # include:
         #   - runs-on: macos-12
         #     compiler: gcc
@@ -36,21 +38,25 @@ jobs:
       #     echo "CXX=g++-${{ matrix.gcc }}" >> $GITHUB_ENV
       #     echo "VERSION=${{ matrix.gcc }}" >> $GITHUB_ENV
 
-      - name: Setup GNU Fortran
+      - name: Setup Fortran
         uses: fortran-lang/setup-fortran@v1
-        id: macos-setup-fortran
+        id: setup-fortran
         with:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
         if: runner.os == 'macOS'
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19
+      - run: |
+          ${{ env.FC }} ... # environment vars FC, CC, and CXX are set
+          ${{ steps.setup-fortran.outputs.fc }} ... # outputs work too
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          path: wheelhouse/*.whl
+      # - name: Build wheels
+      #   uses: pypa/cibuildwheel@v2.19
+
+      # - name: Upload wheels
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     path: wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
