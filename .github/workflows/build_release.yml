@@ -44,7 +44,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19
         env:
-          MACOSX_DEPLOYMENT_TARGET: 13.0
+          MACOSX_DEPLOYMENT_TARGET: "13.0"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
