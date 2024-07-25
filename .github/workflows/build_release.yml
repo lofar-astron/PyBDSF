@@ -31,13 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Select GCC version
-      #   if: matrix.gcc
-      #   run: |
-      #     echo "CC=gcc-${{ matrix.gcc }}" >> $GITHUB_ENV
-      #     echo "CXX=g++-${{ matrix.gcc }}" >> $GITHUB_ENV
-      #     echo "VERSION=${{ matrix.gcc }}" >> $GITHUB_ENV
-
       - name: Setup Fortran
         uses: fortran-lang/setup-fortran@v1
         id: setup-fortran
@@ -46,13 +39,13 @@ jobs:
           version: ${{ matrix.toolchain.version }}
         if: runner.os == 'macOS'
 
-      # - name: Build wheels
-      #   uses: pypa/cibuildwheel@v2.19
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.19
 
-      # - name: Upload wheels
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     path: wheelhouse/*.whl
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          path: wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
