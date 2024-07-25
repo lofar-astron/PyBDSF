@@ -18,6 +18,9 @@ jobs:
       matrix:
         # os: [ubuntu-latest]  #, macos-latest]
         os: [macos-12]
+        include:
+          - os: macos-12
+            toolchain: {compiler: gcc, version 12}
         # include:
         #   - runs-on: macos-12
         #     compiler: gcc
@@ -36,9 +39,10 @@ jobs:
       - name: Setup GNU Fortran
         uses: fortran-lang/setup-fortran@v1
         id: macos-setup-fortran
+        with:
+          compiler: ${{ matrix.toolchain.compiler }}
+          version: ${{ matrix.toolchain.version }}
         if: runner.os == 'macOS'
-        run: |
-          echo "VERSION=12" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19
