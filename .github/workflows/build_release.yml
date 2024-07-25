@@ -50,6 +50,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl
+          # Allow overwriting, especially useful when debugging
+          overwrite: true
 
   build_sdist:
     name: Build source distribution
