@@ -18,25 +18,27 @@ jobs:
       matrix:
         # os: [ubuntu-latest]  #, macos-latest]
         os: [macos-12]
-        include:
-          - runs-on: macos-12
-            compiler: gcc
-            gcc: 12
+        # include:
+        #   - runs-on: macos-12
+        #     compiler: gcc
+        #     gcc: 12
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select GCC version
-        if: matrix.gcc
-        run: |
-          echo "CC=gcc-${{ matrix.gcc }}" >> $GITHUB_ENV
-          echo "CXX=g++-${{ matrix.gcc }}" >> $GITHUB_ENV
-          echo "VERSION=${{ matrix.gcc }}" >> $GITHUB_ENV
+      # - name: Select GCC version
+      #   if: matrix.gcc
+      #   run: |
+      #     echo "CC=gcc-${{ matrix.gcc }}" >> $GITHUB_ENV
+      #     echo "CXX=g++-${{ matrix.gcc }}" >> $GITHUB_ENV
+      #     echo "VERSION=${{ matrix.gcc }}" >> $GITHUB_ENV
 
       - name: Setup GNU Fortran
         uses: fortran-lang/setup-fortran@v1
         id: macos-setup-fortran
         if: runner.os == 'macOS'
+        run: |
+          echo "VERSION=12" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19
