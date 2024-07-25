@@ -38,7 +38,7 @@ class Op_collapse(Op):
                 c_mode = 'single'
                 chan0 = c_list[0]
                 img.collapse_ch0 = chan0
-            ch0sh = img.image_arr.shape[2:]
+            # ch0sh = img.image_arr.shape[2:]
             if img.opts.polarisation_do:
                 ch0images = ['ch0_arr', 'ch0_Q_arr', 'ch0_U_arr', 'ch0_V_arr']
             else:

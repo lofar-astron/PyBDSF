@@ -326,13 +326,13 @@ class Op_polarisation(Op):
             stokes = [I, Q, U, V] and err = [Ierr, Qerr, Uerr, Verr]
 
         """
-        I, Q, U, V = stokes
-        Ierr, Qerr, Uerr, Verr = err
+        I, Q, U, _ = stokes
+        Ierr, Qerr, Uerr, _ = err
         QUerr = N.mean([Qerr, Uerr])
         stokes_lpol = [I, Q, U, 0.0]
         err_lpol = [Ierr, Qerr, Uerr, 0.0]
 
-        lfrac, loerr, uperr, Iup, Qup, Uup, Vup = self.estimate_err_frac_with_limits(stokes_lpol, err_lpol)
+        lfrac, loerr, uperr, Iup, Qup, Uup, _ = self.estimate_err_frac_with_limits(stokes_lpol, err_lpol)
 
         # If all are detections, debias and use error propagation instead
         if not Iup and not Qup and not Uup:

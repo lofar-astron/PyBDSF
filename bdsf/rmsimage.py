@@ -12,7 +12,7 @@ from __future__ import absolute_import
 import numpy as N
 import scipy.ndimage as nd
 from . import _cbdsm
-from .image import Op, Image, NArray, List
+from .image import Op
 from . import const
 from . import mylogger
 import os
@@ -163,10 +163,10 @@ class Op_rmsimage(Op):
         mylog.info('Maximum extent of largest 10-sigma island using clipped rms (pixels) = '+str(max_isl_size))
         if len(isl_size_highthresh) == 0:
             max_isl_size_highthresh = 0.0
-            max_isl_size_lowthresh = 0.0
+            # max_isl_size_lowthresh = 0.0
         else:
             max_isl_size_highthresh = max(isl_size_highthresh)
-            max_isl_size_lowthresh = max(isl_size_lowthresh)
+            # max_isl_size_lowthresh = max(isl_size_lowthresh)
             # avg_max_isl_size = (max_isl_size_highthresh + max_isl_size_lowthresh) / 2.0
 
         if hasattr(img, '_adapt_rms_isl_pos'):

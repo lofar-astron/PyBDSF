@@ -1,8 +1,8 @@
 
 import pylab as pl
-import bdsf, pyfits
+import bdsf
 import numpy as N
-import os, subprocess
+import subprocess
 
 from bdsf.FITS import Op_loadFITS
 from bdsf.collapse import Op_collapse

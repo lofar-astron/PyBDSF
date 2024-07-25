@@ -217,7 +217,7 @@ def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     """ x and y are 2d arrays with the x and y positions. c is a list (of lists) of gaussian parameters to fit, p_tofix
     are gaussian parameters to fix. ind is a list with 0, 1; 1 = fit; 0 = fix. """
 
-    import math
+    # import math
     import numpy as N
 
     val = N.zeros(x.shape)
@@ -238,7 +238,7 @@ def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
 def g2param(g, adj=False):
     """Convert gaussian object g to param list [amp, cenx, ceny, sigx, sigy, theta] """
     from .const import fwsig
-    from math import pi
+    # from math import pi
 
     A = g.peak_flux
     if adj and hasattr(g, 'size_pix_adj'):
@@ -254,7 +254,7 @@ def g2param(g, adj=False):
 def g2param_err(g, adj=False):
     """Convert errors on gaussian object g to param list [Eamp, Ecenx, Eceny, Esigx, Esigy, Etheta] """
     from .const import fwsig
-    from math import pi
+    # from math import pi
 
     A = g.peak_fluxE
     if adj and hasattr(g, 'size_pix_adj'):
@@ -1103,7 +1103,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     """
     from . import mylogger
     import os
-    import numpy as N
+    # import numpy as N
     from astropy.io import fits as pyfits
     from astropy.wcs import WCS
     from copy import deepcopy as cp
@@ -1717,7 +1717,7 @@ def assign_leftovers(mask, open, nisl, labels):
     """
     import scipy.ndimage as nd
     import numpy as N
-    from copy import deepcopy as cp
+    # from copy import deepcopy as cp
 
     n, m = mask.shape
     leftout = ~mask ^ open
@@ -1838,7 +1838,7 @@ def isl_tosplit(isl, opts):
     else:
         if open3: index = 3; n_subisl = n_subisl3; labels = labels3
         else: index = 0
-    convex_def =  convexhull_deficiency(isl)
+    # convex_def =  convexhull_deficiency(isl)
     #print 'CONVEX = ',convex_def
 
     if opts.plot_islands:

@@ -430,7 +430,7 @@ def on_pick(event):
             has_sed = True
         if not has_sed:
             return
-        ax_indx = images.index('seds')
+        # ax_indx = images.index('seds')
         sed_src = get_src(src_list, src_id)
         if srcid_cur == src_id:
             return
@@ -539,7 +539,7 @@ def on_press(event):
                 except RuntimeError:
                     print('Sorry, unable to change source.')
                     return
-        ax_indx = images.index('seds')
+        # ax_indx = images.index('seds')
         sed_src = get_src(src_list, srcid)
         if sed_src is None:
             print('Source not found!')

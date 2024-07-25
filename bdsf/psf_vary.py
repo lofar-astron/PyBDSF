@@ -60,7 +60,7 @@ class Op_psf_vary(Op):
                 snrtop = opts.psf_snrtop; snrbot = opts.psf_snrbot; snrcutstack = opts.psf_snrcutstack
                 gencode = opts.psf_gencode; primarygen = opts.psf_primarygen; itess_method = opts.psf_itess_method
                 tess_sc = opts.psf_tess_sc; tess_fuzzy= opts.psf_tess_fuzzy
-                bright_snr_cut = opts.psf_high_snr
+                # bright_snr_cut = opts.psf_high_snr
                 s_only = opts.psf_stype_only
                 if opts.psf_snrcut < 5.0:
                     mylogger.userinfo(mylog, "Value of psf_snrcut too low; increasing to 5")
@@ -83,7 +83,7 @@ class Op_psf_vary(Op):
                 else: tess_method='unity'
 
                 ### now put all relevant gaussian parameters into a list
-                ngaus = img.ngaus
+                # ngaus = img.ngaus
                 nsrc = img.nsrc
                 num = N.zeros(nsrc, dtype=N.int32)
                 peak = N.zeros(nsrc)
@@ -409,16 +409,16 @@ class Op_psf_vary(Op):
                     med2=10.**(N.median(N.log10(x1[:])))
                     medstd=0    # calcmedianstd.f
                     for j in y1: medstd += (j-med1)*(j-med1)
-                    medstd=math.sqrt(medstd/len(y1))        #
+                    medstd=math.sqrt(medstd/len(y1))
                     av1=N.mean(y1); std1=func.std(y1)
                     # av2=N.mean(x1); std2=func.std(x1)
                     # get_medianclip_vec2
                     z=N.transpose([x1, y1])
                     z1=N.transpose([n for n in z if abs(n[1]-med1)<=nsig*medstd])
                     nout=len(x1)-len(z1[0])
-                    x1=z1[0]; y1=z1[1];
+                    x1=z1[0]; y1=z1[1]
                     niter+=1
-                xval[i]=med2;
+                xval[i]=med2
                 meany[i]=av1; stdy[i]=std1; mediany[i]=med1
 
         if stdy[nbin-1]/mediany[nbin-1] > stdy[nbin-2]/mediany[nbin-2]:

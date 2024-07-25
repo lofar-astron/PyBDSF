@@ -13,7 +13,7 @@ Masked images aren't handled properly yet.
 from __future__ import absolute_import
 
 import numpy as N
-from .image import Op, Image, NArray
+from .image import Op
 from math import sqrt,pi,log
 from scipy.special import erfc
 from . import const
@@ -28,7 +28,7 @@ class Op_threshold(Op):
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Threshold ")
         data = img.ch0_arr
-        mask = img.mask_arr
+        # mask = img.mask_arr
         opts = img.opts
         size = N.product(img.ch0_arr.shape)
         sq2  = sqrt(2)

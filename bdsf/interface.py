@@ -534,7 +534,7 @@ def print_opts(grouped_opts_list, img, banner=None):
     to set the bold color in the profiles to white, as it defaults to red,
     which is a bit hard on the eyes in this case.
     """
-    from .image import Image
+    # from .image import Image
     import os
     from . import functions as func
 

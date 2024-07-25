@@ -310,7 +310,7 @@ class Op_gaul2srl(Op):
             same_isl1_min, same_isl1_cont = same_island_min(pair, g_list, subim, delc, tol)
             same_isl2 = same_island_dist(pair, g_list, tol/2.0)
 
-        g1 = g_list[pair[0]]
+        # g1 = g_list[pair[0]]
 
         same_island = (same_isl1_min and same_isl2) or same_isl1_cont
 
@@ -410,7 +410,7 @@ class Op_gaul2srl(Op):
         # "deconvolve" the sizes
         gaus_c = [mompara[3], mompara[4], mompara[5]]
         gaus_bm = [bm_pix[0], bm_pix[1], bm_pix[2]]
-        gaus_dc, err = func.deconv2(gaus_bm, gaus_c)
+        gaus_dc, _ = func.deconv2(gaus_bm, gaus_c)
         deconv_size_sky = img.pix2gaus(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]])
         deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, [mompara[1]+delc[0], mompara[2]+delc[1]], use_wcs=False)
 
@@ -462,7 +462,7 @@ class Op_gaul2srl(Op):
                     mompara3_MC[i] = mompara[3]
                     mompara4_MC[i] = mompara[4]
                     mompara5_MC[i] = mompara[5]
-            mompara0E = N.std(mompara0_MC)
+            # mompara0E = N.std(mompara0_MC)
             mompara1E = N.std(mompara1_MC)
             if mompara1E > 2.0*mompara[1]:
                 mompara1E = 2.0*mompara[1] # Don't let errors get too large

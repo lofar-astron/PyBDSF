@@ -11,7 +11,6 @@ mylogger.userinfo(mylog, 'info') --> print to screen (if quiet==False)
                                      and to logfile
 """
 import logging
-from socket import gethostname
 import copy
 
 def init_logger(logfilename, quiet=False, debug=False):

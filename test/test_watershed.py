@@ -5,7 +5,7 @@ from bdsf.const import fwsig
 from bdsf.gausfit import Op_gausfit as gg
 import bdsf.functions as func
 from _cbdsm import MGFunction
-from _cbdsm import lmder_fit, dn2g_fit, dnsg_fit
+from _cbdsm import lmder_fit
 import numpy as N
 from copy import deepcopy as cp
 
@@ -76,7 +76,7 @@ from bdsf.const import fwsig
 from bdsf.gausfit import Op_gausfit as gg
 import bdsf.functions as func
 from _cbdsm import MGFunction
-from _cbdsm import lmder_fit, dn2g_fit, dnsg_fit
+from _cbdsm import lmder_fit
 image = N.zeros((100,100))
 markers = N.zeros(image.shape, int)
 op1 = N.zeros(image.shape, int)
