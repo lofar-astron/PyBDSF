@@ -29,6 +29,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Needed for `setuptools-scm`
+          fetch-depth: 0
 
       - name: Setup Fortran
         uses: fortran-lang/setup-fortran@v1
