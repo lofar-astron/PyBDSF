@@ -19,7 +19,7 @@ jobs:
         # os: [ubuntu-latest]  #, macos-latest]
         os: [macos-12]
         toolchain:
-          - {compiler: gcc, version 12}
+          - {compiler: gcc, version: 12}
         # include:
         #   - os: macos-12
         #     toolchain: {compiler: gcc, version 12}
