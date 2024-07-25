@@ -12,19 +12,25 @@ on: [push] #, pull_request]
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    include:
-      - runs-on: macos-12
-        compiler: gcc
-        gcc: 12
     strategy:
       fail-fast: true
       matrix:
+        runs-on: ${{ matrix.os }}
         # os: [ubuntu-latest]  #, macos-latest]
         os: [macos-12]
+        include:
+          - runs-on: macos-12
+            compiler: gcc
+            gcc: 12
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select GCC version
+        if: matrix.gcc
+        run: |
+          echo "CC=gcc-${{ matrix.gcc }}" >> $GITHUB_ENV
+          echo "CXX=g++-${{ matrix.gcc }}" >> $GITHUB_ENV
 
       - name: Setup GNU Fortran
         uses: fortran-lang/setup-fortran@v1
