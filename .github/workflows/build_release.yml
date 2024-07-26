@@ -17,8 +17,8 @@ jobs:
       fail-fast: true
       matrix:
         os: [macos-14]
-        toolchain:
-          - {compiler: gcc, version: 12}
+        # toolchain:
+        #   - {compiler: gcc, version: 12}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +29,9 @@ jobs:
       - name: Setup Fortran
         uses: fortran-lang/setup-fortran@v1
         id: setup-fortran
-        with:
-          compiler: ${{ matrix.toolchain.compiler }}
-          version: ${{ matrix.toolchain.version }}
+        # with:
+        #   compiler: ${{ matrix.toolchain.compiler }}
+        #   version: ${{ matrix.toolchain.version }}
         if: runner.os == 'macOS'
 
       - name: Build wheels
