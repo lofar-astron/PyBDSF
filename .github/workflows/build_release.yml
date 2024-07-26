@@ -1,13 +1,13 @@
 name: Build and upload to PyPI
 
 # Only build and upload when a new release tag is created
-# on:
-  # push:
-  #   tags:
-  #     - "v[0-9]+.[0-9]+.[0-9]+"
-  #     - "v[0-9]+.[0-9]+.[0-9]+[a-z]+[0-9]+"
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+[a-z]+[0-9]+"
 # Alternatively, build on every branch push, tag push, and pull request change
-on: [push] #, pull_request]
+# on: [push, pull_request]
 
 jobs:
   build_wheels:
@@ -74,8 +74,8 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@v1.9.0
         with:
-          # user: __token__
-          # password: ${{ secrets.pypi_password }}
+          user: __token__
+          password: ${{ secrets.pypi_password }}
           # To test:
-          repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.test_pypi_password }}
+          # repository-url: https://test.pypi.org/legacy/
+          # password: ${{ secrets.test_pypi_password }}
