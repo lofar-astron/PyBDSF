@@ -28,8 +28,7 @@ function build_boost_python
   inc_dir=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
   cd "${BOOST_BUILD_DIR}/boost"
   ./bootstrap.sh --prefix="${BOOST_INSTALL_DIR}" \
-    --with-libraries=python \
-    --with-toolset=gcc
+    --with-libraries=python
   ./b2 -j"${nproc}" \
     cxxflags="-fPIC -I${inc_dir}" \
     link=static,shared \
