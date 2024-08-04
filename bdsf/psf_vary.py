@@ -2,14 +2,14 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as N
-from astropy.io import fits as pyfits
+# from astropy.io import fits as pyfits
 from .image import *
 from . import mylogger
-from copy import deepcopy as cp
+# from copy import deepcopy as cp
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
-import scipy
+# import scipy
 import scipy.signal as S
 from . import _cbdsm
 from . import functions as func
@@ -60,7 +60,7 @@ class Op_psf_vary(Op):
                 snrtop = opts.psf_snrtop; snrbot = opts.psf_snrbot; snrcutstack = opts.psf_snrcutstack
                 gencode = opts.psf_gencode; primarygen = opts.psf_primarygen; itess_method = opts.psf_itess_method
                 tess_sc = opts.psf_tess_sc; tess_fuzzy= opts.psf_tess_fuzzy
-                bright_snr_cut = opts.psf_high_snr
+                # bright_snr_cut = opts.psf_high_snr
                 s_only = opts.psf_stype_only
                 if opts.psf_snrcut < 5.0:
                     mylogger.userinfo(mylog, "Value of psf_snrcut too low; increasing to 5")
@@ -83,7 +83,7 @@ class Op_psf_vary(Op):
                 else: tess_method='unity'
 
                 ### now put all relevant gaussian parameters into a list
-                ngaus = img.ngaus
+                # ngaus = img.ngaus
                 nsrc = img.nsrc
                 num = N.zeros(nsrc, dtype=N.int32)
                 peak = N.zeros(nsrc)
@@ -94,7 +94,7 @@ class Op_psf_vary(Op):
                 bpa = N.zeros(nsrc)
                 code = N.array(['']*nsrc);
                 rms = N.zeros(nsrc)
-                src_id_list = []
+                # src_id_list = []
                 for i, src in enumerate(img.sources):
                     src_max = 0.0
                     for gmax in src.gaussians:
@@ -122,6 +122,7 @@ class Op_psf_vary(Op):
                 g_gauls = self.trans_gaul(tr)
 
                 # computes statistics of fitted sizes. Same as psfvary_fullstat.f in fBDSM.
+                # THESE ALL SEEMS TO BE UNUSED (?)
                 bmaj_a, bmaj_r, bmaj_ca, bmaj_cr, ni = _cbdsm.bstat(bmaj, None, nsig)
                 bmin_a, bmin_r, bmin_ca, bmin_cr, ni = _cbdsm.bstat(bmin, None, nsig)
                 bpa_a, bpa_r, bpa_ca, bpa_cr, ni = _cbdsm.bstat(bpa, None, nsig)
@@ -133,7 +134,7 @@ class Op_psf_vary(Op):
                     return
 
                 # see how much the SNR-weighted sizes of unresolved sources differ from the synthesized beam.
-                wtsize_beam_snr = self.av_psf(g_gauls, img.beam, flag_unresolved)
+                # wtsize_beam_snr = self.av_psf(g_gauls, img.beam, flag_unresolved)
 
                 # filter out resolved sources
                 tr_gaul = self.trans_gaul(g_gauls)
@@ -153,12 +154,12 @@ class Op_psf_vary(Op):
                 tile_prop = self.edit_vorogenlist(vorogenP, frac=0.9)
 
                 # tesselate the image
-                volrank, vorowts = self.tesselate(vorogenP, vorogenS, tile_prop, tess_method, tess_sc, tess_fuzzy, \
+                volrank, _ = self.tesselate(vorogenP, vorogenS, tile_prop, tess_method, tess_sc, tess_fuzzy, \
                           generators, gencode, image.shape)
                 if opts.output_all:
                     func.write_image_to_file(img.use_io, img.imagename + '.volrank.fits', volrank, img, dir)
 
-                tile_list, tile_coord, tile_snr = tile_prop
+                tile_list, tile_coord, _ = tile_prop
                 ntile = len(tile_list)
                 bar = statusbar.StatusBar('Determining PSF variation ............... : ', 0, ntile)
                 mylogger.userinfo(mylog, 'Number of tiles for PSF variation', str(ntile))
@@ -174,7 +175,7 @@ class Op_psf_vary(Op):
                 if opts.psf_fwhm is None:
                     # use totpsfimage to get beta, centre and nmax for shapelet decomposition. Use nmax=5 or 6
                     mask=N.zeros(totpsfimage.shape, dtype=bool)
-                    (m1, m2, m3)=func.moment(totpsfimage, mask)
+                    (_, _, m3)=func.moment(totpsfimage, mask)
                     betainit=sqrt(m3[0]*m3[1])*2.0  * 1.4
                     tshape = totpsfimage.shape
                     cen = N.array(N.unravel_index(N.argmax(totpsfimage), tshape))+[1,1]
@@ -196,7 +197,7 @@ class Op_psf_vary(Op):
                     bar.stop()
 
                     # transpose the psf image list
-                    xt, yt = N.transpose(tile_coord)
+                    # xt, yt = N.transpose(tile_coord)
                     tr_psf_cf = N.transpose(N.array(psf_cf))
 
                     # interpolate the coefficients across the image. Ok, interpolate in scipy for
@@ -236,7 +237,7 @@ class Op_psf_vary(Op):
                             maxv = N.max(psfim)
                             p_ini = [maxv, (psfim.shape[0]-1)/2.0*1.1, (psfim.shape[1]-1)/2.0*1.1, bm_pix[0]/fwsig*1.3,
                                      bm_pix[1]/fwsig*1.1, bm_pix[2]*2]
-                            para, ierr = func.fit_gaus2d(psfim, p_ini, x_ax, y_ax, mask)
+                            para, _ = func.fit_gaus2d(psfim, p_ini, x_ax, y_ax, mask)
                             ### first extent is major
                             if para[3] < para[4]:
                                 para[3:5] = para[4:2:-1]
@@ -408,16 +409,16 @@ class Op_psf_vary(Op):
                     med2=10.**(N.median(N.log10(x1[:])))
                     medstd=0    # calcmedianstd.f
                     for j in y1: medstd += (j-med1)*(j-med1)
-                    medstd=math.sqrt(medstd/len(y1))        #
+                    medstd=math.sqrt(medstd/len(y1))
                     av1=N.mean(y1); std1=func.std(y1)
-                    av2=N.mean(x1); std2=func.std(x1)
+                    # av2=N.mean(x1); std2=func.std(x1)
                     # get_medianclip_vec2
                     z=N.transpose([x1, y1])
                     z1=N.transpose([n for n in z if abs(n[1]-med1)<=nsig*medstd])
                     nout=len(x1)-len(z1[0])
-                    x1=z1[0]; y1=z1[1];
+                    x1=z1[0]; y1=z1[1]
                     niter+=1
-                xval[i]=med2;
+                xval[i]=med2
                 meany[i]=av1; stdy[i]=std1; mediany[i]=med1
 
         if stdy[nbin-1]/mediany[nbin-1] > stdy[nbin-2]/mediany[nbin-2]:
@@ -431,7 +432,7 @@ class Op_psf_vary(Op):
         if funct == func.wenss_fit:
             p0=N.array([y[N.argmax(x)]] + [1.])
         res=lambda p, x, y, err: (y-funct(p, x))/err
-        (p, flag)=leastsq(res, p0, args=(x, y, err))
+        (p, _)=leastsq(res, p0, args=(x, y, err))
         return p
 
 ##################################################################################################
@@ -439,7 +440,7 @@ class Op_psf_vary(Op):
     def fit_bins_func(self, x,y,over,ptpbin,nbin,ptplastbin,nsig):  # sub_size_ksclip
         import math
 
-        (xval,meany,stdy,medy)=self.bin_and_stats_ny(x,y,over,ptpbin,nbin,ptplastbin,nsig)
+        (xval,_,stdy,medy)=self.bin_and_stats_ny(x,y,over,ptpbin,nbin,ptplastbin,nsig)
         yfit=stdy/medy
         err=N.array([1.]*nbin)
         if ptplastbin > 0:
@@ -572,7 +573,7 @@ class Op_psf_vary(Op):
     def get_voronoi_generators(self, g_gauls, generators, gencode, snrcut, snrtop, snrbot, snrcutstack):
         """This gets the list of all voronoi generators. It is either the centres of the brightest
         sources, or is imported from metadata (in future)."""
-        from math import sqrt
+        # from math import sqrt
 
         num=len(g_gauls[0])
         snr=N.asarray(g_gauls[1])/N.asarray(g_gauls[8])
@@ -696,7 +697,7 @@ class Op_psf_vary(Op):
             xgen, ygen = tilecoord
             xgen = N.asarray(xgen)
             ygen = N.asarray(ygen)
-            ngen = len(xgen)
+            # ngen = len(xgen)
             i,j = pixel
             dist = N.sqrt((i-xgen)*(i-xgen)+(j-ygen)*(j-ygen))/wts
             minind = dist.argmin()
@@ -709,6 +710,7 @@ class Op_psf_vary(Op):
         return tilenum
 
 ##################################################################################################
+    # vorogenP, vorogenS, generators, gencode are unused
     def tesselate(self, vorogenP, vorogenS, tile_prop, tess_method, tess_sc, tess_fuzzy, generators, gencode, shape):
         """ Various ways of tesselating. If generators='calibrator', no need to tesselate, just get
         modified list based on very nearby sources. If generators='field' then tesselate. The image
@@ -719,7 +721,7 @@ class Op_psf_vary(Op):
               'sqrtlog10' : lambda x : N.sqrt(N.log10(x)), \
               'roundness' : N.array}
 
-        tile_list, tile_coord, tile_snr = tile_prop
+        _, tile_coord, tile_snr = tile_prop
         xt = self.trans_gaul(tile_coord)[0]
         yt = self.trans_gaul(tile_coord)[1]
         vorogenT = xt, yt, tile_snr
@@ -735,6 +737,7 @@ class Op_psf_vary(Op):
         return volrank, wts
 
 ##################################################################################################
+    # plot is unused
     def edit_tile(self, ltnum, g_gauls, flag_unresolved, snrcutstack, volrank, tile_prop, tess_sc, \
                   tess_fuzzy, wts, tess_method, plot):
         """ Looks at tiles with no (or one) unresolved source inside it and deletes it and recomputes
@@ -760,7 +763,7 @@ class Op_psf_vary(Op):
         wts_n = [n for i,n in enumerate(wts) if i in goodtiles]
 
         r2t = N.zeros(ntile, dtype=int)
-        entry = -1
+        # entry = -1
         for itile in range(ntile):
             if ngenpertile[itile] >= ltnum:
                 r2t[itile] = itile
@@ -992,6 +995,7 @@ class Op_psf_vary(Op):
         return prop_int
 
 ##################################################################################################
+    # imshape, totpsfimage, plot are unused
     def create_psf_grid(self, psf_coeff_interp, imshape, xgrid, ygrid, skip, nmax, psfshape, basis, beta,
         cen, totpsfimage, plot):
         """ Creates a image with the gridded interpolated psfs. xgrid and ygrid are 1d numpy arrays
@@ -1012,12 +1016,12 @@ class Op_psf_vary(Op):
 #             stop = N.array((pax.xmax, pax.ymax))
 #             sz=0.07
         mask=N.zeros(psfshape, dtype=bool)   # right now doesnt matter
-        xg=xgrid[::skip+1]
-        yg=ygrid[::skip+1]
+        # xg=xgrid[::skip+1]
+        # yg=ygrid[::skip+1]
         index = [(i,j) for i in range(0,len(xgrid),skip+1) for j in range(0,len(ygrid),skip+1)]
-        xy = [(i,j) for i in xgrid[::skip+1] for j in ygrid[::skip+1]]
+        # xy = [(i,j) for i in xgrid[::skip+1] for j in ygrid[::skip+1]]
         blah=[]
-        for i, coord in enumerate(index):
+        for _, coord in enumerate(index):
             maxpsfshape = [0, 0]
             for k in psf_coeff_interp:
                 if k[0]+1 > maxpsfshape[0]:

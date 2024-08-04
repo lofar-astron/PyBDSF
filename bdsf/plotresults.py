@@ -9,15 +9,15 @@ from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
     import matplotlib.cm as cm
-    import matplotlib.patches as mpatches
-    from matplotlib.widgets import Button
+    # import matplotlib.patches as mpatches
+    # from matplotlib.widgets import Button
     from matplotlib.patches import Ellipse
-    from matplotlib.lines import Line2D
+    # from matplotlib.lines import Line2D
     from matplotlib import collections
-from math import log10
+# from math import log10
 from . import functions as func
 from .const import fwsig
-import os
+# import os
 import warnings
 import numpy as N
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -51,7 +51,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         else:
             samp_gaul_table_url = None
     else:
-        samp_clent = None
+        # samp_clent = None
         samp_key = None
         samp_srl_table_url = None
         samp_gaul_table_url = None
@@ -221,7 +221,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
     ch0max = N.log10(img.max_value + low)
     vmin_cur = vmin
     vmax_cur = vmax
-    origin = 'lower'
+    # origin = 'lower'
     colours = ['m', 'b', 'c', 'g', 'y', 'k'] # reserve red ('r') for wavelets
     styles = ['-', '-.', '--']
     print('=' * 72)
@@ -430,7 +430,7 @@ def on_pick(event):
             has_sed = True
         if not has_sed:
             return
-        ax_indx = images.index('seds')
+        # ax_indx = images.index('seds')
         sed_src = get_src(src_list, src_id)
         if srcid_cur == src_id:
             return
@@ -539,7 +539,7 @@ def on_press(event):
                 except RuntimeError:
                     print('Sorry, unable to change source.')
                     return
-        ax_indx = images.index('seds')
+        # ax_indx = images.index('seds')
         sed_src = get_src(src_list, srcid)
         if sed_src is None:
             print('Source not found!')
@@ -715,7 +715,7 @@ def plot_sed(src, ax):
     ax.cla()
     norm = src.spec_norm
     spin = src.spec_indx
-    espin = src.e_spec_indx
+    # espin = src.e_spec_indx
     y = N.array(src.specin_flux)
     ey = N.array(src.specin_fluxE)
     x = N.array(src.specin_freq)

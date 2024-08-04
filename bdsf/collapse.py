@@ -38,7 +38,7 @@ class Op_collapse(Op):
                 c_mode = 'single'
                 chan0 = c_list[0]
                 img.collapse_ch0 = chan0
-            ch0sh = img.image_arr.shape[2:]
+            # ch0sh = img.image_arr.shape[2:]
             if img.opts.polarisation_do:
                 ch0images = ['ch0_arr', 'ch0_Q_arr', 'ch0_U_arr', 'ch0_V_arr']
             else:
@@ -116,7 +116,7 @@ class Op_collapse(Op):
                         mylog.debug('%s %s %s' % ('Channel weights : ', str1, '; unity=zero if c_wts="rms"'))
                 elif c_mode=='file':
                     mylogger.userinfo(mylog, 'Reading ch0 image from file %s' % (img.opts.collapse_file))
-                    image,hdr=func.read_image_from_file(img.opts.collapse_file, img, None, quiet=False)
+                    image, _=func.read_image_from_file(img.opts.collapse_file, img, None, quiet=False)
                     if pol == 'I':
                         ch0 = image[0,0]
                         img.ch0_arr = ch0

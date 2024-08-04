@@ -545,9 +545,9 @@ pydoc.help = bdsmDocHelper(sys.stdin, sys.stdout)
 # local directory when they might be needed (but only if the user has started
 # to enter a string -- this behavior is to help avoid entering filenames as
 # non-strings; this is also done for the help autocomplete).
-def _opts_completer(self, event):
+def _opts_completer(self, event): # self is not used here
     """ Returns a list of strings with possible completions."""
-    import os
+    # import os
     import glob
     from bdsf.image import Image
     img = Image({'filename':''})

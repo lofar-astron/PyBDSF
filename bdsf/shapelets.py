@@ -9,10 +9,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as N
-try:
-    from astropy.io import fits as pyfits
-except ImportError as err:
-    import pyfits
+# try:
+#     from astropy.io import fits as pyfits
+# except ImportError as err:
+#     import pyfits
 from scipy.optimize import leastsq
 
 def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
@@ -38,8 +38,8 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
         cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
-        npix = N.product(image.shape)-N.sum(mask)
-        npara = (nmax+1)*(nmax+2)*0.5
+        # npix = N.product(image.shape)-N.sum(mask)
+        # npara = (nmax+1)*(nmax+2)*0.5
         cfnew = fit_shapeletbasis(image, mask, cf, Bset)
         recon1 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cf)
         recon2 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cfnew)
@@ -81,6 +81,7 @@ def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
 
     return rimage
 
+# basis is not used
 def shapelet_image(basis, beta, centre, hc, nx, ny, size):
     """ Takes basis, beta, centre (2-tuple), hc matrix, x, y, size and returns the image of the shapelet of
     order nx,ny on an image of size size. Does what getcartim.f does in fBDSM. nx,ny -> 0-nmax
@@ -129,7 +130,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     we find intersection point of these two. This seems to work even for highly
     non-gaussian cases. """
     from . import functions as func
-    import sys
+    # import sys
 
     hc = []
     hc = shapelet_coeff(nmax, basis)
@@ -146,7 +147,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
             B12 = shapelet_image(basis, beta, coord, hc, 0, 1, image.shape)
             cf12[coord] = N.sum(image*B12*msk)
 
-            if coord==(27,51): dumpy = B12
+            # if coord==(27,51): dumpy = B12
 
             B21 = shapelet_image(basis, beta, coord, hc, 1, 0, image.shape)
             cf21[coord] = N.sum(image*B21*msk)
@@ -156,7 +157,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
 
     (xmax,ymax) = N.unravel_index(image.argmax(),image.shape)  #  FIX  with mask
     if xmax in [1,n] or ymax in [1,m]:
-        (m1, m2, m3) = func.moment(mask)
+        (m1, m2, _) = func.moment(mask)
         xmax,ymax = N.round(m2)
 
     # in high snr area, get zero crossings for each horizontal and vertical line for c1, c2 resp
@@ -297,7 +298,7 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
         yfit=yfn[low:low+nfit]
         sig=N.ones(nfit)
         smask=N.zeros(nfit, dtype=bool)
-        xx=[i for i in range(low,low+nfit)]
+        # xx=[i for i in range(low,low+nfit)]
 
         [c, m], errors = func.fit_mask_1d(xfit, yfit, sig, smask, func.poly, do_err=False, order=1)
         root=-c/m

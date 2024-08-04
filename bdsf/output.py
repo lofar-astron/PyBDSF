@@ -255,7 +255,7 @@ def write_lsm_gaul(img, filename=None, srcroot=None, patch=None,
         mylog.warning('Equinox of input image is B1950. Coordinates '
                       'will be precessed to J2000.')
 
-    outl, outn, patl = list_and_sort_gaussians(img, patch=patch,
+    outl, outn, _ = list_and_sort_gaussians(img, patch=patch,
                                                root=srcroot, sort_by=sort_by)
     outstr_list = make_lsm_str(img, outl, outn, incl_empty=incl_empty)
 
@@ -406,7 +406,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
                                                               nmax=nmax, nchan=img.nchan)
     out_list = make_fits_list(img, outl, objtype=objtype, nmax=nmax, incl_empty=incl_empty, incl_chan=incl_chan)
     col_list = []
-    for ind, col in enumerate(out_list):
+    for ind, _ in enumerate(out_list):
         list1 = pyfits.Column(name=cnames[ind], format=cformats[ind],
                               unit=cunits[ind], array=N.array(out_list[ind]))
         col_list.append(list1)
@@ -496,7 +496,7 @@ def write_star(img, filename=None, sort_by='indx',
     f = open(filename, 'w')
     mylog.info('Writing '+filename)
 
-    outl, outn, patl = list_and_sort_gaussians(img, patch=None, sort_by=sort_by)
+    outl, _, _ = list_and_sort_gaussians(img, patch=None, sort_by=sort_by)
 
     for g in outl[0]:
         A = g.peak_flux
@@ -782,13 +782,13 @@ def make_fits_list(img, glist, objtype='gaul', nmax=30, incl_empty=False,
     else:
         incl_aper = False
     for g in glist[0]:
-        cvals, ext1, ext2, ext3 = make_output_columns(g, fits=True, objtype=objtype,
-                                                      incl_spin=img.opts.spectralindex_do,
-                                                      incl_chan=incl_chan,
-                                                      incl_pol=img.opts.polarisation_do,
-                                                      incl_aper=incl_aper,
-                                                      incl_empty=incl_empty,
-                                                      nmax=nmax, nchan=img.nchan)
+        cvals, _, _, _ = make_output_columns(g, fits=True, objtype=objtype,
+                                            incl_spin=img.opts.spectralindex_do,
+                                            incl_chan=incl_chan,
+                                            incl_pol=img.opts.polarisation_do,
+                                            incl_aper=incl_aper,
+                                            incl_empty=incl_empty,
+                                            nmax=nmax, nchan=img.nchan)
         if cvals is not None:
             out_list.append(cvals)
     out_list = func.trans_gaul(out_list)
@@ -800,7 +800,7 @@ def make_casa_str(img, glist):
     from . import functions as func
     outstr_list = ['#CRTFv0 CASA Region Text Format version 0\n']
     scale = 2.0  # scale box to 2 times FWHM of Gaussian
-    for gindx, g in enumerate(glist[0]):
+    for _, g in enumerate(glist[0]):
         x, y = g.centre_pix
         ellx, elly = func.drawellipse(g)
         blc = [min(ellx), min(elly)]

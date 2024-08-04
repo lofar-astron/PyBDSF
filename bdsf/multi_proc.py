@@ -123,7 +123,7 @@ def run_tasks(procs, err_q, out_q, num):
     # Processes finish in arbitrary order. Process IDs double
     # as index in the resultant array.
     results=[None]*num;
-    for i in range(num):
+    for _ in range(num):
         idx, result = out_q.get()
         results[idx] = result
 

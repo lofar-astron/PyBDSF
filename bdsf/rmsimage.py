@@ -12,7 +12,7 @@ from __future__ import absolute_import
 import numpy as N
 import scipy.ndimage as nd
 from . import _cbdsm
-from .image import Op, Image, NArray, List
+from .image import Op
 from . import const
 from . import mylogger
 import os
@@ -98,7 +98,7 @@ class Op_rmsimage(Op):
         isl_size_bright = []
         isl_area_highthresh = []
         isl_peak = []
-        max_isl_brightsize = 0.0
+        # max_isl_brightsize = 0.0
         threshold = start_thresh
         if do_adapt:
             mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
@@ -113,7 +113,7 @@ class Op_rmsimage(Op):
                 threshold *= 0.8
                 rank = len(image.shape)
                 connectivity = nd.generate_binary_structure(rank, rank)
-                labels, count = nd.label(act_pixels, connectivity)
+                labels, _ = nd.label(act_pixels, connectivity)
                 slices = nd.find_objects(labels)
                 for idx, s in enumerate(slices):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
@@ -127,7 +127,7 @@ class Op_rmsimage(Op):
         # the bright source is embedded inside a large island or not. If it is,
         # exclude it from the bright-island list. Also find the size of the
         # largest island at this threshold to set the large-scale rms_box
-        bright_threshold = threshold
+        # bright_threshold = threshold
         threshold = 10.0
         if img.masked:
             act_pixels = ~(mask.copy())
@@ -136,13 +136,13 @@ class Op_rmsimage(Op):
             act_pixels = (image-cmean)/threshold >= crms
         rank = len(image.shape)
         connectivity = nd.generate_binary_structure(rank, rank)
-        labels, count = nd.label(act_pixels, connectivity)
+        labels, _ = nd.label(act_pixels, connectivity)
         slices = nd.find_objects(labels)
         isl_size = []
         isl_size_highthresh = []
         isl_size_lowthresh = []
         isl_snr = []
-        thratio = threshold/bright_threshold
+        # thratio = threshold/bright_threshold
         for idx, s in enumerate(slices):
             isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
             isl_maxposn_lowthresh = tuple(N.array(N.unravel_index(N.argmax(image[s]), image[s].shape))+
@@ -163,11 +163,11 @@ class Op_rmsimage(Op):
         mylog.info('Maximum extent of largest 10-sigma island using clipped rms (pixels) = '+str(max_isl_size))
         if len(isl_size_highthresh) == 0:
             max_isl_size_highthresh = 0.0
-            max_isl_size_lowthresh = 0.0
+            # max_isl_size_lowthresh = 0.0
         else:
             max_isl_size_highthresh = max(isl_size_highthresh)
-            max_isl_size_lowthresh = max(isl_size_lowthresh)
-            avg_max_isl_size = (max_isl_size_highthresh + max_isl_size_lowthresh) / 2.0
+            # max_isl_size_lowthresh = max(isl_size_lowthresh)
+            # avg_max_isl_size = (max_isl_size_highthresh + max_isl_size_lowthresh) / 2.0
 
         if hasattr(img, '_adapt_rms_isl_pos'):
             isl_pos = img._adapt_rms_isl_pos # set isl_pos to existing value (for wavelet analysis)
@@ -251,11 +251,11 @@ class Op_rmsimage(Op):
                     mylogger.userinfo(mylog, "Skipping mean and rms image computation as external images supplied")
                     mylogger.userinfo(mylog, "   Opening mean image: %s"%mean_fits_name)
                     # mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
-                    mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
+                    mean, _ = read_image_from_file(mean_fits_name, img, img.indir)
                     CheckShape(mean); mean = mean[0,0]
                     mylogger.userinfo(mylog, "   Opening rms image: %s"%rms_fits_name)
                     # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
-                    rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
+                    rms, _ = read_image_from_file(rms_fits_name, img, img.indir)
                     CheckShape(rms); rms = rms[0,0]
 
                 elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
@@ -393,10 +393,10 @@ class Op_rmsimage(Op):
         if img.masked:
             unmasked = N.where(~img.mask_arr)
             stdsub = N.std(rms[unmasked])
-            maxrms = N.max(rms[unmasked])
+            # maxrms = N.max(rms[unmasked])
         else:
             stdsub = N.std(rms)
-            maxrms = N.max(rms)
+            # maxrms = N.max(rms)
 
         rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of rms image = ', stdsub*1000.0, 'mJy'))
@@ -424,10 +424,10 @@ class Op_rmsimage(Op):
         if img.masked:
             unmasked = N.where(~img.mask_arr)
             stdsub = N.std(mean[unmasked])
-            maxmean = N.max(mean[unmasked])
+            # maxmean = N.max(mean[unmasked])
         else:
             stdsub = N.std(mean)
-            maxmean = N.max(mean)
+            # maxmean = N.max(mean)
         rms_expect = img.clipped_rms/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of mean image = ', stdsub*1000.0, 'mJy'))
         mylog.debug('%s %10.6f %s' % ('Expected standard deviation = ', rms_expect*1000.0, 'mJy'))
@@ -537,7 +537,7 @@ class Op_rmsimage(Op):
         axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)]
         ax = N.meshgrid(*ax[-1::-1])
-        pt_src_scale = box[0]
+        # pt_src_scale = box[0]
         if do_adapt:
             out_rms2 = N.zeros(rms_map1.shape, dtype=N.float32)
             out_mean2 = N.zeros(rms_map1.shape, dtype=N.float32)
