@@ -17,8 +17,8 @@ jobs:
       fail-fast: true
       matrix:
         os: [macos-14]
-        toolchain:
-          - {compiler: gcc}
+        # toolchain:
+        #   - {compiler: gcc}
 
     steps:
       - uses: actions/checkout@v4
@@ -36,8 +36,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "14.0"
+        # env:
+        #   MACOSX_DEPLOYMENT_TARGET: "14.0"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
