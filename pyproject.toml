@@ -89,7 +89,7 @@ environment = """ \
     FC=gfortran \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
-# test-command = "cd {package}/test && python tbdsf_process_image.py"
+test-command = "cd {package}/test && python tbdsf_process_image.py"
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = """\
