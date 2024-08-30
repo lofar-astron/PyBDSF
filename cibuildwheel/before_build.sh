@@ -29,6 +29,7 @@ function build_boost_python
   cd "${BOOST_BUILD_DIR}/boost"
   ./bootstrap.sh \
     --prefix="${BOOST_INSTALL_DIR}" \
+    --with-toolset=gcc \
     --with-libraries=python
   ./b2 -j"${nproc}" -d0 \
     cxxflags="-fPIC -I${inc_dir}" \
