@@ -18,7 +18,7 @@ function cleanup
 # Install oldest supported numpy
 function install_numpy
 {
-  pip install oldest-supported-numpy
+  pip install numpy
 }
 
 # Build the Boost Python libraries
