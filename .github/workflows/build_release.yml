@@ -17,8 +17,8 @@ jobs:
       fail-fast: true
       matrix:
         os: [macos-14]
-        # toolchain:
-        #   - {compiler: gcc}
+        toolchain:
+          - {compiler: gcc}
 
     steps:
       - uses: actions/checkout@v4
