@@ -11,7 +11,7 @@ requires = [
     "numpy<2",
     "scikit-build>=0.13",
     "setuptools",
-    "setuptools<65; python_version<'3.11'",
+    "setuptools<65; python_version<'3.12'",
     "setuptools_scm",
     "wheel",
 ]
@@ -99,7 +99,7 @@ repair-wheel-command = """\
 """
 
 [tool.cibuildwheel.linux]
-skip = ["*-musllinux_*"]
+skip = ["*-musllinux_*", "*_i686"]
 
 
 ###########################
