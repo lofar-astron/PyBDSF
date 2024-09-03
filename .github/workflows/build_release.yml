@@ -16,12 +16,14 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [macos-12]
+        os: [macos-12, macos-14]
         toolchain:
           - {compiler: gcc, version: 12}
         include:
           - os: macos-12
             macosx_deployment_target: "12.0"
+          - os: macos-14
+            macosx_deployment_target: "14.0"
   
     steps:
       - uses: actions/checkout@v4
