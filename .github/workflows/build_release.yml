@@ -54,6 +54,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Needed for `setuptools-scm`
+          fetch-depth: 0
 
       - name: Build sdist
         run: pipx run build --sdist
