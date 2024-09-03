@@ -8,9 +8,10 @@ requires = [
     "cmake>=3.18",
     "meson",
     "ninja",
-    "oldest-supported-numpy",
+    "numpy<2",
     "scikit-build>=0.13",
     "setuptools",
+    "setuptools<65; python_version<'3.11'",
     "setuptools_scm",
     "wheel",
 ]
