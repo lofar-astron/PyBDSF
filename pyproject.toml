@@ -76,7 +76,8 @@ Documentation = "https://pybdsf.readthedocs.io"
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
-build = "cp3{8,9,10,11,12}-*"
+#build = "cp3{8,9,10,11,12}-*"
+build = "cp312-*"
 build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.85.0" \
