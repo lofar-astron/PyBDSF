@@ -15,7 +15,7 @@ function cleanup
   rm -rf "${BOOST_INSTALL_DIR}"
 }
 
-# Install numpy 1.x; we do not yet support numpy 2.x
+# Install latest numpy 1.x; we do not yet support numpy 2.x
 function install_numpy
 {
   pip install 'numpy<2'
