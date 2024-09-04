@@ -15,10 +15,10 @@ function cleanup
   rm -rf "${BOOST_INSTALL_DIR}"
 }
 
-# Install oldest supported numpy
+# Install numpy 1.x; we do not yet support numpy 2.x
 function install_numpy
 {
-  pip install oldest-supported-numpy
+  pip install 'numpy<2'
 }
 
 # Build the Boost Python libraries
