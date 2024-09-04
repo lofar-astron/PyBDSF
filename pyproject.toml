@@ -11,6 +11,7 @@ requires = [
     "oldest-supported-numpy",
     "scikit-build>=0.13",
     "setuptools",
+    "setuptools<65; python_version<'3.12'",
     "setuptools_scm",
     "wheel",
 ]
