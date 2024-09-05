@@ -1,36 +1,34 @@
 name: Build and upload to PyPI
 
-# # Only build and upload when a new release tag is created
-# on:
-#   push:
-#     tags:
-#       - "v[0-9]+.[0-9]+.[0-9]+"
-#       - "v[0-9]+.[0-9]+.[0-9]+[a-z]+[0-9]+"
+# Only build and upload when a new release tag is created
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+[a-z]+[0-9]+"
 # Alternatively, build on every branch push, tag push, and pull request change
-on: [push]  #, pull_request]
+# on: [push, pull_request]
 
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        # os: [ubuntu-latest, macos-12, macos-14]
-        os: [ubuntu-latest, macos-14]
+        os: [ubuntu-latest, macos-12, macos-14]
         toolchain:
           - {compiler: gcc, version: 12}
         include:
-          # - os: macos-12
-          #   macosx_deployment_target: "12.0"
+          - os: macos-12
+            macosx_deployment_target: "12.0"
           - os: macos-14
             macosx_deployment_target: "14.0"
-  
+
     steps:
       - uses: actions/checkout@v4
         with:
-          # Needed for `setuptools-scm`
-          fetch-depth: 0
+          fetch-depth: 0  # needed for versioning with `setuptools-scm`
 
       - name: Setup Fortran
         uses: fortran-lang/setup-fortran@v1
@@ -57,8 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Needed for `setuptools-scm`
-          fetch-depth: 0
+          fetch-depth: 0  # needed for versioning with `setuptools-scm`
 
       - name: Build sdist
         run: pipx run build --sdist
@@ -69,6 +66,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload_pypi:
+    name: Publish on PyPI
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     permissions:
@@ -80,12 +78,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          # unpack artifacts in `dist` where the next action expects them to be
-          path: dist
+          path: dist  # put artifacts where next action expects them to be
           merge-multiple: true
       - uses: pypa/gh-action-pypi-publish@v1.10.1
         with:
           skip-existing: true
-          verbose: true
           # To test:
-          repository-url: https://test.pypi.org/legacy/
+          # repository-url: https://test.pypi.org/legacy/

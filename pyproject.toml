@@ -74,10 +74,9 @@ Documentation = "https://pybdsf.readthedocs.io"
 #########################
 
 [tool.cibuildwheel]
-# before-all = "cibuildwheel/before_all.sh"
-# before-build = "cibuildwheel/before_build.sh"
-#build = "cp3{8,9,10,11,12}-*"
-build = "cp312-*"
+before-all = "cibuildwheel/before_all.sh"
+before-build = "cibuildwheel/before_build.sh"
+build = "cp3{8,9,10,11,12}-*"
 build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.85.0" \
@@ -90,7 +89,7 @@ environment = """ \
     FC=gfortran \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
-# test-command = "cd {package}/test && python tbdsf_process_image.py"
+test-command = "cd {package}/test && python tbdsf_process_image.py"
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = """\
