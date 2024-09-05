@@ -84,8 +84,10 @@ jobs:
           merge-multiple: true
       - run: ls -lR
 
-      - uses: pypa/gh-action-pypi-publish@v1.9.0
+      - uses: pypa/gh-action-pypi-publish@v1.10.1
         with:
+        permissions:
+          id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
           user: __token__
           password: ${{ secrets.pypi_password }}
           # To test:
