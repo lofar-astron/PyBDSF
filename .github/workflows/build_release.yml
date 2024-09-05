@@ -86,10 +86,10 @@ jobs:
           merge-multiple: true
       - run: ls -lR
 
-      # - uses: pypa/gh-action-pypi-publish@v1.9.0
-      #   with:
-      #     # user: __token__
-      #     # password: ${{ secrets.pypi_password }}
-      #     # To test:
-      #     repository-url: https://test.pypi.org/legacy/
-      #     password: ${{ secrets.test_pypi_password }}
+      - uses: pypa/gh-action-pypi-publish@v1.9.0
+        with:
+          # user: __token__
+          # password: ${{ secrets.pypi_password }}
+          # To test:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.test_pypi_password }}
