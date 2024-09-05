@@ -71,25 +71,21 @@ jobs:
   upload_pypi:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
-    # upload to PyPI on every tag starting with 'v'
-    if: github.event_name == 'push' # && startsWith(github.ref, 'refs/tags/v')
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
-    # if: github.event_name == 'release' && github.event.action == 'published'
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    # Upload to PyPI on every tag starting with 'v'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    # Alternatively, to publish when a GitHub Release is created, use the following rule:
+    # if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v4
         with:
           # unpack artifacts in `dist` where the next action expects them to be
           path: dist
-          # pattern: dist/*
           merge-multiple: true
-      - run: ls -lR
-
       - uses: pypa/gh-action-pypi-publish@v1.10.1
         with:
+          skip-existing: true
           verbose: true
-          # user: __token__
-          # password: ${{ secrets.pypi_password }}
           # To test:
           repository-url: https://test.pypi.org/legacy/
