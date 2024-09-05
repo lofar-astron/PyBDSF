@@ -45,8 +45,9 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macosx_deployment_target }}
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: wheel-${{ matrix.os }}
           path: wheelhouse/*.whl
 
   build_sdist:
@@ -61,8 +62,9 @@ jobs:
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: tarball
           path: dist/*.tar.gz
 
   upload_pypi:
