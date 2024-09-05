@@ -88,6 +88,7 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@v1.10.1
         with:
+          verbose: true
           user: __token__
           password: ${{ secrets.pypi_password }}
           # To test:
