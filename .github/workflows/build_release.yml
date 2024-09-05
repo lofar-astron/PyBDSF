@@ -81,7 +81,7 @@ jobs:
           # unpacks default artifact into dist/
           # if `name: artifact` is omitted, the action will create extra parent dir
           # name: artifact
-          # path: dist
+          path: dist
           # pattern: dist/*
           merge-multiple: true
       - run: ls -lR
