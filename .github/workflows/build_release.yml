@@ -47,7 +47,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.os }}
+          name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
 
   build_sdist:
@@ -78,15 +78,17 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           # unpacks default artifact into dist/
-          name: 
-            - tarball
-            - wheel-${{ matrix.os }}
+          # if `name: artifact` is omitted, the action will create extra parent dir
+          name: artifact
           path: dist
+          pattern: *
+          merge-multiple: true
+      - run: ls -lR dist artifact
 
-      - uses: pypa/gh-action-pypi-publish@v1.9.0
-        with:
-          # user: __token__
-          # password: ${{ secrets.pypi_password }}
-          # To test:
-          repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.test_pypi_password }}
+      # - uses: pypa/gh-action-pypi-publish@v1.9.0
+      #   with:
+      #     # user: __token__
+      #     # password: ${{ secrets.pypi_password }}
+      #     # To test:
+      #     repository-url: https://test.pypi.org/legacy/
+      #     password: ${{ secrets.test_pypi_password }}
