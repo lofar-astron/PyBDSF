@@ -8,7 +8,7 @@ requires = [
     "cmake>=3.18",
     "meson",
     "ninja",
-    "oldest-supported-numpy",
+    "numpy<2",
     "scikit-build>=0.13",
     "setuptools",
     "setuptools<65; python_version<'3.12'",
@@ -76,10 +76,10 @@ Documentation = "https://pybdsf.readthedocs.io"
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
-build = "cp3{8,9,10,11,12}-*_x86_64"
+build = "cp3{8,9,10,11,12}-*"
 build-verbosity = 1
 environment = """ \
-    BOOST_VERSION="1.81.0" \
+    BOOST_VERSION="1.85.0" \
     BOOST_BUILD_DIR="/tmp/boost-build" \
     BOOST_INSTALL_DIR="${HOME}/boost" \
     BOOST_ROOT="${BOOST_INSTALL_DIR}" \
@@ -98,7 +98,7 @@ repair-wheel-command = """\
 """
 
 [tool.cibuildwheel.linux]
-skip = ["*-musllinux_*"]
+skip = ["*-musllinux_*", "*_i686"]
 
 
 ###########################
