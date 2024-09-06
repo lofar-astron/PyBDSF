@@ -8,6 +8,39 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2024/07/26 - Version 1.11.0
+
+    2024/07/26 - Prepare release v1.11 (#234)
+
+    2024/07/01 - Add checks of output to tests (#231)
+
+    2024/06/20 - Set upper limit on NumPy version (#230)
+
+    2024/06/12 - Output island rms and mean values for wavelet Gaussians (#228)
+
+    2024/05/06 - Use setuptools_scm (#224)
+
+    2024/05/02 - Fix ReadtheDocs (#223)
+
+    2024/04/24 - Remove pyfits version checks (#222)
+
+    2024/03/21 - Fix issue with frequency_sp being ignored (#219)
+
+    2024/03/11 - Fix python3.12 build (#217)
+
+    2024/03/08 - Replace distutils for Python 3.12 (#216)
+
+    2023/09/13 - Fix save of residual image and add option to save model image (#213)
+
+    2023/07/13 - Fix issues with error estimation (#211)
+
+    2023/07/05 - Fix various issue with the spectral index module (#210)
+
+    2023/07/05 - Add options for use with a detection image (#209)
+
+    2023/06/02 - Use scikit-build (#204)
+
+
     2023/05/22 - Version 1.10.3
 
     2023/05/08 - Fix build issue with Python 3.11 (#205)
@@ -20,6 +53,7 @@ def changelog():
         Use the new method call `canvas.manager.set_window_title`
 
     2023/04/28 - Replace Travis CI with GitHub actions (#196)
+
 
     2023/02/10 - Version 1.10.2
 
@@ -37,7 +71,11 @@ def changelog():
 
     2022/10/05 - Use len() instead of numpy.alen() (#180)
 
-    2022/02/14 - Version 1.10.1: Fix Numpy API incompatibility issue
+
+    2022/02/14 - Version 1.10.1
+
+    2022/02/14 - Fix Numpy API incompatibility issue
+
 
     2022/02/09 - Version 1.10.0
 
@@ -56,11 +94,13 @@ def changelog():
     2020/04/07 - Allow a file to be supplied for the ch0 image used in the
         spectral index module (PR #127)
 
+
     2019/12/05 - Version 1.9.2
 
     2019/12/04 - Fix exception behaviour if spline order change does not work
 
     2019/09/27 - Add check for frequency info in header
+
 
     2019/09/25 - Version 1.9.1
 
@@ -72,11 +112,13 @@ def changelog():
 
     2019/05/08 - Fix crash in Gaussian fitting (#96)
 
+
     2019/03/25 - Version 1.9.0
 
     2018/10/18 - Add support for Python 3
 
     2018/10/18 - Fix various minor bugs
+
 
     2018/10/12 - Version 1.8.15
 
@@ -85,6 +127,7 @@ def changelog():
     2018/10/04 - Fix math domain error (#76)
 
     2018/06/21 - Fix setup.py for boost versions > 1.63
+
 
     2018/05/18 - Version 1.8.14
 
@@ -97,9 +140,11 @@ def changelog():
     2018/05/18 - Make PyBDSF compatible with newer boost libraries, specifically
         those used in Ubuntu 18.04 (#55)
 
+
     2017/11/17 - Version 1.8.13
 
     2017/11/17 - Remove deprecated boolean operators
+
 
     2017/09/01 - Version 1.8.12
 
@@ -109,18 +154,22 @@ def changelog():
 
     2017/09/01 - Fix compile error with numpy 1.13
 
+
     2017/06/01 - Version 1.8.11
 
     2017/06/01 - Fix for interactive shell problem
+
 
     2017/05/31 - Version 1.8.10
 
     2017/05/31 - Fixes for various installation and runtime issues on modern systems.
 
+
     2017/03/23 - Version 1.8.9
 
     2017/03/23 - Fix to bug that causes an error when grouping Gaussians
         into sources
+
 
     2017/03/17 - Version 1.8.8
 
@@ -128,10 +177,12 @@ def changelog():
 
     2017/02/28 - Fix to issues related to numpy >= 1.12 and astropy >= 1.3
 
+
     2016/06/10 - Version 1.8.7
 
     2016/06/10 - Fix to bug that caused incorrect output images when input
         image was not square.
+
 
     2016/01/20 - Version 1.8.6
 
@@ -140,6 +191,7 @@ def changelog():
 
     2015/12/07 - Fix to bug that caused crash when image is masked and
         the src_ra_dec option is used.
+
 
     2015/11/30 - Version 1.8.5
 
@@ -161,6 +213,7 @@ def changelog():
     2015/11/20 - Increased number of digits for values in output text
         catalogs
 
+
     2015/08/06 - Version 1.8.4
 
     2015/08/06 - Improved speed of wavelet module.
@@ -176,6 +229,7 @@ def changelog():
         and output_all = True. Fixed a bug that caused a crash on machines
         with only one core.
 
+
     2014/09/26 - Version 1.8.3
 
     2014/09/26 - Fix to bug that caused a crash when using the wavelet
@@ -184,6 +238,7 @@ def changelog():
     2014/07/03 - Mask will now be expanded to match input image shape. Fix
         to bug that caused image read failure when image lacks a Stokes axis.
 
+
     2014/05/14 - Version 1.8.2
 
     2014/05/15 - Fix to bug in CASA masks generated with export_image() that
@@ -191,6 +246,7 @@ def changelog():
 
     2014/02/05 - Fix to bug that resulted in output file names being
         converted to lower case inappropriately.
+
 
     2014/01/14 - Version 1.8.1
 
@@ -213,6 +269,7 @@ def changelog():
     2013/11/04 - Added error message when the rms is zero in some part of the
         rms map.
 
+
     2013/10/16 - Version 1.8.0
 
     2013/10/16 - Improved wavelet fitting. Added option so that wavelet
@@ -225,10 +282,12 @@ def changelog():
     2013/10/10 - Fixed a bug that could lead to incomplete fitting of
         some islands. Improved overall convergence of fits.
 
+
     2013/10/10 - Version 1.7.7
 
     2013/10/10 - Improved fitting of bright sources under certain
         circumstances.
+
 
     2013/09/27 - Version 1.7.6
 
@@ -240,6 +299,7 @@ def changelog():
 
     2013/09/05 - Enabled SAGECAL sky-model output.
 
+
     2013/09/02 - Version 1.7.5
 
     2013/09/02 - Fix to bug that caused a crash when images with 2 or
@@ -248,6 +308,7 @@ def changelog():
         for details). The threshold used to determine the clipped rms and
         mean values is now determined internally by default (kappa_clip =
         None).
+
 
     2013/08/27 - Version 1.7.4
 
@@ -261,15 +322,18 @@ def changelog():
         wavelet Gaussians being excluded from model image under certain
         conditions.
 
+
     2013/08/27 - Version 1.7.3
 
     2013/08/27 - Fix to bug in image reading that caused images to be
         distorted.
 
+
     2013/08/23 - Version 1.7.2
 
     2013/08/23 - Improved handling of non-standard FITS CUNIT keywords.
         Improved loading of FITS images when trim_box is specified.
+
 
     2013/08/22 - Version 1.7.1
 
@@ -277,6 +341,7 @@ def changelog():
         rerunning an analysis. Fix to bug in show_fit() due to undefined
         images. Fix to bug in process_image() that would result in unneeded
         reprocessing.
+
 
     2013/08/20 - Version 1.7.0
 
@@ -302,6 +367,7 @@ def changelog():
         bug that caused the position angle used to initialize fitting to
         be incorrect.
 
+
     2013/03/22 - Version 1.6.1
 
     2013/03/21 - Fix to bug in ds9 and kvis catalog files that resulted in
@@ -313,6 +379,7 @@ def changelog():
     2013/03/14 - Removed sky transformations for flagged Gaussians, as
         these could sometimes give math domain errors. Disabled aperture
         flux measurement on wavelet images as it is not used/needed.
+
 
     2013/02/25 - Version 1.6.0
 
@@ -345,6 +412,7 @@ def changelog():
        GLON WCS coordinates. Fix to bug when equinox is taken from the
        epoch keyword.
 
+
     2012/12/19 - Version 1.5.1
 
     2012/12/19 - Fix to bug in wavelet module that occurred when the
@@ -365,12 +433,14 @@ def changelog():
         was used. Fixed a bug with incorrect save directory when
         plot_allgaus = True.
 
+
     2012/10/29 - Version 1.5.0
 
     2012/10/29 - Improved handling of WCS information so that a much
         greater variety of WCS systems may be used. Fixed a bug in logging
         that occurred when negative values were found in the rms map.
         Updated installation instructions.
+
 
     2012/10/12 - Version 1.4.5
 
@@ -383,6 +453,7 @@ def changelog():
         when fitting fails. Fixed a bug in parallelization that could
         cause a crash due to improper concatenation of result lists.
 
+
     2012/10/09 - Version 1.4.4
 
     2012/10/09 - Improved logging. Added a warning when one or more islands
@@ -393,6 +464,7 @@ def changelog():
 
     2012/10/05 - Added code to handle images with no unblanked pixels.
         Improved fitting robustness.
+
 
     2012/10/04 - Version 1.4.3
 
@@ -407,6 +479,7 @@ def changelog():
         the resulting PSF images (psf_smooth). Parallelized the PSF
         interpolation and smoothing steps. Improved PSF vary documentation.
 
+
     2012/09/25 - Version 1.4.2
 
     2012/09/25 - Dramatically reduced the time required to identify valid
@@ -416,6 +489,7 @@ def changelog():
         improperly sorted. Fixed cosmetic bug in the statusbar that could
         sometimes cause improper formatting. Added example of SAMP usage
         to the documentation.
+
 
     2012/09/20 - Version 1.4.1
 
@@ -435,6 +509,7 @@ def changelog():
         mean/rms map generation. Fixed bug that caused residual image
         statistics to fail when NaNs are present.
 
+
     2012/09/11 - Version 1.4.0
 
     2012/09/11 - Parallelized Gaussian fitting, shapelet decomposition,
@@ -447,12 +522,14 @@ def changelog():
         logging of non-default input parameters and internally derived
         parameters.
 
+
     2012/08/22 - Version 1.3.2
 
     2012/08/22 - Fixed a bug that caused the user-specified rms_box to be
         ignored. Added an option to enable the Monte Carlo error estimation
         for 'M'-type sources (the do_mc_errors option), which is now
         disabled by default.
+
 
     2012/07/11 - Version 1.3.1
 
@@ -467,6 +544,7 @@ def changelog():
         images. Improved fitting robustness to prevent rare cases in
         which no valid Gaussians could be fit to an island. Modified the
         island-finding routine to handle NaNs properly.
+
 
     2012/07/03 - Version 1.3
 
@@ -501,6 +579,7 @@ def changelog():
 
     2012/06/13 - Added total island flux (from sum of pixels) to
         "gaul" and "srl" catalogs.
+
 
     2012/06/06 - Version 1.2
 
@@ -552,6 +631,7 @@ def changelog():
     2012/03/29 - Fixed bug in wavelet module that could cause incorrect
         associations of Gaussians. Fixed bug in show_fit that displayed
         incorrect model and residual images when wavelets were used.
+
 
     2012/03/28 - Version 1.1
 
@@ -700,6 +780,7 @@ def changelog():
         leading to large negative residuals. Restricted fitting of Gaussians
         to wavelet images to be only in islands found in the original image
         if opts.atrous_orig_isl is True.
+
 
     2011/09/08 - Version 1.0
 
