@@ -11,28 +11,27 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 from __future__ import print_function
 import traceback
 import sys
-
+import os
 import numpy
-_multi = False
+import multiprocessing
 _ncpus = 1
 
-try:
-    # May raise ImportError
-    import multiprocessing
-
-    # Set spawn method to "fork". This is needed for macOS on Python 3.8+ where the
-    # default has been changed to "spawn", causing problems (see the discussion at
-    # https://github.com/ipython/ipython/issues/12396)
-    if sys.platform == 'darwin':
-        if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
-            multiprocessing.set_start_method('fork')
-    _multi = True
-
-    # May raise NotImplementedError
-    _ncpus = min(multiprocessing.cpu_count(), 8)
-
-except:
-    pass
+# Get the number of available cores. We use os.sched_getaffinity() for this if
+# possible, as the number of available cores may be less than the total number
+# of CPU cores in the machine, which is returned by, e.g.,
+# multiprocessing.cpu_count()
+#
+# Note: since macOS (Darwin) does not support os.sched_getaffinity(), we use
+# multiprocessing.cpu_count() instead
+if sys.platform == 'darwin':
+    if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
+        # We need to set spawn method to "fork" for macOS on Python 3.8+ where
+        # the default has been changed to "spawn", causing problems (see the
+        # discussion at https://github.com/ipython/ipython/issues/12396)
+        multiprocessing.set_start_method('fork')
+    _ncpus = multiprocessing.cpu_count()
+else:
+    _ncpus = len(os.sched_getaffinity(0))
 
 
 __all__ = ('parallel_map',)
@@ -60,8 +59,8 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
         try:
             result = f(val)
         except Exception as e:
-            etype,val,tbk=sys.exc_info()
-            print('Thread raised exception',e)
+            etype, val, tbk = sys.exc_info()
+            print('Thread raised exception', e)
             print('Traceback of thread is:')
             print('-------------------------')
             traceback.print_tb(tbk)
@@ -85,7 +84,7 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
                     bar_state['spin_pos'] = 0
 
     # output the result and task ID to output queue
-    out_q.put( (ii, vals) )
+    out_q.put((ii, vals))
 
 
 def run_tasks(procs, err_q, out_q, num):
@@ -100,8 +99,8 @@ def run_tasks(procs, err_q, out_q, num):
 
     """
     # function to terminate processes that are still running.
-    die = (lambda vals : [val.terminate() for val in vals
-               if val.exitcode is None])
+    die = (lambda vals: [val.terminate() for val in vals
+                         if val.exitcode is None])
 
     try:
         for proc in procs:
@@ -122,7 +121,7 @@ def run_tasks(procs, err_q, out_q, num):
 
     # Processes finish in arbitrary order. Process IDs double
     # as index in the resultant array.
-    results=[None]*num;
+    results = [None] * num
     for i in range(num):
         idx, result = out_q.get()
         results[idx] = result
@@ -152,23 +151,22 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     """
     if not callable(function):
         raise TypeError("input function '%s' is not callable" %
-                repr(function))
+                        repr(function))
 
     if not numpy.iterable(sequence):
         raise TypeError("input '%s' is not iterable" %
-                repr(sequence))
+                        repr(sequence))
 
     sequence = numpy.array(list(sequence), dtype=object)
     size = len(sequence)
 
-    if not _multi or size == 1:
+    if size == 1:
         results = list(map(function, sequence))
         if bar is not None:
             bar.stop()
         return results
 
-
-    # Set default number of cores to use. Try to leave one core free for pyplot.
+    # Set number of cores to use. Try to leave one core free for pyplot.
     if numcores is None:
         numcores = _ncpus - 1
     if numcores > _ncpus - 1:
