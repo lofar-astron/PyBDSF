@@ -18,7 +18,7 @@ class Op_collapse(Op):
     """Collapse 3D image"""
 
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Collapse")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Collapse")
         if img.opts.polarisation_do:
             pols = ['I', 'Q', 'U', 'V'] # make sure I is done first
         else:

@@ -781,7 +781,7 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
     from . import mylogger
     import numpy as N
 
-    mylog = mylogger.logging.getLogger("PyBDSM.Compute")
+    mylog = mylogger.logging.getLogger("PyBDSF.Compute")
 
     if len(p) % 7 > 0:
         mylog.error("Gaussian parameters passed have to have 7n numbers")
@@ -1116,7 +1116,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     except ImportError as err:
         has_casacore = False
 
-    mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Readfile")
+    mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Readfile")
     if indir is None or indir == './':
         prefix = ''
     else:
@@ -1370,7 +1370,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
     import os
     from . import mylogger
 
-    mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Writefile")
+    mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Writefile")
 
     wcs_obj = img.wcs_obj
     if pad_image and img.opts.trim_box is not None:
@@ -1407,7 +1407,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             # The "overwrite" argument was added in astropy v1.3, so fall back to "clobber"
             # if it doesn't work
             temp_im.writeto(tfile.name, clobber=clobber)
-        send_fits_image(img.samp_client, img.samp_key, 'PyBDSM image', tfile.name)
+        send_fits_image(img.samp_client, img.samp_key, 'PyBDSF image', tfile.name)
     else:
         # Write image to FITS file
         if outdir is None:
@@ -2017,7 +2017,7 @@ def start_samp_proxy():
     s = ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
 
     # Register with Hub
-    metadata = {"samp.name": 'PyBDSM', "samp.description.text": 'PyBDSM: the Python Blob Detection and Source Measurement software'}
+    metadata = {"samp.name": 'PyBDSF', "samp.description.text": 'PyBDSF: the Python Blob Detection and Source Finding software'}
     result = s.samp.hub.register(HUB_PARAMS['samp.secret'])
     private_key = result['samp.private-key']
     s.samp.hub.declareMetadata(private_key, metadata)

@@ -2,7 +2,7 @@
 
 
 It's quite basic and limited implementation tailored specifically for
-use in the PyBDSM user-options and derived properties. For a user
+use in the PyBDSF user-options and derived properties. For a user
 option, one can define a group that is used when listing the options to
 the screen. For a property (e.g., flux density), one can define the
 column name to be used on output and the associated units.

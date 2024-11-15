@@ -875,7 +875,7 @@ class Opts(object):
                              group = "output_opts")
     output_all = Bool(False,
                              doc = "Write out all files automatically to directory "\
-                                 "'outdir/filename_pybdsm'",
+                                 "'outdir/filename_pybdsf'",
                              group = "output_opts")
     opdir_overwrite = Enum('overwrite', 'append',
                              doc = "'overwrite'/'append': If output_all=True, "\

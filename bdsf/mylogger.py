@@ -17,10 +17,10 @@ import copy
 def init_logger(logfilename, quiet=False, debug=False):
     logging.USERINFO = logging.INFO + 1
     logging.addLevelName(logging.USERINFO, 'USERINFO')
-    logger = logging.root
+    logger = logging.getLogger('PyBDSF')
     logger.setLevel(logging.DEBUG)
 
-    # First remove any existing handlers (in case PyBDSM has been run
+    # First remove any existing handlers (in case PyBDSF has been run
     # before in this session but the quiet or debug options have changed
     while len(logger.handlers) > 0:
         logger.removeHandler(logger.handlers[0])

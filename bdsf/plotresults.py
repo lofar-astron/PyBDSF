@@ -247,7 +247,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         numx = 1
     numy = int(N.ceil(float(len(images))/float(numx)))
     fig = pl.figure(figsize=(max(15, 10.0*float(numy)/float(numx)), 10.0))
-    fig.canvas.manager.set_window_title('PyBDSM Fit Results for '+ img.filename)
+    fig.canvas.manager.set_window_title('PyBDSF Fit Results for '+ img.filename)
     gray_palette = cm.gray
     gray_palette.set_bad('k')
 
