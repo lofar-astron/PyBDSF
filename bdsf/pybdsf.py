@@ -389,7 +389,7 @@ def show_fit(**kwargs):
       Press "c" ........ : Change source for SED plot
       Click Gaussian ... : Print Gaussian and source IDs (zoom_rect mode,
                            toggled with the "zoom" button and indicated in
-                           the lower right corner, must be off)
+                           the lower left or right corner, must be off)
                            The SED plot will also show the chosen source.
 
     Parameters: ch0_image, rms_image, mean_image, ch0_islands,

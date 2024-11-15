@@ -1399,7 +1399,7 @@ class Opts(object):
                                  "FWHM in arcsec)",
                              group = "hidden")
     psf_minor = Bool(False,
-                             doc = "Show the FWHM of PSF minor axis variation (values are "\
+                             doc = "Show the PSF minor axis variation (values are "\
                                  "FWHM in arcsec)",
                              group = "hidden")
     psf_pa = Bool(False,
