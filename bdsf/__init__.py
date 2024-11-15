@@ -244,12 +244,14 @@ def process_image(input, **kwargs):
         else:
             raise RuntimeError("File '" + input + "' not found.")
 
-    # Set logging options (must be done explicitly, as they are used before the
+    # Set logging and outdir options (must be done explicitly, as they are used before the
     # kwargs are parsed in img.process())
     if 'quiet' in kwargs:
         img.opts.quiet = kwargs['quiet']
     if 'debug' in kwargs:
         img.opts.debug = kwargs['debug']
+    if 'outdir' in kwargs:
+        img.opts.outdir = kwargs['outdir']
 
     # Now process it. Any kwargs specified by the user will
     # override those read in from the parameter save file or dictionary.
