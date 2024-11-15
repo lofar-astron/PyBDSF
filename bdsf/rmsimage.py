@@ -18,6 +18,7 @@ from . import mylogger
 import os
 from . import functions as func
 import scipy.ndimage as nd
+from scipy import interpolate
 from . import multi_proc as mp
 import itertools
 try:
@@ -510,7 +511,26 @@ class Op_rmsimage(Op):
                         else:
                             map_opts = (kappa, img.rms_box, spline_rank)
                     else:
-                        raise RuntimeError('RMS map has negative values')
+                        # We could be catastrophically wrong, or have a local problem with the
+                        # interpolation. If the latter, we can rescue it by interpolating again
+                        fraction = N.sum(rms<0)/N.size(rms)
+                        if fraction < 1e-3:
+                            mylog.warning('Trying to interpolate for small fraction (%.2g) of negative rms values' % fraction)
+                            ys,xs=rms.shape
+                            xx, yy = N.meshgrid(N.arange(xs), N.arange(ys))
+                            mask = rms<0
+                            good_x = xx[~mask]
+                            good_y = yy[~mask]
+                            good_v = rms[~mask]
+                            missing_x = xx[mask]
+                            missing_y = yy[mask]
+                            interp_values = interpolate.griddata((good_x, good_y), good_v, (missing_x, missing_y), method='nearest')
+                            rms[missing_y, missing_x] = interp_values
+                            rms_ok = True
+                        else:
+                            mylog.warning('Too many negative values in RMS map, baling out. Map will be found in %s/%s' % (img.basedir,img.imagename + '.rmsd_I_FAIL.fits'))
+                            func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I_FAIL.fits', rms, img, img.basedir)
+                            raise RuntimeError('RMS map has negative values')
             else:
                 rms_ok = True
 
