@@ -17,7 +17,7 @@ class Op_cleanup(Op):
     """  """
     def __call__(self, img):
 
-        mylog = mylogger.logging.getLogger("PyBDSM.Cleanup")
+        mylog = mylogger.logging.getLogger("PyBDSF.Cleanup")
 
         ### plotresults for all gaussians together
         if img.opts.plot_allgaus and has_pl:

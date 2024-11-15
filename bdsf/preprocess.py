@@ -1,7 +1,7 @@
 """Module preprocess
 
 Calculates some basic statistics of the image and sets up processing
-parameters for PyBDSM.
+parameters for PyBDSF.
 """
 from __future__ import absolute_import
 
@@ -20,7 +20,7 @@ class Op_preprocess(Op):
     are blanked in QC ? """
 
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Preprocess")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Preprocess")
         bstat = func.bstat
         if img.opts.kappa_clip is None:
             kappa = -img.pixel_beamarea()

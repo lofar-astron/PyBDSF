@@ -25,7 +25,7 @@ class Op_shapelets(Op):
 
     def __call__(self, img):
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Shapefit")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Shapefit")
         bar = statusbar.StatusBar('Decomposing islands into shapelets ...... : ', 0, img.nisl)
         opts = img.opts
         if img.opts.shapelet_do:

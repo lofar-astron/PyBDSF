@@ -54,7 +54,7 @@ class Op_polarisation(Op):
     Prerequisites: module gaul2srl should be run first."""
 
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Polarisatn")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Polarisatn")
         if img.opts.polarisation_do:
             mylog.info('Extracting polarisation properties for all sources')
             pols = ['I', 'Q', 'U', 'V']

@@ -33,7 +33,7 @@ class Op_psf_vary(Op):
     def __call__(self, img):
 
         if img.opts.psf_vary_do:
-            mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Psf_Vary")
+            mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Psf_Vary")
             mylogger.userinfo(mylog, '\nEstimating PSF variations')
             opts = img.opts
             dir = img.basedir + '/misc/'
@@ -847,7 +847,7 @@ class Op_psf_vary(Op):
         and pass it to stackpsf with a weight for each gaussian, to calculate the average psf per tile.
 
         Should define weights inside a tile to include closure errors """
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Psf_Vary")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Psf_Vary")
 
         tile_list, tile_coord, tile_snr = tile_prop
         tr_gaul = self.trans_gaul(g_gauls)

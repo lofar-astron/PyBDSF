@@ -30,7 +30,7 @@ class Op_readimage(Op):
     Loads image and configures wcslib machinery for it.
     """
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Readimage")
+        mylog = mylogger.logging.getLogger("PyBDSF." + img.log + "Readimage")
 
         if img.opts.filename == '':
             raise RuntimeError('Image file name not specified.')
@@ -310,7 +310,7 @@ class Op_readimage(Op):
         """Initialize beam parameters, and conversion routines
         to convert beam to/from pixel coordinates"""
         from .const import fwsig
-        mylog = mylogger.logging.getLogger("PyBDSM.InitBeam")
+        mylog = mylogger.logging.getLogger("PyBDSF.InitBeam")
 
         hdr = img.header
         cdelt1, cdelt2 = img.wcs_obj.acdelt[0:2]
@@ -402,7 +402,7 @@ class Op_readimage(Op):
     def init_freq(self, img):
         """Initialize frequency parameters and store them.
 
-        Basically, PyBDSM uses two frequency parameters:
+        Basically, PyBDSF uses two frequency parameters:
 
             img.frequency - the reference frequency in Hz of the ch0 image
             img.freq_pars - the crval, crpix, and cdelt values for the
@@ -419,7 +419,7 @@ class Op_readimage(Op):
                 warnings.filterwarnings("ignore", category=DeprecationWarning)
                 from pywcs import WCS
 
-        mylog = mylogger.logging.getLogger("PyBDSM.InitFreq")
+        mylog = mylogger.logging.getLogger("PyBDSF.InitFreq")
         if img.opts.frequency_sp is not None and img.image_arr.shape[1] > 1:
             # If user specifies multiple frequencies, then let
             # collapse.py do the initialization

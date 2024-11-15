@@ -1,5 +1,5 @@
 """
-This is for pybdsm for calculating spectral index. We assume a linear spectral index
+This is for PyBDSF for calculating spectral index. We assume a linear spectral index
 in log(freq) and then each channel has a flux which is bit wrong because of the colour
 correction problem within that band.
 
