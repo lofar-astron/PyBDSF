@@ -62,7 +62,6 @@ dependencies = [
 
 [project.scripts]
 pybdsf = "bdsf.pybdsf:main [ishell]"
-pybdsm = "bdsf.pybdsf:main [ishell]"
 
 [project.urls]
 Homepage = "https://github.com/lofar-astron/PyBDSF"
