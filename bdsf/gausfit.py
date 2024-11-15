@@ -37,7 +37,7 @@ class Op_gausfit(Op):
     def __call__(self, img):
         from . import functions as func
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gausfit")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Gausfit")
         if len(img.islands) == 0:
             img.gaussians = []
             img.ngaus = 0
@@ -946,7 +946,7 @@ class Gaussian(object):
         """Initialize Gaussian object from fitting data
 
         Parameters:
-        img: PyBDSM image object
+        img: PyBDSF image object
         gaussian: 6-tuple of fitted numbers
         isl_idx: island serial number
         g_idx: gaussian serial number

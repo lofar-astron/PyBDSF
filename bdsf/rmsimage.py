@@ -34,7 +34,7 @@ class Op_rmsimage(Op):
     Prerequisites: Module preprocess should be run first.
     """
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"RMSimage")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"RMSimage")
         mylogger.userinfo(mylog, "Calculating background rms and mean images")
         if img.opts.polarisation_do:
             pols = ['I', 'Q', 'U', 'V']
@@ -263,7 +263,7 @@ class Op_rmsimage(Op):
                     if len(data.shape) == 2:   ## 2d case
                         mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
                                         bright_pt_coords=isl_pos, rms_box2=img.rms_box,
-                                        logname="PyBDSM."+img.log, ncores=img.opts.ncores)
+                                        logname="PyBDSF."+img.log, ncores=img.opts.ncores)
                     elif len(data.shape) == 3: ## 3d case
                         if not isinstance(mask, N.ndarray):
                             mask = N.zeros(data.shape[0], dtype=bool)
@@ -271,7 +271,7 @@ class Op_rmsimage(Op):
                         ## iterate each plane
                             mean, rms = self.calculate_maps(img, data[i], mean[i], rms[i], mask[i], map_opts,
                                             do_adapt=do_adapt, bright_pt_coords=isl_pos,
-                                            rms_box2=img.rms_box, logname="PyBDSM."+img.log,
+                                            rms_box2=img.rms_box, logname="PyBDSF."+img.log,
                                             ncores=img.opts.ncores)
                     else:
                         mylog.critical('Image shape not handleable' + pol_txt)
@@ -387,7 +387,7 @@ class Op_rmsimage(Op):
         """
         from math import sqrt
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Checkrms  ")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Checkrms  ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
@@ -418,7 +418,7 @@ class Op_rmsimage(Op):
         """
         from math import sqrt
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Checkmean ")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Checkmean ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
@@ -452,9 +452,9 @@ class Op_rmsimage(Op):
                        bright_pt_coords=[], rms_box2=None,
                        logname=None, ncores=None):
         """Calls map_2d and checks for problems"""
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Calcmaps ")
         rms_ok = False
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Rmsimage.Calcmaps ")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Calcmaps ")
         opts = img.opts
         kappa = map_opts[0]
         spline_rank = opts.spline_rank
@@ -667,7 +667,7 @@ class Op_rmsimage(Op):
         rms_map[0,0] is extrapolated as .5*(rms_map[0,1] + rms_map[1,0])
         rms_map[0,1] is extrapolated as rms_map[1,1]
         """
-        mylog = mylogger.logging.getLogger("PyBDSM.RmsMean")
+        mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
         if box is None:
             box = (50, 25)
         if box[0] < box[1]:
@@ -1041,7 +1041,7 @@ class Op_rmsimage(Op):
         """Prints rms/mean box size"""
         opts = img.opts
         do_adapt = opts.adaptive_rms_box
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"RMSimage")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"RMSimage")
         if (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
             if do_adapt:
                 if opts.rms_box_bright is None:

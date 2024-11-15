@@ -27,7 +27,7 @@ class Op_make_residimage(Op):
         from copy import deepcopy as cp
         import os
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"ResidImage")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"ResidImage")
         mylog.info("Calculating residual image after subtracting reconstructed gaussians")
         shape = img.ch0_arr.shape
         thresh= img.opts.fittedimage_clip

@@ -32,7 +32,7 @@ class Op_gaul2srl(Op):
     def __call__(self, img):
         #  for each island, get the gaussians into a list and then send them to process
         #  src_index is source number, starting from 0
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gaul2Srl")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Gaul2Srl")
         mylogger.userinfo(mylog, 'Grouping Gaussians into sources')
         img.aperture = img.opts.aperture
         if img.aperture is not None and img.aperture <= 0.0:
@@ -325,7 +325,7 @@ class Op_gaul2srl(Op):
         from scipy import ndimage
         from . import functions as func
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Gaul2Srl  ")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Gaul2Srl  ")
         dum = img.beam[0]*img.beam[1]
         cdeltsq = img.wcs_obj.acdelt[0]*img.wcs_obj.acdelt[1]
         bmar_p = 2.0*pi*dum/(cdeltsq*fwsig*fwsig)

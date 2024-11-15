@@ -43,7 +43,7 @@ class Op_islands(Op):
     Prerequisites: module rmsimage should be run first.
     """
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Islands")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Islands")
         opts = img.opts
 
         minsize = opts.minpix_isl

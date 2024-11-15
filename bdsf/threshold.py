@@ -26,7 +26,7 @@ class Op_threshold(Op):
     Prerequisites: Module preprocess and rmsimage should be run first.
     """
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"Threshold ")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Threshold ")
         data = img.ch0_arr
         mask = img.mask_arr
         opts = img.opts

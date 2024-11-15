@@ -37,7 +37,7 @@ class Op_spectralindex(Op):
     def __call__(self, img):
         global bar1
 
-        mylog = mylogger.logging.getLogger("PyBDSM."+img.log+"SpectIndex")
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"SpectIndex")
         img.mylog = mylog
         if img.opts.spectralindex_do:
             mylogger.userinfo(mylog, '\nExtracting spectral indices for all ch0 sources')
