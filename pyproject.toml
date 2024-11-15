@@ -24,7 +24,7 @@ requires = [
 [project]
 name = "bdsf"
 dynamic = ["version"]
-description = "Blob Detection and Source Finder"
+description = "Blob Detector and Source Finder"
 readme = "README.rst"
 requires-python = ">=3.8"
 authors = [

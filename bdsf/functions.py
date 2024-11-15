@@ -2017,7 +2017,7 @@ def start_samp_proxy():
     s = ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
 
     # Register with Hub
-    metadata = {"samp.name": 'PyBDSF', "samp.description.text": 'PyBDSF: the Python Blob Detection and Source Finder software'}
+    metadata = {"samp.name": 'PyBDSF', "samp.description.text": 'PyBDSF: the Python Blob Detector and Source Finder software'}
     result = s.samp.hub.register(HUB_PARAMS['samp.secret'])
     private_key = result['samp.private-key']
     s.samp.hub.declareMetadata(private_key, metadata)
