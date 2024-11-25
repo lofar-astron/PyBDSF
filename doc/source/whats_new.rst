@@ -4,6 +4,53 @@
 What's New
 **********
 
+    Version 1.12.0 (2024/11/25):
+    * Fix string checks and clean up (#243)
+
+    * Fix unintended removal of handlers from the root logger (#245)
+
+    * Fix outdir being ignored (#244)
+
+    * rmsimage negative rms fallback, fixes #215 (#242)
+
+    * Fix bug that resulted in ncores being at most 8 and improve method for getting no. of available cores (#240)
+
+    Version 1.11.1 (2024/09/06):
+    * Add macos arm binary wheels (#238)
+
+    * Remove manylinux2014 directory (#237)
+
+    * GitHub action download artifact security update (#236)
+
+    Version 1.11.0 (2024/07/26):
+    * Add checks of output to tests (#231)
+
+    * Set upper limit on NumPy version (#230)
+
+    * Output island rms and mean values for wavelet Gaussians (#228)
+
+    * Use setuptools_scm (#224)
+
+    * Fix ReadtheDocs (#223)
+
+    * Remove pyfits version checks (#222)
+
+    * Fix issue with frequency_sp being ignored (#219)
+
+    * Fix python3.12 build (#217)
+
+    * Replace distutils for Python 3.12 (#216)
+
+    * Fix save of residual image and add option to save model image (#213)
+
+    * Fix issues with error estimation (#211)
+
+    * Fix various issue with the spectral index module (#210)
+
+    * Add options for use with a detection image (#209)
+
+    * Use scikit-build (#204)
+
 Version 1.10.3 (2023/05/22):
 
     * Fix build issue with Python 3.11 (#205)
