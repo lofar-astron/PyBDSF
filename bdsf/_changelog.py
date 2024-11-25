@@ -8,6 +8,27 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2024/11/25 - Version 1.12.0
+
+    2024/11/19 - Fix string checks and clean up (#243)
+
+    2024/11/15 - Fix unintended removal of handlers from the root logger (#245)
+
+    2024/11/15 - Fix outdir being ignored (#244)
+
+    2024/11/15 - rmsimage negative rms fallback, fixes #215 (#242)
+
+    2024/10/11 - Fix bug that resulted in ncores being at most 8 and improve
+                 method for getting no. of available cores (#240)
+
+    2024/09/06 - Version 1.11.1
+
+    2024/09/06 - Add macos arm binary wheels (#238)
+
+    2024/09/04 - Remove manylinux2014 directory (#237)
+
+    2024/09/04 - GitHubh action download artifact security update (#236)
+
     2024/07/26 - Version 1.11.0
 
     2024/07/26 - Prepare release v1.11 (#234)
