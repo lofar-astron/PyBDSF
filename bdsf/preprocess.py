@@ -8,8 +8,7 @@ from __future__ import absolute_import
 import numpy as N
 from . import _cbdsm
 from .image import *
-from math import pi, sqrt, log
-from . import const
+from math import pi
 from . import functions as func
 from . import mylogger
 
