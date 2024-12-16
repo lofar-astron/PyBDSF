@@ -12,7 +12,6 @@ from __future__ import absolute_import
 import numpy as N
 import scipy.ndimage as nd
 from . import _cbdsm
-from .image import Op, Image, NArray, List
 from . import const
 from . import mylogger
 import os
