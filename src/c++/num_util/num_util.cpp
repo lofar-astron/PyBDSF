@@ -209,7 +209,7 @@ pyndarray makeNum(const pyndarray& arr){
 }
 
 NPY_TYPES type(pyndarray arr){
-  return NPY_TYPES(PyArray_TYPE(arr.ptr()));
+  return NPY_TYPES(PyArray_TYPE((PyArrayObject*)arr.ptr()));
 }
 
 void check_type(pyndarray arr,
@@ -232,7 +232,7 @@ int rank(pyndarray arr){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
     throw_error_already_set();
   }
-  return PyArray_NDIM(arr.ptr());
+  return PyArray_NDIM((PyArrayObject*)arr.ptr());
 }
 
 void check_rank(pyndarray arr, int expected_rank){
@@ -274,7 +274,7 @@ std::vector<int> shape(pyndarray arr){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
     throw_error_already_set();
   }
-  npy_intp* dims_ptr = PyArray_DIMS(arr.ptr());
+  npy_intp* dims_ptr = PyArray_DIMS((PyArrayObject*)arr.ptr());
   int the_rank = rank(arr);
   for (int i = 0; i < the_rank; i++){
     out_dims.push_back(*(dims_ptr + i));
@@ -324,7 +324,7 @@ void check_dim(pyndarray arr, int dimnum, int dimsize){
 bool iscontiguous(pyndarray arr)
 {
   //  return arr.iscontiguous();
-  return PyArray_ISCONTIGUOUS(arr.ptr());
+  return PyArray_ISCONTIGUOUS((PyArrayObject*)arr.ptr());
 }
 
 void check_contiguous(pyndarray arr)
@@ -341,13 +341,13 @@ void* data(pyndarray arr){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
     throw_error_already_set();
   }
-  return PyArray_DATA(arr.ptr());
+  return PyArray_DATA((PyArrayObject*)arr.ptr());
 }
 
 //Copy data into the array
 void copy_data(pyndarray arr, char* new_data){
   char* arr_data = (char*) data(arr);
-  int nbytes = PyArray_NBYTES(arr.ptr());
+  int nbytes = PyArray_NBYTES((PyArrayObject*)arr.ptr());
   for (int i = 0; i < nbytes; i++) {
     arr_data[i] = new_data[i];
   }
@@ -376,7 +376,7 @@ std::vector<int> strides(pyndarray arr){
     PyErr_SetString(PyExc_ValueError, "expected a PyArrayObject");
     throw_error_already_set();
   }
-  npy_intp* strides_ptr = PyArray_STRIDES(arr.ptr());
+  npy_intp* strides_ptr = PyArray_STRIDES((PyArrayObject*)arr.ptr());
   int the_rank = rank(arr);
   for (int i = 0; i < the_rank; i++){
     out_strides.push_back(*(strides_ptr + i));
@@ -389,7 +389,7 @@ int refcount(pyndarray arr){
 }
 
 void check_PyArrayElementType(object newo){
-  NPY_TYPES theType=NPY_TYPES(PyArray_TYPE(newo.ptr()));
+  NPY_TYPES theType=NPY_TYPES(PyArray_TYPE((PyArrayObject*)newo.ptr()));
   if(theType == NPY_OBJECT){
       std::ostringstream stream;
       stream << "array elments have been cast to NPY_OBJECT, "

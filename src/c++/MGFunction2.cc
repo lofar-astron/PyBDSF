@@ -453,8 +453,8 @@ unsigned long MGFunction::_cksum() const
 template<class T>
 void MGFunction::__update_dcache() const
 {
-  PyObject *data = (PyObject *)m_data.ptr();
-  PyObject *mask = (PyObject *)m_mask.ptr();
+  PyArrayObject *data = (PyArrayObject *)m_data.ptr();
+  PyArrayObject *mask = (PyArrayObject *)m_mask.ptr();
   std::vector<int> shape = n::shape(m_data);
   dcache_t t;
 
