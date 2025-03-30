@@ -384,7 +384,7 @@ std::vector<int> strides(pyndarray arr){
 }
 
 int refcount(pyndarray arr){
-  return NPY_REFCOUNT(arr.ptr());
+  return Py_REFCNT(arr.ptr());
 }
 
 void check_PyArrayElementType(object newo){
