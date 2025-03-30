@@ -134,6 +134,7 @@ set(NATGRID_SRC
     natgrid/Src/nnusers.c
 )
 add_library(natgridmodule MODULE ${NATGRID_SRC})
+target_compile_definitions(natgridmodule PRIVATE NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 target_include_directories(natgridmodule PRIVATE natgrid/Include)
 python_extension_module(natgridmodule)
 install(TARGETS natgridmodule LIBRARY DESTINATION bdsf/nat)
