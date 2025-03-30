@@ -120,18 +120,18 @@ namespace num_util{
 typedef KindStringMap::value_type  KindStringMapEntry;
 KindStringMapEntry kindStringMapEntries[] =
   {
-    KindStringMapEntry(NPY_UBYTE,  "PyArray_UBYTE"),
-    KindStringMapEntry(NPY_BYTE,   "PyArray_BYTE"),
-    KindStringMapEntry(NPY_SHORT,  "PyArray_SHORT"),
-    KindStringMapEntry(NPY_INT,    "PyArray_INT"),
-    KindStringMapEntry(NPY_LONG,   "PyArray_LONG"),
-    KindStringMapEntry(NPY_FLOAT,  "PyArray_FLOAT"),
-    KindStringMapEntry(NPY_DOUBLE, "PyArray_DOUBLE"),
-    KindStringMapEntry(NPY_CFLOAT, "PyArray_CFLOAT"),
-    KindStringMapEntry(NPY_CDOUBLE,"PyArray_CDOUBLE"),
-    KindStringMapEntry(NPY_OBJECT, "PyArray_OBJECT"),
-    KindStringMapEntry(NPY_NTYPES, "PyArray_NTYPES"),
-    KindStringMapEntry(NPY_NOTYPE ,"PyArray_NOTYPE")
+    KindStringMapEntry(NPY_UBYTE,  "NPY_UBYTE"),
+    KindStringMapEntry(NPY_BYTE,   "NPY_BYTE"),
+    KindStringMapEntry(NPY_SHORT,  "NPY_SHORT"),
+    KindStringMapEntry(NPY_INT,    "NPY_INT"),
+    KindStringMapEntry(NPY_LONG,   "NPY_LONG"),
+    KindStringMapEntry(NPY_FLOAT,  "NPY_FLOAT"),
+    KindStringMapEntry(NPY_DOUBLE, "NPY_DOUBLE"),
+    KindStringMapEntry(NPY_CFLOAT, "NPY_CFLOAT"),
+    KindStringMapEntry(NPY_CDOUBLE,"NPY_CDOUBLE"),
+    KindStringMapEntry(NPY_OBJECT, "NPY_OBJECT"),
+    KindStringMapEntry(NPY_NTYPES, "NPY_NTYPES"),
+    KindStringMapEntry(NPY_NOTYPE ,"NPY_NOTYPE")
   };
 
 typedef KindCharMap::value_type  KindCharMapEntry;
