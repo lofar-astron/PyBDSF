@@ -60,7 +60,7 @@ namespace num_util{
   {
     PyErr_SetString(PyExc_ValueError, "no mapping available for this type");
     boost::python::throw_error_already_set();
-    return PyArray_VOID;
+    return NPY_VOID;
   }
 
   /** 
@@ -249,7 +249,7 @@ namespace num_util{
 
   /** 
    *Throws an exception if the element of a numpy array is type cast to
-   *PyArray_OBJECT.
+   *NPY_OBJECT.
    *@param newo a Boost/Python object.
    *@return -----
    */

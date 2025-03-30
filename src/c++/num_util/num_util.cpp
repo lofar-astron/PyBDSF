@@ -19,149 +19,149 @@ namespace num_util{
   template <>
   NPY_TYPES getEnum<unsigned char>(void)
   {
-    return PyArray_UBYTE;
+    return NPY_UBYTE;
   }
 
 
   template <>
   NPY_TYPES getEnum<signed char>(void)
   {
-    return PyArray_BYTE;
+    return NPY_BYTE;
   }
 
   template <>
   NPY_TYPES getEnum<short>(void)
   {
-    return PyArray_SHORT;
+    return NPY_SHORT;
   }
 
   template <>
   NPY_TYPES getEnum<unsigned short>(void)
   {
-    return PyArray_USHORT;
+    return NPY_USHORT;
   }
 
 
   template <>
   NPY_TYPES getEnum<unsigned int>(void)
   {
-    return PyArray_UINT;
+    return NPY_UINT;
   }
 
   template <>
   NPY_TYPES getEnum<int>(void)
   {
-    return PyArray_INT;
+    return NPY_INT;
   }
 
   template <>
   NPY_TYPES getEnum<long>(void)
   {
-    return PyArray_LONG;
+    return NPY_LONG;
   }
 
   template <>
   NPY_TYPES getEnum<unsigned long>(void)
   {
-    return PyArray_ULONG;
+    return NPY_ULONG;
   }
 
 
   template <>
   NPY_TYPES getEnum<long long>(void)
   {
-    return PyArray_LONGLONG;
+    return NPY_LONGLONG;
   }
 
   template <>
   NPY_TYPES getEnum<unsigned long long>(void)
   {
-    return PyArray_ULONGLONG;
+    return NPY_ULONGLONG;
   }
 
   template <>
   NPY_TYPES getEnum<float>(void)
   {
-    return PyArray_FLOAT;
+    return NPY_FLOAT;
   }
 
   template <>
   NPY_TYPES getEnum<double>(void)
   {
-    return PyArray_DOUBLE;
+    return NPY_DOUBLE;
   }
 
   template <>
   NPY_TYPES getEnum<long double>(void)
   {
-    return PyArray_LONGDOUBLE;
+    return NPY_LONGDOUBLE;
   }
 
   template <>
   NPY_TYPES getEnum<std::complex<float> >(void)
   {
-    return PyArray_CFLOAT;
+    return NPY_CFLOAT;
   }
 
 
   template <>
   NPY_TYPES getEnum<std::complex<double> >(void)
   {
-    return PyArray_CDOUBLE;
+    return NPY_CDOUBLE;
   }
 
   template <>
   NPY_TYPES getEnum<std::complex<long double> >(void)
   {
-    return PyArray_CLONGDOUBLE;
+    return NPY_CLONGDOUBLE;
   }
 
 
 typedef KindStringMap::value_type  KindStringMapEntry;
 KindStringMapEntry kindStringMapEntries[] =
   {
-    KindStringMapEntry(PyArray_UBYTE,  "PyArray_UBYTE"),
-    KindStringMapEntry(PyArray_BYTE,   "PyArray_BYTE"),
-    KindStringMapEntry(PyArray_SHORT,  "PyArray_SHORT"),
-    KindStringMapEntry(PyArray_INT,    "PyArray_INT"),
-    KindStringMapEntry(PyArray_LONG,   "PyArray_LONG"),
-    KindStringMapEntry(PyArray_FLOAT,  "PyArray_FLOAT"),
-    KindStringMapEntry(PyArray_DOUBLE, "PyArray_DOUBLE"),
-    KindStringMapEntry(PyArray_CFLOAT, "PyArray_CFLOAT"),
-    KindStringMapEntry(PyArray_CDOUBLE,"PyArray_CDOUBLE"),
-    KindStringMapEntry(PyArray_OBJECT, "PyArray_OBJECT"),
-    KindStringMapEntry(PyArray_NTYPES, "PyArray_NTYPES"),
-    KindStringMapEntry(PyArray_NOTYPE ,"PyArray_NOTYPE")
+    KindStringMapEntry(NPY_UBYTE,  "PyArray_UBYTE"),
+    KindStringMapEntry(NPY_BYTE,   "PyArray_BYTE"),
+    KindStringMapEntry(NPY_SHORT,  "PyArray_SHORT"),
+    KindStringMapEntry(NPY_INT,    "PyArray_INT"),
+    KindStringMapEntry(NPY_LONG,   "PyArray_LONG"),
+    KindStringMapEntry(NPY_FLOAT,  "PyArray_FLOAT"),
+    KindStringMapEntry(NPY_DOUBLE, "PyArray_DOUBLE"),
+    KindStringMapEntry(NPY_CFLOAT, "PyArray_CFLOAT"),
+    KindStringMapEntry(NPY_CDOUBLE,"PyArray_CDOUBLE"),
+    KindStringMapEntry(NPY_OBJECT, "PyArray_OBJECT"),
+    KindStringMapEntry(NPY_NTYPES, "PyArray_NTYPES"),
+    KindStringMapEntry(NPY_NOTYPE ,"PyArray_NOTYPE")
   };
 
 typedef KindCharMap::value_type  KindCharMapEntry;
 KindCharMapEntry kindCharMapEntries[] =
   {
-    KindCharMapEntry(PyArray_UBYTE,  'B'),
-    KindCharMapEntry(PyArray_BYTE,   'b'),
-    KindCharMapEntry(PyArray_SHORT,  'h'),
-    KindCharMapEntry(PyArray_INT,    'i'),
-    KindCharMapEntry(PyArray_LONG,   'l'),
-    KindCharMapEntry(PyArray_FLOAT,  'f'),
-    KindCharMapEntry(PyArray_DOUBLE, 'd'),
-    KindCharMapEntry(PyArray_CFLOAT, 'F'),
-    KindCharMapEntry(PyArray_CDOUBLE,'D'),
-    KindCharMapEntry(PyArray_OBJECT, 'O')
+    KindCharMapEntry(NPY_UBYTE,  'B'),
+    KindCharMapEntry(NPY_BYTE,   'b'),
+    KindCharMapEntry(NPY_SHORT,  'h'),
+    KindCharMapEntry(NPY_INT,    'i'),
+    KindCharMapEntry(NPY_LONG,   'l'),
+    KindCharMapEntry(NPY_FLOAT,  'f'),
+    KindCharMapEntry(NPY_DOUBLE, 'd'),
+    KindCharMapEntry(NPY_CFLOAT, 'F'),
+    KindCharMapEntry(NPY_CDOUBLE,'D'),
+    KindCharMapEntry(NPY_OBJECT, 'O')
   };
 
 typedef KindTypeMap::value_type  KindTypeMapEntry;
 KindTypeMapEntry kindTypeMapEntries[] =
   {
-    KindTypeMapEntry('B',PyArray_UBYTE),
-    KindTypeMapEntry('b',PyArray_BYTE),
-    KindTypeMapEntry('h',PyArray_SHORT),
-    KindTypeMapEntry('i',PyArray_INT),
-    KindTypeMapEntry('l',PyArray_LONG),
-    KindTypeMapEntry('f',PyArray_FLOAT),
-    KindTypeMapEntry('d',PyArray_DOUBLE),
-    KindTypeMapEntry('F',PyArray_CFLOAT),
-    KindTypeMapEntry('D',PyArray_CDOUBLE),
-    KindTypeMapEntry('O',PyArray_OBJECT)
+    KindTypeMapEntry('B',NPY_UBYTE),
+    KindTypeMapEntry('b',NPY_BYTE),
+    KindTypeMapEntry('h',NPY_SHORT),
+    KindTypeMapEntry('i',NPY_INT),
+    KindTypeMapEntry('l',NPY_LONG),
+    KindTypeMapEntry('f',NPY_FLOAT),
+    KindTypeMapEntry('d',NPY_DOUBLE),
+    KindTypeMapEntry('F',NPY_CFLOAT),
+    KindTypeMapEntry('D',NPY_CDOUBLE),
+    KindTypeMapEntry('O',NPY_OBJECT)
   };
 
 int numStringEntries = sizeof(kindStringMapEntries)/sizeof(KindStringMapEntry);
@@ -184,20 +184,20 @@ pyndarray makeNum(object x){
     throw_error_already_set();
   }
   object obj(handle<>
-	     (PyArray_ContiguousFromObject(x.ptr(),PyArray_NOTYPE,0,0)));
+	     (PyArray_ContiguousFromObject(x.ptr(),NPY_NOTYPE,0,0)));
   check_PyArrayElementType(obj);
   return extract<pyndarray>(obj);
 }
 
 //Create a one-dimensional Numeric array of length n and Numeric type t
-pyndarray makeNum(int n, NPY_TYPES t=PyArray_DOUBLE){
+pyndarray makeNum(int n, NPY_TYPES t=NPY_DOUBLE){
   object obj(handle<>(PyArray_FromDims(1, &n, t)));
   return extract<pyndarray>(obj);
 }
 
 //Create a Numeric array with dimensions dimens and Numeric type t
 pyndarray makeNum(std::vector<int> dimens,
-		       NPY_TYPES t=PyArray_DOUBLE){
+		       NPY_TYPES t=NPY_DOUBLE){
   object obj(handle<>(PyArray_FromDims(dimens.size(), &dimens[0], t)));
   return extract<pyndarray>(obj);
 }
@@ -356,7 +356,7 @@ void copy_data(pyndarray arr, char* new_data){
 
 //Return a clone of this array
 pyndarray clone(pyndarray arr){
-  object obj(handle<>(PyArray_NewCopy((PyArrayObject*)arr.ptr(),PyArray_CORDER)));
+  object obj(handle<>(PyArray_NewCopy((PyArrayObject*)arr.ptr(),NPY_CORDER)));
   return makeNum(obj);
 }
 
@@ -389,10 +389,10 @@ int refcount(pyndarray arr){
 }
 
 void check_PyArrayElementType(object newo){
-  NPY_TYPES theType=PyArray_TYPES(PyArray_TYPE(newo.ptr()));
-  if(theType == PyArray_OBJECT){
+  NPY_TYPES theType=NPY_TYPES(PyArray_TYPE(newo.ptr()));
+  if(theType == NPY_OBJECT){
       std::ostringstream stream;
-      stream << "array elments have been cast to PyArray_OBJECT, "
+      stream << "array elments have been cast to NPY_OBJECT, "
              << "numhandle can only accept arrays with numerical elements"
 	     << std::ends;
       PyErr_SetString(PyExc_TypeError, stream.str().c_str());

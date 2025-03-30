@@ -215,7 +215,7 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
     dims[0] = numxout;
     dims[1] = numyout;
 
-    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(PyArray_FLOAT), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
+    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(NPY_FLOAT), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
 
     if (PRINTNATGRIDS == 1) {
         /* -------- print data to the screen ---------- */
@@ -929,7 +929,7 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
     dims[0] = numxout;
     dims[1] = numyout;
 
-    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(PyArray_DOUBLE), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
+    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(NPY_DOUBLE), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
 
 
     if (PRINTNATGRIDS == 1) {
