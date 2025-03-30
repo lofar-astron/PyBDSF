@@ -550,7 +550,7 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
     if mode == "full":
         return ret
     elif mode == "same":
-        if product(s1, axis=0) > product(s2, axis=0):
+        if N.prod(s1, axis=0) > N.prod(s2, axis=0):
             osize = s1
         else:
             osize = s2

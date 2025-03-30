@@ -370,7 +370,7 @@ class Op_rmsimage(Op):
                     if not os.path.exists(resdir): os.makedirs(resdir)
                     zero_pixels = N.where(rms <= 0.0)
                     rms_nonzero = rms.copy()
-                    rms_nonzero[zero_pixels] = N.NaN
+                    rms_nonzero[zero_pixels] = N.nan
                     func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
             else:
@@ -390,7 +390,7 @@ class Op_rmsimage(Op):
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Checkrms  ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
-        fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
+        fw_pix = sqrt(N.prod(bm)/abs(N.prod(cdelt)))
         if img.masked:
             unmasked = N.where(~img.mask_arr)
             stdsub = N.std(rms[unmasked])
@@ -421,7 +421,7 @@ class Op_rmsimage(Op):
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Checkmean ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
-        fw_pix = sqrt(N.product(bm)/abs(N.product(cdelt)))
+        fw_pix = sqrt(N.prod(bm)/abs(N.prod(cdelt)))
         if img.masked:
             unmasked = N.where(~img.mask_arr)
             stdsub = N.std(mean[unmasked])

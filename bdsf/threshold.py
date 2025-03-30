@@ -30,7 +30,7 @@ class Op_threshold(Op):
         data = img.ch0_arr
         mask = img.mask_arr
         opts = img.opts
-        size = N.product(img.ch0_arr.shape)
+        size = N.prod(img.ch0_arr.shape)
         sq2  = sqrt(2)
 
         if img.opts.thresh is None:
@@ -54,7 +54,7 @@ class Op_threshold(Op):
         if img.thresh=='fdr':
             cdelt = img.wcs_obj.acdelt[:2]
             bm = (img.beam[0], img.beam[1])
-            area_pix = int(round(N.product(bm)/(abs(N.product(cdelt))* \
+            area_pix = int(round(N.prod(bm)/(abs(N.prod(cdelt))* \
                                                       pi/(4.0*log(2.0)))))
             s0 = 0
             for i in range(area_pix):
@@ -95,7 +95,7 @@ class Op_threshold(Op):
         freq = img.frequency
         bm = (img.beam[0], img.beam[1])
         cdelt = img.wcs_obj.acdelt[:2]
-        x = 2.0*pi*N.product(bm)/abs(N.product(cdelt))/(fwsig*fwsig)*img.omega
+        x = 2.0*pi*N.prod(bm)/abs(N.prod(cdelt))/(fwsig*fwsig)*img.omega
 
         smin_L = img.clipped_rms*cutoff*((1.4e9/freq)**spin)
         scflux = sc.s

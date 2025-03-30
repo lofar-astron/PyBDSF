@@ -107,7 +107,7 @@ class Op_preprocess(Op):
 
         ### Solid angle of the image
         cdelt = N.array(img.wcs_obj.acdelt[:2])
-        img.omega = N.product(shape)*abs(N.product(cdelt))/(180.*180./pi/pi)
+        img.omega = N.prod(shape)*abs(N.prod(cdelt))/(180.*180./pi/pi)
 
         ### Total flux in ch0 image
         if 'atrous' in img.filename or img._pi or img.log == 'Detection image':
@@ -135,7 +135,7 @@ class Op_preprocess(Op):
                 n = 1
                 mylog.info('No pixels in image > 5-sigma.')
                 mylog.info('Taking number of pixels above 5-sigma as 1.')
-            img.bmpersrc_th = N.product(shape)/((alpha_sourcecounts-1.)*n)
+            img.bmpersrc_th = N.prod(shape)/((alpha_sourcecounts-1.)*n)
             mylog.info('%s %6.2f' % ('Estimated bmpersrc_th = ', img.bmpersrc_th))
         else:
             img.bmpersrc_th = opts.bmpersrc_th

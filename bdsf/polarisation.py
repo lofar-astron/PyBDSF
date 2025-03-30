@@ -129,23 +129,23 @@ class Op_polarisation(Op):
                             pi_src._pi = True
                             pi_src.island_id = isl_id
                             pi_src.source_id = src_id
-                            pi_src.spec_indx = N.NaN
-                            pi_src.e_spec_indx = N.NaN
-                            pi_src.spec_norm = N.NaN
-                            pi_src.specin_flux = [N.NaN]
-                            pi_src.specin_fluxE = [N.NaN]
-                            pi_src.specin_freq = [N.NaN]
-                            pi_src.specin_freq0 = N.NaN
+                            pi_src.spec_indx = N.nan
+                            pi_src.e_spec_indx = N.nan
+                            pi_src.spec_norm = N.nan
+                            pi_src.specin_flux = [N.nan]
+                            pi_src.specin_fluxE = [N.nan]
+                            pi_src.specin_freq = [N.nan]
+                            pi_src.specin_freq0 = N.nan
                             for gaus in pi_src.gaussians:
                                 gaus.island_id = isl_id
                                 gaus.source_id = src_id
-                                gaus.spec_indx = N.NaN
-                                gaus.e_spec_indx = N.NaN
-                                gaus.spec_norm = N.NaN
-                                gaus.specin_flux = [N.NaN]
-                                gaus.specin_fluxE = [N.NaN]
-                                gaus.specin_freq = [N.NaN]
-                                gaus.specin_freq0 = N.NaN
+                                gaus.spec_indx = N.nan
+                                gaus.e_spec_indx = N.nan
+                                gaus.spec_norm = N.nan
+                                gaus.specin_flux = [N.nan]
+                                gaus.specin_fluxE = [N.nan]
+                                gaus.specin_freq = [N.nan]
+                                gaus.specin_freq0 = N.nan
                             new_sources.append(pi_src)
                             new_src.append(pi_src)
                             n_new_src += 1

@@ -124,13 +124,13 @@ class Op_spectralindex(Op):
                                 print('Gaussian #%i : averaged to %i channels, all of which will be used' % (gaussian.gaus_num,
                                        len(total_flux[:, ig])))
                         if (img.opts.flagchan_snr and n_good_chan_per_gaus[ig] < 2) or npos < 2:
-                            gaussian.spec_indx = N.NaN
-                            gaussian.e_spec_indx = N.NaN
-                            gaussian.spec_norm = N.NaN
-                            gaussian.specin_flux = [N.NaN]
-                            gaussian.specin_fluxE = [N.NaN]
-                            gaussian.specin_freq = [N.NaN]
-                            gaussian.specin_freq0 = N.NaN
+                            gaussian.spec_indx = N.nan
+                            gaussian.e_spec_indx = N.nan
+                            gaussian.spec_norm = N.nan
+                            gaussian.specin_flux = [N.nan]
+                            gaussian.specin_fluxE = [N.nan]
+                            gaussian.specin_freq = [N.nan]
+                            gaussian.specin_freq0 = N.nan
                         else:
                             if img.opts.flagchan_snr:
                                 good_fluxes_ind = N.where(gaus_mask[:, ig] == False)
@@ -192,13 +192,13 @@ class Op_spectralindex(Op):
                         if isinstance(n_good_chan, int):
                             n_good_chan = [n_good_chan]
                         if (img.opts.flagchan_snr and n_good_chan[0] < 2) or npos < 2:
-                            src.spec_indx = N.NaN
-                            src.e_spec_indx = N.NaN
-                            src.spec_norm = N.NaN
-                            src.specin_flux = [N.NaN]
-                            src.specin_fluxE = [N.NaN]
-                            src.specin_freq = [N.NaN]
-                            src.specin_freq0 = N.NaN
+                            src.spec_indx = N.nan
+                            src.e_spec_indx = N.nan
+                            src.spec_norm = N.nan
+                            src.specin_flux = [N.nan]
+                            src.specin_fluxE = [N.nan]
+                            src.specin_freq = [N.nan]
+                            src.specin_freq0 = N.nan
                         else:
                             if img.opts.flagchan_snr:
                                 good_fluxes_ind = N.where(src_mask == False)
