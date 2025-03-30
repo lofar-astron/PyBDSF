@@ -130,7 +130,6 @@ KindStringMapEntry kindStringMapEntries[] =
     KindStringMapEntry(NPY_CFLOAT, "NPY_CFLOAT"),
     KindStringMapEntry(NPY_CDOUBLE,"NPY_CDOUBLE"),
     KindStringMapEntry(NPY_OBJECT, "NPY_OBJECT"),
-    KindStringMapEntry(NPY_NTYPES, "NPY_NTYPES"),
     KindStringMapEntry(NPY_NOTYPE ,"NPY_NOTYPE")
   };
 
@@ -190,15 +189,15 @@ pyndarray makeNum(object x){
 }
 
 //Create a one-dimensional Numeric array of length n and Numeric type t
-pyndarray makeNum(int n, NPY_TYPES t=NPY_DOUBLE){
-  object obj(handle<>(PyArray_FromDims(1, &n, t)));
+pyndarray makeNum(ssize_t n, NPY_TYPES t=NPY_DOUBLE){
+  object obj(handle<>(PyArray_SimpleNew(1, &n, t)));
   return extract<pyndarray>(obj);
 }
 
 //Create a Numeric array with dimensions dimens and Numeric type t
-pyndarray makeNum(std::vector<int> dimens,
+pyndarray makeNum(std::vector<ssize_t> dimens,
 		       NPY_TYPES t=NPY_DOUBLE){
-  object obj(handle<>(PyArray_FromDims(dimens.size(), &dimens[0], t)));
+  object obj(handle<>(PyArray_SimpleNew(dimens.size(), &dimens[0], t)));
   return extract<pyndarray>(obj);
 }
 
