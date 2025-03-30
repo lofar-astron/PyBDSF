@@ -16,7 +16,7 @@ from .const import fwsig
 from copy import deepcopy as cp
 from . import functions as func
 import gc
-from numpy import array, product
+from numpy import array, prod
 import scipy.signal
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
