@@ -17,101 +17,101 @@ namespace num_util{
 
 
   template <>
-  PyArray_TYPES getEnum<unsigned char>(void)
+  NPY_TYPES getEnum<unsigned char>(void)
   {
     return PyArray_UBYTE;
   }
 
 
   template <>
-  PyArray_TYPES getEnum<signed char>(void)
+  NPY_TYPES getEnum<signed char>(void)
   {
     return PyArray_BYTE;
   }
 
   template <>
-  PyArray_TYPES getEnum<short>(void)
+  NPY_TYPES getEnum<short>(void)
   {
     return PyArray_SHORT;
   }
 
   template <>
-  PyArray_TYPES getEnum<unsigned short>(void)
+  NPY_TYPES getEnum<unsigned short>(void)
   {
     return PyArray_USHORT;
   }
 
 
   template <>
-  PyArray_TYPES getEnum<unsigned int>(void)
+  NPY_TYPES getEnum<unsigned int>(void)
   {
     return PyArray_UINT;
   }
 
   template <>
-  PyArray_TYPES getEnum<int>(void)
+  NPY_TYPES getEnum<int>(void)
   {
     return PyArray_INT;
   }
 
   template <>
-  PyArray_TYPES getEnum<long>(void)
+  NPY_TYPES getEnum<long>(void)
   {
     return PyArray_LONG;
   }
 
   template <>
-  PyArray_TYPES getEnum<unsigned long>(void)
+  NPY_TYPES getEnum<unsigned long>(void)
   {
     return PyArray_ULONG;
   }
 
 
   template <>
-  PyArray_TYPES getEnum<long long>(void)
+  NPY_TYPES getEnum<long long>(void)
   {
     return PyArray_LONGLONG;
   }
 
   template <>
-  PyArray_TYPES getEnum<unsigned long long>(void)
+  NPY_TYPES getEnum<unsigned long long>(void)
   {
     return PyArray_ULONGLONG;
   }
 
   template <>
-  PyArray_TYPES getEnum<float>(void)
+  NPY_TYPES getEnum<float>(void)
   {
     return PyArray_FLOAT;
   }
 
   template <>
-  PyArray_TYPES getEnum<double>(void)
+  NPY_TYPES getEnum<double>(void)
   {
     return PyArray_DOUBLE;
   }
 
   template <>
-  PyArray_TYPES getEnum<long double>(void)
+  NPY_TYPES getEnum<long double>(void)
   {
     return PyArray_LONGDOUBLE;
   }
 
   template <>
-  PyArray_TYPES getEnum<std::complex<float> >(void)
+  NPY_TYPES getEnum<std::complex<float> >(void)
   {
     return PyArray_CFLOAT;
   }
 
 
   template <>
-  PyArray_TYPES getEnum<std::complex<double> >(void)
+  NPY_TYPES getEnum<std::complex<double> >(void)
   {
     return PyArray_CDOUBLE;
   }
 
   template <>
-  PyArray_TYPES getEnum<std::complex<long double> >(void)
+  NPY_TYPES getEnum<std::complex<long double> >(void)
   {
     return PyArray_CLONGDOUBLE;
   }
@@ -190,14 +190,14 @@ pyndarray makeNum(object x){
 }
 
 //Create a one-dimensional Numeric array of length n and Numeric type t
-pyndarray makeNum(int n, PyArray_TYPES t=PyArray_DOUBLE){
+pyndarray makeNum(int n, NPY_TYPES t=PyArray_DOUBLE){
   object obj(handle<>(PyArray_FromDims(1, &n, t)));
   return extract<pyndarray>(obj);
 }
 
 //Create a Numeric array with dimensions dimens and Numeric type t
 pyndarray makeNum(std::vector<int> dimens,
-		       PyArray_TYPES t=PyArray_DOUBLE){
+		       NPY_TYPES t=PyArray_DOUBLE){
   object obj(handle<>(PyArray_FromDims(dimens.size(), &dimens[0], t)));
   return extract<pyndarray>(obj);
 }
@@ -208,13 +208,13 @@ pyndarray makeNum(const pyndarray& arr){
   return pyndarray(arr);
 }
 
-PyArray_TYPES type(pyndarray arr){
-  return PyArray_TYPES(PyArray_TYPE(arr.ptr()));
+NPY_TYPES type(pyndarray arr){
+  return NPY_TYPES(PyArray_TYPE(arr.ptr()));
 }
 
 void check_type(pyndarray arr,
-		PyArray_TYPES expected_type){
-  PyArray_TYPES actual_type = type(arr);
+		NPY_TYPES expected_type){
+  NPY_TYPES actual_type = type(arr);
   if (actual_type != expected_type) {
     std::ostringstream stream;
     stream << "expected Numeric type " << kindstrings[expected_type]
@@ -362,7 +362,7 @@ pyndarray clone(pyndarray arr){
 
 
 //Return a clone of this array with a new type
-pyndarray astype(pyndarray arr, PyArray_TYPES t){
+pyndarray astype(pyndarray arr, NPY_TYPES t){
   #if BOOST_VERSION < 106500
     return (pyndarray) arr.astype(type2char(t));
   #else
@@ -389,7 +389,7 @@ int refcount(pyndarray arr){
 }
 
 void check_PyArrayElementType(object newo){
-  PyArray_TYPES theType=PyArray_TYPES(PyArray_TYPE(newo.ptr()));
+  NPY_TYPES theType=PyArray_TYPES(PyArray_TYPE(newo.ptr()));
   if(theType == PyArray_OBJECT){
       std::ostringstream stream;
       stream << "array elments have been cast to PyArray_OBJECT, "
@@ -401,11 +401,11 @@ void check_PyArrayElementType(object newo){
   return;
 }
 
-std::string type2string(PyArray_TYPES t_type){
+std::string type2string(NPY_TYPES t_type){
   return kindstrings[t_type];
 }
 
-char type2char(PyArray_TYPES t_type){
+char type2char(NPY_TYPES t_type){
   return kindchars[t_type];
 }
 
@@ -438,7 +438,7 @@ boost::python::numpy::dtype type2dtype(char t){
 }
 #endif
 
-PyArray_TYPES char2type(char e_type){
+NPY_TYPES char2type(char e_type){
   return kindtypes[e_type];
 }
 

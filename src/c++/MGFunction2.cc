@@ -478,7 +478,7 @@ void MGFunction::__update_dcache() const
 //
 void MGFunction::_update_dcache() const
 {
-  PyArray_TYPES type = n::type(m_data);
+  NPY_TYPES type = n::type(m_data);
 
   switch (type) {
   case NPY_DOUBLE:
