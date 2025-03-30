@@ -8,7 +8,7 @@ requires = [
     "cmake>=3.18",
     "meson",
     "ninja",
-    "numpy<2",
+    "numpy",
     "scikit-build>=0.13",
     "setuptools",
     "setuptools<65; python_version<'3.12'",
@@ -50,7 +50,7 @@ classifiers = [
 dependencies = [
     "backports.shutil_get_terminal_size",
     "astropy",
-    "numpy<2",
+    "numpy",
     "scipy",
 ]
 
