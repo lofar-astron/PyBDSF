@@ -16,8 +16,6 @@ else()
     set(PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 endif()
 
-set(CMAKE_BUILD_TYPE Debug)
-
 ## -- Static library: minpack -- ##
 set(MINPACK_SRC
     src/minpack/lmder.f
