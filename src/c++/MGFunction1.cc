@@ -44,7 +44,11 @@ MGFunction::MGFunction(pyndarray data, pyndarray mask, double weight)
             PyExc_TypeError, "Incorrect mask datatype");
 
   // to calculate m_ndata we subtract masked pixels
+#if NPY_ABI_VERSION < 0x02000000
   PyObject *sum = PyArray_Sum((PyArrayObject *)mask.ptr(), NPY_MAXDIMS, NPY_INT, NULL);
+#else
+  PyObject *sum = PyArray_Sum((PyArrayObject *)mask.ptr(), NPY_RAVEL_AXIS, NPY_INT, NULL);
+#endif
   m_ndata = n::size(data) - PyInt_AsLong(sum);
   Py_DECREF(sum);
 }
