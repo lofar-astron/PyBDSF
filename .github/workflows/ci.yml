@@ -42,7 +42,7 @@ jobs:
         echo "CXX=g++" >> $GITHUB_ENV
         echo "CXXFLAGS=-I${{env.BOOST_ROOT}}/include -L${{env.BOOST_ROOT}}/lib" >> $GITHUB_ENV
         echo "FC=gfortran" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=${{env.BOOST_ROOT}}/lib" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=${{env.BOOST_ROOT}}/lib:${{env.LD_LIBRARY_PATH}}" >> $GITHUB_ENV
 
     - name: Show environment
       run: |
