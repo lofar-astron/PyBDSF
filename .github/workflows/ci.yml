@@ -21,21 +21,27 @@ jobs:
     # - name: Apt install required packages
     #   run: |
     #     sudo apt-get install -y libboost-python-dev libboost-numpy-dev
-    - name: Get environment variables from pyproject.toml
-      shell: python
-      run: |
-        import tomllib, os
-        with open("pyproject.toml", "rb") as f:
-          toml = tomllib.load(f)
-        env = toml["tool"]["cibuildwheel"]["environment"].strip()
-        with open(os.environ["GITHUB_ENV"], "a") as f:
-            f.write(env)
-    # - name: Set environment variables
-    #   run:
-    #     echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
-    #     echo "BOOST_ROOT=/opt/boost" >> $GITHUB_ENV
-    #     echo "BOOST_BUILD_DIR=/tmp/boost-build" >> $GITHUB_ENV
-    #     echo "BOOST_INSTALL_DIR=${BOOST_ROOT}"
+    # - name: Get environment variables from pyproject.toml
+    #   shell: python
+    #   run: |
+    #     import tomllib, os
+    #     with open("pyproject.toml", "rb") as f:
+    #       toml = tomllib.load(f)
+    #     env = toml["tool"]["cibuildwheel"]["environment"].strip()
+    #     with open(os.environ["GITHUB_ENV"], "a") as f:
+    #         f.write(env)
+    - name: Set environment variables
+      run:
+        echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
+        echo "BOOST_BUILD_DIR=/tmp/boost-build" >> $GITHUB_ENV
+        echo "BOOST_INSTALL_DIR="${HOME}/boost" >> $GITHUB_ENV
+        echo "BOOST_ROOT=${BOOST_INSTALL_DIR}" >> $GITHUB_ENV
+        echo "CC=gcc" >> $GITHUB_ENV
+        echo "CXX=g++" >> $GITHUB_ENV
+        echo "CXXFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" >> $GITHUB_ENV
+        echo "FC=gfortran" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=${BOOST_INSTALL_DIR}/lib" >> $GITHUB_ENV
+
     - name: Show environment
       run: |
         env
