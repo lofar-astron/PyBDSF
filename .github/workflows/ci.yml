@@ -31,7 +31,7 @@ jobs:
     #     with open(os.environ["GITHUB_ENV"], "a") as f:
     #         f.write(env)
     - name: Set environment variables
-      run:
+      run: |
         echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
         echo "BOOST_BUILD_DIR=/tmp/boost-build" >> $GITHUB_ENV
         echo "BOOST_INSTALL_DIR="${HOME}/boost" >> $GITHUB_ENV
