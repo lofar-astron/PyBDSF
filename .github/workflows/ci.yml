@@ -5,12 +5,14 @@ on:
   push:
     branches: ["master"]
 
+env:
+  BOOST_ROOT: "/opt/boost"
+
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      BOOST_ROOT: "/opt/boost"
-      LD_LIBRARY_PATH: "${{ .BOOST_ROOT }}/lib:${{ .LD_LIBRARY_PATH }}"
+      LD_LIBRARY_PATH: ${{ BOOST_ROOT }}/lib:${{ LD_LIBRARY_PATH }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -36,8 +38,12 @@ jobs:
     #     cibuildwheel/before_all.sh
     #     cibuildwheel/before_build.sh
     # - name: Build and install PyBDSF
+    #   env:
+    #     LD_LIBRARY_PATH: "${{ env.BOOST_ROOT }}/lib:${{ env.LD_LIBRARY_PATH }}"
     #   run: |
     #     python -m pip install .
     # - name: Test PyBDSF
+    #   env:
+    #     LD_LIBRARY_PATH: "${{ env.BOOST_ROOT }}/lib:${{ env.LD_LIBRARY_PATH }}"
     #   run: |
     #     cd test && python tbdsf_process_image.py
