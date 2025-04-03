@@ -21,9 +21,22 @@ jobs:
     # - name: Apt install required packages
     #   run: |
     #     sudo apt-get install -y libboost-python-dev libboost-numpy-dev
-    - name: Show environment
+    - name: Get environment variables from pyproject.toml
+      shell: python
       run: |
-        env
+        import tomllib
+        with open("pyproject.toml", "rb") as f:
+          toml = tomllib.load(f)
+        print(toml)
+    # - name: Set environment variables
+    #   run:
+    #     echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
+    #     echo "BOOST_ROOT=/opt/boost" >> $GITHUB_ENV
+    #     echo "BOOST_BUILD_DIR=/tmp/boost-build" >> $GITHUB_ENV
+    #     echo "BOOST_INSTALL_DIR=${BOOST_ROOT}"
+    # - name: Show environment
+    #   run: |
+    #     env
     # - name: Build and install Boost
     #   env:
     #     BOOST_VERSION: "1.87.0"
