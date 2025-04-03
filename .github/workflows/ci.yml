@@ -32,7 +32,7 @@ jobs:
     #         f.write(env)
     - name: Set environment variables
       env:
-        BOOST_ROOT: "${{env.HOME}}/boost"
+        BOOST_ROOT: "/opt/boost"
       run: |
         echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
         echo "BOOST_BUILD_DIR=/tmp/boost-build" >> $GITHUB_ENV
