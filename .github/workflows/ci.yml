@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      LD_LIBRARY_PATH: ${{ BOOST_ROOT }}/lib:${{ LD_LIBRARY_PATH }}
+      LD_LIBRARY_PATH: ${{ env.BOOST_ROOT }}/lib:${{ vars.LD_LIBRARY_PATH }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
