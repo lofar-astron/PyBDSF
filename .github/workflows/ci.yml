@@ -8,21 +8,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      BOOST_VERSION: "1.87.0"
+      BOOST_BUILD_DIR: "/tmp/boost-build"
+      BOOST_INSTALL_DIR: "${HOME}/boost"
+      BOOST_ROOT: "${BOOST_INSTALL_DIR}"
+      CC: "gcc"
+      CXX: "g++"
+      CXXFLAGS: "-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib"
+      FC: "gfortran"
+      LD_LIBRARY_PATH: "${BOOST_INSTALL_DIR}/lib"
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
-    - env:
-        BOOST_VERSION: "1.87.0"
-        BOOST_BUILD_DIR: "/tmp/boost-build"
-        BOOST_INSTALL_DIR: "${HOME}/boost"
-        BOOST_ROOT: "${BOOST_INSTALL_DIR}"
-        CC: "gcc"
-        CXX: "g++"
-        CXXFLAGS: "-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib"
-        FC: "gfortran"
-        LD_LIBRARY_PATH: "${BOOST_INSTALL_DIR}/lib"
     # - name: Apt install required packages
     #   run: |
     #     sudo apt-get install -y libboost-python-dev libboost-numpy-dev
