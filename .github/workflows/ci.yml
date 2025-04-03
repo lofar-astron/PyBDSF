@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -16,6 +16,19 @@ jobs:
     # - name: Apt install required packages
     #   run: |
     #     sudo apt-get install -y libboost-python-dev libboost-numpy-dev
+    - name: Build and install Boost
+      run: |
+        export BOOST_VERSION="1.87.0"
+        export BOOST_BUILD_DIR="/tmp/boost-build"
+        export BOOST_INSTALL_DIR="${HOME}/boost"
+        export BOOST_ROOT="${BOOST_INSTALL_DIR}"
+        export CC=gcc
+        export CXX=g++
+        export CXXFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib"
+        export FC=gfortran
+        export LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib"
+        cibuildwheel/before_all.sh
+        cibuildwheel/before_build.sh
     - name: Build and install PyBDSF
       run: |
         python -m pip install .
