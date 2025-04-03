@@ -29,8 +29,8 @@ jobs:
           toml = tomllib.load(f)
         env = toml["tool"]["cibuildwheel"]["environment"].strip()
         print(f"GITHUB_ENV = {os.getenv('GITHUB_ENV')}")
-        with open(os.getenv("GITHUB_ENV", "a")) as f:
-          f.write(env)
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(env)
     # - name: Set environment variables
     #   run:
     #     echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
