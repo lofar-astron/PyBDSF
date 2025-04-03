@@ -13,20 +13,21 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
+    - env:
+        BOOST_VERSION: "1.87.0"
+        BOOST_BUILD_DIR: "/tmp/boost-build"
+        BOOST_INSTALL_DIR: "${HOME}/boost"
+        BOOST_ROOT: "${BOOST_INSTALL_DIR}"
+        CC: "gcc"
+        CXX: "g++"
+        CXXFLAGS: "-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib"
+        FC: "gfortran"
+        LD_LIBRARY_PATH: "${BOOST_INSTALL_DIR}/lib"
     # - name: Apt install required packages
     #   run: |
     #     sudo apt-get install -y libboost-python-dev libboost-numpy-dev
     - name: Build and install Boost
       run: |
-        export BOOST_VERSION="1.87.0"
-        export BOOST_BUILD_DIR="/tmp/boost-build"
-        export BOOST_INSTALL_DIR="${HOME}/boost"
-        export BOOST_ROOT="${BOOST_INSTALL_DIR}"
-        export CC=gcc
-        export CXX=g++
-        export CXXFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib"
-        export FC=gfortran
-        export LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib"
         cibuildwheel/before_all.sh
         cibuildwheel/before_build.sh
     - name: Build and install PyBDSF
