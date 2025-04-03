@@ -34,11 +34,11 @@ jobs:
       run: |
         echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
         echo "BOOST_BUILD_DIR=/tmp/boost-build" >> $GITHUB_ENV
-        echo "BOOST_INSTALL_DIR="${HOME}/boost" >> $GITHUB_ENV
+        echo "BOOST_INSTALL_DIR=${HOME}/boost" >> $GITHUB_ENV
         echo "BOOST_ROOT=${BOOST_INSTALL_DIR}" >> $GITHUB_ENV
         echo "CC=gcc" >> $GITHUB_ENV
         echo "CXX=g++" >> $GITHUB_ENV
-        echo "CXXFLAGS="-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" >> $GITHUB_ENV
+        echo "CXXFLAGS=-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib" >> $GITHUB_ENV
         echo "FC=gfortran" >> $GITHUB_ENV
         echo "LD_LIBRARY_PATH=${BOOST_INSTALL_DIR}/lib" >> $GITHUB_ENV
 
