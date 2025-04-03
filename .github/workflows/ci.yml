@@ -9,15 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      BOOST_VERSION: "1.87.0"
-      BOOST_BUILD_DIR: "/tmp/boost-build"
-      BOOST_INSTALL_DIR: "/opt/boost"
-      BOOST_ROOT: "${BOOST_INSTALL_DIR}"
-      CC: "gcc"
-      CXX: "g++"
-      CXXFLAGS: "-I${BOOST_INSTALL_DIR}/include -L${BOOST_INSTALL_DIR}/lib"
-      FC: "gfortran"
-      LD_LIBRARY_PATH: "${BOOST_INSTALL_DIR}/lib"
+      BOOST_ROOT: "/opt/boost"
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -30,6 +22,17 @@ jobs:
       run: |
         env
     # - name: Build and install Boost
+      env:
+        BOOST_VERSION: "1.87.0"
+        BOOST_BUILD_DIR: "/tmp/boost-build"
+        BOOST_INSTALL_DIR: ${{ env.BOOST_ROOT }}
+        CC: "gcc"
+        CXX: "g++"
+        CXXFLAGS: "-I${{ env.BOOST_ROOT }}/include -L${{ env.BOOST_ROOT }}/lib"
+        FC: "gfortran"
+        LD_LIBRARY_PATH: "${{ env.BOOST_ROOT }}/lib"
+      run: |
+        env
     #   run: |
     #     cibuildwheel/before_all.sh
     #     cibuildwheel/before_build.sh
