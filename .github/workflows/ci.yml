@@ -21,7 +21,7 @@ jobs:
     - name: Show environment
       run: |
         env
-    # - name: Build and install Boost
+    - name: Build and install Boost
       env:
         BOOST_VERSION: "1.87.0"
         BOOST_BUILD_DIR: "/tmp/boost-build"
