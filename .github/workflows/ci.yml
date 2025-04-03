@@ -28,6 +28,7 @@ jobs:
         with open("pyproject.toml", "rb") as f:
           toml = tomllib.load(f)
         env = toml["tool"]["cibuildwheel"]["environment"].strip()
+        print(f"GITHUB_ENV = os.getenv('GITHUB_ENV')")
         with open(os.getenv("GITHUB_ENV", "a")) as f:
           f.write(env)
     # - name: Set environment variables
