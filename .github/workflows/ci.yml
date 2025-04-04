@@ -13,19 +13,38 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
+
     - name: Get environment variables from pyproject.toml
       shell: python
       run: |
         import os, re, tomllib
+        
         with open("pyproject.toml", "rb") as f:
           toml = tomllib.load(f)
-        env = toml["tool"]["cibuildwheel"]["environment"]
-        pat = re.compile(r"\S*=\S*")
+
+        # Regular expression to capture key-value pairs
+        pattern = r'(\w+)=(".*?"|\S+)'
+
+        # Extract key-value pairs
+        matches = re.findall(pattern, toml["tool"]["cibuildwheel"]["environment"])
+
+        # Function to expand environment variables within the dictionary
+        def expand_vars(value, env):
+          """Recursively expand environment variables inside a string."""
+          while True:
+            new_value = re.sub(r'\$\{(\w+)\}', lambda m: env.get(m.group(1), os.getenv(m.group(1), m.group(0))), value)
+            if new_value == value:  # Stop if no more changes
+              break
+            value = new_value
+          return value
+
+        # Apply expansion
+        expanded_env = {key: expand_vars(value, env) for key, value in env.items()}
+
         with open(os.environ["GITHUB_ENV"], "a") as f:
-          for match in pat.findall(env):
-            key, value = match.split("=")
-            os.environ[key] = os.path.expandvars(value)
+          for key, value in expanded_env.items():
             f.write(f"{key}={value}\n")
+
     - name: Show environment variables
       run: |
         env
