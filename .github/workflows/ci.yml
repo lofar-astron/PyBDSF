@@ -24,6 +24,9 @@ jobs:
         with open(os.environ["GITHUB_ENV"], "a") as f:
           for match in pat.findall(env):
             f.write(f"{match}\n")
+    - name: Show environment variables
+      run: |
+        env
     # - name: Set environment variables
     #   env:
     #     BOOST_ROOT: "/opt/boost"
