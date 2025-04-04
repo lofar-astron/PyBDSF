@@ -18,14 +18,14 @@ jobs:
       shell: python
       run: |
         import os, re, tomllib
-        
+
         with open("pyproject.toml", "rb") as f:
           toml = tomllib.load(f)
 
         # Regular expression to capture key-value pairs
         pattern = r'(\w+)=(".*?"|\S+)'
 
-        # Extract key-value pairs
+        # Extract key-value pairs from the environment used by cibuildwheel
         matches = re.findall(pattern, toml["tool"]["cibuildwheel"]["environment"])
 
         # Convert to dictionary (removing quotes)
@@ -48,23 +48,6 @@ jobs:
           for key, value in expanded_env.items():
             f.write(f"{key}={value}\n")
 
-    # - name: Show environment variables
-    #   run: |
-    #     env
-    # - name: Set environment variables
-    #   env:
-    #     BOOST_ROOT: "/opt/boost"
-    #   run: |
-    #     echo "BOOST_VERSION=1.87.0" >> $GITHUB_ENV
-    #     echo "BOOST_BUILD_DIR=/tmp/boost-build" >> $GITHUB_ENV
-    #     echo "BOOST_INSTALL_DIR=${{env.BOOST_ROOT}}" >> $GITHUB_ENV
-    #     echo "BOOST_ROOT=${{env.BOOST_ROOT}}" >> $GITHUB_ENV
-    #     echo "CC=gcc" >> $GITHUB_ENV
-    #     echo "CXX=g++" >> $GITHUB_ENV
-    #     echo "CXXFLAGS=-I${{env.BOOST_ROOT}}/include -L${{env.BOOST_ROOT}}/lib" >> $GITHUB_ENV
-    #     echo "FC=gfortran" >> $GITHUB_ENV
-    #     echo "LD_LIBRARY_PATH=${{env.BOOST_ROOT}}/lib:${{env.LD_LIBRARY_PATH}}" >> $GITHUB_ENV
-    
     - name: Build and install Boost
       run: |
         cibuildwheel/before_all.sh
