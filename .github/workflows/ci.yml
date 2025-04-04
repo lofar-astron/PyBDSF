@@ -23,7 +23,7 @@ jobs:
         pat = re.compile(r"\S*=\S*")
         with open(os.environ["GITHUB_ENV"], "a") as f:
           for match in pat.findall(env):
-            f.write(f"{match}\n")
+            f.write(f"{os.path.expandvars(match)}\n")
     - name: Show environment variables
       run: |
         env
