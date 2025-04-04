@@ -22,7 +22,7 @@ jobs:
         env = toml["tool"]["cibuildwheel"]["environment"]
         pat = re.compile(r"\S*=\S*")
         with open(os.environ["GITHUB_ENV"], "a") as f:
-          for match in pat.findall(env)
+          for match in pat.findall(env):
             f.write(f"{match}\n")
     # - name: Set environment variables
     #   env:
