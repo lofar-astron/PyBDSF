@@ -16,12 +16,14 @@ jobs:
     - name: Get environment variables from pyproject.toml
       shell: python
       run: |
-        import tomllib, os
+        import os, re, tomllib
         with open("pyproject.toml", "rb") as f:
           toml = tomllib.load(f)
-        env = toml["tool"]["cibuildwheel"]["environment"].strip()
+        env = toml["tool"]["cibuildwheel"]["environment"]
+        pat = re.compile(r"\S*=\S*")
         with open(os.environ["GITHUB_ENV"], "a") as f:
-            f.write(env)
+          for match in pat.findall(env)
+            f.write(f"{match}\n")
     # - name: Set environment variables
     #   env:
     #     BOOST_ROOT: "/opt/boost"
