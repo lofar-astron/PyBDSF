@@ -28,6 +28,9 @@ jobs:
         # Extract key-value pairs
         matches = re.findall(pattern, toml["tool"]["cibuildwheel"]["environment"])
 
+        # Convert to dictionary (removing quotes)
+        env = {key: value.strip('"') for key, value in matches}
+
         # Function to expand environment variables within the dictionary
         def expand_vars(value, env):
           """Recursively expand environment variables inside a string."""
