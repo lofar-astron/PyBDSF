@@ -28,24 +28,8 @@ jobs:
         # Extract key-value pairs from the environment used by cibuildwheel
         matches = re.findall(pattern, toml["tool"]["cibuildwheel"]["environment"])
 
-        # Convert to dictionary (removing quotes)
-        env = {key: value.strip('"') for key, value in matches}
-
-        # Function to expand environment variables within the dictionary
-        def expand_vars(value, env):
-          """Recursively expand environment variables inside a string."""
-          while True:
-            new_value = re.sub(r'\$\{(\w+)\}', lambda m: env.get(m.group(1), os.getenv(m.group(1), m.group(0))), value)
-            if new_value == value:  # Stop if no more changes
-              break
-            value = new_value
-          return value
-
-        # Apply expansion
-        expanded_env = {key: expand_vars(value, env) for key, value in env.items()}
-
         with open(os.environ["GITHUB_ENV"], "a") as f:
-          for key, value in expanded_env.items():
+          for key, value in matches:
             f.write(f"{key}={value}\n")
 
     - name: Build and install Boost
