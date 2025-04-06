@@ -30,7 +30,7 @@ jobs:
 
         with open(os.environ["GITHUB_ENV"], "a") as f:
           for key, value in matches:
-            f.write(f"{key}={value}\n")
+            f.write(f"{key}={value.strip('"')}\n")
 
     - name: Build and install Boost
       run: |
