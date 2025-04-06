@@ -20,25 +20,22 @@ jobs:
         import os, re, tomllib
 
         with open("pyproject.toml", "rb") as f:
-          toml = tomllib.load(f)
-
-        # Regular expression to capture key-value pairs
-        pattern = r'(\w+)=(".*?"|\S+)'
+            toml = tomllib.load(f)
 
         # Extract key-value pairs from the environment used by cibuildwheel
-        matches = re.findall(pattern, toml["tool"]["cibuildwheel"]["environment"])
+        matches = re.findall(
+            r'(\w+)=(".*?"|\S+)',
+            toml["tool"]["cibuildwheel"]["environment"]
+        )
 
+        # Add every key-value pair to the environment, so that if a value contains an
+        # environemt variable, it can be expanded before it is added to GITHUB_ENV.
+        # This is needed, because variables in GITHUB_ENV will not be expanded.
         with open(os.environ["GITHUB_ENV"], "a") as f:
           for key, value in matches:
             value = os.path.expandvars(value.strip('"'))
             os.environ[key] = value
             f.write(f"{key}={value}\n")
-
-    # - name: Show environment
-    #   run: |
-    #     env
-    #     echo "BOOST_ROOT=${BOOST_ROOT}"
-    #     echo "CXXFLAGS=${CXXFLAGS}"
 
     - name: Build and install Boost
       run: |
