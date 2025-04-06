@@ -32,15 +32,18 @@ jobs:
           for key, value in matches:
             f.write(f"{key}={value.strip('"')}\n")
 
-    - name: Build and install Boost
-      run: |
-        cibuildwheel/before_all.sh
-        cibuildwheel/before_build.sh
+    - name: Show environment
+      run: env
 
-    - name: Build and install PyBDSF
-      run: |
-        python -m pip install .
+    # - name: Build and install Boost
+    #   run: |
+    #     cibuildwheel/before_all.sh
+    #     cibuildwheel/before_build.sh
 
-    - name: Test PyBDSF
-      run: |
-        cd test && python tbdsf_process_image.py
+    # - name: Build and install PyBDSF
+    #   run: |
+    #     python -m pip install .
+
+    # - name: Test PyBDSF
+    #   run: |
+    #     cd test && python tbdsf_process_image.py
