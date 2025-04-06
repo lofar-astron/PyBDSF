@@ -33,7 +33,10 @@ jobs:
             f.write(f"{key}={value.strip('"')}\n")
 
     - name: Show environment
-      run: env
+      run: |
+        env
+        echo "BOOST_ROOT=${BOOST_ROOT}"
+        echo "CXXFLAGS=${CXXFLAGS}"
 
     # - name: Build and install Boost
     #   run: |
