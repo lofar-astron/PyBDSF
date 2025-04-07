@@ -254,7 +254,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
                 cmd = 'ax' + str(i+1) + ' = pl.subplot(' + str(numx) + \
                     ', ' + str(numy) + ', ' + str(i+1) + ', sharex=ax1' + \
                     ', sharey=ax1)'
-            exec(cmd)
+            exec(cmd, globals())
             if 'PSF' in titles[i]:
                 im = image  # note: im is used in cmd string below
             else:
@@ -358,7 +358,7 @@ def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
         elif image == 'seds':
             cmd = 'ax' + str(i+1) + ' = pl.subplot(' + str(numx) + \
                 ', ' + str(numy) + ', ' + str(i+1) + ')'
-            exec(cmd)
+            exec(cmd, globals())
             ax = pl.gca()
             plot_sed(sed_src, ax)
 
