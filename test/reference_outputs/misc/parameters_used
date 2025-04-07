@@ -17,7 +17,7 @@ beam_spectrum                           None
     Value used                          [(0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0), (0.015, 0.015, 0.0)]
 blank_limit                             None
 bmpersrc_th                             None
-    Value used                          16.834597875569045
+    Value used                          np.float64(16.834597875569045)
 broadcast                               False
 catalog_type                            'gaul'
 ch0_flagged                             False
@@ -55,7 +55,7 @@ flagging_opts                           False
 force_output                            False
 format                                  'bbs'
 frequency                               None
-    Value used                          23.5
+    Value used                          np.float64(23.5)
 frequency_sp                            None
 gmodel_image                            True
 gresid_image                            True
