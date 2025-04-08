@@ -8,7 +8,7 @@ requires = [
     "cmake>=3.18",
     "meson",
     "ninja",
-    "numpy<2",
+    "numpy",
     "scikit-build>=0.13",
     "setuptools",
     "setuptools<65; python_version<'3.12'",
@@ -26,7 +26,7 @@ name = "bdsf"
 dynamic = ["version"]
 description = "Blob Detector and Source Finder"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     { name = "David Rafferty", email = "drafferty@hs.uni-hamburg.de" },
 ]
@@ -40,17 +40,17 @@ classifiers = [
     "Programming Language :: C++",
     "Programming Language :: Fortran",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
     "backports.shutil_get_terminal_size",
     "astropy",
-    "numpy<2",
+    "numpy",
     "scipy",
 ]
 
@@ -75,10 +75,10 @@ Documentation = "https://pybdsf.readthedocs.io"
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
-build = "cp3{8,9,10,11,12}-*"
+build = "cp3{9,10,11,12,13}-*"
 build-verbosity = 1
 environment = """ \
-    BOOST_VERSION="1.85.0" \
+    BOOST_VERSION="1.87.0" \
     BOOST_BUILD_DIR="/tmp/boost-build" \
     BOOST_INSTALL_DIR="${HOME}/boost" \
     BOOST_ROOT="${BOOST_INSTALL_DIR}" \

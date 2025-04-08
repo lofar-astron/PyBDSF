@@ -18,7 +18,7 @@ function cleanup
 # Install latest numpy 1.x; we do not yet support numpy 2.x
 function install_numpy
 {
-  pip install 'numpy<2'
+  pip install 'numpy'
 }
 
 # Build the Boost Python libraries

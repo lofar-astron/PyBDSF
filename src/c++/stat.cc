@@ -236,7 +236,7 @@ object bstat(pyndarray arr, object mask, double kappa)
 {
   NPY_TYPES type = n::type(arr);
 
-  if (PyArray_ISBYTESWAPPED(arr.ptr()))
+  if (PyArray_ISBYTESWAPPED((PyArrayObject*) arr.ptr()))
     goto fail;
 
   if (mask.ptr() != Py_None && mask.ptr() != Py_False 
@@ -248,7 +248,7 @@ object bstat(pyndarray arr, object mask, double kappa)
     n::check_rank(amask, rank);
     n::check_size(amask, n::size(arr));
     // this is pointless on pc, but might matter somewhere else
-    if (PyArray_ISBYTESWAPPED(amask.ptr()))
+    if (PyArray_ISBYTESWAPPED((PyArrayObject*) amask.ptr()))
       goto fail;
   }
 

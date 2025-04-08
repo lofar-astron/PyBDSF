@@ -16,7 +16,7 @@ from .const import fwsig
 from copy import deepcopy as cp
 from . import functions as func
 import gc
-from numpy import array, product
+from numpy import array, prod
 import scipy.signal
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
@@ -550,7 +550,7 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
     if mode == "full":
         return ret
     elif mode == "same":
-        if product(s1, axis=0) > product(s2, axis=0):
+        if N.prod(s1, axis=0) > N.prod(s2, axis=0):
             osize = s1
         else:
             osize = s2

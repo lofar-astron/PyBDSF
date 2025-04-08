@@ -38,7 +38,7 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
         cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
-        npix = N.product(image.shape)-N.sum(mask)
+        npix = N.prod(image.shape)-N.sum(mask)
         npara = (nmax+1)*(nmax+2)*0.5
         cfnew = fit_shapeletbasis(image, mask, cf, Bset)
         recon1 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cf)
@@ -317,7 +317,7 @@ def shapelet_check_centre(image, mask, cen, beam_pix):
         if not mask[int(round(x)),int(round(y))]: error == 2
 
     if error > 0:
-        if (N.product(mask.shape)-sum(sum(mask)))/(pi*0.25*beam_pix[0]*beam_pix[1]) < 2.5:
+        if (N.prod(mask.shape)-sum(sum(mask)))/(pi*0.25*beam_pix[0]*beam_pix[1]) < 2.5:
             error = error*10   # expected to fail since source is too small
 
     return error

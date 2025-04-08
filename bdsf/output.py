@@ -1104,7 +1104,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                         cnames.append(colname[0]+'_ch'+str(i+1))
                         cunits.append(units[0])
                     else:
-                        cvals.append(N.NaN)
+                        cvals.append(N.nan)
                         cnames.append(colname[0]+'_ch'+str(i+1))
                         cunits.append(units[0])
             else:
@@ -1136,7 +1136,7 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                         # This is a numpy array, so flatten it
                         tarr = val.flatten()
                         tarr2 = N.resize(tarr, nmax**2)
-                        tarr2[tarr.shape[0]:] = N.NaN
+                        tarr2[tarr.shape[0]:] = N.nan
                         cvals.append(tarr2)
                         cnames.append(colname)
                         cunits.append(units)

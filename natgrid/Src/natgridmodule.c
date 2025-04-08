@@ -208,26 +208,26 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    out = (float *)c_natgrids(npnts, (float *)object_x->data, (float *)object_y->data, (float *)object_z->data,
-                                              numxout, numyout, (float *)object_xo->data, (float *)object_yo->data, &ier);
+    out = (float *)c_natgrids(npnts, (float *)PyArray_DATA(object_x), (float *)PyArray_DATA(object_y), (float *)PyArray_DATA(object_z),
+                              numxout, numyout, (float *)PyArray_DATA(object_xo), (float *)PyArray_DATA(object_yo), &ier);
 
     /* -------- create a NumPy array housing the C language data out ----------- */
     dims[0] = numxout;
     dims[1] = numyout;
 
-    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(PyArray_FLOAT), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
+    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(NPY_FLOAT), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
 
     if (PRINTNATGRIDS == 1) {
         /* -------- print data to the screen ---------- */
         printf("npnts: %d\n", npnts);
         printf("numxout: %d\n", numxout);
         printf("numyout: %d\n", numyout);
-        print_float(npnts, title[0], (float *)object_x->data);
-        print_float(npnts, title[1], (float *)object_x->data);
-        print_float(npnts, title[2], (float *)object_z->data);
-        print_float(numxout, title[3], (float *)object_xo->data);
-        print_float(numyout, title[4], (float *)object_yo->data);
-        print_float(numxout*numyout, title[5], (float *)object_out->data);
+        print_float(npnts, title[0], (float *)PyArray_DATA(object_x));
+        print_float(npnts, title[1], (float *)PyArray_DATA(object_y));
+        print_float(npnts, title[2], (float *)PyArray_DATA(object_z));
+        print_float(numxout, title[3], (float *)PyArray_DATA(object_xo));
+        print_float(numyout, title[4], (float *)PyArray_DATA(object_yo));
+        print_float(numxout*numyout, title[5], (float *)PyArray_DATA(object_out));
     }
 
     if (WRITENATGRIDS == 1) {
@@ -240,12 +240,12 @@ static PyObject *nat_c_natgrids(PyObject *self, PyObject *args)
         fprintf(fp, "npnts: %d\n", npnts);
         fprintf(fp, "numxout: %d\n", numxout);
         fprintf(fp, "numyout: %d\n", numyout);
-        write_float(npnts, title[0], fp, (float *)object_x->data);
-        write_float(npnts, title[1], fp, (float *)object_y->data);
-        write_float(npnts, title[2], fp, (float *)object_z->data);
-        write_float(numxout, title[3], fp, (float *)object_xo->data);
-        write_float(numyout, title[4], fp, (float *)object_yo->data);
-        write_float(numxout*numyout, title[5], fp, (float *)object_out->data);
+        write_float(npnts, title[0], fp, (float *)PyArray_DATA(object_x));
+        write_float(npnts, title[1], fp, (float *)PyArray_DATA(object_y));
+        write_float(npnts, title[2], fp, (float *)PyArray_DATA(object_z));
+        write_float(numxout, title[3], fp, (float *)PyArray_DATA(object_xo));
+        write_float(numyout, title[4], fp, (float *)PyArray_DATA(object_yo));
+        write_float(numxout*numyout, title[5], fp, (float *)PyArray_DATA(object_out));
 
         fclose(fp);
     }
@@ -716,14 +716,14 @@ static PyObject *nat_c_nnpntinits(PyObject *self, PyObject *args)
 
     /* -------- write  input data to a file ----------- */
 
-    c_nnpntinits(npnts, (float *)object_x->data, (float *)object_y->data, (float *)object_z->data);
+    c_nnpntinits(npnts, (float *)PyArray_DATA(object_x), (float *)PyArray_DATA(object_y), (float *)PyArray_DATA(object_z));
 
     if (PRINTPNTINITS == 1) {
         /* -------- print data to the screen ---------- */
         printf("npnts: %d\n", npnts);
-        print_float(npnts, title[0], (float *)object_x->data);
-        print_float(npnts, title[1], (float *)object_x->data);
-        print_float(npnts, title[2], (float *)object_z->data);
+        print_float(npnts, title[0], (float *)PyArray_DATA(object_x));
+        print_float(npnts, title[1], (float *)PyArray_DATA(object_y));
+        print_float(npnts, title[2], (float *)PyArray_DATA(object_z));
     }
 
     if (WRITEPNTINITS == 1) {
@@ -734,9 +734,9 @@ static PyObject *nat_c_nnpntinits(PyObject *self, PyObject *args)
         }
 
         fprintf(fp, "npnts: %d\n", npnts);
-        write_float(npnts, title[0], fp, (float *)object_x->data);
-        write_float(npnts, title[1], fp, (float *)object_y->data);
-        write_float(npnts, title[2], fp, (float *)object_z->data);
+        write_float(npnts, title[0], fp, (float *)PyArray_DATA(object_x));
+        write_float(npnts, title[1], fp, (float *)PyArray_DATA(object_y));
+        write_float(npnts, title[2], fp, (float *)PyArray_DATA(object_z));
 
         fclose(fp);
     }
@@ -922,14 +922,14 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    out = (double *)c_natgridd(npnts, (double *)object_x->data, (double *)object_y->data, (double *)object_z->data,
-                                            numxout, numyout, (double *)object_xo->data, (double *)object_yo->data, &ier);
+    out = (double *)c_natgridd(npnts, (double *)PyArray_DATA(object_x), (double *)PyArray_DATA(object_y), (double *)PyArray_DATA(object_z),
+                               numxout, numyout, (double *)PyArray_DATA(object_xo), (double *)PyArray_DATA(object_yo), &ier);
 
     /* -------- create a NumPy array housing the c language data out ----------- */
     dims[0] = numxout;
     dims[1] = numyout;
 
-    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(PyArray_DOUBLE), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
+    object_out = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(NPY_DOUBLE), 2, dims, NULL, (char *)out, NPY_ARRAY_CARRAY, NULL);
 
 
     if (PRINTNATGRIDS == 1) {
@@ -937,12 +937,12 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
         printf("npnts: %d\n", npnts);
         printf("numxout: %d\n", numxout);
         printf("numyout: %d\n", numyout);
-        print_double(npnts, title[0], (double *)object_x->data);
-        print_double(npnts, title[1], (double *)object_x->data);
-        print_double(npnts, title[2], (double *)object_z->data);
-        print_double(numxout, title[3], (double *)object_xo->data);
-        print_double(numyout, title[4], (double *)object_yo->data);
-        print_double(numxout*numyout, title[5], (double *)object_out->data);
+        print_double(npnts, title[0], (double *)PyArray_DATA(object_x));
+        print_double(npnts, title[1], (double *)PyArray_DATA(object_y));
+        print_double(npnts, title[2], (double *)PyArray_DATA(object_z));
+        print_double(numxout, title[3], (double *)PyArray_DATA(object_xo));
+        print_double(numyout, title[4], (double *)PyArray_DATA(object_yo));
+        print_double(numxout*numyout, title[5], (double *)PyArray_DATA(object_out));
     }
 
     if (WRITENATGRIDS == 1) {
@@ -955,12 +955,12 @@ static PyObject *nat_c_natgridd(PyObject *self, PyObject *args)
         fprintf(fp, "npnts: %d\n", npnts);
         fprintf(fp, "numxout: %d\n", numxout);
         fprintf(fp, "numyout: %d\n", numyout);
-        write_double(npnts, title[0], fp, (double *)object_x->data);
-        write_double(npnts, title[1], fp, (double *)object_y->data);
-        write_double(npnts, title[2], fp, (double *)object_z->data);
-        write_double(numxout, title[3], fp, (double *)object_xo->data);
-        write_double(numyout, title[4], fp, (double *)object_yo->data);
-        write_double(numxout*numyout, title[5], fp, (double *)object_out->data);
+        write_double(npnts, title[0], fp, (double *)PyArray_DATA(object_x));
+        write_double(npnts, title[1], fp, (double *)PyArray_DATA(object_y));
+        write_double(npnts, title[2], fp, (double *)PyArray_DATA(object_z));
+        write_double(numxout, title[3], fp, (double *)PyArray_DATA(object_xo));
+        write_double(numyout, title[4], fp, (double *)PyArray_DATA(object_yo));
+        write_double(numxout*numyout, title[5], fp, (double *)PyArray_DATA(object_out));
 
         fclose(fp);
     }
@@ -1242,15 +1242,15 @@ static PyObject *nat_c_nnpntinitd(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    c_nnpntinitd(npnts, (double *)object_x->data, (double *)object_y->data, (double *)object_z->data);
+    c_nnpntinitd(npnts, (double *)PyArray_DATA(object_x), (double *)PyArray_DATA(object_y), (double *)PyArray_DATA(object_z));
 
 
     if (PRINTPNTINITS == 1) {
         /* -------- print data to the screen ---------- */
         printf("npnts: %d\n", npnts);
-        print_double(npnts, title[0], (double *)object_x->data);
-        print_double(npnts, title[1], (double *)object_x->data);
-        print_double(npnts, title[2], (double *)object_z->data);
+        print_double(npnts, title[0], (double *)PyArray_DATA(object_x));
+        print_double(npnts, title[1], (double *)PyArray_DATA(object_y));
+        print_double(npnts, title[2], (double *)PyArray_DATA(object_z));
     }
 
     if (WRITEPNTINITS == 1) {
@@ -1261,9 +1261,9 @@ static PyObject *nat_c_nnpntinitd(PyObject *self, PyObject *args)
         }
 
         fprintf(fp, "npnts: %d\n", npnts);
-        write_double(npnts, title[0], fp, (double *)object_x->data);
-        write_double(npnts, title[1], fp, (double *)object_y->data);
-        write_double(npnts, title[2], fp, (double *)object_z->data);
+        write_double(npnts, title[0], fp, (double *)PyArray_DATA(object_x));
+        write_double(npnts, title[1], fp, (double *)PyArray_DATA(object_y));
+        write_double(npnts, title[2], fp, (double *)PyArray_DATA(object_z));
 
         fclose(fp);
     }

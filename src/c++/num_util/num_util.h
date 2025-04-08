@@ -37,7 +37,7 @@ namespace num_util{
    *@param t elements' numpy type. Default is double.
    *@return a numeric array of size n with elements initialized to zero.
    */
-  pyndarray makeNum(int n, PyArray_TYPES t);
+  pyndarray makeNum(int n, NPY_TYPES t);
 
   /** 
    *Creates a n-dimensional numpy array with dimensions dimens and numpy 
@@ -47,7 +47,7 @@ namespace num_util{
    *@return a numeric array of shape dimens with elements initialized to zero.
    */
   pyndarray makeNum(std::vector<int> dimens, 
-					PyArray_TYPES t);
+					NPY_TYPES t);
 				      
   /** 
    *Function template returns PyArray_Type for C++ type
@@ -56,11 +56,11 @@ namespace num_util{
    *@return numpy type enum
    */
 
-  template<typename T> PyArray_TYPES getEnum(void)
+  template<typename T> NPY_TYPES getEnum(void)
   {
     PyErr_SetString(PyExc_ValueError, "no mapping available for this type");
     boost::python::throw_error_already_set();
-    return PyArray_VOID;
+    return NPY_VOID;
   }
 
   /** 
@@ -110,7 +110,7 @@ namespace num_util{
    *@param arr a Boost/Python numeric array.
    *@return the numpy type of the array's elements 
    */
-  PyArray_TYPES type(pyndarray arr);
+  NPY_TYPES type(pyndarray arr);
 
   /** 
    *Throws an exception if the actual array type is not equal to the expected 
@@ -120,7 +120,7 @@ namespace num_util{
    *@return -----
    */
   void check_type(pyndarray arr, 
-		  PyArray_TYPES expected_type);
+		  NPY_TYPES expected_type);
 
   /** 
    *A free function that retrieves the number of dimensions of a numpy array.
@@ -227,11 +227,11 @@ namespace num_util{
   /** 
    *Returns a clone of this array with a new type.
    *@param arr a Boost/Python numeric array.
-   *@param t PyArray_TYPES of the output array.
+   *@param t NPY_TYPES of the output array.
    *@return a replicate of 'arr' with type set to 't'.
    */
   pyndarray astype(pyndarray arr, 
-				       PyArray_TYPES t);
+				       NPY_TYPES t);
 
 
 /*    *Returns the reference count of the array. */
@@ -249,7 +249,7 @@ namespace num_util{
 
   /** 
    *Throws an exception if the element of a numpy array is type cast to
-   *PyArray_OBJECT.
+   *NPY_OBJECT.
    *@param newo a Boost/Python object.
    *@return -----
    */
@@ -258,36 +258,36 @@ namespace num_util{
   /** 
    *Mapping from a PyArray_TYPE to its corresponding name in string.
    */
-  typedef std::map<PyArray_TYPES, std::string> KindStringMap;
+  typedef std::map<NPY_TYPES, std::string> KindStringMap;
 
   /** 
    *Mapping from a PyArray_TYPE to its corresponding typeID in char.
    */
-  typedef std::map<PyArray_TYPES, char> KindCharMap;
+  typedef std::map<NPY_TYPES, char> KindCharMap;
 
   /** 
    *Mapping from a typeID to its corresponding PyArray_TYPE.
    */
-  typedef std::map<char, PyArray_TYPES> KindTypeMap;
+  typedef std::map<char, NPY_TYPES> KindTypeMap;
 
   /** 
    *Converts a PyArray_TYPE to its name in string.
-   *@param t_type a PyArray_TYPES.
+   *@param t_type a NPY_TYPES.
    *@return the corresponding name in string.
    */
-  std::string type2string(PyArray_TYPES t_type);
+  std::string type2string(NPY_TYPES t_type);
 
   /** 
    *Converts a PyArray_TYPE to its single character typecode.
-   *@param t_type a PyArray_TYPES.
+   *@param t_type a NPY_TYPES.
    *@return the corresponding typecode in char.
    */
-  char type2char(PyArray_TYPES t_type);
+  char type2char(NPY_TYPES t_type);
   
   /** 
    *Converts single character typecode of PyArray_TYPE
    *to its corresponding numpy dtype.
-   *@param t  single character typecode of PyArray_TYPES.
+   *@param t  single character typecode of NPY_TYPES.
    *@return the corresponding numpy dtype.
    */
   #if BOOST_VERSION >= 106500
@@ -295,11 +295,11 @@ namespace num_util{
   #endif
 
   /** 
-   *Coverts a single character typecode to its PyArray_TYPES.
-   *@param e_type a PyArray_TYPES typecode in char.
-   *@return its corresponding PyArray_TYPES.
+   *Coverts a single character typecode to its NPY_TYPES.
+   *@param e_type a NPY_TYPES typecode in char.
+   *@return its corresponding NPY_TYPES.
    */
-  PyArray_TYPES char2type(char e_type);
+  NPY_TYPES char2type(char e_type);
 
   /**
    *Constructs a string which contains a list of elements extracted from the 

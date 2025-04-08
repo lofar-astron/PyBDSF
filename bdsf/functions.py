@@ -583,7 +583,7 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
         for coord in index:
             co = N.array(coord)
             m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
-            m11 += N.product(co - mompara[1:3])*subim[coord]
+            m11 += N.prod(co - mompara[1:3])*subim[coord]
 
         mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
         mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
@@ -910,7 +910,7 @@ def variance_of_wted_windowedmean(S_i, rms_i, chanmask, window_size):
             s = S_i[index]; r = rms_i[index]; w = wt[index]
             fluxes[i] = N.sum(s*w)/N.sum(w)
             vars[i] = 1.0/sqrt(N.sum(1.0/r/r))
-            mask[i] = N.product(m)
+            mask[i] = N.prod(m)
         else:
             fluxes[i] = 0
             vars[i] = 0
