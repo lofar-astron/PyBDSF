@@ -10,7 +10,7 @@ def changelog():
     -----------------------------------------------------------------------
     2025/04/10 - Fix failing publish to PyPI step in CI pipeline (#254)
 
-    2025/04/08 - Version 1.12.0
+    2025/04/08 - Version 1.13.0
 
     2025/04/08 - Issues/247 support numpy2.0 (#251)
 
