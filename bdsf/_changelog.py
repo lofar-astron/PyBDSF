@@ -8,6 +8,14 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2025/04/10 - Fix failing publish to PyPI step in CI pipeline (#254)
+
+    2025/04/08 - Version 1.12.0
+
+    2025/04/08 - Issues/247 support numpy2.0 (#251)
+
+    2025/04/07 - Fix exec() call for Python 3.13+ (#252)
+
     2024/11/25 - Version 1.12.0
 
     2024/11/19 - Fix string checks and clean up (#243)
