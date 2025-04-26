@@ -18,7 +18,6 @@ from .islands import Op_islands
 from .gausfit import Op_gausfit
 from .gaul2srl import Op_gaul2srl
 from .make_residimage import Op_make_residimage
-from .const import fwsig
 from . import mylogger
 import numpy as N
 from . import functions as func
