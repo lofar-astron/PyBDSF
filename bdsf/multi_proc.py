@@ -108,6 +108,10 @@ def run_tasks(procs, err_q, out_q, num):
 
         for proc in procs:
             proc.join()
+            if proc.exitcode != 0:
+                raise RuntimeError(
+                    f"Process {proc.name} died unexpectedly (exit code: {proc.exitcode})"
+                )
 
     except Exception as e:
         # kill all slave processes on ctrl-C
