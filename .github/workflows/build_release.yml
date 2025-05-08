@@ -39,7 +39,7 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19
+        uses: pypa/cibuildwheel@v2.23
         env:
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macosx_deployment_target }}
 
