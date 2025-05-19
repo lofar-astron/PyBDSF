@@ -13,7 +13,6 @@ Masked images aren't handled properly yet.
 from __future__ import absolute_import
 
 import numpy as N
-from .image import Op, Image, NArray
 from math import sqrt,pi,log
 from scipy.special import erfc
 from . import const

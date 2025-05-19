@@ -2,15 +2,11 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as N
-from astropy.io import fits as pyfits
 from .image import *
 from . import mylogger
-from copy import deepcopy as cp
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
-import scipy
-import scipy.signal as S
 from . import _cbdsm
 from . import functions as func
 from . import _pytesselate as _pytess
