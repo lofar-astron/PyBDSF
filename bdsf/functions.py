@@ -2135,6 +2135,7 @@ def bstat(indata, mask, kappa_npixbeam):
         unmasked = numpy.where(~msk_flat)
         skpix = skpix[unmasked]
 
+    skpix.sort()
     ct = skpix.size
     iter = 0
     c1 = 1.0
@@ -2154,19 +2155,21 @@ def bstat(indata, mask, kappa_npixbeam):
             if kappa < 3.0:
                 kappa = 3.0
         lastct = ct
-        medval = numpy.median(skpix)
+        medval = skpix[npix//2]
         sig = numpy.std(skpix)
-        wsm = numpy.where(abs(skpix-medval) < kappa*sig)
-        ct = len(wsm[0])
+
+        wsm1, wsm2 = numpy.searchsorted(skpix, [medval - kappa*sig,
+                                                medval + kappa*sig])
+        ct = wsm2 - wsm1
         if ct > 0:
-            skpix = skpix[wsm]
+            skpix = skpix[wsm1:wsm2]
 
         c1 = abs(ct - lastct)
         c2 = converge_num * lastct
         iter += 1
 
     mean  = numpy.mean(skpix)
-    median = numpy.median(skpix)
+    median = skpix[skpix.size//2]
     sigma = numpy.std(skpix, ddof=1)
     mode = 2.5*median - 1.5*mean
     if sigma > 0.0:
