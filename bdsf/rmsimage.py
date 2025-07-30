@@ -613,8 +613,8 @@ class Op_rmsimage(Op):
             axes2mod[0] = axes2[0]/arr.shape[0]*mean_map1.shape[0]
             axes2mod[1] = axes2[1]/arr.shape[1]*mean_map1.shape[1]
             ax2 = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(out_rms2.shape, axes2mod)][-1::-1]
-            mapcoord_threaded(rms_map2,  ax2, order=interp, output=out_rms2)
-            mapcoord_threaded(mean_map2, ax2, order=interp, output=out_mean2)
+            mapcoord_threaded(rms_map2,  ax2, order=interp, output=out_rms2, ncores=ncores)
+            mapcoord_threaded(mean_map2, ax2, order=interp, output=out_mean2, ncores=ncores)
             rms_map = out_rms2
             mean_map = out_mean2
 
@@ -657,8 +657,8 @@ class Op_rmsimage(Op):
 
         # Interpolate to image coords
         mylog = mylogger.logging.getLogger(logname+"Rmsimage")
-        mapcoord_threaded(rms_map,  ax, order=interp, output=out_rms)
-        mapcoord_threaded(mean_map, ax, order=interp, output=out_mean)
+        mapcoord_threaded(rms_map,  ax, order=interp, output=out_rms, ncores=ncores)
+        mapcoord_threaded(mean_map, ax, order=interp, output=out_mean, ncores=ncores)
 
         # Apply mask to mean_map and rms_map by setting masked values to NaN
         if isinstance(mask, N.ndarray):
