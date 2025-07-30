@@ -2176,7 +2176,7 @@ def bstat(indata, mask, kappa_npixbeam):
 
     mean  = numpy.mean(skpix)
     median = skpix[skpix.size//2]
-    sigma = numpy.std(skpix, ddof=1)
+    sigma =  (d2.sum()/(ct-1) - (m_raw-mean)**2 * ct/(ct-1) )**0.5
     mode = 2.5*median - 1.5*mean
     if sigma > 0.0:
         skew_par = abs(mean - median)/sigma
