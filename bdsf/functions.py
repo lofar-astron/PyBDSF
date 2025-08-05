@@ -2143,7 +2143,8 @@ def bstat(indata, mask, kappa_npixbeam):
     maxiter = 200
     converge_num = 1e-6
     m_raw = numpy.mean(skpix)
-    r_raw = numpy.std(skpix, ddof=1)
+    d2 = (skpix-m_raw)**2
+    r_raw = (d2.sum()/(ct-1))**0.5
 
     while (c1 >= c2) and (iter < maxiter):
         npix = skpix.size
@@ -2156,13 +2157,18 @@ def bstat(indata, mask, kappa_npixbeam):
                 kappa = 3.0
         lastct = ct
         medval = skpix[npix//2]
-        sig = numpy.std(skpix)
+        if iter == 0:
+            sig = r_raw
+        else:
+            m_new = numpy.mean(skpix)
+            sig = (d2.sum()/ct - (m_raw-m_new)**2)**0.5
 
         wsm1, wsm2 = numpy.searchsorted(skpix, [medval - kappa*sig,
                                                 medval + kappa*sig])
         ct = wsm2 - wsm1
         if ct > 0:
             skpix = skpix[wsm1:wsm2]
+            d2    = d2[wsm1:wsm2]
 
         c1 = abs(ct - lastct)
         c2 = converge_num * lastct
@@ -2170,7 +2176,7 @@ def bstat(indata, mask, kappa_npixbeam):
 
     mean  = numpy.mean(skpix)
     median = skpix[skpix.size//2]
-    sigma = numpy.std(skpix, ddof=1)
+    sigma =  (d2.sum()/(ct-1) - (m_raw-mean)**2 * ct/(ct-1) )**0.5
     mode = 2.5*median - 1.5*mean
     if sigma > 0.0:
         skew_par = abs(mean - median)/sigma
