@@ -86,11 +86,11 @@ class Op_make_residimage(Op):
             self.calc_resid_mean_rms(isl, resid, type='gaus')
 
         # Calculate some statistics for the Gaussian residual image
-        non_masked = N.where(~N.isnan(img.ch0_arr))
-        mean = N.mean(resid_gaus[non_masked], axis=None)
-        std_dev = N.std(resid_gaus[non_masked], axis=None)
-        skew = stats.skew(resid_gaus[non_masked], axis=None)
-        kurt = stats.kurtosis(resid_gaus[non_masked], axis=None)
+        resid_gaus_non_masked = resid_gaus[N.where(~N.isnan(img.ch0_arr))]
+        mean = N.mean(resid_gaus_non_masked, axis=None)
+        std_dev = N.std(resid_gaus_non_masked, axis=None)
+        skew = stats.skew(resid_gaus_non_masked, axis=None)
+        kurt = stats.kurtosis(resid_gaus_non_masked, axis=None)
         stat_msg = "Statistics of the Gaussian residual image:\n"
         stat_msg += "        mean: %.3e (Jy/beam)\n" % mean
         stat_msg += "    std. dev: %.3e (Jy/beam)\n" % std_dev
