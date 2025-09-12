@@ -4,10 +4,10 @@ void    Initialize(int, float [], float [], int, int,
 double  armin(int, float *);
 double  armax(int, float *);
 
-extern int    ReadData();
+extern int    ReadData(int, float *, float *, float *);
 extern float  **MakeGrid(int, int, float *, float *);
 
 extern void   c_nnsetr(char *, float);
 extern void   c_nngetr(char *, float *);
 
-extern void   Terminate();
+extern void   Terminate(void);

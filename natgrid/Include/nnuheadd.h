@@ -5,7 +5,7 @@ extern void   c_nngetsloped(int, int, double *, int *);
 extern void   c_nngetaspectd(int, int, double *, int *);
 extern void   c_nnpntinitd(int, double *, double *, double *);
 extern void   c_nnpntd(double, double, double *);
-extern void   c_nnpntendd();
+extern void   c_nnpntendd(void);
 
 /*
  *  Fortran function macro.  This macro is used to provide the appropriate
@@ -40,7 +40,7 @@ void  NGCALLF(nngetsloped,NNGETSLOPED) (int *, int *, double *, int *);
 void  NGCALLF(nngetaspectd,NNGETASPECTD) (int *, int *, double *, int *);
 void  NGCALLF(nnpntinitd,NNPNTINITD) (int *, double *, double *, double *);
 void  NGCALLF(nnpntd,NNPNTD) (double *, double *, double *);
-void  NGCALLF(nnpntend,NNPNTEND) ();
+void  NGCALLF(nnpntend,NNPNTEND) (void);
 
 double  *c_natgridd(int, double [], double [], double [],
                     int, int, double [], double [], int *);

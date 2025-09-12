@@ -37,31 +37,31 @@ extern  int     datcnt, datcnt3, numtri, imag, numnei, iscale,
 
 extern  char    tri_file[256], error_file[256], emsg[256];
 
-extern  FILE    *fopen(), *filee;
+extern  FILE    *filee;
 
-extern void     Terminate();
+extern void     Terminate(void);
 extern void     ErrorHnd(int, char *, FILE *, char *);
 
-void            FindNeigh();
-void            TriNeigh();
-void            Gradient();
-void            FindProp();
-double          Surface();
-double          Meld();
-void            TooSteep();
-void            TooShallow();
-void            TooNarrow();
-struct datum    *IMakeDatum();
-struct simp     *IMakeSimp();
-struct temp     *IMakeTemp();
-struct neig     *IMakeNeig();
-int             *IntVect();
-void            FreeVecti();
-double          *DoubleVect();
-void            FreeVectd();
-int             **IntMatrix();
-void            FreeMatrixi();
-float           **FloatMatrix();
-void            FreeMatrixf();
-double          **DoubleMatrix();
-void            FreeMatrixd();
+void            FindNeigh(int);
+void            TriNeigh(void);
+void            Gradient(void);
+void            FindProp(double, double);
+double          Surface(void);
+double          Meld(double, double, double);
+void            TooSteep(void);
+void            TooShallow(void);
+void            TooNarrow(void);
+struct datum    *IMakeDatum(void);
+struct simp     *IMakeSimp(void);
+struct temp     *IMakeTemp(void);
+struct neig     *IMakeNeig(void);
+int             *IntVect(int ncols);
+void            FreeVecti(int *vectptr);
+double          *DoubleVect(int ncols);
+void            FreeVectd(double *vectptr);
+int             **IntMatrix(int nrows, int ncols);
+void            FreeMatrixi(int **matptr);
+float           **FloatMatrix(int nrows, int ncols);
+void            FreeMatrixf(float **matptr);
+double          **DoubleMatrix(int nrows, int ncols);
+void            FreeMatrixd(double **matptr);
