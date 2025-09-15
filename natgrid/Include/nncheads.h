@@ -10,4 +10,4 @@ void            c_nngetslopes(int, int, float *, int *);
 void            c_nngetaspects(int, int, float *, int *);
 void            c_nnpntinits(int, float [], float [], float []);
 extern void     c_nnpnts(float, float, float *);
-void            c_nnpntend();
+void            c_nnpntend(void);

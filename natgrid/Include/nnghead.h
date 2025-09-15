@@ -37,11 +37,11 @@ extern  int     datcnt, datcnt3, numtri, imag, numnei, iscale,
 
 extern  char    tri_file[256], error_file[256], emsg[256];
 
-extern  FILE    *fopen(), *filee;
+extern  FILE    *filee;
 
-extern void   Gradient();
+extern void   Gradient(void);
 extern void   ErrorHnd(int, char *, FILE *, char *);
-extern void   CircOut();
+extern void   CircOut(void);
 
 extern void   c_nnsetc(char *, char *);
 extern void   c_nngetc(char *, char *);

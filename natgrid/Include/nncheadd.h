@@ -19,4 +19,4 @@ void            c_nngetsloped(int, int, double *, int *);
 void            c_nngetaspectd(int, int, double *, int *);
 void            c_nnpntinitd(int, double [], double [], double []);
 extern void     c_nnpntd(double, double, double *);
-void            c_nnpntendd();
+void            c_nnpntendd(void);

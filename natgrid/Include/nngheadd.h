@@ -4,10 +4,10 @@ void    Initialized(int, double [], double [], int, int,
 double  armind(int, double *);
 double  armaxd(int, double *);
 
-extern int     ReadDatad();
+extern int     ReadDatad(int, double *, double *, double *);
 extern double  **MakeGridd(int, int, double *, double *);
 
 extern void   c_nnsetrd(char *, double);
 extern void   c_nngetrd(char *, double *);
 
-extern void   Terminate();
+extern void   Terminate(void);

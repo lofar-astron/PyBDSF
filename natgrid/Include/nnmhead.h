@@ -39,40 +39,40 @@ int     datcnt, datcnt3, numtri, imag, numnei, iscale,
 char    tri_file[256] = {"nnalg.dat"}, error_file[256] = {"stderr"},
         emsg[256];
 
-FILE    *fopen(), *filee = NULL;
+FILE    *filee = NULL;
 
-extern void   Gradient();
+extern void   Gradient(void);
 extern void   ErrorHnd(int, char *, FILE *, char *);
-extern void   CircOut();
+extern void   CircOut(void);
 
 extern void   c_nnsetc(char *, char *);
 extern void   c_nngetc(char *, char *);
 extern void   c_nnseti(char *, int);
 extern void   c_nngeti(char *, int *);
 
-extern void     Terminate();
+extern void     Terminate(void);
 extern void     ErrorHnd(int, char *, FILE *, char *);
 
-void            FindNeigh();
-void            TriNeigh();
-void            Gradient();
-void            FindProp();
-double          Surface();
-double          Meld();
-void            TooSteep();
-void            TooShallow();
-void            TooNarrow();
-struct datum    *IMakeDatum();
-struct simp     *IMakeSimp();
-struct temp     *IMakeTemp();
-struct neig     *IMakeNeig();
-int             *IntVect();
-void            FreeVecti();
-double          *DoubleVect();
-void            FreeVectd();
-int             **IntMatrix();
-void            FreeMatrixi();
-float           **FloatMatrix();
-void            FreeMatrixf();
-double          **DoubleMatrix();
-void            FreeMatrixd();
+void            FindNeigh(void);
+void            TriNeigh(void);
+void            Gradient(void);
+void            FindProp(void);
+double          Surface(void);
+double          Meld(void);
+void            TooSteep(void);
+void            TooShallow(void);
+void            TooNarrow(void);
+struct datum    *IMakeDatum(void);
+struct simp     *IMakeSimp(void);
+struct temp     *IMakeTemp(void);
+struct neig     *IMakeNeig(void);
+int             *IntVect(int ncols);
+void            FreeVecti(int *vectptr);
+double          *DoubleVect(int ncols);
+void            FreeVectd(double *vectptr);
+int             **IntMatrix(int nrows, int ncols);
+void            FreeMatrixi(int **matptr);
+float           **FloatMatrix(int nrows, int ncols);
+void            FreeMatrixf(float **matptr);
+double          **DoubleMatrix(int nrows, int ncols);
+void            FreeMatrixd(double **matptr);
