@@ -116,6 +116,7 @@ add_library(_cbdsm MODULE ${CBDSM_SRC})
 target_compile_definitions(_cbdsm PRIVATE NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 target_include_directories(_cbdsm PRIVATE src/c++)
 target_link_libraries(_cbdsm minpack port3 gfortran ${Boost_LIBRARIES})
+set_target_properties(_cbdsm PROPERTIES INSTALL_RPATH "${Boost_LIBRARY_DIRS}")
 python_extension_module(_cbdsm)
 install(TARGETS _cbdsm LIBRARY DESTINATION bdsf)
 
