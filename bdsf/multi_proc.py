@@ -8,30 +8,31 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 (http://www.astropython.org/snippet/2010/3/Parallel-map-using-multiprocessing).
 
 """
-from __future__ import print_function
-import traceback
-import sys
-import os
-import numpy
-import multiprocessing
-_ncpus = 1
 
-# Get the number of available cores. We use os.sched_getaffinity() for this if
-# possible, as the number of available cores may be less than the total number
-# of CPU cores in the machine, which is returned by, e.g.,
-# multiprocessing.cpu_count()
-#
-# Note: since macOS (Darwin) does not support os.sched_getaffinity(), we use
-# multiprocessing.cpu_count() instead
-if sys.platform == 'darwin':
-    if sys.version_info[0] == 3 and sys.version_info[1] >= 8:
-        # We need to set spawn method to "fork" for macOS on Python 3.8+ where
-        # the default has been changed to "spawn", causing problems (see the
-        # discussion at https://github.com/ipython/ipython/issues/12396)
-        multiprocessing.set_start_method('fork')
-    _ncpus = multiprocessing.cpu_count()
-else:
+import multiprocessing
+import os
+import sys
+import traceback
+
+import numpy
+
+# Try to determine the number of CPU cores _available_ to the current process,
+# similar to what the Linux `nproc` command does. If that fails, return the
+# total number of CPU cores in the machine.
+try:
     _ncpus = len(os.sched_getaffinity(0))
+except AttributeError:
+    _ncpus = multiprocessing.cpu_count()
+
+if sys.platform == 'darwin' and sys.version_info >= (3, 8):
+    # We need to set spawn method to "fork" for macOS on Python 3.8+ where
+    # the default has been changed to "spawn", causing problems (see the
+    # discussion at https://github.com/ipython/ipython/issues/12396)
+    multiprocessing.set_start_method('fork')
+elif sys.platform == 'linux' and sys.version_info >= (3, 14):
+    # In Python 3.14, the default start method changed from "fork" to
+    # "forkserver" on Unix-like systems, but we need "fork".
+    multiprocessing.set_start_method('fork')
 
 
 __all__ = ('parallel_map',)
