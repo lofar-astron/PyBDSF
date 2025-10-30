@@ -229,7 +229,7 @@ class FITSImage(object):
         self.shift = 0.
         self.noise = 1.
 
-        self.header = astropy.io.fits.open(imagefile)[0].header
+        self.header = astropy.io.fits.getheader(imagefile)
         self.find_beam()
         self.find_freq()
         self.flatten()
@@ -269,16 +269,16 @@ class FITSImage(object):
 
     def flatten(self):
         """ Flatten a fits file so that it becomes a 2D image. Return new header and data """
-        f = astropy.io.fits.open(self.imagefile)
+        fits_data = astropy.io.fits.getdata(self.imagefile)
 
-        naxis = f[0].header['NAXIS']
+        naxis = self.header['NAXIS']
         if naxis < 2:
             raise RuntimeError('Can\'t make map from this')
         if naxis == 2:
-            self.img_hdr = f[0].header
-            self.img_data = f[0].data
+            self.img_hdr = self.header
+            self.img_data = fits_data
         else:
-            w = astropy.wcs.WCS(f[0].header)
+            w = astropy.wcs.WCS(self.header)
             wn = astropy.wcs.WCS(naxis=2)
             wn.wcs.crpix[0] = w.wcs.crpix[0]
             wn.wcs.crpix[1] = w.wcs.crpix[1]
@@ -289,8 +289,8 @@ class FITSImage(object):
 
             header = wn.to_header()
             header["NAXIS"] = 2
-            header["NAXIS1"] = f[0].header['NAXIS1']
-            header["NAXIS2"] = f[0].header['NAXIS2']
+            header["NAXIS1"] = self.header['NAXIS1']
+            header["NAXIS2"] = self.header['NAXIS2']
             header["FREQ"] = self.freq
             header['RESTFREQ'] = self.freq
             header['BMAJ'] = self.beam[0]
@@ -298,7 +298,7 @@ class FITSImage(object):
             header['BPA'] = self.beam[2]
             copy = ('EQUINOX', 'EPOCH')
             for k in copy:
-                r = f[0].header.get(k)
+                r = self.header.get(k)
                 if r:
                     header[k] = r
 
@@ -309,7 +309,7 @@ class FITSImage(object):
                 else:
                     dataslice.append(0)
             self.img_hdr = header
-            self.img_data = f[0].data[tuple(dataslice)]
+            self.img_data = fits_data[tuple(dataslice)]
         self.min_value = float(np.nanmin(self.img_data))
         self.max_value = float(np.nanmax(self.img_data))
         self.mean_value = float(np.nanmean(self.img_data))
