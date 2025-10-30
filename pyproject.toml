@@ -45,6 +45,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
@@ -75,7 +76,7 @@ Documentation = "https://pybdsf.readthedocs.io"
 [tool.cibuildwheel]
 before-all = "cibuildwheel/before_all.sh"
 before-build = "cibuildwheel/before_build.sh"
-build = "cp3{9,10,11,12,13}-*"
+build = "cp3{9,10,11,12,13,14}-*"
 build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.87.0" \
