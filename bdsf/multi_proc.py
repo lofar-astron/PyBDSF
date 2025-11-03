@@ -24,16 +24,8 @@ try:
 except AttributeError:
     _ncpus = multiprocessing.cpu_count()
 
-if sys.platform == 'darwin' and sys.version_info >= (3, 8):
-    # We need to set spawn method to "fork" for macOS on Python 3.8+ where
-    # the default has been changed to "spawn", causing problems (see the
-    # discussion at https://github.com/ipython/ipython/issues/12396)
-    multiprocessing.set_start_method('fork')
-elif sys.platform == 'linux' and sys.version_info >= (3, 14):
-    # In Python 3.14, the default start method changed from "fork" to
-    # "forkserver" on Unix-like systems, but we need "fork".
-    multiprocessing.set_start_method('fork')
-
+# Set the start method to "fork". Other methods don't work with our codebase.
+multiprocessing.set_start_method('fork')
 
 __all__ = ('parallel_map',)
 
