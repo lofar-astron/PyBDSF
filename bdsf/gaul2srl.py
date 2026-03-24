@@ -369,26 +369,60 @@ class Op_gaul2srl(Op):
         # posn from gaussian fit instead.
         if N.isnan(mompara[1]):
             mompara[1] = posn[0] - delc[0]
-        x1 = int(N.floor(mompara[1]))
         if N.isnan(mompara[2]):
             mompara[2] = posn[1] - delc[1]
-        y1 = int(N.floor(mompara[2]))
-        xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
-        if img.opts.flag_smallsrc and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
+
+        interp_x = float(mompara[1])
+        interp_y = float(mompara[2])
+        orig_interp_x = interp_x
+        orig_interp_y = interp_y
+        can_bilinear = subim_src.shape[0] >= 2 and subim_src.shape[1] >= 2
+        if can_bilinear:
+            interp_x = min(max(interp_x, 0.0), subim_src.shape[0] - 1.0)
+            interp_y = min(max(interp_y, 0.0), subim_src.shape[1] - 1.0)
+            x1 = int(N.floor(interp_x))
+            y1 = int(N.floor(interp_y))
+            x1 = min(max(x1, 0), subim_src.shape[0] - 2)
+            y1 = min(max(y1, 0), subim_src.shape[1] - 2)
+            xind = slice(x1, x1+2, 1)
+            yind = slice(y1, y1+2, 1)
+            mask_patch = mask[xind, yind]
+            t = interp_x - x1
+            u = interp_y - y1
+        else:
+            x1 = min(max(int(N.round(interp_x)), 0), subim_src.shape[0] - 1)
+            y1 = min(max(int(N.round(interp_y)), 0), subim_src.shape[1] - 1)
+            xind = slice(x1, x1+1, 1)
+            yind = slice(y1, y1+1, 1)
+            mask_patch = mask[xind, yind]
+            t = 0.0
+            u = 0.0
+
+        if (orig_interp_x != interp_x) or (orig_interp_y != interp_y):
+            mylog.debug('Clipped source centroid for interpolation from '
+                        + repr((orig_interp_x, orig_interp_y)) + ' to '
+                        + repr((interp_x, interp_y)) + ' in island '
+                        + str(isl.island_id))
+
+        patch_is_full = mask_patch.shape == (2, 2) and N.all(mask_patch == isrc)
+        if img.opts.flag_smallsrc and (not patch_is_full):
             mylog.debug('Island = '+str(isl.island_id))
-            mylog.debug('Mask = '+repr(mask[xind, yind])+'xind, yind, x1, y1 = '+repr(xind)+' '+repr(yind)+' '+repr(x1)+' '+repr(y1))
-        t=(mompara[1]-x1)/(x1+1-x1)  # in case u change it later
-        u=(mompara[2]-y1)/(y1+1-y1)
-        try:
-            s_peak=((1.0-t)*(1.0-u)*subim_src[x1,y1]+
-                    t*(1.0-u)*subim_src[x1+1,y1]+
-                    t*u*subim_src[x1+1,y1+1]+
-                    (1.0-t)*u*subim_src[x1,y1+1])
-        except IndexError:
-            # interpolation failed because source is too small
-            # probably pathological, take a guess..
-            s_peak=subim_src[x1,y1]
-        if (not img.opts.flag_smallsrc) and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
+            mylog.debug('Mask = '+repr(mask_patch)+'xind, yind, x1, y1 = '
+                        + repr(xind)+' '+repr(yind)+' '+repr(x1)+' '+repr(y1))
+        if can_bilinear:
+            try:
+                s_peak=((1.0-t)*(1.0-u)*subim_src[x1,y1]+
+                        t*(1.0-u)*subim_src[x1+1,y1]+
+                        t*u*subim_src[x1+1,y1+1]+
+                        (1.0-t)*u*subim_src[x1,y1+1])
+            except IndexError:
+                # Interpolation failed because source lies on the border after
+                # clipping the centroid into the available image support.
+                s_peak = subim_src[x1, y1]
+        else:
+            # Degenerate 1-pixel support cannot provide a 2x2 interpolation patch.
+            s_peak = subim_src[x1, y1]
+        if (not img.opts.flag_smallsrc) and (not patch_is_full):
             mylog.debug('Speak '+repr(s_peak)+'Mompara = '+repr(mompara))
             mylog.debug('x1, y1 : '+repr(x1)+', '+repr(y1))
 

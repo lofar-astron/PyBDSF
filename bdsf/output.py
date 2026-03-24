@@ -1096,8 +1096,9 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                 # As these are variable length lists, they must
                 # (unfortunately) be treated differently.
                 val = obj.__getattribute__(name)
-                colname = obj.__dict__[name+'_def']._colname
-                units = obj.__dict__[name+'_def']._units
+                definition = getattr(obj, name+'_def')
+                colname = definition._colname
+                units = definition._units
                 for i in range(nchan):
                     if i < len(val):
                         cvals.append(val[i])
@@ -1110,8 +1111,9 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
             else:
                 if not skip_next:
                     val = obj.__getattribute__(name)
-                    colname = obj.__dict__[name+'_def']._colname
-                    units = obj.__dict__[name+'_def']._units
+                    definition = getattr(obj, name+'_def')
+                    colname = definition._colname
+                    units = definition._units
                     if units is None:
                         units = ' '
                     if isinstance(val, list) or isinstance(val, tuple):
@@ -1120,8 +1122,9 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                         # in the order (val, error).
                         next_name = names[n+1]
                         val_next = obj.__getattribute__(next_name)
-                        colname_next = obj.__dict__[next_name+'_def']._colname
-                        units_next = obj.__dict__[next_name+'_def']._units
+                        next_definition = getattr(obj, next_name+'_def')
+                        colname_next = next_definition._colname
+                        units_next = next_definition._units
                         if units_next is None:
                             units_next = ' '
                         for i in range(len(val)):
