@@ -35,7 +35,11 @@ class Op_gausfit(Op):
     Prerequisites: module islands should be run first.
     """
     def _estimate_island_dispatch_cost(self, isl, img, opts, peak_size, maxsize):
-        """Estimate a cheap, stable dispatch weight for one island."""
+        """Estimate a stable, cheap dispatch weight for one island.
+
+        Keep this model intentionally conservative: prefer low-cost,
+        cross-dataset features that are already available before fitting.
+        """
         size_active = float(max(1, getattr(isl, 'size_active', 1)))
         beamarea = img.pixel_beamarea()
         size_beams = size_active/beamarea*2.0 if beamarea else size_active
@@ -56,8 +60,13 @@ class Op_gausfit(Op):
         predict_split = bool(opts.split_isl and size_beams > maxsize)
 
         weight = size_active
+
+        # Sparse islands with a large bounding box tend to be costlier than
+        # compact ones with the same number of active pixels.
         weight += max(0.0, bbox_area - size_active) * 0.15
 
+        # Large-island branches dominate the long tail, so bias the scheduler
+        # toward spreading them out without trying to model the exact cost.
         if predict_iterative:
             weight *= 4.0
         if predict_split:
@@ -66,17 +75,15 @@ class Op_gausfit(Op):
             weight *= 1.5
         if predict_split and size_beams > 2.0*maxsize:
             weight *= 1.5
+
+        # Mild shape/signal penalties help separate obviously pathological
+        # islands without overfitting the model to a single dataset.
         if aspect_ratio > 4.0:
             weight *= 1.1
         if snr_proxy > 50.0:
             weight *= 1.1
 
-        info = {
-            'dispatch_weight': int(max(1.0, round(weight))),
-            'predict_iterative': int(predict_iterative),
-            'predict_split': int(predict_split),
-        }
-        return info['dispatch_weight'], info
+        return int(max(1.0, round(weight)))
 
     def __call__(self, img):
         from . import functions as func
@@ -117,13 +124,13 @@ class Op_gausfit(Op):
         img_simple.beam2pix = img.beam2pix
         img_simple.beam = img.beam
 
+        # Use a cheap heuristic weight so heavy islands are spread more evenly
+        # across workers without needing a precise runtime model.
         weights = []
-        sched_infos = []
         for isl in img.islands:
-            weight, sched_info = self._estimate_island_dispatch_cost(isl, img, opts,
-                                                                     peak_size, maxsize)
+            weight = self._estimate_island_dispatch_cost(isl, img, opts, peak_size,
+                                                         maxsize)
             weights.append(weight)
-            sched_infos.append(sched_info)
 
         # Now call the parallel mapping function. Returns a list of
         # [gaul, fgaul] for each island.  If ncores is 1, use the
@@ -133,12 +140,12 @@ class Op_gausfit(Op):
             gaus_list = map(func.eval_func_tuple,
                             zip(itertools.repeat(self.process_island),
                                 img.islands, itertools.repeat(img_simple),
-                                itertools.repeat(opts), sched_infos))
+                                itertools.repeat(opts)))
         else:
             gaus_list = mp.parallel_map(func.eval_func_tuple,
                                         zip(itertools.repeat(self.process_island),
                                             img.islands, itertools.repeat(img_simple),
-                                            itertools.repeat(opts), sched_infos),
+                                            itertools.repeat(opts)),
                                         numcores=opts.ncores, bar=bar, weights=weights)
         gaus_list = list(gaus_list)
 
@@ -228,7 +235,7 @@ class Op_gausfit(Op):
         img.completed_Ops.append('gausfit')
         return img
 
-    def process_island(self, isl, img, opts=None, sched_info=None):
+    def process_island(self, isl, img, opts=None):
         """Processes a single island.
 
         Returns a list of the best-fit Gaussians and flagged Gaussians.
