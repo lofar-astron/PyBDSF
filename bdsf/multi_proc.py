@@ -9,6 +9,7 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 
 """
 
+import heapq
 import multiprocessing
 import os
 import sys
@@ -30,7 +31,7 @@ multiprocessing.set_start_method('fork')
 __all__ = ('parallel_map',)
 
 
-def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
+def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=False):
     """
     A worker function that maps an input function over a
     slice of the input iterable.
@@ -44,11 +45,15 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
            ( useful in extending parallel_map() )
     :param bar: statusbar to update during fit
     :param bar_state: statusbar state dictionary
+    :param preserve_order: whether chunk entries carry their original index
     """
     vals = []
 
-    # iterate over slice
-    for val in chunk:
+    for entry in chunk:
+        if preserve_order:
+            val_idx, val = entry
+        else:
+            val = entry
         try:
             result = f(val)
         except Exception as e:
@@ -61,9 +66,11 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
             err_q.put(e)
             return
 
-        vals.append(result)
+        if preserve_order:
+            vals.append((val_idx, result))
+        else:
+            vals.append(result)
 
-        # update statusbar
         if bar is not None:
             if bar_state['started']:
                 bar.pos = bar_state['pos']
@@ -76,11 +83,10 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state):
                 if bar_state['spin_pos'] >= 4:
                     bar_state['spin_pos'] = 0
 
-    # output the result and task ID to output queue
     out_q.put((ii, vals))
 
 
-def run_tasks(procs, err_q, out_q, num):
+def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
     """
     A function that executes populated processes and processes
     the resultant array. Checks error queue for any exceptions.
@@ -89,9 +95,10 @@ def run_tasks(procs, err_q, out_q, num):
     :param out_q: thread-safe output queue
     :param err_q: thread-safe queue to populate on exception
     :param num : length of resultant array
+    :param preserve_order: whether worker outputs carry original item indices
+    :param total_items: total number of items to reconstruct
 
     """
-    # function to terminate processes that are still running.
     die = (lambda vals: [val.terminate() for val in vals
                          if val.exitcode is None])
 
@@ -107,23 +114,26 @@ def run_tasks(procs, err_q, out_q, num):
                 )
 
     except Exception as e:
-        # kill all slave processes on ctrl-C
         die(procs)
         raise e
 
     if not err_q.empty():
-        # kill all on any exception from any one slave
         die(procs)
         raise err_q.get()
 
-    # Processes finish in arbitrary order. Process IDs double
-    # as index in the resultant array.
+    if preserve_order:
+        results = [None] * total_items
+        for i in range(num):
+            idx, result = out_q.get()
+            for item_idx, item_result in result:
+                results[item_idx] = item_result
+        return results
+
     results = [None] * num
     for i in range(num):
         idx, result = out_q.get()
         results[idx] = result
 
-    # Remove extra dimension added by array_split
     result_list = []
     for result in results:
         result_list += result
@@ -154,7 +164,8 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         raise TypeError("input '%s' is not iterable" %
                         repr(sequence))
 
-    sequence = numpy.array(list(sequence), dtype=object)
+    sequence_list = list(sequence)
+    sequence = numpy.array(sequence_list, dtype=object)
     size = len(sequence)
 
     if size == 1:
@@ -163,7 +174,6 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
             bar.stop()
         return results
 
-    # Set number of cores to use. Try to leave one core free for pyplot.
     if numcores is None:
         numcores = _ncpus - 1
     if numcores > _ncpus - 1:
@@ -171,15 +181,8 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     if numcores < 1:
         numcores = 1
 
-    # Returns a started SyncManager object which can be used for sharing
-    # objects between processes. The returned manager object corresponds
-    # to a spawned child process and has methods which will create shared
-    # objects and return corresponding proxies.
     manager = multiprocessing.Manager()
 
-    # Create FIFO queue and lock shared objects and return proxies to them.
-    # The managers handles a server process that manages shared objects that
-    # each slave process has access to. Bottom line -- thread-safe.
     out_q = manager.Queue()
     err_q = manager.Queue()
     lock = manager.Lock()
@@ -189,40 +192,42 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         bar_state['spin_pos'] = bar.spin_pos
         bar_state['started'] = bar.started
 
-    # if sequence is less than numcores, only use len sequence number of
-    # processes
     if size < numcores:
         numcores = size
 
-    # group sequence into numcores-worth of chunks
+    preserve_order = False
     if weights is None or numcores == size:
-        # No grouping specified (or there are as many cores as
-        # processes), so divide into equal chunks
         sequence = numpy.array_split(sequence, numcores)
     else:
-        # Group so that each group has roughly an equal sum of weights
-        weight_per_core = numpy.sum(weights)/float(numcores)
-        cut_values = []
-        temp_sum = 0.0
-        for indx, weight in enumerate(weights):
-            temp_sum += weight
-            if temp_sum > weight_per_core:
-                cut_values.append(indx+1)
-                temp_sum = weight
-        if len(cut_values) > numcores - 1:
-            cut_values = cut_values[0:numcores-1]
-        sequence = numpy.array_split(sequence, cut_values)
+        preserve_order = True
+        weight_array = numpy.asarray(weights, dtype=numpy.float64)
+        indexed_sequence = list(enumerate(sequence_list))
+        bins = [[] for _ in range(numcores)]
+        heap = [(0.0, idx) for idx in range(numcores)]
+        heapq.heapify(heap)
 
-    # Make sure there are no empty chunks at the end of the sequence
+        weighted_items = zip(indexed_sequence, weight_array.tolist())
+        for (orig_idx, item), weight in sorted(weighted_items,
+                                              key=lambda pair: pair[1],
+                                              reverse=True):
+            current_weight, worker_idx = heapq.heappop(heap)
+            bins[worker_idx].append((orig_idx, item))
+            current_weight += float(weight)
+            heapq.heappush(heap, (current_weight, worker_idx))
+
+        sequence = bins
+
     while len(sequence[-1]) == 0:
         sequence.pop()
 
     procs = [multiprocessing.Process(target=worker,
-             args=(function, ii, chunk, out_q, err_q, lock, bar, bar_state))
+             args=(function, ii, chunk, out_q, err_q, lock, bar, bar_state,
+                   preserve_order))
              for ii, chunk in enumerate(sequence)]
 
     try:
-        results = run_tasks(procs, err_q, out_q, len(sequence))
+        results = run_tasks(procs, err_q, out_q, len(sequence),
+                            preserve_order=preserve_order, total_items=size)
         if bar is not None:
             if bar.started:
                 bar.stop()

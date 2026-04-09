@@ -1090,14 +1090,38 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
     cunits = []
     cvals = []
     skip_next = False
+
+    def get_definition(name):
+        def_name = name + '_def'
+
+        # Most objects still store column definitions directly on the
+        # instance, but Gaussian definitions now live on the class as TC
+        # descriptors. Looking in __dict__ first avoids triggering the TC
+        # descriptor and getting its default value instead of the
+        # definition object.
+        definition = obj.__dict__.get(def_name)
+        if hasattr(definition, '_colname'):
+            return definition
+
+        definition = getattr(type(obj), def_name, None)
+        if hasattr(definition, '_colname'):
+            return definition
+
+        definition = getattr(obj, def_name)
+        if hasattr(definition, '_colname'):
+            return definition
+
+        raise AttributeError("No output definition found for '%s'" % def_name)
+
     for n, name in enumerate(names):
         if hasattr(obj, name):
             if name in ['specin_flux', 'specin_fluxE', 'specin_freq']:
                 # As these are variable length lists, they must
                 # (unfortunately) be treated differently.
                 val = obj.__getattribute__(name)
-                colname = obj.__dict__[name+'_def']._colname
-                units = obj.__dict__[name+'_def']._units
+                definition = get_definition(name)
+                colname = definition._colname
+                units = definition._units
                 for i in range(nchan):
                     if i < len(val):
                         cvals.append(val[i])
@@ -1110,8 +1134,9 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
             else:
                 if not skip_next:
                     val = obj.__getattribute__(name)
-                    colname = obj.__dict__[name+'_def']._colname
-                    units = obj.__dict__[name+'_def']._units
+                    definition = get_definition(name)
+                    colname = definition._colname
+                    units = definition._units
                     if units is None:
                         units = ' '
                     if isinstance(val, list) or isinstance(val, tuple):
@@ -1120,8 +1145,9 @@ def make_output_columns(obj, fits=False, objtype='gaul', incl_spin=False,
                         # in the order (val, error).
                         next_name = names[n+1]
                         val_next = obj.__getattribute__(next_name)
-                        colname_next = obj.__dict__[next_name+'_def']._colname
-                        units_next = obj.__dict__[next_name+'_def']._units
+                        next_definition = get_definition(next_name)
+                        colname_next = next_definition._colname
+                        units_next = next_definition._units
                         if units_next is None:
                             units_next = ' '
                         for i in range(len(val)):
