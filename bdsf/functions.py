@@ -201,17 +201,27 @@ def gdist_pa(pix1, pix2, gsize):
 
 def gaus_2d(c, x, y):
     """ x and y are 2d arrays with the x and y positions. """
-    import math
     import numpy as N
 
-    rad = 180.0/math.pi
-    cs = math.cos(c[5]/rad)
-    sn = math.sin(c[5]/rad)
-    f1 = ((x-c[1])*cs+(y-c[2])*sn)/c[3]
-    f2 = ((y-c[2])*cs-(x-c[1])*sn)/c[4]
-    val = c[0]*N.exp(-0.5*(f1*f1+f2*f2))
+    rad_factor = 0.017453292519943295 
+    angle_rad = c[5] * rad_factor
+    cs = N.cos(angle_rad)
+    sn = N.sin(angle_rad)
 
-    return val
+    dx = x - c[1]
+    dy = y - c[2]
+
+    inv_sigx = 1.0 / c[3]
+    inv_sigy = 1.0 / c[4]
+
+    term1 = (dx * cs + dy * sn) * inv_sigx
+    term2 = (dy * cs - dx * sn) * inv_sigy
+
+    exponent = term1**2
+    exponent += term2**2
+    exponent *= -0.5
+
+    return c[0] * N.exp(exponent)
 
 def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     """ x and y are 2d arrays with the x and y positions. c is a list (of lists) of gaussian parameters to fit, p_tofix
