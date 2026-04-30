@@ -219,8 +219,8 @@ def gaus_2d(c, x, y):
     # values before squaring, which created additional matrix copies in memory. The new
     # version multiplies by the inverse of the square, which is a more computationally
     # efficient.
-    inv_sigx2 = 0.5 / (c[3]**2)
-    inv_sigy2 = 0.5 / (c[4]**2)
+    inv_sigx2 = -0.5 / (c[3]**2)
+    inv_sigy2 = -0.5 / (c[4]**2)
 
     # (f1^2 + f2^2) can be expressed as a quadratic form, which is computed faster by NumPy
     # f1 = (dx*cs + dy*sn) / sigx
@@ -230,7 +230,7 @@ def gaus_2d(c, x, y):
 
     exponent = (f1_part**2 * inv_sigx2) + (f2_part**2 * inv_sigy2)
 
-    return c[0] * N.exp(-exponent)
+    return c[0] * N.exp(exponent)
 
 def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     """ x and y are 2d arrays with the x and y positions. c is a list (of lists) of gaussian parameters to fit, p_tofix
