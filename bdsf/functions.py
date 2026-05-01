@@ -200,18 +200,37 @@ def gdist_pa(pix1, pix2, gsize):
     return fwhm
 
 def gaus_2d(c, x, y):
-    """ x and y are 2d arrays with the x and y positions. """
+    """ x and y are 2d arrays with the x and y positions.
+    c = [amp, x0, y0, sigx, sigy, pa_deg] """
     import math
     import numpy as N
 
+    # Pre-calculate rotation parameters outside of matrix operations
     rad = 180.0/math.pi
-    cs = math.cos(c[5]/rad)
-    sn = math.sin(c[5]/rad)
-    f1 = ((x-c[1])*cs+(y-c[2])*sn)/c[3]
-    f2 = ((y-c[2])*cs-(x-c[1])*sn)/c[4]
-    val = c[0]*N.exp(-0.5*(f1*f1+f2*f2))
+    angle_rad = c[5]/rad
+    cs = math.cos(angle_rad)
+    sn = math.sin(angle_rad)
 
-    return val
+    # Coordinate shift
+    dx = x - c[1]
+    dy = y - c[2]
+
+    # Avoiding the creation of unnecessary temporary arrays. The original function divided
+    # values before squaring, which created additional matrix copies in memory. The new
+    # version multiplies by the inverse of the square, which is a more computationally
+    # efficient.
+    inv_sigx2 = -0.5 / (c[3]**2)
+    inv_sigy2 = -0.5 / (c[4]**2)
+
+    # (f1^2 + f2^2) can be expressed as a quadratic form, which is computed faster by NumPy
+    # f1 = (dx*cs + dy*sn) / sigx
+    # f2 = (dy*cs - dx*sn) / sigy
+    f1_part = dx * cs + dy * sn
+    f2_part = dy * cs - dx * sn
+
+    exponent = (f1_part**2 * inv_sigx2) + (f2_part**2 * inv_sigy2)
+
+    return c[0] * N.exp(exponent)
 
 def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     """ x and y are 2d arrays with the x and y positions. c is a list (of lists) of gaussian parameters to fit, p_tofix
