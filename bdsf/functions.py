@@ -239,13 +239,13 @@ def gaus_2d(c, x, y):
     exponent = dx * dy  
     exponent *= C_neg   
 
-    dx *= dx            
-    dx *= A_neg         
-    exponent += dx      
+    dx *= dx
+    dx *= A_neg
+    exponent += dx
 
-    dy *= dy            
-    dy *= B_neg         
-    exponent += dy      
+    dy *= dy
+    dy *= B_neg
+    exponent += dy
 
     # Overwrite the exponent array with the results of the exp() function
     N.exp(exponent, out=exponent)
