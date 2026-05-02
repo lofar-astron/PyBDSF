@@ -205,32 +205,53 @@ def gaus_2d(c, x, y):
     import math
     import numpy as N
 
-    # Pre-calculate rotation parameters outside of matrix operations
-    rad = 180.0/math.pi
-    angle_rad = c[5]/rad
+    # Scalar calculations (executed only once)
+    rad = 180.0 / math.pi
+    angle_rad = c[5] / rad
     cs = math.cos(angle_rad)
     sn = math.sin(angle_rad)
 
-    # Coordinate shift
-    dx = x - c[1]
-    dy = y - c[2]
+    # Faster at the C level than c[3]**2
+    inv_sigx2 = 0.5 / (c[3] * c[3]) 
+    inv_sigy2 = 0.5 / (c[4] * c[4])
 
-    # Avoiding the creation of unnecessary temporary arrays. The original function divided
-    # values before squaring, which created additional matrix copies in memory. The new
-    # version multiplies by the inverse of the square, which is a more computationally
-    # efficient.
-    inv_sigx2 = -0.5 / (c[3]**2)
-    inv_sigy2 = -0.5 / (c[4]**2)
+    cs2 = cs * cs
+    sn2 = sn * sn
+    sn_cs_2 = 2.0 * sn * cs
 
-    # (f1^2 + f2^2) can be expressed as a quadratic form, which is computed faster by NumPy
-    # f1 = (dx*cs + dy*sn) / sigx
-    # f2 = (dy*cs - dx*sn) / sigy
-    f1_part = dx * cs + dy * sn
-    f2_part = dy * cs - dx * sn
+    # Components of the expanded ellipse equation (already negated)
+    # Calculated as scalars, so they take no time
+    A_neg = -(cs2 * inv_sigx2 + sn2 * inv_sigy2)
+    B_neg = -(sn2 * inv_sigx2 + cs2 * inv_sigy2)
+    C_neg = -(sn_cs_2 * (inv_sigx2 - inv_sigy2))
 
-    exponent = (f1_part**2 * inv_sigx2) + (f2_part**2 * inv_sigy2)
+    # Create result arrays. Instead of inheriting the type from x and y
+    # (which could be int), force float by * 1.0
+    # Force a copy in float and subtrac in place to avoid creation
+    # of temporary array for (x - c[1])
+    dx = N.array(x, dtype=N.float64, copy=True)
+    dx -= c[1]
+    
+    dy = N.array(y, dtype=N.float64, copy=True)
+    dy -= c[2]
 
-    return c[0] * N.exp(exponent)
+    # In place to avoid allocating new RAM
+    exponent = dx * dy  
+    exponent *= C_neg   
+
+    dx *= dx
+    dx *= A_neg
+    exponent += dx
+
+    dy *= dy
+    dy *= B_neg
+    exponent += dy
+
+    # Overwrite the exponent array with the results of the exp() function
+    N.exp(exponent, out=exponent)
+    exponent *= c[0]
+    
+    return exponent
 
 def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     """ x and y are 2d arrays with the x and y positions. c is a list (of lists) of gaussian parameters to fit, p_tofix
