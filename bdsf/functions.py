@@ -227,25 +227,30 @@ def gaus_2d(c, x, y):
 
     # Create result arrays. Instead of inheriting the type from x and y
     # (which could be int), force float by * 1.0
-    dx = (x - c[1]) * 1.0
-    dy = (y - c[2]) * 1.0
-
-    exponent = dx * dy  
-    exponent *= C_neg  # in place
+    # Force a copy in float and subtrac in place to avoid creation
+    # of temporary array for (x - c[1])
+    dx = N.array(x, dtype=N.float64, copy=True)
+    dx -= c[1]
+    
+    dy = N.array(y, dtype=N.float64, copy=True)
+    dy -= c[2]
 
     # In place to avoid allocating new RAM
-    dx **= 2
-    dx *= A_neg
-    exponent += dx
+    exponent = dx * dy  
+    exponent *= C_neg   
 
-    dy **= 2
-    dy *= B_neg
-    exponent += dy
+    dx *= dx            
+    dx *= A_neg         
+    exponent += dx      
+
+    dy *= dy            
+    dy *= B_neg         
+    exponent += dy      
 
     # Overwrite the exponent array with the results of the exp() function
     N.exp(exponent, out=exponent)
-
     exponent *= c[0]
+    
     return exponent
 
 def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
