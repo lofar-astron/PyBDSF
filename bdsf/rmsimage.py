@@ -35,41 +35,62 @@ from scipy import ndimage
 def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     """Threaded map_coordinates on cartesian coordinate grid (meshgrid)
 
-    :param a: Array to be regridded
-
-    :param axs: List of axes onto which to regrid. Result is gridded
-    to equivalent of meshgrid(*axs)
-
+    Parameters:
+    a: Array to be regridded
+    axs: List of axes onto which to regrid. Result is gridded
+         to equivalent of meshgrid(*axs)
     """
+
+    # FALLBACK: Ensure ncores is an integer if None is passed, as 
+    # numpy.array_split strictly requires an integer value for sections.
+    if ncores is None:
+        ncores = os.cpu_count() or 8
+
     output = kwargs.get("output", None)
     kwargs["output"] = None
-    # Prefilter only once to awoid repeated work in the workers. See
-    # _interpolation.py in scipy
+
+    # Prefilter only once to avoid repeated work in the workers. 
+    # See _interpolation.py in scipy for details on spline filtering.
     order = kwargs.get("order", 3)
     if order > 1:
         a = ndimage.spline_filter(a, order,
                                   output=numpy.float64,
                                   mode=kwargs.get("mode", "constant"))
 
-    def tworker(cl1):
-        # Construct the subset of meshgrid to which worker has been
-        # applied.
-        # NB: The axis reversal is specific to this program. The indexing parameter
-        # does not do exactly the same thing
-        cl = numpy.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
+    # Data Chunking
+    # The original implementation called numpy.meshgrid for every single row,
+    # causing massive overhead. By splitting the first axis (axs[0]) into 
+    # 'ncores' chunks, we significantly reduce the number of meshgrid calls 
+    # and memory allocation overhead.
+    chunks = numpy.array_split(axs[0], ncores)
+
+    def tworker(cl1_chunk):
+        # Cases where ncores might exceed the number of available rows
+        if len(cl1_chunk) == 0:
+            return None
+
+        # Construct the subset of meshgrid to which the worker has been applied.
+        # The axis reversal is specific to this program. The indexing parameter
+        # does not do exactly the same thing.
+        # Prefilter is set to False because it was already applied once above.
+        cl = numpy.meshgrid(*( [cl1_chunk] + axs[1:] ))[-1::-1]
         return ndimage.map_coordinates(a,
                                        cl,
-                                       # NB we pulled the pre-filter out
                                        prefilter=False,
                                        *args, **kwargs)
 
+    # Parallelize the coordinate mapping using a ThreadPoolExecutor.
+    # This is effective for I/O and low-level C-extension calls (like scipy)
+    # that release the Global Interpreter Lock (GIL).
     with ThreadPoolExecutor(max_workers=ncores) as te:
-        res=te.map(tworker,
-                   axs[0])
-        res=numpy.hstack(list(res))
-        if output is not None:
-            numpy.copyto(output, res)
-        return res
+        results = list(te.map(tworker, chunks))
+
+    # Reassemble the processed chunks into the final array.
+    res = numpy.hstack([r for r in results if r is not None])
+
+    if output is not None:
+        numpy.copyto(output, res)
+    return res
 
 
 class Op_rmsimage(Op):
