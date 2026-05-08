@@ -32,65 +32,89 @@ import numpy
 from scipy import ndimage
 
 
+
 def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     """Threaded map_coordinates on cartesian coordinate grid (meshgrid)
 
-    Parameters:
-    a: Array to be regridded
-    axs: List of axes onto which to regrid. Result is gridded
-         to equivalent of meshgrid(*axs)
+    :param a: Array to be regridded
+    :param axs: List of axes onto which to regrid. Result is gridded
+    to equivalent of meshgrid(*axs)
+    
+    Affine Transform detection and optimized memory usage.
     """
 
-    # FALLBACK: Ensure ncores is an integer if None is passed, as 
-    # numpy.array_split strictly requires an integer value for sections.
+    # Ensure ncores is an integer for array partitioning
     if ncores is None:
         ncores = os.cpu_count() or 8
 
-    output = kwargs.get("output", None)
-    kwargs["output"] = None
-
-    # Prefilter only once to avoid repeated work in the workers. 
-    # See _interpolation.py in scipy for details on spline filtering.
-    order = kwargs.get("order", 3)
+    # Safe extraction of arguments to avoid "multiple values for keyword argument" errors
+    output_target = kwargs.pop("output", None)
+    order = kwargs.pop("order", 3)
+    mode = kwargs.pop("mode", "constant")
+    # Force prefilter=False in workers because we handle it once here
+    kwargs.pop("prefilter", None) 
+    
+    out_shape = tuple(len(ax) for ax in axs)
+    
+    # Spline pre-filtering
+    # Applied once to the whole array to avoid redundant work in threads
     if order > 1:
-        a = ndimage.spline_filter(a, order,
-                                  output=numpy.float64,
-                                  mode=kwargs.get("mode", "constant"))
+        a = ndimage.spline_filter(a, order, output=numpy.float64, mode=mode)
 
-    # Data Chunking
-    # The original implementation called numpy.meshgrid for every single row,
-    # causing massive overhead. By splitting the first axis (axs[0]) into 
-    # 'ncores' chunks, we significantly reduce the number of meshgrid calls 
-    # and memory allocation overhead.
+    # Affine Transform Detection
+    # If axes are linear (constant step), affine_transform is faster 
+    # as it calculates coordinates algorithmically in C instead of reading from RAM
+    def is_linear(ax):
+        if len(ax) < 2: return True
+        diffs = numpy.diff(ax)
+        return numpy.allclose(diffs, diffs[0], rtol=1e-5)
+
+    if is_linear(axs[0]) and is_linear(axs[1]):
+        sy = axs[0][1] - axs[0][0] if len(axs[0]) > 1 else 1.0
+        sx = axs[1][1] - axs[1][0] if len(axs[1]) > 1 else 1.0
+        matrix = numpy.diag([sy, sx])
+        offset = [axs[0][0], axs[1][0]]
+        
+        res = ndimage.affine_transform(a, matrix, offset=offset, 
+                                       output_shape=out_shape, 
+                                       order=order, prefilter=False, 
+                                       mode=mode, **kwargs)
+        if output_target is not None:
+            numpy.copyto(output_target, res)
+        return res
+
+    # Memory-efficient Threaded Mapping
+    # Use direct-to-slice writing to eliminate large memory allocations (hstack/copyto)
+    if output_target is None:
+        output_target = numpy.empty(out_shape, dtype=a.dtype)
+
     chunks = numpy.array_split(axs[0], ncores)
+    indices = [0]
+    for chunk in chunks:
+        indices.append(indices[-1] + len(chunk))
 
-    def tworker(cl1_chunk):
-        # Cases where ncores might exceed the number of available rows
+    def tworker(idx):
+        cl1_chunk = chunks[idx]
         if len(cl1_chunk) == 0:
-            return None
+            return
 
-        # Construct the subset of meshgrid to which the worker has been applied.
-        # The axis reversal is specific to this program. The indexing parameter
-        # does not do exactly the same thing.
-        # Prefilter is set to False because it was already applied once above.
-        cl = numpy.meshgrid(*( [cl1_chunk] + axs[1:] ))[-1::-1]
-        return ndimage.map_coordinates(a,
-                                       cl,
-                                       prefilter=False,
-                                       *args, **kwargs)
+        # Fast coordinate grid generation using broadcasting
+        # float32 coordinates are sufficient for interpolation and save 50% RAM bandwidth
+        ny, nx = len(cl1_chunk), len(axs[1])
+        cl = numpy.empty((2, ny, nx), dtype=numpy.float32)
+        cl[0] = cl1_chunk[:, numpy.newaxis]
+        cl[1] = axs[1]
+        
+        # Perform interpolation directly into the target memory slice.
+        ndimage.map_coordinates(a, cl, 
+                               output=output_target[indices[idx]:indices[idx+1], :], 
+                               prefilter=False, order=order, mode=mode, **kwargs)
 
-    # Parallelize the coordinate mapping using a ThreadPoolExecutor.
-    # This is effective for I/O and low-level C-extension calls (like scipy)
-    # that release the Global Interpreter Lock (GIL).
-    with ThreadPoolExecutor(max_workers=ncores) as te:
-        results = list(te.map(tworker, chunks))
+    # ThreadPoolExecutor is used because ndimage releases the GIL during C-level processing
+    with ThreadPoolExecutor(max_workers=ncores) as executor:
+        list(executor.map(tworker, range(ncores)))
 
-    # Reassemble the processed chunks into the final array.
-    res = numpy.hstack([r for r in results if r is not None])
-
-    if output is not None:
-        numpy.copyto(output, res)
-    return res
+    return output_target
 
 
 class Op_rmsimage(Op):
