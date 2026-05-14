@@ -752,9 +752,6 @@ def check_islands_for_overlap(img, wimg):
 
         if not img.opts.quiet:
             bar.increment()
-
-    if not img.opts.quiet:
         bar.stop()
 
     return tot_flux
-
