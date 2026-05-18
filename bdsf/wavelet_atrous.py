@@ -2,8 +2,6 @@
 
 Do source extraction on this if asked.
 """
-from __future__ import print_function
-from __future__ import absolute_import
 import numpy as N
 from .image import *
 from . import mylogger
@@ -16,7 +14,6 @@ from .const import fwsig
 from copy import deepcopy as cp
 from . import functions as func
 import gc
-from numpy import array, prod
 import scipy.signal
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
@@ -522,8 +519,8 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
     """Convolve two N-dimensional arrays using FFT. See convolve.
 
     """
-    s1 = array(in1.shape)
-    s2 = array(in2.shape)
+    s1 = N.array(in1.shape)
+    s2 = N.array(in2.shape)
     complex_result = (N.issubdtype(in1.dtype, N.complex) or
                       N.issubdtype(in2.dtype, N.complex))
     size = s1 + s2 - 1
