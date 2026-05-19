@@ -13,8 +13,7 @@ import itertools
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
-import scipy.ndimage as nd
-from scipy import interpolate
+from scipy import interpolate, ndimage
 
 from .image import Op, Image, NArray, List
 from . import const
@@ -40,7 +39,7 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     # _interpolation.py in scipy
     order = kwargs.get("order", 3)
     if order > 1:
-        a = nd.spline_filter(a, order,
+        a = ndimage.spline_filter(a, order,
                                   output=np.float64,
                                   mode=kwargs.get("mode", "constant"))
 
@@ -50,7 +49,7 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
         # NB: The axis reversal is specific to this program. The indexing parameter
         # does not do exactly the same thing
         cl = np.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
-        return nd.map_coordinates(a,
+        return ndimage.map_coordinates(a,
                                        cl,
                                        # NB we pulled the pre-filter out
                                        prefilter=False,
@@ -150,16 +149,16 @@ class Op_rmsimage(Op):
                     act_pixels = (image-cmean)/threshold >= crms
                 threshold *= 0.8
                 rank = len(image.shape)
-                connectivity = nd.generate_binary_structure(rank, rank)
-                labels, count = nd.label(act_pixels, connectivity)
-                slices = nd.find_objects(labels)
+                connectivity = ndimage.generate_binary_structure(rank, rank)
+                labels, count = ndimage.label(act_pixels, connectivity)
+                slices = ndimage.find_objects(labels)
                 for idx, s in enumerate(slices):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
                     size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     isl_area_highthresh.append(size_area)
                     isl_maxposn.append(tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+\
                           np.array((s[0].start, s[1].start))))
-                    isl_peak.append(nd.maximum(image[s], labels[s], idx+1))
+                    isl_peak.append(ndimage.maximum(image[s], labels[s], idx+1))
 
         # Check islands found above at thresh_isl threshold to determine if
         # the bright source is embedded inside a large island or not. If it is,
@@ -173,9 +172,9 @@ class Op_rmsimage(Op):
         else:
             act_pixels = (image-cmean)/threshold >= crms
         rank = len(image.shape)
-        connectivity = nd.generate_binary_structure(rank, rank)
-        labels, count = nd.label(act_pixels, connectivity)
-        slices = nd.find_objects(labels)
+        connectivity = ndimage.generate_binary_structure(rank, rank)
+        labels, count = ndimage.label(act_pixels, connectivity)
+        slices = ndimage.find_objects(labels)
         isl_size = []
         isl_size_highthresh = []
         isl_size_lowthresh = []
