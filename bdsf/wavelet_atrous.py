@@ -103,7 +103,6 @@ class Op_wavelet_atrous(Op):
 
             im_old = img.resid_wavelets_arr
             total_flux = 0.0
-            ntot_wvgaus = 0
             stop_wav = False
             pix_masked = N.where(N.isnan(resid))
             jmin = 1
@@ -301,7 +300,6 @@ class Op_wavelet_atrous(Op):
             pyrank -= 1  # align pyrank values with island ids and set regions outside of islands to -1
             img.pyrank = pyrank
 
-            img.ngaus += ntot_wvgaus
             img.total_flux_gaus += total_flux
             mylogger.userinfo(mylog, "Total flux density in model on all scales", '%.3f Jy' % img.total_flux_gaus)
             if img.opts.output_all:
