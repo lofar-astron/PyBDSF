@@ -668,7 +668,7 @@ def renumber_islands(img):
             g.island_id = i
         for dg in isl.dgaul:
             dg.island_id = i
-            pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
+        pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
     pyrank -= 1  # align pyrank values with island ids and set regions outside of islands to -1
     img.pyrank = pyrank
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
