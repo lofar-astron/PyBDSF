@@ -7,21 +7,29 @@ The current implementation will handle both 2D and 3D images,
 where for 3D case it will calculate maps for each plane (=
 Stokes images).
 """
-import os
-from math import sqrt, log
-import itertools
-from concurrent.futures import ThreadPoolExecutor
+from __future__ import absolute_import
 
-import numpy as np
-from scipy import interpolate, ndimage
-
+import numpy as N
+import scipy.ndimage as nd
+from . import _cbdsm
 from .image import Op, Image, NArray, List
 from . import const
 from . import mylogger
+import os
 from . import functions as func
-from .functions import read_image_from_file
+import scipy.ndimage as nd
+from scipy import interpolate
 from . import multi_proc as mp
-from . import _cbdsm
+import itertools
+try:
+    from itertools import izip as zip
+except ImportError: # will be 3.x series
+    pass
+from .functions import read_image_from_file
+
+from concurrent.futures import ThreadPoolExecutor
+import numpy
+from scipy import ndimage
 
 
 
@@ -130,7 +138,7 @@ class Op_rmsimage(Op):
 
         mask = img.mask_arr
         opts = img.opts
-        cdelt = np.array(img.wcs_obj.acdelt[:2])
+        cdelt = N.array(img.wcs_obj.acdelt[:2])
 
         # Determine box size for rms/mean map calculations.
         # If user specifies rms_box, use it. Otherwise, use either an
@@ -194,16 +202,16 @@ class Op_rmsimage(Op):
                     act_pixels = (image-cmean)/threshold >= crms
                 threshold *= 0.8
                 rank = len(image.shape)
-                connectivity = ndimage.generate_binary_structure(rank, rank)
-                labels, count = ndimage.label(act_pixels, connectivity)
-                slices = ndimage.find_objects(labels)
+                connectivity = nd.generate_binary_structure(rank, rank)
+                labels, count = nd.label(act_pixels, connectivity)
+                slices = nd.find_objects(labels)
                 for idx, s in enumerate(slices):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
                     size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     isl_area_highthresh.append(size_area)
-                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+\
-                          np.array((s[0].start, s[1].start))))
-                    isl_peak.append(ndimage.maximum(image[s], labels[s], idx+1))
+                    isl_maxposn.append(tuple(N.array(N.unravel_index(N.argmax(image[s]), image[s].shape))+\
+                          N.array((s[0].start, s[1].start))))
+                    isl_peak.append(nd.maximum(image[s], labels[s], idx+1))
 
         # Check islands found above at thresh_isl threshold to determine if
         # the bright source is embedded inside a large island or not. If it is,
@@ -217,9 +225,9 @@ class Op_rmsimage(Op):
         else:
             act_pixels = (image-cmean)/threshold >= crms
         rank = len(image.shape)
-        connectivity = ndimage.generate_binary_structure(rank, rank)
-        labels, count = ndimage.label(act_pixels, connectivity)
-        slices = ndimage.find_objects(labels)
+        connectivity = nd.generate_binary_structure(rank, rank)
+        labels, count = nd.label(act_pixels, connectivity)
+        slices = nd.find_objects(labels)
         isl_size = []
         isl_size_highthresh = []
         isl_size_lowthresh = []
@@ -227,8 +235,8 @@ class Op_rmsimage(Op):
         thratio = threshold/bright_threshold
         for idx, s in enumerate(slices):
             isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
-            isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+
-                                          np.array((s[0].start, s[1].start)))
+            isl_maxposn_lowthresh = tuple(N.array(N.unravel_index(N.argmax(image[s]), image[s].shape))+
+                                          N.array((s[0].start, s[1].start)))
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
             if do_adapt and isl_maxposn_lowthresh in isl_maxposn:
                 bright_indx = isl_maxposn.index(isl_maxposn_lowthresh)
@@ -302,8 +310,8 @@ class Op_rmsimage(Op):
 
         for ipol, pol in enumerate(pols):
             data = ch0_images[ipol]
-            mean = np.zeros(data.shape, dtype=np.float32)
-            rms  = np.zeros(data.shape, dtype=np.float32)
+            mean = N.zeros(data.shape, dtype=N.float32)
+            rms  = N.zeros(data.shape, dtype=N.float32)
             if len(pols) > 1:
                 pol_txt = ' (' + pol + ')'
             else:
@@ -346,8 +354,8 @@ class Op_rmsimage(Op):
                                         bright_pt_coords=isl_pos, rms_box2=img.rms_box,
                                         logname="PyBDSF."+img.log, ncores=img.opts.ncores)
                     elif len(data.shape) == 3: ## 3d case
-                        if not isinstance(mask, np.ndarray):
-                            mask = np.zeros(data.shape[0], dtype=bool)
+                        if not isinstance(mask, N.ndarray):
+                            mask = N.zeros(data.shape[0], dtype=bool)
                         for i in range(data.shape[0]):
                         ## iterate each plane
                             mean, rms = self.calculate_maps(img, data[i], mean[i], rms[i], mask[i], map_opts,
@@ -398,8 +406,8 @@ class Op_rmsimage(Op):
                 mylogger.userinfo(mylog, 'Value of background rms' + pol_txt,
                                   '%.2e Jy/beam' % rms[0][0])
             else:
-                rms_min = np.nanmin(rms)
-                rms_max = np.nanmax(rms)
+                rms_min = N.nanmin(rms)
+                rms_max = N.nanmax(rms)
                 mylogger.userinfo(mylog, 'Min/max values of background rms map' + pol_txt,
                                   '(%.2e, %.2e) Jy/beam' % (rms_min, rms_max))
 
@@ -412,17 +420,17 @@ class Op_rmsimage(Op):
                 mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
                                   str(round(val,5))+' Jy/beam')
             else:
-                mean_min = np.nanmin(mean)
-                mean_max = np.nanmax(mean)
+                mean_min = N.nanmin(mean)
+                mean_max = N.nanmax(mean)
                 mylogger.userinfo(mylog, 'Min/max values of background mean map' + pol_txt,
                                   '(%.2e, %.2e) Jy/beam' % (mean_min, mean_max))
 
             if pol == 'I':
                 # Apply mask to mean_map and rms_map by setting masked values to NaN
-                if isinstance(mask, np.ndarray):
-                    pix_masked = np.where(mask == True)
-                    mean[pix_masked] = np.nan
-                    rms[pix_masked] = np.nan
+                if isinstance(mask, N.ndarray):
+                    pix_masked = N.where(mask == True)
+                    mean[pix_masked] = N.nan
+                    rms[pix_masked] = N.nan
 
                 img.mean_arr = mean
                 img.rms_arr = rms
@@ -449,9 +457,9 @@ class Op_rmsimage(Op):
                     else:
                         resdir = img.basedir + '/background/'
                     if not os.path.exists(resdir): os.makedirs(resdir)
-                    zero_pixels = np.where(rms <= 0.0)
+                    zero_pixels = N.where(rms <= 0.0)
                     rms_nonzero = rms.copy()
-                    rms_nonzero[zero_pixels] = np.nan
+                    rms_nonzero[zero_pixels] = N.nan
                     func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
             else:
@@ -466,18 +474,19 @@ class Op_rmsimage(Op):
         rms_map=None, whether to take the map (if variance
         is significant) or a constant value
         """
+        from math import sqrt
 
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Checkrms  ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
-        fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
+        fw_pix = sqrt(N.prod(bm)/abs(N.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(rms[unmasked])
-            maxrms = np.max(rms[unmasked])
+            unmasked = N.where(~img.mask_arr)
+            stdsub = N.std(rms[unmasked])
+            maxrms = N.max(rms[unmasked])
         else:
-            stdsub = np.std(rms)
-            maxrms = np.max(rms)
+            stdsub = N.std(rms)
+            maxrms = N.max(rms)
 
         rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of rms image = ', stdsub*1000.0, 'mJy'))
@@ -496,18 +505,19 @@ class Op_rmsimage(Op):
         mean_map=None, whether to take the map (if variance
         is significant) or a constant value
         """
+        from math import sqrt
 
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Checkmean ")
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
-        fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
+        fw_pix = sqrt(N.prod(bm)/abs(N.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(mean[unmasked])
-            maxmean = np.max(mean[unmasked])
+            unmasked = N.where(~img.mask_arr)
+            stdsub = N.std(mean[unmasked])
+            maxmean = N.max(mean[unmasked])
         else:
-            stdsub = np.std(mean)
-            maxmean = np.max(mean)
+            stdsub = N.std(mean)
+            maxmean = N.max(mean)
         rms_expect = img.clipped_rms/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of mean image = ', stdsub*1000.0, 'mJy'))
         mylog.debug('%s %10.6f %s' % ('Expected standard deviation = ', rms_expect*1000.0, 'mJy'))
@@ -542,9 +552,9 @@ class Op_rmsimage(Op):
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
                         logname=logname, ncores=ncores)
             if img.masked:
-                test = np.any(rms[~img.mask_arr] < 0.0)
+                test = N.any(rms[~img.mask_arr] < 0.0)
             else:
-                test = np.any(rms < 0.0)
+                test = N.any(rms < 0.0)
             if test:
                 rms_ok = False
                 if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
@@ -592,11 +602,11 @@ class Op_rmsimage(Op):
                     else:
                         # We could be catastrophically wrong, or have a local problem with the
                         # interpolation. If the latter, we can rescue it by interpolating again
-                        fraction = np.sum(rms<0)/np.size(rms)
+                        fraction = N.sum(rms<0)/N.size(rms)
                         if fraction < 1e-3:
                             mylog.warning('Trying to interpolate for small fraction (%.2g) of negative rms values' % fraction)
                             ys,xs=rms.shape
-                            xx, yy = np.meshgrid(np.arange(xs), np.arange(ys))
+                            xx, yy = N.meshgrid(N.arange(xs), N.arange(ys))
                             mask = rms<0
                             good_x = xx[~mask]
                             good_y = yy[~mask]
@@ -637,8 +647,8 @@ class Op_rmsimage(Op):
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)][-1::-1]
         pt_src_scale = box[0]
         if do_adapt:
-            out_rms2 = np.zeros(rms_map1.shape, dtype=np.float32)
-            out_mean2 = np.zeros(rms_map1.shape, dtype=np.float32)
+            out_rms2 = N.zeros(rms_map1.shape, dtype=N.float32)
+            out_mean2 = N.zeros(rms_map1.shape, dtype=N.float32)
             # Generate rms/mean maps on large scale
             box2 = rms_box2
             axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores)
@@ -665,25 +675,25 @@ class Op_rmsimage(Op):
                 bbox_ysize = bbox[1].stop-bbox[1].start
                 src_center[0] -= bbox[0].start
                 src_center[1] -= bbox[1].start
-                weights = np.ones((bbox_xsize, bbox_ysize))
+                weights = N.ones((bbox_xsize, bbox_ysize))
 
                 # Taper weights to zero where small-scale value is within a factor of
                 # 2 of large-scale value. Use distance to center of the box
                 # to determine taper value. This tapering prevents the use of the
                 # small-scale box beyond the range of artifacts.
-                low_vals_ind = np.where(rms_map1[tuple(bbox)]/out_rms2[tuple(bbox)] < 2.0)
+                low_vals_ind = N.where(rms_map1[tuple(bbox)]/out_rms2[tuple(bbox)] < 2.0)
                 if len(low_vals_ind[0]) > 0:
                     dist_to_cen = []
                     for (x,y) in zip(low_vals_ind[0],low_vals_ind[1]):
-                        dist_to_cen.append(np.sqrt( (x-src_center[0])**2 +
+                        dist_to_cen.append(N.sqrt( (x-src_center[0])**2 +
                                            (y-src_center[1])**2 ))
-                    med_dist_to_cen = np.min(dist_to_cen)
+                    med_dist_to_cen = N.min(dist_to_cen)
                     for x in range(bbox_xsize):
                         for y in range(bbox_ysize):
-                            dist_to_cen = np.sqrt( (x-src_center[0])**2 +
+                            dist_to_cen = N.sqrt( (x-src_center[0])**2 +
                                                (y-src_center[1])**2 )
                             if dist_to_cen >= med_dist_to_cen:
-                                weights[x,y] = 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0
+                                weights[x,y] = 1.0 - dist_to_cen/N.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0
                 rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
                 mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
         else:
@@ -696,10 +706,10 @@ class Op_rmsimage(Op):
         mapcoord_threaded(mean_map, ax, order=interp, output=out_mean, ncores=ncores)
 
         # Apply mask to mean_map and rms_map by setting masked values to NaN
-        if isinstance(mask, np.ndarray):
-            pix_masked = np.where(mask == True)
-            out_mean[pix_masked] = np.nan
-            out_rms[pix_masked] = np.nan
+        if isinstance(mask, N.ndarray):
+            pix_masked = N.where(mask == True)
+            out_mean[pix_masked] = N.nan
+            out_rms[pix_masked] = N.nan
 
     def rms_mean_map(self, arr, mask=False, kappa=3, box=None, ncores=None):
         """Calculate map of the mean/rms values
@@ -753,7 +763,7 @@ class Op_rmsimage(Op):
         # Some math first: boxcount is number of boxes alongsize each axis,
         # bounds is non-zero for axes which have extra pixels beyond last box
         BS, SS = box
-        imgshape = np.array(arr.shape)
+        imgshape = N.array(arr.shape)
 
         # If boxize is less than 10% of image, use simple extrapolation to
         # derive the edges of the mean and rms maps; otherwise, use padded
@@ -766,11 +776,11 @@ class Op_rmsimage(Op):
 
         if use_extrapolation:
             boxcount = 1 + (imgshape - BS)/SS
-            bounds   = np.asarray((boxcount-1)*SS + BS < imgshape, dtype=int)
+            bounds   = N.asarray((boxcount-1)*SS + BS < imgshape, dtype=int)
             mapshape = 2 + boxcount + bounds
         else:
             boxcount = 1 + imgshape/SS
-            bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
+            bounds   = N.asarray((boxcount-1)*SS < imgshape, dtype=int)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
             new_shape = (arr.shape[0] + 2*pad_border_size, arr.shape[1]
@@ -784,9 +794,9 @@ class Op_rmsimage(Op):
         # Make arrays for calculated data
         mapshape = [int(ms) for ms in mapshape]
         boxcount = [int(bc) for bc in boxcount]
-        mean_map = np.zeros(mapshape, dtype=np.float32)
-        rms_map  = np.zeros(mapshape, dtype=np.float32)
-        axes     = [np.zeros(len, dtype=np.float32) for len in mapshape]
+        mean_map = N.zeros(mapshape, dtype=N.float32)
+        rms_map  = N.zeros(mapshape, dtype=N.float32)
+        axes     = [N.zeros(len, dtype=N.float32) for len in mapshape]
 
         # Step 1: internal area of the image
         # Make a list of coordinates to send to process_mean_rms_maps()
@@ -819,7 +829,7 @@ class Op_rmsimage(Op):
             rms_map[co] = cr
 
         # Check if all regions have too few unmasked pixels
-        if mask is not None and np.size(np.where(mean_map != np.inf)) == 0:
+        if mask is not None and N.size(N.where(mean_map != N.inf)) == 0:
             raise RuntimeError("No unmasked regions from which to determine "\
                          "mean and rms maps")
 
@@ -906,20 +916,20 @@ class Op_rmsimage(Op):
         # Step 4: fill in coordinate axes
         for i in range(2):
             if use_extrapolation:
-                axes[i][1:boxcount[i]+1] = (np.arange(boxcount[i])*SS
+                axes[i][1:boxcount[i]+1] = (N.arange(boxcount[i])*SS
                                             + BS/2. - .5)
                 if bounds[i]:
                     axes[i][-2] = imgshape[i] - BS/2. - .5
             else:
-                axes[i][0:boxcount[i]] = np.arange(boxcount[i])*SS - .5
+                axes[i][0:boxcount[i]] = N.arange(boxcount[i])*SS - .5
                 if bounds[i]:
                     axes[i][-2] = imgshape[i] - .5
             axes[i][-1] = imgshape[i] - 1
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
-        # np.inf)
-        unmasked_boxes = np.where(mean_map != np.inf)
-        if np.size(unmasked_boxes,1) < mapshape[0]*mapshape[1]:
+        # N.inf)
+        unmasked_boxes = N.where(mean_map != N.inf)
+        if N.size(unmasked_boxes,1) < mapshape[0]*mapshape[1]:
             mean_map = self.fill_masked_regions(mean_map)
             rms_map = self.fill_masked_regions(rms_map)
 
@@ -933,11 +943,11 @@ class Op_rmsimage(Op):
         return cm, cr
 
 
-    def fill_masked_regions(self, themap, magic=np.inf):
+    def fill_masked_regions(self, themap, magic=N.inf):
         """Fill masked regions (defined where values == magic) in themap.
         """
-        masked_boxes = np.where(themap == magic) # locations of masked regions
-        for i in range(np.size(masked_boxes,1)):
+        masked_boxes = N.where(themap == magic) # locations of masked regions
+        for i in range(N.size(masked_boxes,1)):
             num_unmasked = 0
             x, y = masked_boxes[0][i], masked_boxes[1][i]
             delx = dely = 1
@@ -955,10 +965,10 @@ class Op_rmsimage(Op):
                 goodcutout = cutout[cutout != magic]
                 num_unmasked = len(goodcutout)
                 if num_unmasked > 0:
-                    themap[x, y] = np.nansum(goodcutout)/float(len(goodcutout))
+                    themap[x, y] = N.nansum(goodcutout)/float(len(goodcutout))
                 delx += 1
                 dely += 1
-        themap[np.where(np.isnan(themap))] = 0.0
+        themap[N.where(N.isnan(themap))] = 0.0
         return themap
 
     def pad_array(self, arr, new_shape):
@@ -966,42 +976,42 @@ class Op_rmsimage(Op):
         # Assume that padding is the same for both axes and is equal
         # around all edges.
         half_size = int((new_shape[0] - arr.shape[0]) / 2)
-        arr_pad = np.zeros( (new_shape), dtype=arr.dtype)
+        arr_pad = N.zeros( (new_shape), dtype=arr.dtype)
 
         # left band
         band = arr[:half_size, :]
-        arr_pad[:half_size, half_size:-half_size] =  np.flipud( band )
+        arr_pad[:half_size, half_size:-half_size] =  N.flipud( band )
 
         # right band
         band = arr[-half_size:, :]
-        arr_pad[-half_size:, half_size:-half_size] = np.flipud( band )
+        arr_pad[-half_size:, half_size:-half_size] = N.flipud( band )
 
         # bottom band
         band = arr[:, :half_size]
-        arr_pad[half_size:-half_size, :half_size] = np.fliplr( band )
+        arr_pad[half_size:-half_size, :half_size] = N.fliplr( band )
 
         # top band
         band = arr[:, -half_size:]
-        arr_pad[half_size:-half_size, -half_size:] =  np.fliplr( band )
+        arr_pad[half_size:-half_size, -half_size:] =  N.fliplr( band )
 
         # central band
         arr_pad[half_size:-half_size, half_size:-half_size] = arr
 
         # bottom left corner
         band = arr[:half_size,:half_size]
-        arr_pad[:half_size,:half_size] = np.flipud(np.fliplr(band))
+        arr_pad[:half_size,:half_size] = N.flipud(N.fliplr(band))
 
         # top right corner
         band = arr[-half_size:,-half_size:]
-        arr_pad[-half_size:,-half_size:] = np.flipud(np.fliplr(band))
+        arr_pad[-half_size:,-half_size:] = N.flipud(N.fliplr(band))
 
         # top left corner
         band = arr[:half_size,-half_size:]
-        arr_pad[:half_size,-half_size:] = np.flipud(np.fliplr(band))
+        arr_pad[:half_size,-half_size:] = N.flipud(N.fliplr(band))
 
         # bottom right corner
         band = arr[-half_size:,:half_size]
-        arr_pad[-half_size:,:half_size] = np.flipud(np.fliplr(band))
+        arr_pad[-half_size:,:half_size] = N.flipud(N.fliplr(band))
 
         return arr_pad
 
@@ -1014,19 +1024,19 @@ class Op_rmsimage(Op):
             if cnt > 198: cm = m; cr = r
             mean_map[i, j], rms_map[i, j] = cm, cr
         else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
+            pix_unmasked = N.where(mask[a:b, c:d] == False)
+            npix_unmasked = N.size(pix_unmasked,1)
             if npix_unmasked > 20: # find clipped mean/rms
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
                 mean_map[i, j], rms_map[i, j] = cm, cr
             else:
                 if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                    cm = N.mean(arr[pix_unmasked])
+                    cr = N.std(arr[pix_unmasked])
                     mean_map[i, j], rms_map[i, j] = cm, cr
                 else: # too few unmasked pixels --> set mean/rms to inf
-                    mean_map[i, j], rms_map[i, j] = np.inf, np.inf
+                    mean_map[i, j], rms_map[i, j] = N.inf, N.inf
 
 
     def for_masked_mp(self, mask, arr, ind, kappa):
@@ -1037,18 +1047,18 @@ class Op_rmsimage(Op):
             m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
         else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
+            pix_unmasked = N.where(mask[a:b, c:d] == False)
+            npix_unmasked = N.size(pix_unmasked,1)
             if npix_unmasked > 20: # find clipped mean/rms
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                    cm = N.mean(arr[pix_unmasked])
+                    cr = N.std(arr[pix_unmasked])
                 else: # too few unmasked pixels --> set mean/rms to inf
-                    cm = np.inf
-                    cr = np.inf
+                    cm = N.inf
+                    cr = N.inf
 
         return cm, cr
 
@@ -1084,12 +1094,12 @@ class Op_rmsimage(Op):
         should be obtained by interpolation)
         """
         from math import floor, ceil
-        res = np.zeros(size, dtype=np.float32)
+        res = N.zeros(size, dtype=N.float32)
 
         for i in range(len(arr) - 1):
             i1 = arr[i]
             i2 = arr[i+1]
-            t = np.arange(ceil(i1), floor(i2)+1, dtype=float)
+            t = N.arange(ceil(i1), floor(i2)+1, dtype=float)
             res[int(ceil(i1)):int(floor(i2))+1] = i + (t-i1)/(i2-i1)
 
         return res
