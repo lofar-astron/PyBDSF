@@ -673,70 +673,90 @@ def renumber_islands(img):
     img.gaussians = gaussian_list
 
 
-
 def check_islands_for_overlap(img, wimg):
     """Checks for overlaps between img and wimg islands"""
 
+    # Removed check and import of numexpr
+    
     tot_flux = 0.0
     bar = statusbar.StatusBar('Checking islands for overlap ............ : ', 0, len(wimg.islands))
-    
-    # 1. Constant auxiliary maps
-    wpp = wimg.pyrank + 1
-    # orig_rankim_bool is a static snapshot of the initial island state
-    # Keep it outside the loop to ensure parity with original behavior
+
+    # Make masks for regions that have islands
+    wpp = wimg.pyrank+1  # does not change, store for later
+    wav_rankim_bool = wpp > 0  # boolean
     orig_rankim_bool = img.pyrank > -1
+
+    # Make "images" of island ids for overlaping regions
+    # Removed pre-allocation of global orig_islands matrix
+    # The original code initialized a global array: orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
+    # covering the entire sky. The sub-matrix is now computed dynamically on demand only for the active bbox
 
     if not img.opts.quiet:
         bar.start()
-
+        
     for idx, wvisl in enumerate(wimg.islands):
         if len(wvisl.gaul) > 0:
+            
+            # Cached bounding box tuple
+            # Casting tuple(wvisl.bbox) repeatedly within the loop introduced call overhead
+            # Now we store it in a local variable
             bbox = tuple(wvisl.bbox)
+
+            # Get unique island IDs. If an island overlaps with one
+            # in the original ch0 image, merge them together. If not,
+            # add the island as a new one.
+            wav_islands = orig_rankim_bool[bbox] * wpp[bbox] - 1
+            wav_ids = N.unique(wav_islands)  # saves conversion to set and back
             
-            # 2. Calculate collision map ONLY for the current wavelet island area (bbox)
-            # Use the static orig_rankim_bool to preserve the original logic
-            sub_orig_bool = orig_rankim_bool[bbox]
-            sub_wpp = wpp[bbox]
-            wav_islands_bbox = sub_orig_bool * sub_wpp - 1
-            
-            # 3. Flux accumulation
             for wvg in wvisl.gaul:
                 tot_flux += wvg.total_flux
                 wvg.valid = True
-
-            # 4. Collision check (optimized equivalent of: if idx in N.unique(wav_islands_bbox))
-            if N.any(wav_islands_bbox == idx):
-                # Get current island IDs from img.pyrank only for the colliding pixels
-                # img.pyrank is updated by renumber_islands(), so we always get fresh IDs
-                sub_pyrank = img.pyrank[bbox]
-                mask = (wav_islands_bbox == idx)
-                orig_idx = N.unique(sub_pyrank[mask])
+                
+            if idx in wav_ids:
+                # Localized generation of orig_islands
+                # Instead of indexing a pre-allocated global array, generate the same data subset
+                # dynamically using localized bounding box slices bbox (keeps operations inside CPU cache)
+                orig_islands_local = wav_rankim_bool[bbox] * (img.pyrank[bbox] + 1) - 1
+                orig_idx = N.unique(orig_islands_local[wav_islands == idx])
                 
                 if len(orig_idx) == 1:
-                    # Merging with a single existing island
                     merge_islands(img, img.islands[orig_idx[0]], wvisl)
                 else:
-                    # Multiple merge
-                    target_isl_idx = orig_idx[0]
-                    target_isl = img.islands[target_isl_idx]
-                    
-                    merge_islands(img, target_isl, wvisl)
+                    merge_islands(img, img.islands[orig_idx[0]], wvisl)
                     for oidx in orig_idx[1:]:
-                        merge_islands(img, target_isl, img.islands[oidx])
+                        merge_islands(img, img.islands[orig_idx[0]], img.islands[oidx])
                     
-                    # Remove merged islands and renumber (updates img.pyrank globally)
-                    remove_ids = set(orig_idx[1:])
-                    img.islands = [x for x in img.islands if x.island_id not in remove_ids]
-                    renumber_islands(img)
+                    img.islands = [x for x in img.islands if x.island_id not in orig_idx[1:]]
+                    
+                    # Inlining of renumber_islands
+                    # Replaced the renumber_islands(img) call. The original function initialized a global matrix
+                    # of zeros and iteratively processed inverted mask additions. Now we pre-fill a matrix
+                    # with -1 using N.full and utilize NumPy mask indexing (~isl.mask_active) to overwrite 
+                    # the state
+                    pyrank = N.full(img.pyrank.shape, -1, dtype=N.int32)
+                    for i, isl in enumerate(img.islands):
+                        isl.island_id = i
+                        for g in isl.gaul:
+                            g.island_id = i
+                        for dg in isl.dgaul:
+                            dg.island_id = i
+                        pyrank[tuple(isl.bbox)][~isl.mask_active] = i
+                    img.pyrank = pyrank
+                    
+                    # Regenerate the global gaussian list to keep gaus_num and island_id properly synchronized
+                    img.gaussians = [g for isl in img.islands for g in isl.gaul]
+                    
+                # Recalculate the overlap images, since the islands have changed
+                # Removed global array recalculation block
+                # Originally, the code recalculated the global array from scratch
+                # The current approach relies on local slices img.pyrank[bbox]
                 
-                # Omitted global recalculation: orig_islands = wav_rankim_bool * ipp - 1
-                # No need to update the massive global matrix because step 4 
-                # reads directly from img.pyrank[bbox], which is always updated
             else:
-                # No collision with initial islands, so create a new island
                 isl_id = img.islands[-1].island_id + 1
-                new_isl = wvisl.copy(img.pixel_beamarea(), 
-                                     image=img.ch0_arr[bbox],
+                # Applied cached bbox tuple to attribute slices
+                # Utilizing the cached bbox variable when pulling slices for: image, mean, and rms arrays
+                # avoids calling tuple() multiple times
+                new_isl = wvisl.copy(img.pixel_beamarea(), image=img.ch0_arr[bbox],
                                      mean=img.mean_arr[bbox],
                                      rms=img.rms_arr[bbox])
                 new_isl.gaul = []
@@ -747,6 +767,8 @@ def check_islands_for_overlap(img, wimg):
 
         if not img.opts.quiet:
             bar.increment()
-    bar.stop()
+            
+    if not img.opts.quiet:
+        bar.stop()
 
     return tot_flux
