@@ -368,7 +368,6 @@ class Op_wavelet_atrous(Op):
         opts['peak_fit'] = True
         opts['peak_maxsize'] = 30.0
         opts['detection_image'] = ''
-        opts['verbose_fitting'] = img.opts.verbose_fitting
 
         ops = []
         for op in chain:
