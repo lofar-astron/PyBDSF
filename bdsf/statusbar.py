@@ -51,21 +51,17 @@ class StatusBar():
                 self.columns = 1
         return
 
-    # Redraw progress bar
+    # redraw progress bar
     def __print(self):
         # Update terminal size with each actual frame rendering
         self.__getsize()
 
         sys.stdout.write('\x1b[1G')
-        
-        # Check to prevent ZeroDivisionError if there are no items to process
         if self.max == 0:
             sys.stdout.write(self.color + self.text + '[] 0/0\033[0m\n')
         else:
-            # Recalculate comp here (moved from increment) immediately after __getsize()
-            # to ensure the progress bar adapts correctly if the terminal was resized.
+            # Recalculate comp in case the terminal size (self.columns) has changed
             self.comp = int(float(self.pos) / self.max * self.columns)
-            
             sys.stdout.write(self.color + self.text + '[' + '=' * self.comp + self.busy_char + '-'*(self.columns - self.comp - 1) + '] ' + str(self.pos) + '/' + str(self.max) + '\033[0m')
             sys.stdout.write('\x1b[' + str(self.comp + 2 + 44) + 'G')
         sys.stdout.flush()
