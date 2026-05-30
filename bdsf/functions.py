@@ -1,6 +1,7 @@
 # some functions
 from __future__ import print_function
 from __future__ import absolute_import
+from shutil import get_terminal_size
 
 try:
     # For Python 2
@@ -1968,40 +1969,18 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     return mask
 
 def getTerminalSize():
+    """Returns the terminal size as a tuple (lines, columns).
+    
+    Uses the built-in shutil module, ensuring cross-platform
+    compatibility (Linux, macOS, Windows).
     """
-    returns (lines:int, cols:int)
-    """
-    import os, struct
-    def ioctl_GWINSZ(fd):
-        import fcntl, termios
-        return struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
-    # try stdin, stdout, stderr
-    for fd in (0, 1, 2):
-        try:
-            return ioctl_GWINSZ(fd)
-        except:
-            pass
-    # try os.ctermid()
-    try:
-        fd = os.open(os.ctermid(), os.O_RDONLY)
-        try:
-            return ioctl_GWINSZ(fd)
-        finally:
-            os.close(fd)
-    except:
-        pass
-    # try `stty size`
-    try:
-        return tuple(int(x) for x in os.popen("stty size", "r").read().split())
-    except:
-        pass
-    # try environment variables
-    try:
-        return tuple(int(os.getenv(var)) for var in ("LINES", "COLUMNS"))
-    except:
-        pass
-    # Give up. return 0.
-    return (0, 0)
+
+    # shutil.get_terminal_size accepts a fallback in the format (columns, lines).
+    # We set it to (80, 25) to maintain the identical default values as the old code.
+    size = get_terminal_size(fallback=(80, 25))
+    
+    # Return the result as (lines, columns)
+    return size.lines, size.columns
 
 def eval_func_tuple(f_args):
     """Takes a tuple of a function and args, evaluates and returns result
