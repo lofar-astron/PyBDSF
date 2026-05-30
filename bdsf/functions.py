@@ -1972,12 +1972,11 @@ def getTerminalSize():
     """Returns the terminal size as a tuple (lines, columns).
     
     Uses the built-in shutil module, ensuring cross-platform
-    compatibility (Linux, macOS, Windows).
+    compatibility
     """
-
-    # shutil.get_terminal_size accepts a fallback in the format (columns, lines).
-    # We set it to (80, 25) to maintain the identical default values as the old code.
-    size = get_terminal_size(fallback=(80, 25))
+    # shutil.get_terminal_size accepts a fallback in the format (columns, lines)
+    # We use (0, 0) as the fallback to match the original function's behavior
+    size = get_terminal_size(fallback=(0, 0))
     
     # Return the result as (lines, columns)
     return size.lines, size.columns
