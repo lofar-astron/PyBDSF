@@ -63,9 +63,10 @@ class StatusBar():
         if self.max == 0:
             sys.stdout.write(self.color + self.text + '[] 0/0\033[0m\n')
         else:
-            # We are about to divide by self.max, but it is safe in the 'else' block.
-            # We calculate 'self.comp' right after checking the terminal size (__getsize) 
-            # so the progress bar adapts to possible window resizing.
+            # We are about to divide by self.max. We are inside the 'else' block,
+            # so self.max is not 0, meaning this division will not crash.
+            # We calculate this right after checking the terminal size (__getsize) 
+            # so the progress bar adapts to window resizing.
             self.comp = int(float(self.pos) / self.max * self.columns)
             sys.stdout.write(self.color + self.text + '[' + '=' * self.comp + self.busy_char + '-'*(self.columns - self.comp - 1) + '] ' + str(self.pos) + '/' + str(self.max) + '\033[0m')
             sys.stdout.write('\x1b[' + str(self.comp + 2 + 44) + 'G')
