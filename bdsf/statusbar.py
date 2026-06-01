@@ -58,12 +58,15 @@ class StatusBar():
 
         sys.stdout.write('\x1b[1G')
 
-        # Check to prevent ZeroDivisionError if there are no items to process
+        # Handle the case where there are no items to process (prevents from
+        # dividing by zero later)
         if self.max == 0:
             sys.stdout.write(self.color + self.text + '[] 0/0\033[0m\n')
         else:
-            # Recalculate comp here (moved from increment) immediately after __getsize()
-            # to ensure the progress bar adapts correctly if the terminal was resized
+            # We are about to divide by self.max. We are inside the 'else' block,
+            # so self.max is not 0, meaning this division will not crash.
+            # We calculate this right after checking the terminal size (__getsize) 
+            # so the progress bar adapts to window resizing.
             self.comp = int(float(self.pos) / self.max * self.columns)
             sys.stdout.write(self.color + self.text + '[' + '=' * self.comp + self.busy_char + '-'*(self.columns - self.comp - 1) + '] ' + str(self.pos) + '/' + str(self.max) + '\033[0m')
             sys.stdout.write('\x1b[' + str(self.comp + 2 + 44) + 'G')
