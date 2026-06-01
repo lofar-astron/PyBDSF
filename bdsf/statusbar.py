@@ -60,7 +60,7 @@ class StatusBar():
 
         # Handle the case where there are no items to process (prevents from
         # dividing by zero later)
-        if self.max == 0:
+        if self.max <= 0:
             sys.stdout.write(self.color + self.text + '[] 0/0\033[0m\n')
         else:
             # We are about to divide by self.max, but it is safe in the 'else' block.
