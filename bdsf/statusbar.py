@@ -1,7 +1,7 @@
+
 """Display an animated statusbar"""
-from __future__ import absolute_import
 import sys
-import os
+import time
 from . import functions as func
 
 class StatusBar():
@@ -23,6 +23,11 @@ class StatusBar():
         self.inc =  0
         self.started = 0
         self.color = color
+        
+        # 5 frames per second
+        self.min_interval = 0.2
+        self.last_print_time = 0.0
+        
         self.__getsize()
         if max > 0:
             self.comp = int(float(self.pos) / self.max * self.columns)
@@ -35,21 +40,33 @@ class StatusBar():
             rows, columns = func.getTerminalSize()
         except ValueError:
             rows = columns = 0
+            
         if int(columns) > self.max + 2 + 44 + (len(str(self.max))*2 + 2):
             self.columns = self.max
         else:
             # note: -2 is for brackets, -44 for 'Fitting islands...' text, rest is for pos/max text
             self.columns = int(columns) - 2 - 44 - (len(str(self.max))*2 + 2)
+            # Protection against negative or zero column width
+            if self.columns < 1:
+                self.columns = 1
         return
 
-    # redraw progress bar
+    # Redraw progress bar
     def __print(self):
+        # Update terminal size with each frame rendering
         self.__getsize()
 
         sys.stdout.write('\x1b[1G')
-        if self.max == 0:
+
+        # Handle the case where there are no items to process (prevents from
+        # dividing by zero later)
+        if self.max <= 0:
             sys.stdout.write(self.color + self.text + '[] 0/0\033[0m\n')
         else:
+            # We are about to divide by self.max, but it is safe in the 'else' block.
+            # We calculate 'self.comp' right after checking the terminal size (__getsize) 
+            # so the progress bar adapts to possible window resizing.
+            self.comp = int(float(self.pos) / self.max * self.columns)
             sys.stdout.write(self.color + self.text + '[' + '=' * self.comp + self.busy_char + '-'*(self.columns - self.comp - 1) + '] ' + str(self.pos) + '/' + str(self.max) + '\033[0m')
             sys.stdout.write('\x1b[' + str(self.comp + 2 + 44) + 'G')
         sys.stdout.flush()
@@ -61,14 +78,13 @@ class StatusBar():
         self.spin_pos += 1
         if self.spin_pos >= len(busy_chars):
             self.spin_pos = 0
-        # display the busy spinning icon
         self.busy_char = busy_chars[self.spin_pos]
-        sys.stdout.write(self.color + busy_chars[self.spin_pos] + '\x1b[1D' + '\033[0m')
-        sys.stdout.flush()
 
     # increment number of completed items
     def increment(self):
         self.inc = 1
+        current_time = time.time()
+        
         if (self.pos + self.inc) >= self.max:
             self.pos = self.max
             self.comp = self.columns
@@ -78,14 +94,18 @@ class StatusBar():
         else:
             self.pos += self.inc
             self.inc = 0
-            self.spin()
-            self.comp = int(float(self.pos) / self.max \
-                * self.columns)
-            self.__print()
+            
+            # Only refresh if at least 0.2 seconds have passed since the last print
+            if current_time - self.last_print_time >= self.min_interval:
+                self.spin()
+                self.__print()
+                self.last_print_time = current_time
+                
         return 1
 
     def start(self):
         self.started = 1
+        self.last_print_time = time.time()
         self.__print()
 
     def stop(self):
