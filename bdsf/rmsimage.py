@@ -135,7 +135,6 @@ class Op_rmsimage(Op):
         isl_size_bright = []
         isl_area_highthresh = []
         isl_peak = []
-        max_isl_brightsize = 0.0
         threshold = start_thresh
         if do_adapt:
             mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
@@ -488,7 +487,6 @@ class Op_rmsimage(Op):
         """Calls map_2d and checks for problems"""
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Calcmaps ")
         rms_ok = False
-        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Calcmaps ")
         opts = img.opts
         kappa = map_opts[0]
         spline_rank = opts.spline_rank
