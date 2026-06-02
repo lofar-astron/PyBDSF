@@ -582,7 +582,6 @@ class Op_rmsimage(Op):
         mask_small = mask
         axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)][-1::-1]
-        pt_src_scale = box[0]
         if do_adapt:
             out_rms2 = np.zeros(rms_map1.shape, dtype=np.float32)
             out_mean2 = np.zeros(rms_map1.shape, dtype=np.float32)
