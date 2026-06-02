@@ -178,7 +178,6 @@ class Op_rmsimage(Op):
         isl_size_highthresh = []
         isl_size_lowthresh = []
         isl_snr = []
-        thratio = threshold/bright_threshold
         for idx, s in enumerate(slices):
             isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
             isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+
@@ -203,7 +202,6 @@ class Op_rmsimage(Op):
         else:
             max_isl_size_highthresh = max(isl_size_highthresh)
             max_isl_size_lowthresh = max(isl_size_lowthresh)
-            avg_max_isl_size = (max_isl_size_highthresh + max_isl_size_lowthresh) / 2.0
 
         if hasattr(img, '_adapt_rms_isl_pos'):
             isl_pos = img._adapt_rms_isl_pos # set isl_pos to existing value (for wavelet analysis)
@@ -428,10 +426,8 @@ class Op_rmsimage(Op):
         if img.masked:
             unmasked = np.where(~img.mask_arr)
             stdsub = np.std(rms[unmasked])
-            maxrms = np.max(rms[unmasked])
         else:
             stdsub = np.std(rms)
-            maxrms = np.max(rms)
 
         rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of rms image = ', stdsub*1000.0, 'mJy'))
@@ -458,10 +454,8 @@ class Op_rmsimage(Op):
         if img.masked:
             unmasked = np.where(~img.mask_arr)
             stdsub = np.std(mean[unmasked])
-            maxmean = np.max(mean[unmasked])
         else:
             stdsub = np.std(mean)
-            maxmean = np.max(mean)
         rms_expect = img.clipped_rms/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of mean image = ', stdsub*1000.0, 'mJy'))
         mylog.debug('%s %10.6f %s' % ('Expected standard deviation = ', rms_expect*1000.0, 'mJy'))
