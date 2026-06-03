@@ -162,7 +162,6 @@ class Op_rmsimage(Op):
         # the bright source is embedded inside a large island or not. If it is,
         # exclude it from the bright-island list. Also find the size of the
         # largest island at this threshold to set the large-scale rms_box
-        bright_threshold = threshold
         threshold = 10.0
         if img.masked:
             act_pixels = ~(mask.copy())
