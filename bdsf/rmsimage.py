@@ -174,7 +174,6 @@ class Op_rmsimage(Op):
         slices = ndimage.find_objects(labels)
         isl_size = []
         isl_size_highthresh = []
-        isl_snr = []
         for idx, s in enumerate(slices):
             isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
             isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+
@@ -185,7 +184,6 @@ class Op_rmsimage(Op):
                 if isl_area_lowthresh < 25.0 or isl_area_lowthresh/isl_area_highthresh[bright_indx] < 8.0:
                     isl_pos.append(isl_maxposn_lowthresh)
                     isl_size_highthresh.append(isl_size_bright[bright_indx])
-                    isl_snr.append(isl_peak[bright_indx]/crms)
 
         if len(isl_size) == 0:
             max_isl_size = 0.0
