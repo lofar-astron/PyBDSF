@@ -116,20 +116,29 @@ class Op_rmsimage(Op):
         img.use_rms_map = None
         img.mean_map_type = None
 
+        crms = crmss[0]
         # 'size' of brightest source
         kappa1 = 3.0
+        # Calculate the full diameter of the brightest source in pixels.
+        # Assume a 2D Gaussian beam profile: I_max * exp(-r^2 / (2*sigma^2))
+        # The formula finds the diameter 2r where the brightness drops to 3x the noise level
+        # (kappa1 * crms). Solving for 2r gives: 2 * sigma * sqrt(2 * ln(I_max / (3 * sigma_noise)))
         try:
             brightsize = int(round(2.*img.beam[0]/cdelt[0]/fwsig*
                                sqrt(2.*log(img.max_value/(kappa1*crms)))))
-        except:
+        # Fallback: 2-sigma beam
+        # If the image contains no sources, `img.max_value` might be 
+        # smaller than the noise threshold (kappa1 * crms). This would make the fraction < 1, 
+        # causing `log()` to return a negative number, and `sqrt()` to raise a math domain error.
+        except (ValueError, ZeroDivisionError):
             brightsize = int(round(2.*img.beam[0]/cdelt[0]/fwsig))
+
         mylog.info('Estimated size of brightest source (pixels) = '+str(brightsize))
 
         # Using clipped mean and rms and a starting threshold of 500 sigma,
         # search for bright sources. If fewer than 5 are found, reduce
         # threshold until limit set by adapt_thresh is hit.
         cmean = cmeans[0]
-        crms = crmss[0]
         image = ch0_images[0]
         shape = image.shape
         isl_size_bright = []
