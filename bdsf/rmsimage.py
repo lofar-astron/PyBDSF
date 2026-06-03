@@ -571,8 +571,7 @@ class Op_rmsimage(Op):
                 calculated map
         do_adapt: use adaptive binning
         """
-        mask_small = mask
-        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
+        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask, kappa, box, ncores)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)][-1::-1]
         if do_adapt:
             out_rms2 = np.zeros(rms_map1.shape, dtype=np.float32)
