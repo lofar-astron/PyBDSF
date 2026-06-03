@@ -8,7 +8,7 @@ where for 3D case it will calculate maps for each plane (=
 Stokes images).
 """
 import os
-from math import sqrt, log
+from math import sqrt, log, floor, ceil
 import itertools
 from concurrent.futures import ThreadPoolExecutor
 
@@ -1020,7 +1020,6 @@ class Op_rmsimage(Op):
         compressed image (e.g. it has no exact counterpart, and it's value
         should be obtained by interpolation)
         """
-        from math import floor, ceil
         res = np.zeros(size, dtype=np.float32)
 
         for i in range(len(arr) - 1):
