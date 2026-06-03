@@ -21,7 +21,6 @@ from . import mylogger
 from . import functions as func
 from .functions import read_image_from_file
 from . import multi_proc as mp
-from . import _cbdsm
 
 
 def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
@@ -198,10 +197,8 @@ class Op_rmsimage(Op):
         mylog.info('Maximum extent of largest 10-sigma island using clipped rms (pixels) = '+str(max_isl_size))
         if len(isl_size_highthresh) == 0:
             max_isl_size_highthresh = 0.0
-            max_isl_size_lowthresh = 0.0
         else:
             max_isl_size_highthresh = max(isl_size_highthresh)
-            max_isl_size_lowthresh = max(isl_size_lowthresh)
 
         if hasattr(img, '_adapt_rms_isl_pos'):
             isl_pos = img._adapt_rms_isl_pos # set isl_pos to existing value (for wavelet analysis)
