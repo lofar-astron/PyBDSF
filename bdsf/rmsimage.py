@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from scipy import interpolate, ndimage
 
-from .image import Op, Image, NArray, List
+from .image import Op
 from . import const
 from . import mylogger
 from . import functions as func
