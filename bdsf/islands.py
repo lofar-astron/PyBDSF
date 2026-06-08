@@ -202,8 +202,13 @@ class Op_islands(Op):
             idx += 1  # nd.labels indices are counted from 1
             isl_size = (labels[s] == idx).sum()  # number of pixels inside bounding box which are in island
             isl_peak = nd.maximum(image[s], labels[s], idx)
-            isl_maxposn = tuple(N.array(N.unravel_index(N.nanargmax(image[s]), image[s].shape)) +
-                                N.array((s[0].start, s[1].start)))
+            # Copy of the bounding box
+            sub_image = image[s].copy()
+            # Mask the pixels that are outisde the island
+            sub_image[labels[s] != idx] = N.nan
+            # 'nanargmax' finds the brightest pixels only in the island area
+            max_posn = N.unravel_index(N.nanargmax(sub_image), sub_image.shape)
+            isl_maxposn = tuple(N.array(max_posn) + N.array((s[0].start, s[1].start)))
             if (isl_size >= img.minpix_isl) and (isl_size <= img.maxpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
