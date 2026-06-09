@@ -142,7 +142,6 @@ class Op_rmsimage(Op):
         shape = image.shape
         isl_size_bright = []
         isl_area_highthresh = []
-        isl_peak = []
         threshold = start_thresh
         if do_adapt:
             mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
@@ -165,7 +164,6 @@ class Op_rmsimage(Op):
                     isl_area_highthresh.append(size_area)
                     isl_maxposn.append(tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+\
                           np.array((s[0].start, s[1].start))))
-                    isl_peak.append(ndimage.maximum(image[s], labels[s], idx+1))
 
         # Check islands found above at thresh_isl threshold to determine if
         # the bright source is embedded inside a large island or not. If it is,
