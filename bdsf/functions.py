@@ -1968,19 +1968,6 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     mask[tuple(submask_slice)] = submask
     return mask
 
-def getTerminalSize():
-    """Returns the terminal size as a tuple (lines, columns).
-    
-    Uses the built-in shutil module, ensuring cross-platform
-    compatibility
-    """
-    # shutil.get_terminal_size accepts a fallback in the format (columns, lines)
-    # We use (0, 0) as the fallback to match the original function's behavior
-    size = get_terminal_size(fallback=(0, 0))
-    
-    # Return the result as (lines, columns)
-    return size.lines, size.columns
-
 def eval_func_tuple(f_args):
     """Takes a tuple of a function and args, evaluates and returns result
 
