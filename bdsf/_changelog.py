@@ -11,6 +11,8 @@ def changelog():
 
     2026/06/10 - Version 1.14.0
 
+    2026/06/10 - Drop support for Python 3.9
+
     2026/06/09 - Remove dead code from `islands.py` (#293)
 
     2026/06/08 - Fix computing brightest pixel in the island (#296)
