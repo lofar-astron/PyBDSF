@@ -155,7 +155,7 @@ class Op_make_residimage(Op):
                 self.calc_resid_mean_rms(isl, resid, type='shap')
 
             # Calculate some statistics for the Shapelet residual image
-            non_masked = N.where(~N.isnan(img.ch0_arr))
+            non_masked = resid_shap[~N.isnan(resid_shap)]
             mean = N.mean(resid_shap[non_masked], axis=None)
             std_dev = N.std(resid_shap[non_masked], axis=None)
             skew = stats.skew(resid_shap[non_masked], axis=None)
