@@ -8,7 +8,67 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+
+    2026/06/10 - Version 1.14.0
+
+    2026/06/09 - Remove dead code from `islands.py` (#293)
+
+    2026/06/08 - Fix computing brightest pixel in the island (#296)
+
+    2026/06/03 - Fix brightest source estimation (#290)
+
+    2026/06/01 - Make statusbar faster (#286)
+
+    2026/06/01 - Speedup `getTerminalSize` (#287)
+
+    2026/05/29 - Remove duplicate in `opts` (#283)
+
+    2026/05/29 - Make `check_islands_for_overlap` faster (#276)
+
+    2026/05/22 - Fix renumbering of islands (#281)
+
+    2026/05/21 - Remove `ntot_wvgaus` as a dead code (#280)
+
+    2026/05/19 - Fix imports in `rmsimage.py` (#278)
+
+    2026/05/18 - Remove unused imports from wavelet_atrous.py (#277)
+
+    2026/05/01 - Make `gaus_2d` faster (#273)
+
+    2026/04/09 - SCOOP-582 Optimize gausfit scheduling and Gaussian materialization (#271)
+
+    2025/11/03 - Fix binary wheel build for Python 3.14 (#267)
+
+    2025/10/30 - Fix test warnings (#266)
+
+    2025/10/10 - Add RPATH
+
+    2025/09/15 - Add argument types to function prototypes (#264)
+
+    2025/09/02 - Merge pull request #260 from bnikolic/threadedmapcoordinates
+
+    2025/09/01 - Merge pull request #262 from bnikolic/fastormasking
+
+    2025/08/21 - Factor out selection of unmasked elements to improve perfomance
+
+    2025/08/05 - Merge pull request #261 from bnikolic/stdevimprove
+
+    2025/07/30 - Adapt also the last sigma calculation
+
+    2025/07/30 - Save on standard deviation calculation
+
+    2025/07/30 - pass the cores parameter
+
+    2025/07/30 - Parallelise map_coordinates by multi-threaded map
+
+    2025/07/23 - Improve performance of iterative sigma clipped rms (#259)
+
+    2025/05/08 - Bump cibuildwheel version in GitHub workflow
+
+    2025/05/06 - Check exit code of each joined process (#255)
+
     2025/04/10 - Fix failing publish to PyPI step in CI pipeline (#254)
+
 
     2025/04/08 - Version 1.13.0
 
