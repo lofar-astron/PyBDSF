@@ -86,7 +86,7 @@ class Op_make_residimage(Op):
             self.calc_resid_mean_rms(isl, resid, type='gaus')
 
         # Calculate some statistics for the Gaussian residual image
-        resid_gaus_non_masked = resid_gaus[N.where(~N.isnan(img.ch0_arr))]
+        resid_gaus_non_masked = resid_gaus[~N.isnan(resid_gaus)]
         mean = N.mean(resid_gaus_non_masked, axis=None)
         std_dev = N.std(resid_gaus_non_masked, axis=None)
         skew = stats.skew(resid_gaus_non_masked, axis=None)
