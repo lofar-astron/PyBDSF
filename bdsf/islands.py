@@ -197,7 +197,6 @@ class Op_islands(Op):
         img.island_labels = labels
 
         # Apply cuts on island size and peak value
-        pyrank = N.zeros(image.shape, dtype=N.int32)
         res = []
         for idx, s in enumerate(slices):
             idx += 1  # nd.labels indices are counted from 1
@@ -213,8 +212,6 @@ class Op_islands(Op):
             if (isl_size >= img.minpix_isl) and (isl_size <= img.maxpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
-                pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active)*idx // idx
-
         return res
 
     def coords_to_isl(self, img, opts):
