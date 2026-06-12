@@ -211,7 +211,7 @@ def _run_op_list(img, chain):
 
     return True
 
-def process_image(input, **kwargs):
+def process_image(finput, **kwargs):
     """Run a standard analysis and returns the associated Image object.
 
     The input can be a FITS or CASA image, a PyBDSF parameter save
@@ -231,18 +231,18 @@ def process_image(input, **kwargs):
     from .image import Image
     import os
 
-    # Try to load input assuming it's a parameter save file or a dictionary.
+    # Try to load finput assuming it's a parameter save file or a dictionary.
     # load_pars returns None if this doesn't work.
-    img, err = load_pars(input)
+    img, err = load_pars(finput)
 
     # If load_pars fails (returns None), assume that input is an image file. If it's not a
     # valid image file (but is an existing file), an error will be raised
     # by img.process() during reading of the file.
     if img is None:
-        if os.path.exists(input):
-            img = Image({'filename': input})
+        if os.path.exists(finput):
+            img = Image({'filename': finput})
         else:
-            raise RuntimeError("File '" + input + "' not found.")
+            raise RuntimeError("File '" + finput + "' not found.")
 
     # Set logging and outdir options (must be done explicitly, as they are used before the
     # kwargs are parsed in img.process())
