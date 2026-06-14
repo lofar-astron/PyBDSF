@@ -2,11 +2,11 @@
 #
 # This script should be called by `cibuildwheel` in the `before-build` stage.
 #
-# This script will first install the latest `numpy` 1.x version (2.x is not
-# supported yet). Next the Boost Python libraries will be built from source,
-# including the bindings to NumPy. The Boost sources must be in the directory
-# `${BOOST_BUILD_DIR}/boost`. The libraries will be installed in the directory
-# `${BOOST_INSTALL_DIR}`. Both environment variables must have been set.
+# This script will first install `numpy`. Next the Boost Python libraries will
+# be built from source, including the bindings to NumPy. The Boost sources must
+# be in the directory `${BOOST_BUILD_DIR}/boost`. The libraries will be
+# installed in the directory `${BOOST_INSTALL_DIR}`. Both environment variables
+# must have been set.
 
 # Ensure we start with a clean slate
 function cleanup
@@ -15,7 +15,7 @@ function cleanup
   rm -rf "${BOOST_INSTALL_DIR}"
 }
 
-# Install latest numpy 1.x; we do not yet support numpy 2.x
+# Install numpy
 function install_numpy
 {
   pip install 'numpy'

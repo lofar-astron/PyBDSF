@@ -216,35 +216,35 @@ def getzeroes_matrix(mask, cf, cen, cenx):
         npts = len(l)-sum(l)
 
         #print 'npts = ',npts
-    if npts > 3 and not N.isnan(cf[i,cen]):
-        mrow=mask[i,:]
-        if sum(l) == 0:
-            low=0
-            up=cf.shape[1]-1
-        else:
-            low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
-            #print 'mrow = ',i, mrow, low,
-            try:
-                up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
-                #print 'up1= ', up
-            except IndexError:
-                if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
-                    up = len(mrow)
-                    #print 'up2= ', up,
-                else:
-                    raise
-                #print
-        low += 1; up -= 1
-        npoint = up-low+1
-        xfn = N.arange(npoint)+low
-        yfn = cf[i,xfn]
-        root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
-        if error != 1:
-            y[i] = root
+        if npts > 3 and not N.isnan(cf[i,cen]):
+            mrow=mask[i,:]
+            if sum(l) == 0:
+                low=0
+                up=cf.shape[1]-1
+            else:
+                low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
+                #print 'mrow = ',i, mrow, low,
+                try:
+                    up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
+                    #print 'up1= ', up
+                except IndexError:
+                    if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
+                        up = len(mrow)
+                        #print 'up2= ', up,
+                    else:
+                        raise
+                    #print
+            low += 1; up -= 1
+            npoint = up-low+1
+            xfn = N.arange(npoint)+low
+            yfn = cf[i,xfn]
+            root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
+            if error != 1:
+                y[i] = root
+            else:
+                y[i] = 0.0
         else:
             y[i] = 0.0
-    else:
-        y[i] = 0.0
 
     return x,y
 
