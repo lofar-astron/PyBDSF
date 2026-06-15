@@ -305,7 +305,7 @@ def shapelet_check_centre(image, mask, cen, beam_pix):
     x, y = round(cen[0]), round(cen[1])
     if x <= 0 or x >= n or y <= 0 or y >= m: error = 1
     if error == 0:
-        if not mask[int(round(x)),int(round(y))]: error == 2
+        if not mask[int(round(x)),int(round(y))]: error = 2
 
     if error > 0:
         if (N.prod(mask.shape)-sum(sum(mask)))/(pi*0.25*beam_pix[0]*beam_pix[1]) < 2.5:
