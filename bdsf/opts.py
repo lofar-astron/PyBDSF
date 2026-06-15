@@ -710,11 +710,6 @@ class Opts(object):
                                  "faster but also uses much more memory.",
                              group = "atrous_do")
 
-    residual_stats_do = Bool(False,
-                             doc = "Calculate and print to log statistics of residual "\
-                             "images (there is a computational cost)",
-                             group = "atrous_do")
-
     #--------------------------------FLAGGING OPTIONS--------------------------------
     flag_smallsrc = Bool(False,
                              doc = "Flag sources smaller than "\
@@ -968,6 +963,11 @@ class Opts(object):
     quiet = Bool(False,
                              doc = "Suppress text output to screen. Output is "\
                                  "still sent to the log file as usual",
+                             group = "output_opts")
+
+    residual_stats_do = Bool(False,
+                             doc = "Calculate and print to log statistics of residual "\
+                             "images (there is a computational cost)",
                              group = "output_opts")
 
 
