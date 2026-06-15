@@ -155,17 +155,18 @@ class Op_make_residimage(Op):
                 resid = resid_shap[tuple(isl.bbox)]
                 self.calc_resid_mean_rms(isl, resid, type='shap')
 
-            # Calculate some statistics for the Shapelet residual image
-            non_masked = N.where(~N.isnan(img.ch0_arr))
-            mean = N.mean(resid_shap[non_masked], axis=None)
-            std_dev = N.std(resid_shap[non_masked], axis=None)
-            skew = stats.skew(resid_shap[non_masked], axis=None)
-            kurt = stats.kurtosis(resid_shap[non_masked], axis=None)
-            mylog.info("Statistics of the Shapelet residual image:")
-            mylog.info("        mean: %.3e (Jy/beam)" % mean)
-            mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
-            mylog.info("        skew: %.3f" % skew)
-            mylog.info("    kurtosis: %.3f" % kurt)
+            if img.opts.residual_stats_do:
+                # Calculate some statistics for the Shapelet residual image
+                non_masked = N.where(~N.isnan(img.ch0_arr))
+                mean = N.mean(resid_shap[non_masked], axis=None)
+                std_dev = N.std(resid_shap[non_masked], axis=None)
+                skew = stats.skew(resid_shap[non_masked], axis=None)
+                kurt = stats.kurtosis(resid_shap[non_masked], axis=None)
+                mylog.info("Statistics of the Shapelet residual image:")
+                mylog.info("        mean: %.3e (Jy/beam)" % mean)
+                mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
+                mylog.info("        skew: %.3f" % skew)
+                mylog.info("    kurtosis: %.3f" % kurt)
 
         img.completed_Ops.append('make_residimage')
         return img
