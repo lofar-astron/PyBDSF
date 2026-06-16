@@ -17,8 +17,8 @@ function download_and_untar_boost
 
   name="boost"
   long_name="${name}_${major}_${minor}_${patch}"
-  site="https://sourceforge.net"
-  directory="projects/${name}/files/${name}/${major}.${minor}.${patch}"
+  site="https://archives.boost.io"
+  directory="release/${major}.${minor}.${patch}/source"
   file="${long_name}.tar.bz2"
 
   url="${site}/${directory}/${file}"

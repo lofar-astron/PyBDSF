@@ -965,6 +965,11 @@ class Opts(object):
                                  "still sent to the log file as usual",
                              group = "output_opts")
 
+    residual_stats_do = Bool(False,
+                             doc = "Calculate and print to log statistics of residual "\
+                             "images (there is a computational cost)",
+                             group = "output_opts")
+
 
     #------------------------POLARISATION OPTIONS------------------------------
     pi_fit = Bool(True,
