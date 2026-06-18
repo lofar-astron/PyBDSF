@@ -958,16 +958,19 @@ class Op_rmsimage(Op):
             if cnt > 198: cm = m; cr = r
             mean_map[i, j], rms_map[i, j] = cm, cr
         else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
+            arr_slice = arr[a:b, c:d]
+            mask_slice = mask[a:b, c:d]
+            unmasked_mask = ~mask_slice
+            npix_unmasked = np.count_nonzero(unmasked_mask)
+            
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                m, r, cm, cr, cnt = bstat(arr_slice, mask_slice, kappa)
                 if cnt > 198: cm = m; cr = r
                 mean_map[i, j], rms_map[i, j] = cm, cr
             else:
                 if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                    cm = np.mean(arr_slice[unmasked_mask])
+                    cr = np.std(arr_slice[unmasked_mask])
                     mean_map[i, j], rms_map[i, j] = cm, cr
                 else: # too few unmasked pixels --> set mean/rms to inf
                     mean_map[i, j], rms_map[i, j] = np.inf, np.inf
@@ -981,15 +984,18 @@ class Op_rmsimage(Op):
             m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
         else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
+            arr_slice = arr[a:b, c:d]
+            mask_slice = mask[a:b, c:d]
+            unmasked_mask = ~mask_slice
+            npix_unmasked = np.count_nonzero(unmasked_mask)
+            
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                m, r, cm, cr, cnt = bstat(arr_slice, mask_slice, kappa)
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                    cm = np.mean(arr_slice[unmasked_mask])
+                    cr = np.std(arr_slice[unmasked_mask])
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
