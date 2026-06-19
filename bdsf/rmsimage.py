@@ -899,7 +899,7 @@ class Op_rmsimage(Op):
                 goodcutout = cutout[cutout != magic]
                 num_unmasked = len(goodcutout)
                 if num_unmasked > 0:
-                    themap[x, y] = np.nansum(goodcutout)/float(len(goodcutout))
+                    themap[x, y] = np.nanmean(goodcutout)
                 delx += 1
                 dely += 1
         themap[np.where(np.isnan(themap))] = 0.0
