@@ -518,8 +518,10 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
     """
     s1 = N.array(in1.shape)
     s2 = N.array(in2.shape)
-    complex_result = (N.issubdtype(in1.dtype, N.complex) or
-                      N.issubdtype(in2.dtype, N.complex))
+    complex_result = (
+        N.issubdtype(in1.dtype, N.complexfloating) or
+        N.issubdtype(in2.dtype, N.complexfloating)
+    )
     size = s1 + s2 - 1
 
     if pad_to_power_of_two:
