@@ -1577,7 +1577,9 @@ def area_polygon(points):
     area = 0.0
     for i in range(n_tri):
         p1, p2, p3 = N.array([cenx, ceny]), N.array([x[i], y[i]]), N.array([x[i+1], y[i+1]])
-        t_area= N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
+        v1 = p2 - p1
+        v2 = p3 - p1
+        t_area = abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.0
         area += t_area
 
     return area
@@ -1605,7 +1607,9 @@ def convexhull_deficiency(isl):
 
     def area_of_triangle(p1, p2, p3):
         """calculate area of any triangle given co-ordinates of the corners"""
-        return N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
+        v1 = p2 - p1
+        v2 = p3 - p1
+        return abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.
 
     def convex_hull(points):
         """Calculate subset of points that make a convex hull around points
