@@ -38,20 +38,6 @@ def wenss_fit(c,x):
     y = N.sqrt(c[0]*c[0]+c[1]*c[1]/(x*x))
     return y
 
-def nanmean(x):
-    """ Mean of array with NaN """
-    import numpy as N
-
-    sum = N.nansum(x)
-    n = N.sum(~N.isnan(x))
-
-    if n > 0:
-        mean = sum/n
-    else:
-        mean = float("NaN")
-
-    return mean
-
 def shapeletfit(cf, Bset, cfshape):
     """ The function """
     import numpy as N
@@ -1886,7 +1872,7 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
         return [0.0, 0.0]
     aper_flux = N.nansum(aper_im[aper_mask])/beamarea # Jy
     pixels_in_source = N.sum(~N.isnan(aper_im[aper_mask])) # number of unmasked pixels assigned to current source
-    aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
+    aper_fluxE = N.nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
     return [aper_flux, aper_fluxE]
 
 def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
