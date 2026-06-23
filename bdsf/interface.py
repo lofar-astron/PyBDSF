@@ -535,9 +535,10 @@ def print_opts(grouped_opts_list, img, banner=None):
     """
     from .image import Image
     import os
-    from . import functions as func
+    import shutil
 
-    termy, termx = func.getTerminalSize() # note: returns row, col -> y, x
+    tsize = shutil.get_terminal_size(fallback=(0, 0))
+    termx = tsize.columns
     minwidth = 28 # minimum width for parameter names and values
 
     # Define colors for output
