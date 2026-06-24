@@ -112,7 +112,7 @@ class Op_wavelet_atrous(Op):
                 numcores = img.opts.ncores
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
-                im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores, use_scipy_fft=img.opts.use_scipy_fft)
+                im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores)
                 im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
                 if img.opts.atrous_sum:
                     w = im_new
@@ -314,7 +314,7 @@ class Op_wavelet_atrous(Op):
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
             img.completed_Ops.append('wavelet_atrous')
 
-    def atrous(self, image, filtvec, lpf, j, numcores=1, use_scipy_fft=True):
+    def atrous(self, image, filtvec, lpf, j, numcores=1):
 
         ff = filtvec[:]
         for i in range(1, len(filtvec)):
@@ -322,10 +322,7 @@ class Op_wavelet_atrous(Op):
             ff[ii:ii] = [0] * (2 ** (j - 1) - 1)
         kern = N.outer(ff, ff)
         unmasked = N.nan_to_num(image)
-        if use_scipy_fft:
-            im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
-        else:
-            im_new = fftconvolve(unmasked, kern, mode='same', pad_to_power_of_two=False, numcores=numcores)
+        im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
         if im_new.shape != image.shape:
             im_new = im_new[0:image.shape[0], 0:image.shape[1]]
 
@@ -510,49 +507,6 @@ class Pyramid_source(object):
 
 
 Image.pyrsrcs = List(tInstance(Pyramid_source), doc="List of Pyramidal sources")
-
-
-def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
-    """Convolve two N-dimensional arrays using FFT. See convolve.
-
-    """
-    s1 = N.array(in1.shape)
-    s2 = N.array(in2.shape)
-    complex_result = (
-        N.issubdtype(in1.dtype, N.complexfloating) or
-        N.issubdtype(in2.dtype, N.complexfloating)
-    )
-    size = s1 + s2 - 1
-
-    if pad_to_power_of_two:
-        # Use 2**n-sized FFT; it might improve performance
-        fsize = 2 ** N.ceil(N.log2(size))
-    else:
-        # Padding to a power of two might degrade performance, too
-        fsize = size
-    if has_pyfftw:
-        IN1 = N.fft.fftn(in1, fsize, threads=numcores)
-        IN1 *= N.fft.fftn(in2, fsize, threads=numcores)
-        fslice = tuple([slice(0, int(sz)) for sz in size])
-        ret = N.fft.ifftn(IN1, threads=numcores)[fslice].copy()
-    else:
-        IN1 = N.fft.fftn(in1, fsize)
-        IN1 *= N.fft.fftn(in2, fsize)
-        fslice = tuple([slice(0, int(sz)) for sz in size])
-        ret = N.fft.ifftn(IN1)[fslice].copy()
-    del IN1
-    if not complex_result:
-        ret = ret.real
-    if mode == "full":
-        return ret
-    elif mode == "same":
-        if N.prod(s1, axis=0) > N.prod(s2, axis=0):
-            osize = s1
-        else:
-            osize = s2
-        return func.centered(ret, osize)
-    elif mode == "valid":
-        return func.centered(ret, abs(s2 - s1) + 1)
 
 
 def rebase_bbox(box, minv):
