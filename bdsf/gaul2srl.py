@@ -714,6 +714,5 @@ class Source(object):
         self.mean_isl = img.islands[island_id].mean
         self.total_flux_isl = img.islands[island_id].total_flux
         self.total_flux_islE = img.islands[island_id].total_fluxE
-        self.mean_isl = img.islands[island_id].mean
         self.jlevel = img.j
         self.aperture_flux, self.aperture_fluxE =  aper_flux
