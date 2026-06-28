@@ -977,7 +977,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
                           'included in the output sky model.')
         for p in unique_patch_ids:
             if p != 0:
-                in_patch = N.where(patchnums == p)
+                in_patch = N.where(N.array(patchnums) == p)
                 outlist.append(N.array(gauslist)[in_patch].tolist())
                 outnames.append(N.array(gausname)[in_patch].tolist())
                 patchnames.append('patch_'+str(p))
