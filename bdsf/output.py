@@ -4,10 +4,10 @@ Defines functions that write the results of source detection in a
 variety of formats. These are then used as methods of Image objects
 and/or are called by the outlist operation if output_all is True.
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
 from .image import Op
+
+from astropy.coordinates import SkyCoord
+import astropy.units as u
 
 
 class Op_outlist(Op):
@@ -175,36 +175,17 @@ def dec2ddmmss(deg):
 
 
 def B1950toJ2000(Bcoord):
-    """ Precess using Aoki et al. 1983. Same results as NED to ~0.2asec """
-    from math import sin, cos, pi, sqrt, asin, acos
-    import numpy as N
+    """
+    Uses the modern IAU 2006/2010 standards, which are significantly
+    more accurate than the previous Aoki et al. 1983 implementation
+    (~0.2 arcsec vs << 1 mas)
+    """
 
-    rad = 180.0/pi
-    ra, dec = Bcoord
-
-    A = N.array([-1.62557e-6, -0.31919e-6, -0.13843e-6])
-    M = N.array([[0.9999256782, 0.0111820609, 0.00485794], [-0.0111820610, 0.9999374784, -0.0000271474],
-                 [-0.0048579477, -0.0000271765, 0.9999881997]])
-
-    r0 = N.zeros(3)
-    r0[0] = cos(dec/rad) * cos(ra/rad)
-    r0[1] = cos(dec/rad) * sin(ra/rad)
-    r0[2] = sin(dec/rad)
-
-    r0A = N.sum(r0*A)
-    r1 = r0 - A + r0A*r0
-    r = N.sum(M.transpose()*r1, axis=1)
-
-    rscal = sqrt(N.sum(r*r))
-    decj = asin(r[2]/rscal)*rad
-
-    d1 = r[0] / rscal / cos(decj/rad)
-    d2 = r[1] / rscal / cos(decj/rad)
-    raj = acos(d1)*rad
-    if d2 < 0.0:
-        raj = 360.0 - raj
-
-    Jcoord = [raj, decj]
+    ra_deg, dec_deg = Bcoord
+    c_b1950 = SkyCoord(ra=ra_deg*u.deg, dec=dec_deg*u.deg, frame='fk4', equinox='B1950')
+    c_j2000 = c_b1950.transform_to('fk5')
+    Jcoord = [c_j2000.ra.degree, c_j2000.dec.degree]
+    
     return Jcoord
 
 
