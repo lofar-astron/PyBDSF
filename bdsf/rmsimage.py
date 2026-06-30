@@ -32,6 +32,9 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     to equivalent of meshgrid(*axs)
 
     """
+    if ncores is None:
+        ncores = min(32, (os.cpu_count() or 1) + 4)
+
     output = kwargs.get("output", None)
     kwargs["output"] = None
     # Prefilter only once to awoid repeated work in the workers. See
@@ -42,25 +45,36 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
                                   output=np.float64,
                                   mode=kwargs.get("mode", "constant"))
 
-    def tworker(cl1):
-        # Construct the subset of meshgrid to which worker has been
-        # applied.
-        # NB: The axis reversal is specific to this program. The indexing parameter
-        # does not do exactly the same thing
-        cl = np.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
-        return ndimage.map_coordinates(a,
+    if ncores <= 1:
+        cl = np.meshgrid( * ([axs[0]]+axs[1:]))[-1::-1]
+        res = ndimage.map_coordinates(a,
                                        cl,
-                                       # NB we pulled the pre-filter out
                                        prefilter=False,
                                        *args, **kwargs)
+    else:
+        # Split axs[0] into chunks, one for each worker.
+        # This reduces thread overhead and maximizes parallel execution in C.
+        chunks = np.array_split(axs[0], ncores)
 
-    with ThreadPoolExecutor(max_workers=ncores) as te:
-        res=te.map(tworker,
-                   axs[0])
-        res=np.hstack(list(res))
-        if output is not None:
-            np.copyto(output, res)
-        return res
+        def tworker(cl1):
+            # Construct the subset of meshgrid to which worker has been
+            # applied.
+            # NB: The axis reversal is specific to this program. The indexing parameter
+            # does not do exactly the same thing
+            cl = np.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
+            return ndimage.map_coordinates(a,
+                                           cl,
+                                           # NB we pulled the pre-filter out
+                                           prefilter=False,
+                                           *args, **kwargs)
+
+        with ThreadPoolExecutor(max_workers=ncores) as te:
+            res = te.map(tworker, chunks)
+            res = np.hstack(list(res))
+
+    if output is not None:
+        np.copyto(output, res)
+    return res
 
 
 class Op_rmsimage(Op):
