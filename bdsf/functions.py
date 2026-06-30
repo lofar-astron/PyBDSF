@@ -66,23 +66,6 @@ def shapeletfit(cf, Bset, cfshape):
     return y
 
 
-def polar2cart(polar, cen):
-    """ convert polar coordinates around cen to cartesian coordinates. theta is
-    zero for +ve xaxis and goes counter clockwise. polar is a numpy array of [r], [heta]
-    and cart is a numpy array [x,y] where x and y are numpy arrays of all the (>0)
-    values of coordinates."""
-    import math
-
-    cart = N.zeros(polar.shape)
-    pi = math.pi
-    rad = 180.0/pi
-
-    cart[0]=polar[0]*N.cos(polar[1]/rad)+cen[0]
-    cart[1]=polar[0]*N.sin(polar[1]/rad)+cen[1]
-
-    return cart
-
-
 def atanproper(dumr, dx, dy):
     from math import pi
 
