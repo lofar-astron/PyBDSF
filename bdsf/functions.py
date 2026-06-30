@@ -615,33 +615,6 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
     return errors
 
 
-def variance_of_wted_windowedmean(S_i, rms_i, chanmask, window_size):
-    from math import sqrt
-    import numpy as N
-
-    nchan = len(S_i)
-    nwin = nchan/window_size
-    wt = 1/rms_i/rms_i
-    wt = wt/N.median(wt)
-    fluxes = N.zeros(nwin); vars = N.zeros(nwin); mask = N.zeros(nwin, bool)
-    for i in range(nwin):
-        strt = i*window_size; stp = (i+1)*window_size
-        if i == nwin-1: stp = nchan
-        ind = N.arange(strt,stp)
-        m = chanmask[ind]
-        index = [arg for ii,arg in enumerate(ind) if not m[ii]]
-        if len(index) > 0:
-            s = S_i[index]; r = rms_i[index]; w = wt[index]
-            fluxes[i] = N.sum(s*w)/N.sum(w)
-            vars[i] = 1.0/sqrt(N.sum(1.0/r/r))
-            mask[i] = N.prod(m)
-        else:
-            fluxes[i] = 0
-            vars[i] = 0
-            mask[i] = True
-
-    return fluxes, vars, mask
-
 def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj=False):
     """ fitcode : 0=fit all; 1=fit amp; 2=fit amp, posn; 3=fit amp, size """
     from scipy.optimize import leastsq
@@ -807,14 +780,6 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
 
     return opw, markers
 
-def get_kwargs(kwargs, key, typ, default):
-    obj = True
-    if key in kwargs:
-        obj = kwargs[key]
-    if not isinstance(obj, typ):
-        obj = default
-
-    return obj
 
 def read_image_from_file(filename, img, indir, quiet=False):
     """ Reads data and header from indir/filename.
