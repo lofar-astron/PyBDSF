@@ -631,50 +631,6 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
 
     return errors
 
-def fit_chisq(x, p, ep, mask, funct, order):
-    import numpy as N
-
-    ind = N.where(N.array(mask)==False)[0]
-    if order == 0:
-        fit = [funct(p)]*len(p)
-    else:
-        fitpara, efit = fit_mask_1d(x, p, ep, mask, funct, True, order)
-        fit = funct(fitpara, x)
-
-    dev = (p-fit)*(p-fit)/(ep*ep)
-    num = order+1
-    csq = N.sum(dev[ind])/(len(fit)-num-1)
-
-    return csq
-
-def calc_chisq(x, y, ey, p, mask, funct, order):
-    import numpy as N
-
-    if order == 0:
-        fit = [funct(y)]*len(y)
-    else:
-        fit = funct(p, x)
-
-    dev = (y-fit)*(y-fit)/(ey*ey)
-    ind = N.where(~N.array(mask))
-    num = order+1
-    csq = N.sum(dev[ind])/(len(mask)-num-1)
-
-    return csq
-
-def get_windowsize_av(S_i, rms_i, chanmask, K, minchan):
-    import numpy as N
-
-    av_window = N.arange(2, int(len(S_i)/minchan)+1)
-    win_size = 0
-    for window in av_window:
-        fluxes, vars, mask = variance_of_wted_windowedmean(S_i, rms_i, chanmask, window)
-        minsnr = N.min(fluxes[~mask]/vars[~mask])
-        if minsnr > K*1.1:                ### K*1.1 since fitted peak can be less than wted peak
-            win_size = window  # is the size of averaging window
-            break
-
-    return win_size
 
 def variance_of_wted_windowedmean(S_i, rms_i, chanmask, window_size):
     from math import sqrt
