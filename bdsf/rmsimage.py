@@ -35,10 +35,10 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     if ncores is None:
         ncores = min(32, (os.cpu_count() or 1) + 4)
 
-    output = kwargs.get("output", None)
-    kwargs["output"] = None
-    # Prefilter only once to awoid repeated work in the workers. See
-    # _interpolation.py in scipy
+    # Retrieve output and remove it from kwargs to manage it manually
+    output = kwargs.pop("output", None)
+    
+    # Pre-filtering performed once
     order = kwargs.get("order", 3)
     if order > 1:
         a = ndimage.spline_filter(a, order,
@@ -47,34 +47,42 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
 
     if ncores <= 1:
         cl = np.meshgrid( * ([axs[0]]+axs[1:]))[-1::-1]
-        res = ndimage.map_coordinates(a,
-                                       cl,
-                                       prefilter=False,
-                                       *args, **kwargs)
-    else:
-        # Split axs[0] into chunks, one for each worker.
-        # This reduces thread overhead and maximizes parallel execution in C.
-        chunks = np.array_split(axs[0], ncores)
+        res = ndimage.map_coordinates(a, cl, prefilter=False, output=output, *args, **kwargs)
+        return res
 
-        def tworker(cl1):
-            # Construct the subset of meshgrid to which worker has been
-            # applied.
-            # NB: The axis reversal is specific to this program. The indexing parameter
-            # does not do exactly the same thing
-            cl = np.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
-            return ndimage.map_coordinates(a,
-                                           cl,
-                                           # NB we pulled the pre-filter out
-                                           prefilter=False,
-                                           *args, **kwargs)
+    # Calculate chunk sizes
+    chunks = np.array_split(axs[0], ncores)
+    
+    # Pre-allocation - avoids np.hstack and np.copyto overhead
+    if output is None:
+        # Meshgrid with default indexing 'xy' returns a grid with shape (len(y), len(x))
+        shape = [len(axs[1]), len(axs[0])] + [len(ax) for ax in axs[2:]]
+        out_dtype = np.float64 if order > 1 else a.dtype
+        output = np.empty(shape, dtype=out_dtype)
 
-        with ThreadPoolExecutor(max_workers=ncores) as te:
-            res = te.map(tworker, chunks)
-            res = np.hstack(list(res))
+    # Calculate starting and ending indices for each column chunk
+    chunk_sizes = [len(c) for c in chunks]
+    indices = [0] + np.cumsum(chunk_sizes).tolist()
 
-    if output is not None:
-        np.copyto(output, res)
-    return res
+    def tworker(i, cl1):
+        # Generate a subset of the meshgrid for the worker
+        cl = np.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
+        start, end = indices[i], indices[i+1]
+        
+        # Create a slice view for the corresponding columns (axis=1)
+        out_slice = [slice(None)] * output.ndim
+        out_slice[1] = slice(start, end)
+        
+        # Write the result directly into target array (no need to return/concatenate results)
+        ndimage.map_coordinates(a, cl, prefilter=False, output=output[tuple(out_slice)], *args, **kwargs)
+
+    with ThreadPoolExecutor(max_workers=ncores) as te:
+        futures = [te.submit(tworker, i, chunk) for i, chunk in enumerate(chunks)]
+        for f in futures:
+            # Re-raise exceptions if any occurred in the threads
+            f.result()
+
+    return output
 
 
 class Op_rmsimage(Op):
