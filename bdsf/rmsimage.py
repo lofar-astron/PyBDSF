@@ -35,55 +35,96 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     if ncores is None:
         ncores = min(32, (os.cpu_count() or 1) + 4)
 
-    # Retrieve output and remove it from kwargs to manage it manually
     output = kwargs.pop("output", None)
-    
-    # Pre-filtering performed once
     order = kwargs.get("order", 3)
-    if order > 1:
-        a = ndimage.spline_filter(a, order,
-                                  output=np.float64,
-                                  mode=kwargs.get("mode", "constant"))
-
-    if ncores <= 1:
-        cl = np.meshgrid( * ([axs[0]]+axs[1:]))[-1::-1]
-        res = ndimage.map_coordinates(a, cl, prefilter=False, output=output, *args, **kwargs)
-        return res
-
-    # Calculate chunk sizes
-    chunks = np.array_split(axs[0], ncores)
+    mode = kwargs.get("mode", "constant")
     
-    # Pre-allocation - avoids np.hstack and np.copyto overhead
+    # Filter the original image only once in the main thread
+    if order > 1:
+        a = ndimage.spline_filter(a, order, output=np.float64, mode=mode)
+
+    # Fallback for non-2D cases
+    if len(axs) != 2:
+        if output is None:
+            shape = [len(axs[1]), len(axs[0])] + [len(ax) for ax in axs[2:]]
+            out_dtype = np.float64 if order > 1 else a.dtype
+            output = np.empty(shape, dtype=out_dtype)
+        
+        chunks = np.array_split(axs[0], ncores)
+        chunk_sizes = [len(c) for c in chunks]
+        indices = [0] + np.cumsum(chunk_sizes).tolist()
+
+        def tworker_fallback(i, cl1):
+            cl = np.meshgrid(*([cl1]+axs[1:]))[-1::-1]
+            start, end = indices[i], indices[i+1]
+            out_slice = [slice(None)] * output.ndim
+            out_slice[1] = slice(start, end)
+            ndimage.map_coordinates(a, cl, prefilter=False, output=output[tuple(out_slice)], *args, **kwargs)
+
+        with ThreadPoolExecutor(max_workers=ncores) as te:
+            futures = [te.submit(tworker_fallback, i, chunk) for i, chunk in enumerate(chunks)]
+            for f in futures:
+                f.result() # Re-raise exceptions if any occurred in the threads
+        return output
+
+    # Cache blocking (tiling)
+    ax0, ax1 = axs[0], axs[1]
+    len0, len1 = len(ax0), len(ax1)
+    
     if output is None:
-        # Meshgrid with default indexing 'xy' returns a grid with shape (len(y), len(x))
-        shape = [len(axs[1]), len(axs[0])] + [len(ax) for ax in axs[2:]]
-        out_dtype = np.float64 if order > 1 else a.dtype
-        output = np.empty(shape, dtype=out_dtype)
+        output = np.empty((len1, len0), dtype=np.float32)
 
-    # Calculate starting and ending indices for each column chunk
-    chunk_sizes = [len(c) for c in chunks]
-    indices = [0] + np.cumsum(chunk_sizes).tolist()
+    # Aim to split the image to generate enough tasks for all cores
+    ideal_tile_size = int(max(len0, len1) / (np.sqrt(ncores) or 1))
+    
+    # Limit the tile size: 
+    # max 1000: to avoid evicting data from the CPU L3 cache (~16 MB)
+    # min 100:  so the Python array creation overhead doesn't exceed computation time
+    TILE_SIZE = max(100, min(1000, ideal_tile_size))
+    
+    # Generate coordinate ranges for individual tiles
+    ranges_0 = [(i, min(i + TILE_SIZE, len0)) for i in range(0, len0, TILE_SIZE)]
+    ranges_1 = [(i, min(i + TILE_SIZE, len1)) for i in range(0, len1, TILE_SIZE)]
+    
+    # Prepare coordinate pairs to eliminate task assignment delays
+    tasks = [(r0, r1) for r1 in ranges_1 for r0 in ranges_0]
 
-    def tworker(i, cl1):
-        # Generate a subset of the meshgrid for the worker
-        cl = np.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
-        start, end = indices[i], indices[i+1]
+    def tworker_tiled(r0, r1):
+        start0, end0 = r0
+        start1, end1 = r1
         
-        # Create a slice view for the corresponding columns (axis=1)
-        out_slice = [slice(None)] * output.ndim
-        out_slice[1] = slice(start, end)
+        sub_ax0 = ax0[start0:end0]
+        sub_ax1 = ax1[start1:end1]
         
-        # Write the result directly into target array (no need to return/concatenate results)
-        ndimage.map_coordinates(a, cl, prefilter=False, output=output[tuple(out_slice)], *args, **kwargs)
+        h = end1 - start1
+        w = end0 - start0
+        
+        # Allocate a contiguous float64 array and use 
+        # lossless numpy broadcasting
+        coords = np.empty((2, h, w), dtype=np.float64)
+        coords[0, :, :] = sub_ax1[:, None]  # Y-axis
+        coords[1, :, :] = sub_ax0[None, :]  # X-axis
+        
+        out_slice = (slice(start1, end1), slice(start0, end0))
+        
+        ndimage.map_coordinates(
+            a, coords, 
+            prefilter=False, 
+            output=output[out_slice], 
+            *args, **kwargs
+        )
 
-    with ThreadPoolExecutor(max_workers=ncores) as te:
-        futures = [te.submit(tworker, i, chunk) for i, chunk in enumerate(chunks)]
-        for f in futures:
-            # Re-raise exceptions if any occurred in the threads
-            f.result()
+    # If the image is very small, run it in the main thread, 
+    # bypassing ThreadPoolExecutor
+    if len(tasks) == 1:
+        tworker_tiled(tasks[0][0], tasks[0][1])
+    else:
+        with ThreadPoolExecutor(max_workers=ncores) as te:
+            futures = [te.submit(tworker_tiled, r0, r1) for r0, r1 in tasks]
+            for f in futures:
+                f.result() # Catches any potential exceptions raised in threads
 
     return output
-
 
 class Op_rmsimage(Op):
     """Calculate rms & noise maps
