@@ -456,13 +456,13 @@ class Op_gausfit(Op):
                     s_peak = ((1.0-t) * (1.0-u) * fit_image[x1, y1] + t * (1.0-u) * fit_image[x1+1, y1] +
                               t * u * fit_image[x1+1, y1+1] + (1.0-t) * u * fit_image[x1, y1+1])
                     mompara[0] = s_peak
-                    par = [mompara.tolist()]
+                    par = mompara.tolist()
                     par[3] /= fwsig
                     par[4] /= fwsig
-                    gaul, fgaul = self.flag_gaussians(par, opts,
+                    gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
                                                       isl.image, size)
-            except:
+            except ValueError:
                 pass
 
         # Return whatever we got
