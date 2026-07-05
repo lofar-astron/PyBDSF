@@ -66,45 +66,6 @@ def shapeletfit(cf, Bset, cfshape):
 
     return y
 
-def func_poly2d(ord,p,x,y):
-    """ 2d polynomial.
-    ord=0 : z=p[0]
-    ord=1 : z=p[0]+p[1]*x+p[2]*y
-    ord=2 : z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y
-    ord=3 : z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y+
-              p[6]*x*x*x+p[7]*x*x*y+p[8]*x*y*y+p[9]*y*y*y"""
-
-    if ord == 0:
-        z=p[0]
-    if ord == 1:
-        z=p[0]+p[1]*x+p[2]*y
-    if ord == 2:
-        z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y
-    if ord == 3:
-        z=p[0]+p[1]*x+p[2]*y+p[3]*x*x+p[4]*y*y+p[5]*x*y+\
-          p[6]*x*x*x+p[7]*x*x*y+p[8]*x*y*y+p[9]*y*y*y
-    if ord > 3:
-        print(" We do not trust polynomial fits > 3 ")
-    z = None
-
-    return z
-
-def func_poly2d_ini(ord, av):
-    """ Initial guess -- assume flat plane. """
-
-    if ord == 0:
-        p0 = N.asarray([av])
-    if ord == 1:
-        p0 = N.asarray([av] + [0.0]*2)
-    if ord == 2:
-        p0 = N.asarray([av] + [0.0]*5)
-    if ord == 3:
-        p0 = N.asarray([av] + [0.0]*9)
-    if ord > 3:
-        p0 = None
-
-    return p0
-
 def ilist(x):
     """ integer part of a list of floats. """
 
