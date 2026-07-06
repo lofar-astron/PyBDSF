@@ -969,7 +969,7 @@ class Op_rmsimage(Op):
                     valid_pixels = arr_slice[unmasked_mask]
                     cm = np.median(valid_pixels)
                     
-                    # Calculate standard deviation estimated from MAD
+                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
                     # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
                     mad = np.median(np.abs(valid_pixels - cm))
                     cr = 1.4826 * mad
