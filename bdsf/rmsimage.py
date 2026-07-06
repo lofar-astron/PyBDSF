@@ -965,9 +965,18 @@ class Op_rmsimage(Op):
                 if cnt > 198: cm = m; cr = r
                 mean_map[i, j], rms_map[i, j] = cm, cr
             else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                if npix_unmasked > 5: # use robust median and MAD instead of mean/std
+                    # First take the same windows for which the mask was calculated
+                    # and then select only the unmasked pixels
+                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    cm = np.median(valid_pixels)
+                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
+                    # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
+                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+
+                    # Protection against zero noise (e.g. all pixels have the same value)
+                    if cr == 0.0:
+                        cr = np.std(valid_pixels) # final fallback
                     mean_map[i, j], rms_map[i, j] = cm, cr
                 else: # too few unmasked pixels --> set mean/rms to inf
                     mean_map[i, j], rms_map[i, j] = np.inf, np.inf
@@ -987,9 +996,14 @@ class Op_rmsimage(Op):
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
             else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                if npix_unmasked > 5: # same logic as in 'for_masked'
+                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    cm = np.median(valid_pixels)
+                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+                    
+                    # Protection against zero noise (e.g. all pixels have the same value)
+                    if cr == 0.0:
+                        cr = np.std(valid_pixels) # final fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
