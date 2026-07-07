@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import numpy as N
 from .image import Op, Image, NArray
 from math import sqrt,pi,log
-from scipy.special import erfc
+from scipy.special import erfc, erfcinv
 from . import const
 from . import mylogger
 
@@ -71,11 +71,8 @@ class Op_threshold(Op):
                 raise RuntimeError("FDR thresholding failed. Please check the input image for problems.")
             dumr1 = 1.0-2.0*pcrit
             dumr = 8.0/3.0/pi*(pi-3.0)/(4.0-pi)
-            # approx for inv(erfc)
-            sigcrit = sqrt(-2.0/pi/dumr-log(1.0-dumr1*dumr1)/2.0+  \
-                          sqrt((2.0/pi/dumr+log(1.0-dumr1*dumr1)/2.0)* \
-                          (2.0/pi/dumr+log(1.0-dumr1*dumr1)/2.0)-      \
-                          log(1.0-dumr1*dumr1)/dumr))*sq2
+            # Inverse of the complementary error function
+            sigcrit = erfcinv(2.0 * pcrit) * sq2
             if pcrit == 0.0:
                 img.thresh = 'hard'
             else:
