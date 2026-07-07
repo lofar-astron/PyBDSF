@@ -6,8 +6,8 @@ and/or are called by the outlist operation if output_all is True.
 """
 from .image import Op
 
-from astropy.coordinates import SkyCoord
 import astropy.units as u
+from astropy.coordinates import SkyCoord, FK4, FK5
 
 
 class Op_outlist(Op):
@@ -176,17 +176,31 @@ def dec2ddmmss(deg):
 
 def B1950toJ2000(Bcoord):
     """
-    Uses the modern IAU 2006/2010 standards, which are significantly
-    more accurate than the previous Aoki et al. 1983 implementation
-    (~0.2 arcsec vs << 1 mas)
+    Convert FK4 B1950 coordinates to FK5 J2000.
+
+    Uses Astropy's FK4->FK5 transformation based on
+    modern IAU 2006/2010 standards.
+
+    Results differ from the classical Aoki et al. (1983)
+    implementation used by PyBDSF by about 0.1-0.3 arcsec.
     """
 
     ra_deg, dec_deg = Bcoord
-    c_b1950 = SkyCoord(ra=ra_deg*u.deg, dec=dec_deg*u.deg, frame='fk4', equinox='B1950')
-    c_j2000 = c_b1950.transform_to('fk5')
-    Jcoord = [c_j2000.ra.degree, c_j2000.dec.degree]
-    
-    return Jcoord
+
+    c_b1950 = SkyCoord(
+        ra=ra_deg * u.deg,
+        dec=dec_deg * u.deg,
+        frame=FK4(equinox="B1950")
+    )
+
+    c_j2000 = c_b1950.transform_to(
+        FK5(equinox="J2000")
+    )
+
+    return [
+        c_j2000.ra.degree,
+        c_j2000.dec.degree
+    ]
 
 
 def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
