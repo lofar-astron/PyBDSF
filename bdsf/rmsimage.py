@@ -141,13 +141,13 @@ class Op_rmsimage(Op):
         image = ch0_images[0]
         shape = image.shape
         isl_size_bright = []
-        isl_area_highthresh = []
         threshold = start_thresh
         if do_adapt:
             mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
+                isl_area_highthresh = []
                 if img.masked:
                     act_pixels = ~(mask.copy())
                     act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
