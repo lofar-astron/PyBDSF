@@ -371,9 +371,8 @@ class Op_rmsimage(Op):
             if pol == 'I':
                 # Apply mask to mean_map and rms_map by setting masked values to NaN
                 if isinstance(mask, np.ndarray):
-                    pix_masked = np.where(mask == True)
-                    mean[pix_masked] = np.nan
-                    rms[pix_masked] = np.nan
+                    mean[mask] = np.nan
+                    rms[mask] = np.nan
 
                 img.mean_arr = mean
                 img.rms_arr = rms
@@ -400,9 +399,8 @@ class Op_rmsimage(Op):
                     else:
                         resdir = img.basedir + '/background/'
                     if not os.path.exists(resdir): os.makedirs(resdir)
-                    zero_pixels = np.where(rms <= 0.0)
                     rms_nonzero = rms.copy()
-                    rms_nonzero[zero_pixels] = np.nan
+                    rms_nonzero[rms <= 0.0] = np.nan
                     func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
             else:
@@ -423,8 +421,7 @@ class Op_rmsimage(Op):
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(rms[unmasked])
+            stdsub = np.std(rms[~img.mask_arr])
         else:
             stdsub = np.std(rms)
 
@@ -451,8 +448,7 @@ class Op_rmsimage(Op):
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(mean[unmasked])
+            stdsub = np.std(mean[~img.mask_arr])
         else:
             stdsub = np.std(mean)
         rms_expect = img.clipped_rms/img.rms_box[0]*fw_pix
@@ -763,7 +759,7 @@ class Op_rmsimage(Op):
             rms_map[co] = cr
 
         # Check if all regions have too few unmasked pixels
-        if mask is not None and np.size(np.where(mean_map != np.inf)) == 0:
+        if mask is not None and not np.any(mean_map != np.inf):
             raise RuntimeError("No unmasked regions from which to determine "\
                          "mean and rms maps")
 
@@ -862,8 +858,7 @@ class Op_rmsimage(Op):
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
         # np.inf)
-        unmasked_boxes = np.where(mean_map != np.inf)
-        if np.size(unmasked_boxes,1) < mapshape[0]*mapshape[1]:
+        if np.count_nonzero(mean_map != np.inf) < mapshape[0]*mapshape[1]:
             mean_map = self.fill_masked_regions(mean_map)
             rms_map = self.fill_masked_regions(rms_map)
 
@@ -899,10 +894,10 @@ class Op_rmsimage(Op):
                 goodcutout = cutout[cutout != magic]
                 num_unmasked = len(goodcutout)
                 if num_unmasked > 0:
-                    themap[x, y] = np.nansum(goodcutout)/float(len(goodcutout))
+                    themap[x, y] = np.nanmean(goodcutout)
                 delx += 1
                 dely += 1
-        themap[np.where(np.isnan(themap))] = 0.0
+        themap[np.isnan(themap)] = 0.0
         return themap
 
     def pad_array(self, arr, new_shape):
@@ -965,9 +960,18 @@ class Op_rmsimage(Op):
                 if cnt > 198: cm = m; cr = r
                 mean_map[i, j], rms_map[i, j] = cm, cr
             else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                if npix_unmasked > 5: # use robust median and MAD instead of mean/std
+                    # First take the same windows for which the mask was calculated
+                    # and then select only the unmasked pixels
+                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    cm = np.median(valid_pixels)
+                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
+                    # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
+                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+
+                    # Protection against zero noise (e.g. all pixels have the same value)
+                    if cr == 0.0:
+                        cr = np.std(valid_pixels) # final fallback
                     mean_map[i, j], rms_map[i, j] = cm, cr
                 else: # too few unmasked pixels --> set mean/rms to inf
                     mean_map[i, j], rms_map[i, j] = np.inf, np.inf
@@ -987,9 +991,14 @@ class Op_rmsimage(Op):
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
             else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                if npix_unmasked > 5: # same logic as in 'for_masked'
+                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    cm = np.median(valid_pixels)
+                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+                    
+                    # Protection against zero noise (e.g. all pixels have the same value)
+                    if cr == 0.0:
+                        cr = np.std(valid_pixels) # final fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
