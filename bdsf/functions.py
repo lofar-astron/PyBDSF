@@ -1286,7 +1286,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 data = fits[0].data
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
-            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
             if naxis > 4:
                 data = data.reshape(shape_out_untrimmed) # Add axes if needed
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
@@ -1296,7 +1296,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             # With casacore, just read in the whole image and then trim
             data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
-            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
             data = data.reshape(shape_out_untrimmed) # Add axes if needed
             data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
 
@@ -1311,7 +1311,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         else:
             data = inputimage.getdata()
         data = data.transpose(*indx_out) # transpose axes to final order
-        data.shape = data.shape[0:4] # trim unused dimensions (if any)
+        data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
         data = data.reshape(shape_out) # Add axes if needed
 
     mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
