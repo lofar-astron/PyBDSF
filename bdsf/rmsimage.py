@@ -942,37 +942,16 @@ class Op_rmsimage(Op):
 
         return arr_pad
 
+
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
+        """
+        Delegates calculations to 'for_masked_mp', and then
+        stores results into the global 2D map arrays.
+        """
 
-        bstat = func.bstat#_cbdsm.bstat
-        a, b, c, d = ind; i, j = co
-        if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
-            if cnt > 198: cm = m; cr = r
-            mean_map[i, j], rms_map[i, j] = cm, cr
-        else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
-            if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
-                if cnt > 198: cm = m; cr = r
-                mean_map[i, j], rms_map[i, j] = cm, cr
-            else:
-                if npix_unmasked > 5: # use robust median and MAD instead of mean/std
-                    # First take the same windows for which the mask was calculated
-                    # and then select only the unmasked pixels
-                    valid_pixels = arr[a:b, c:d][pix_unmasked]
-                    cm = np.median(valid_pixels)
-                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
-                    # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
-                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
-
-                    # Protection against zero noise (e.g. all pixels have the same value)
-                    if cr == 0.0:
-                        cr = np.std(valid_pixels) # final fallback
-                    mean_map[i, j], rms_map[i, j] = cm, cr
-                else: # too few unmasked pixels --> set mean/rms to inf
-                    mean_map[i, j], rms_map[i, j] = np.inf, np.inf
+        i, j = co
+        cm, cr = self.for_masked_mp(mask, arr, ind, kappa)
+        mean_map[i, j], rms_map[i, j] = cm, cr
 
 
     def for_masked_mp(self, mask, arr, ind, kappa):
@@ -990,8 +969,12 @@ class Op_rmsimage(Op):
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5: # same logic as in 'for_masked'
+                    # First take the same windows for which the mask was calculated
+                    # and then select only the unmasked pixels
                     valid_pixels = arr[a:b, c:d][pix_unmasked]
                     cm = np.median(valid_pixels)
+                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
+                    # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
                     cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
                     
                     # Protection against zero noise (e.g. all pixels have the same value)
