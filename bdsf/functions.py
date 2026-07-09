@@ -1109,214 +1109,217 @@ def read_image_from_file(filename, img, indir, quiet=False):
         img._reason = f'File {image_file} does not exist'
         return None
 
-    # If img.use_io is set, then use appropriate io module
-    if img.use_io:
-        # Sanity check: only 'fits' and 'rap' are supported image I/O types
-        if img.use_io not in ('fits', 'rap'):
-            raise ValueError(f"Invalid image I/O type '{img.use_io}'. "
-                             "Supported types are: 'fits' and 'rap'")
-        if img.use_io == 'fits':
-            try:
-                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            except IOError as err:
-                img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
-                return None
-        if img.use_io == 'rap':
-            if not has_casacore:
-                img._reason = f'Problem reading {image_file}.\nCasacore is unavailable'
-                return None
-            try:
-                inputimage = pim.image(image_file)
-            except IOError as err:
-                img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
-                return None
-    else:
-        # First assume image is a fits file, and use pyfits to open it.
-        # If that fails, try to use casacore if available.
-        failed_read = False
-        try:
-            fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            img.use_io = 'fits'
-        except IOError as err:
-            e_pyfits = str(err)
-            if has_casacore:
+    fits = None
+    try:
+        # If img.use_io is set, then use appropriate io module
+        if img.use_io:
+            # Sanity check: only 'fits' and 'rap' are supported image I/O types
+            if img.use_io not in ('fits', 'rap'):
+                raise ValueError(f"Invalid image I/O type '{img.use_io}'. "
+                                 "Supported types are: 'fits' and 'rap'")
+            if img.use_io == 'fits':
+                try:
+                    fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+                except IOError as err:
+                    img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
+                    return None
+            if img.use_io == 'rap':
+                if not has_casacore:
+                    img._reason = f'Problem reading {image_file}.\nCasacore is unavailable'
+                    return None
                 try:
                     inputimage = pim.image(image_file)
-                    img.use_io = 'rap'
                 except IOError as err:
-                    e_casacore = str(err)
+                    img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
+                    return None
+        else:
+            # First assume image is a fits file, and use pyfits to open it.
+            # If that fails, try to use casacore if available.
+            failed_read = False
+            try:
+                fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
+                img.use_io = 'fits'
+            except IOError as err:
+                e_pyfits = str(err)
+                if has_casacore:
+                    try:
+                        inputimage = pim.image(image_file)
+                        img.use_io = 'rap'
+                    except IOError as err:
+                        e_casacore = str(err)
+                        failed_read = True
+                        img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
+                else:
                     failed_read = True
-                    img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
+                    e_casacore = "Casacore unavailable"
+                    img._reason = f'Problem reading {image_file}.'
+            if failed_read:
+                img._reason += f'\nOriginal error: {e_pyfits}\n {e_casacore}'
+                return None
+
+        # Now that image has been read in successfully, get header (data is loaded
+        # later to take advantage of sectioning if trim_box is specified).
+        if not quiet:
+            mylogger.userinfo(mylog, "Opened '"+image_file+"'")
+        if img.use_io == 'rap':
+            tmpdir = os.path.join(img.outdir, img.parentname+'_tmp')
+            hdr = convert_casacore_header(inputimage, tmpdir)
+            coords = inputimage.coordinates()
+            img.coords_dict = coords.dict()
+            if 'telescope' in img.coords_dict:
+                img._telescope = img.coords_dict['telescope']
             else:
-                failed_read = True
-                e_casacore = "Casacore unavailable"
-                img._reason = f'Problem reading {image_file}.'
-        if failed_read:
-            img._reason += f'\nOriginal error: {e_pyfits}\n {e_casacore}'
-            return None
-
-    # Now that image has been read in successfully, get header (data is loaded
-    # later to take advantage of sectioning if trim_box is specified).
-    if not quiet:
-        mylogger.userinfo(mylog, "Opened '"+image_file+"'")
-    if img.use_io == 'rap':
-        tmpdir = os.path.join(img.outdir, img.parentname+'_tmp')
-        hdr = convert_casacore_header(inputimage, tmpdir)
-        coords = inputimage.coordinates()
-        img.coords_dict = coords.dict()
-        if 'telescope' in img.coords_dict:
-            img._telescope = img.coords_dict['telescope']
-        else:
-            img._telescope = None
-    if img.use_io == 'fits':
-        hdr = fits[0].header
-        img.coords_dict = None
-        if 'TELESCOP' in hdr:
-            img._telescope = hdr['TELESCOP']
-        else:
-            img._telescope = None
-
-    # Make sure data is in proper order. Final order is [pol, chan, x (RA), y (DEC)],
-    # so we need to rearrange dimensions if they are not in this order. Use the
-    # ctype FITS keywords to determine order of dimensions. Note that both PyFITS
-    # and casacore reverse the order of the axes relative to NAXIS, so we must too.
-    naxis = hdr['NAXIS']
-    data_shape = []
-    for i in range(naxis):
-        data_shape.append(hdr['NAXIS'+str(i+1)])
-    data_shape.reverse()
-    data_shape = tuple(data_shape)
-    mylog.info("Original data shape of " + image_file +': ' +str(data_shape))
-    ctype_in = []
-    for i in range(naxis):
-        key_val_raw = hdr['CTYPE' + str(i+1)]
-        key_val = key_val_raw.split('-')[0]
-        ctype_in.append(key_val.strip())
-    if 'RA' not in ctype_in or 'DEC' not in ctype_in:
-        if 'GLON' not in ctype_in or 'GLAT' not in ctype_in:
-            raise RuntimeError("Image data not found")
-        else:
-            lat_lon = True
-    else:
-        lat_lon = False
-
-    # Check for incorrect spectral units. For example, "M/S" is not
-    # recognized by PyWCS as velocity ("S" is actually Siemens, not
-    # seconds). Note that we check CUNIT3 and CUNIT4 even if the
-    # image has only 2 axes, as the header may still have these
-    # entries.
-    for i in range(4):
-        key_val_raw = hdr.get('CUNIT' + str(i+1))
-        if key_val_raw is not None:
-            if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:
-                hdr['CUNIT' + str(i+1)] = 'm/s'
-            if 'HZ' in key_val_raw or 'hZ' in key_val_raw or 'hz' in key_val_raw:
-                hdr['CUNIT' + str(i+1)] = 'Hz'
-            if 'DEG' in key_val_raw or 'Deg' in key_val_raw:
-                hdr['CUNIT' + str(i+1)] = 'deg'
-
-    # Make sure that the spectral axis has been identified properly
-    if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
-        from astropy.wcs import FITSFixedWarning
-        # TODO: Is it still needed and/or desirable to filter warnings?
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",category=DeprecationWarning)
-            warnings.filterwarnings("ignore",category=FITSFixedWarning)
-            t = WCS(hdr)
-            t.wcs.fix()
-        spec_indx = t.wcs.spec
-        if spec_indx != -1:
-            ctype_in[spec_indx] = 'FREQ'
-
-    # Now reverse the axes order to match PyFITS/casacore order and define the
-    # final desired order (cytpe_out) and shape (shape_out).
-    ctype_in.reverse()
-    if lat_lon:
-        ctype_out = ['STOKES', 'FREQ', 'GLON', 'GLAT']
-    else:
-        ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
-    indx_out = [-1, -1, -1, -1]
-    indx_in = range(naxis)
-    for i in indx_in:
-        for j in range(4):
-            if ctype_in[i] == ctype_out[j]:
-                indx_out[j] = i
-    shape_out = [1, 1, data_shape[indx_out[2]], data_shape[indx_out[3]]]
-    if indx_out[0] != -1:
-        shape_out[0] = data_shape[indx_out[0]]
-    if indx_out[1] != -1:
-        shape_out[1] = data_shape[indx_out[1]]
-    indx_out = [a for a in indx_out if a >= 0] # trim unused axes
-
-    # Read in data. If only a subsection of the image is desired (as defined
-    # by the trim_box option), we can try to use PyFITS to read only that section.
-    img._original_naxis = data_shape
-    img._original_shape = (shape_out[2], shape_out[3])
-    img._xy_hdr_shift = (0, 0)
-    if img.opts.trim_box is not None:
-        img.trim_box = [int(b) for b in img.opts.trim_box]
-        xmin, xmax, ymin, ymax = img.trim_box
-        if xmin < 0: xmin = 0
-        if ymin < 0: ymin = 0
-        if xmax > shape_out[2]: xmax = shape_out[2]
-        if ymax > shape_out[3]: ymax = shape_out[3]
-        if xmin >= xmax or ymin >= ymax:
-            raise RuntimeError("The trim_box option does not specify a valid part of the image.")
-        shape_out_untrimmed = shape_out[:]
-        shape_out[2] = xmax-xmin
-        shape_out[3] = ymax-ymin
-
+                img._telescope = None
         if img.use_io == 'fits':
-            sx = slice(int(xmin),int(xmax))
-            sy = slice(int(ymin),int(ymax))
-            sn = slice(None)
-            s_array = [sx, sy]
-            for i in range(naxis-2):
-                s_array.append(sn)
-            s_array.reverse() # to match ordering of data array returned by PyFITS
-            if naxis == 2:
-                data = fits[0].section[s_array[0], s_array[1]]
-            elif naxis == 3:
-                data = fits[0].section[s_array[0], s_array[1], s_array[2]]
-            elif naxis == 4:
-                data = fits[0].section[s_array[0], s_array[1], s_array[2], s_array[3]]
+            hdr = fits[0].header
+            img.coords_dict = None
+            if 'TELESCOP' in hdr:
+                img._telescope = hdr['TELESCOP']
             else:
-                # If more than 4 axes, just read in the whole image and
-                # do the trimming after reordering.
-                data = fits[0].data
-            fits.close()
-            data = data.transpose(*indx_out) # transpose axes to final order
-            data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
-            if naxis > 4:
+                img._telescope = None
+
+        # Make sure data is in proper order. Final order is [pol, chan, x (RA), y (DEC)],
+        # so we need to rearrange dimensions if they are not in this order. Use the
+        # ctype FITS keywords to determine order of dimensions. Note that both PyFITS
+        # and casacore reverse the order of the axes relative to NAXIS, so we must too.
+        naxis = hdr['NAXIS']
+        data_shape = []
+        for i in range(naxis):
+            data_shape.append(hdr['NAXIS'+str(i+1)])
+        data_shape.reverse()
+        data_shape = tuple(data_shape)
+        mylog.info("Original data shape of " + image_file +': ' +str(data_shape))
+        ctype_in = []
+        for i in range(naxis):
+            key_val_raw = hdr['CTYPE' + str(i+1)]
+            key_val = key_val_raw.split('-')[0]
+            ctype_in.append(key_val.strip())
+        if 'RA' not in ctype_in or 'DEC' not in ctype_in:
+            if 'GLON' not in ctype_in or 'GLAT' not in ctype_in:
+                raise RuntimeError("Image data not found")
+            else:
+                lat_lon = True
+        else:
+            lat_lon = False
+
+        # Check for incorrect spectral units. For example, "M/S" is not
+        # recognized by PyWCS as velocity ("S" is actually Siemens, not
+        # seconds). Note that we check CUNIT3 and CUNIT4 even if the
+        # image has only 2 axes, as the header may still have these
+        # entries.
+        for i in range(4):
+            key_val_raw = hdr.get('CUNIT' + str(i+1))
+            if key_val_raw is not None:
+                if 'M/S' in key_val_raw or 'm/S' in key_val_raw or 'M/s' in key_val_raw:
+                    hdr['CUNIT' + str(i+1)] = 'm/s'
+                if 'HZ' in key_val_raw or 'hZ' in key_val_raw or 'hz' in key_val_raw:
+                    hdr['CUNIT' + str(i+1)] = 'Hz'
+                if 'DEG' in key_val_raw or 'Deg' in key_val_raw:
+                    hdr['CUNIT' + str(i+1)] = 'deg'
+
+        # Make sure that the spectral axis has been identified properly
+        if len(ctype_in) > 2 and 'FREQ' not in ctype_in:
+            from astropy.wcs import FITSFixedWarning
+            # TODO: Is it still needed and/or desirable to filter warnings?
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                warnings.filterwarnings("ignore",category=FITSFixedWarning)
+                t = WCS(hdr)
+                t.wcs.fix()
+            spec_indx = t.wcs.spec
+            if spec_indx != -1:
+                ctype_in[spec_indx] = 'FREQ'
+
+        # Now reverse the axes order to match PyFITS/casacore order and define the
+        # final desired order (cytpe_out) and shape (shape_out).
+        ctype_in.reverse()
+        if lat_lon:
+            ctype_out = ['STOKES', 'FREQ', 'GLON', 'GLAT']
+        else:
+            ctype_out = ['STOKES', 'FREQ', 'RA', 'DEC']
+        indx_out = [-1, -1, -1, -1]
+        indx_in = range(naxis)
+        for i in indx_in:
+            for j in range(4):
+                if ctype_in[i] == ctype_out[j]:
+                    indx_out[j] = i
+        shape_out = [1, 1, data_shape[indx_out[2]], data_shape[indx_out[3]]]
+        if indx_out[0] != -1:
+            shape_out[0] = data_shape[indx_out[0]]
+        if indx_out[1] != -1:
+            shape_out[1] = data_shape[indx_out[1]]
+        indx_out = [a for a in indx_out if a >= 0] # trim unused axes
+
+        # Read in data. If only a subsection of the image is desired (as defined
+        # by the trim_box option), we can try to use PyFITS to read only that section.
+        img._original_naxis = data_shape
+        img._original_shape = (shape_out[2], shape_out[3])
+        img._xy_hdr_shift = (0, 0)
+        if img.opts.trim_box is not None:
+            img.trim_box = [int(b) for b in img.opts.trim_box]
+            xmin, xmax, ymin, ymax = img.trim_box
+            if xmin < 0: xmin = 0
+            if ymin < 0: ymin = 0
+            if xmax > shape_out[2]: xmax = shape_out[2]
+            if ymax > shape_out[3]: ymax = shape_out[3]
+            if xmin >= xmax or ymin >= ymax:
+                raise RuntimeError("The trim_box option does not specify a valid part of the image.")
+            shape_out_untrimmed = shape_out[:]
+            shape_out[2] = xmax-xmin
+            shape_out[3] = ymax-ymin
+
+            if img.use_io == 'fits':
+                sx = slice(int(xmin),int(xmax))
+                sy = slice(int(ymin),int(ymax))
+                sn = slice(None)
+                s_array = [sx, sy]
+                for i in range(naxis-2):
+                    s_array.append(sn)
+                s_array.reverse() # to match ordering of data array returned by PyFITS
+                if naxis == 2:
+                    data = fits[0].section[s_array[0], s_array[1]]
+                elif naxis == 3:
+                    data = fits[0].section[s_array[0], s_array[1], s_array[2]]
+                elif naxis == 4:
+                    data = fits[0].section[s_array[0], s_array[1], s_array[2], s_array[3]]
+                else:
+                    # If more than 4 axes, just read in the whole image and
+                    # do the trimming after reordering.
+                    data = fits[0].data
+                data = data.transpose(*indx_out) # transpose axes to final order
+                data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
+                if naxis > 4:
+                    data = data.reshape(shape_out_untrimmed) # Add axes if needed
+                    data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
+                else:
+                    data = data.reshape(shape_out) # Add axes if needed
+            else:
+                # With casacore, just read in the whole image and then trim
+                data = inputimage.getdata()
+                data = data.transpose(*indx_out) # transpose axes to final order
+                data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
                 data = data.reshape(shape_out_untrimmed) # Add axes if needed
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
-            else:
-                data = data.reshape(shape_out) # Add axes if needed
+
+            # Adjust WCS keywords for trim_box starting x and y.
+            hdr['crpix1'] -= xmin
+            hdr['crpix2'] -= ymin
+            img._xy_hdr_shift = (xmin, ymin)
         else:
-            # With casacore, just read in the whole image and then trim
-            data = inputimage.getdata()
+            if img.use_io == 'fits':
+                data = fits[0].data
+            else:
+                data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
             data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
-            data = data.reshape(shape_out_untrimmed) # Add axes if needed
-            data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
+            data = data.reshape(shape_out) # Add axes if needed
 
-        # Adjust WCS keywords for trim_box starting x and y.
-        hdr['crpix1'] -= xmin
-        hdr['crpix2'] -= ymin
-        img._xy_hdr_shift = (xmin, ymin)
-    else:
-        if img.use_io == 'fits':
-            data = fits[0].data
+        mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
+
+        return data, hdr
+    finally:
+        if fits is not None:
             fits.close()
-        else:
-            data = inputimage.getdata()
-        data = data.transpose(*indx_out) # transpose axes to final order
-        data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
-        data = data.reshape(shape_out) # Add axes if needed
-
-    mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
-
-    return data, hdr
 
 
 def convert_casacore_header(casacore_image, tmpdir):
