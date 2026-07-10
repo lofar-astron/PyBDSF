@@ -5,14 +5,7 @@ ordermax = nmax+1; range(ordermax) has all the values of n
 Order n => J=n, where J=0 is the gaussian.
 
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
 import numpy as N
-try:
-    from astropy.io import fits as pyfits
-except ImportError as err:
-    import pyfits
 from scipy.optimize import leastsq
 
 def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
@@ -38,8 +31,6 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
         cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
-        npix = N.prod(image.shape)-N.sum(mask)
-        npara = (nmax+1)*(nmax+2)*0.5
         cfnew = fit_shapeletbasis(image, mask, cf, Bset)
         recon1 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cf)
         recon2 = reconstruct_shapelets(image.shape, mask, basis, beta, centre, nmax, cfnew)
@@ -71,7 +62,6 @@ def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
     """ Reconstructs a shapelet image of size, for pixels which are unmasked, for a given
     beta, centre, nmax, basis and the shapelet coefficient matrix cf. """
     rimage = N.zeros(size, dtype=N.float32)
-    hc = []
     hc = shapelet_coeff(nmax, basis)
 
     index = [(i,j) for i in range(nmax) for j in range(nmax-i)]
@@ -120,9 +110,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
     we find intersection point of these two. This seems to work even for highly
     non-gaussian cases. """
     from . import functions as func
-    import sys
 
-    hc = []
     hc = shapelet_coeff(nmax, basis)
 
     msk=N.zeros(mask.shape, dtype=bool)
@@ -136,8 +124,6 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
         if msk[coord]:
             B12 = shapelet_image(basis, beta, coord, hc, 0, 1, image.shape)
             cf12[coord] = N.sum(image*B12*msk)
-
-            if coord==(27,51): dumpy = B12
 
             B21 = shapelet_image(basis, beta, coord, hc, 1, 0, image.shape)
             cf21[coord] = N.sum(image*B21*msk)
@@ -167,10 +153,10 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
         ninter=5
         if xind<3 or yind<3 or xind>n-2 or yind>m-2:
             ninter = 3
-        xft1 = x1[xind-(ninter-1)/2:xind+(ninter-1)/2+1]
-        yft1 = y1[xind-(ninter-1)/2:xind+(ninter-1)/2+1]
-        xft2 = x2[yind-(ninter-1)/2:yind+(ninter-1)/2+1]
-        yft2 = y2[yind-(ninter-1)/2:yind+(ninter-1)/2+1]
+        xft1 = x1[xind - (ninter-1)//2 : xind + (ninter-1)//2 + 1]
+        yft1 = y1[xind - (ninter-1)//2 : xind + (ninter-1)//2 + 1]
+        xft2 = x2[yind - (ninter-1)//2 : yind + (ninter-1)//2 + 1]
+        yft2 = y2[yind - (ninter-1)//2 : yind + (ninter-1)//2 + 1]
         sig  = N.ones(ninter, dtype=float)
         smask1=N.array([r == 0 for r in yft1])
         smask2=N.array([r == 0 for r in xft2])
@@ -216,35 +202,35 @@ def getzeroes_matrix(mask, cf, cen, cenx):
         npts = len(l)-sum(l)
 
         #print 'npts = ',npts
-    if npts > 3 and not N.isnan(cf[i,cen]):
-        mrow=mask[i,:]
-        if sum(l) == 0:
-            low=0
-            up=cf.shape[1]-1
-        else:
-            low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
-            #print 'mrow = ',i, mrow, low,
-            try:
-                up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
-                #print 'up1= ', up
-            except IndexError:
-                if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
-                    up = len(mrow)
-                    #print 'up2= ', up,
-                else:
-                    raise
-                #print
-        low += 1; up -= 1
-        npoint = up-low+1
-        xfn = N.arange(npoint)+low
-        yfn = cf[i,xfn]
-        root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
-        if error != 1:
-            y[i] = root
+        if npts > 3 and not N.isnan(cf[i,cen]):
+            mrow=mask[i,:]
+            if sum(l) == 0:
+                low=0
+                up=cf.shape[1]-1
+            else:
+                low = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)-1]
+                #print 'mrow = ',i, mrow, low,
+                try:
+                    up = mrow.nonzero()[0][mrow.nonzero()[0].searchsorted(cen)]
+                    #print 'up1= ', up
+                except IndexError:
+                    if [mrow.nonzero()[0].searchsorted(cen)][0]==len(mrow.nonzero()):
+                        up = len(mrow)
+                        #print 'up2= ', up,
+                    else:
+                        raise
+                    #print
+            low += 1; up -= 1
+            npoint = up-low+1
+            xfn = N.arange(npoint)+low
+            yfn = cf[i,xfn]
+            root, error = shapelet_getroot(xfn, yfn, x[i], cenx, cen)
+            if error != 1:
+                y[i] = root
+            else:
+                y[i] = 0.0
         else:
             y[i] = 0.0
-    else:
-        y[i] = 0.0
 
     return x,y
 
@@ -288,7 +274,6 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
         yfit=yfn[low:low+nfit]
         sig=N.ones(nfit)
         smask=N.zeros(nfit, dtype=bool)
-        xx=[i for i in range(low,low+nfit)]
 
         [c, m], errors = func.fit_mask_1d(xfit, yfit, sig, smask, func.poly, do_err=False, order=1)
         root=-c/m
@@ -305,7 +290,7 @@ def shapelet_check_centre(image, mask, cen, beam_pix):
     x, y = round(cen[0]), round(cen[1])
     if x <= 0 or x >= n or y <= 0 or y >= m: error = 1
     if error == 0:
-        if not mask[int(round(x)),int(round(y))]: error == 2
+        if not mask[int(round(x)),int(round(y))]: error = 2
 
     if error > 0:
         if (N.prod(mask.shape)-sum(sum(mask)))/(pi*0.25*beam_pix[0]*beam_pix[1]) < 2.5:
@@ -316,7 +301,6 @@ def shapelet_check_centre(image, mask, cen, beam_pix):
 def shape_varybeta(image, mask, basis, betainit, cen, nmax, betarange, plot):
     """ Shapelet decomposes and then reconstructs an image with various values of beta
     and looks at the residual rms vs beta to estimate the optimal value of beta. """
-    from . import _cbdsm
 
     nbin = 30
     delta = (2.0*betainit-betainit/2.0)/nbin
@@ -354,7 +338,6 @@ def shapelet_coeff(nmax=20,basis='cartesian'):
       hc=shapelet_coeff(nmax=10, basis='cartesian') or
       hc=shapelet_coeff(10) or hc=shapelet_coeff().
       hc(nmax) will be a nmax+1 X nmax+1 matrix."""
-    import numpy as N
 
     order=nmax+1
     if basis == 'polar':
