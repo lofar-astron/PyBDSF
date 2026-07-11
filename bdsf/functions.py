@@ -1286,7 +1286,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 data = fits[0].data
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
-            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
             if naxis > 4:
                 data = data.reshape(shape_out_untrimmed) # Add axes if needed
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
@@ -1296,7 +1296,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             # With casacore, just read in the whole image and then trim
             data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
-            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
             data = data.reshape(shape_out_untrimmed) # Add axes if needed
             data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
 
@@ -1311,7 +1311,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         else:
             data = inputimage.getdata()
         data = data.transpose(*indx_out) # transpose axes to final order
-        data.shape = data.shape[0:4] # trim unused dimensions (if any)
+        data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
         data = data.reshape(shape_out) # Add axes if needed
 
     mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
@@ -1570,14 +1570,28 @@ def area_polygon(points):
     triangle with the centre """
     import numpy as N
 
+    # Unpack the input coordinates into separate arrays for x and y
     x, y = points
+    # Calculate the number of triangles. The vertices are angle-ordered, so
+    # we connect consecutive pairs (i and i+1) with the center, forming len(x) - 1 triangles.
     n_tri = len(x)-1
+    # Find the centroid of the polygon
     cenx, ceny = N.mean(x), N.mean(y)
 
     area = 0.0
+    # Loop through each pair of consecutive vertices to calculate individual triangle areas
     for i in range(n_tri):
+        # Define the three vertices of the current triangle:
+        # p1 is the center point, p2 is the current vertex, and p3 is the next consecutive vertex.
         p1, p2, p3 = N.array([cenx, ceny]), N.array([x[i], y[i]]), N.array([x[i+1], y[i+1]])
-        t_area= N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
+        # Create two vectors originating from the center point (p1) to the outer vertices (p2 and p3)
+        v1 = p2 - p1
+        v2 = p3 - p1
+        # Calculate the area of the triangle using the 2D cross-product.
+        # The absolute value of (v1_x * v2_y - v1_y * v2_x) represents the area spanned by v1 and v2.
+        # Dividing this value by 2.0 gives the triangle area.
+        t_area = abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.0
+        # Add the area of the current triangle into the total polygon area
         area += t_area
 
     return area
@@ -1605,7 +1619,9 @@ def convexhull_deficiency(isl):
 
     def area_of_triangle(p1, p2, p3):
         """calculate area of any triangle given co-ordinates of the corners"""
-        return N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
+        v1 = p2 - p1
+        v2 = p3 - p1
+        return abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.
 
     def convex_hull(points):
         """Calculate subset of points that make a convex hull around points
