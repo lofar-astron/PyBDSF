@@ -28,6 +28,7 @@ class Op_threshold(Op):
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Threshold ")
         data = img.ch0_arr
+        mask = img.mask_arr # not implemented yet
         opts = img.opts
         size = N.prod(img.ch0_arr.shape)
         sq2  = sqrt(2)
