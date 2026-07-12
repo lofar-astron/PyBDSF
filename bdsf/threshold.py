@@ -51,6 +51,7 @@ class Op_threshold(Op):
         else:
             img.thresh = img.opts.thresh
 
+        # https://iopscience.iop.org/article/10.1086/338316
         if img.thresh=='fdr':
             cdelt = img.wcs_obj.acdelt[:2]
             bm = (img.beam[0], img.beam[1])
