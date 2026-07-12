@@ -101,6 +101,8 @@ class Op_threshold(Op):
         for i,s in enumerate(scflux):
             if s < smin_L:
                 index = i
+                mylogger.userinfo(mylog, "Detection threshold lies outside the calibrated source-count range.")
+                mylogger.userinfo(mylog, "Source count estimate is extrapolated.")
                 break
         n1 = scnum[index]; n2 = scnum[-1]
         s1 = scflux[index]; s2 = scflux[-1]
