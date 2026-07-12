@@ -60,12 +60,16 @@ class Op_threshold(Op):
             for i in range(area_pix):
                 s0 +=  1.0/(i+1)
             slope = opts.fdr_alpha/s0
-            # sort erf of normalised image as vector
-            v = N.sort(0.5*erfc(N.ravel((data-img.mean_arr)/img.rms_arr)/sq2))[::-1]
+            # Sort p-values in ascending order for correct FDR implementation
+            v = N.sort(0.5*erfc(N.ravel((data-img.mean_arr)/img.rms_arr)/sq2))
             pcrit = None
-            for i,x in enumerate(v):
-                if x < slope*i/size:
-                    pcrit = x
+            
+            # Find the largest index k (from size down to 1) 
+            # such that p-value <= slope * k / size
+            for k in range(size, 0, -1):
+                # Benjamini-Yekutieli FDR condition
+                if v[k-1] <= slope * k / size:
+                    pcrit = v[k-1]
                     break
             if pcrit is None:
                 raise RuntimeError("FDR thresholding failed. Please check the input image for problems.")
