@@ -34,7 +34,7 @@ class Op_threshold(Op):
         sq2  = sqrt(2)
 
         if img.opts.thresh is None:
-            source_p = self.get_srcp(img)
+            source_p = self.get_srcp(img, mylog)
             cutoff = 5.0
             false_p = 0.5*erfc(cutoff/sq2)*size
             if false_p < opts.fdr_ratio*source_p:
@@ -84,7 +84,7 @@ class Op_threshold(Op):
         img.completed_Ops.append('threshold')
         return img
 
-    def get_srcp(self, img):
+    def get_srcp(self, img, mylog):
         from . import sourcecounts as sc
         fwsig = const.fwsig
         cutoff = 5.0
