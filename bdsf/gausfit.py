@@ -682,7 +682,7 @@ class Op_gausfit(Op):
                         invmask[i] = invmask[i]*newmask
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
             for i in range(nshed):
-                size = sqrt(N.sum(invmask))/fwsig
+                size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
                 x, y = N.indices(im.shape)
