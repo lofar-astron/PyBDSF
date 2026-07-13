@@ -315,7 +315,9 @@ class Island(object):
             N.logical_or(noise_mask, isl_mask, noise_mask)
 
             # Invert masks
-            N.logical_not(isl_mask, isl_mask)
+            N.logical_not(isl_mask, isl_mask) # after this:
+                                              # True  for background (masked pixels)
+                                              # False for island pixels (not masked)
             N.logical_not(noise_mask, noise_mask)
             if isinstance(mask, N.ndarray):
                 noise_mask[mask[tuple(bbox)]] = True
@@ -350,7 +352,7 @@ class Island(object):
         self.islmean = bbox_mean_im[in_bbox_and_unmasked].mean()
         valid_pixels = ~self.mask_active & ~N.isnan(self.image) # pixels that are both: inside the island and not NaN
         self.total_flux = N.nansum(self.image[valid_pixels])/beamarea
-        pixels_in_isl = N.sum(~N.isnan(self.image[self.mask_active]))  # number of unmasked pixels assigned to current island
+        pixels_in_isl = N.sum(~N.isnan(self.image[~self.mask_active]))  # number of unmasked pixels assigned to current island
         self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
         self.border = self.get_border()
         self.gaul = []
