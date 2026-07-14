@@ -48,7 +48,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
-    "backports.shutil_get_terminal_size",
     "astropy",
     "numpy",
     "scipy",

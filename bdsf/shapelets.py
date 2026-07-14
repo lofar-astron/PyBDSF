@@ -153,10 +153,10 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
         ninter=5
         if xind<3 or yind<3 or xind>n-2 or yind>m-2:
             ninter = 3
-        xft1 = x1[xind-(ninter-1)/2:xind+(ninter-1)/2+1]
-        yft1 = y1[xind-(ninter-1)/2:xind+(ninter-1)/2+1]
-        xft2 = x2[yind-(ninter-1)/2:yind+(ninter-1)/2+1]
-        yft2 = y2[yind-(ninter-1)/2:yind+(ninter-1)/2+1]
+        xft1 = x1[xind - (ninter-1)//2 : xind + (ninter-1)//2 + 1]
+        yft1 = y1[xind - (ninter-1)//2 : xind + (ninter-1)//2 + 1]
+        xft2 = x2[yind - (ninter-1)//2 : yind + (ninter-1)//2 + 1]
+        yft2 = y2[yind - (ninter-1)//2 : yind + (ninter-1)//2 + 1]
         sig  = N.ones(ninter, dtype=float)
         smask1=N.array([r == 0 for r in yft1])
         smask2=N.array([r == 0 for r in xft2])
