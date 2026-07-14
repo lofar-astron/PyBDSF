@@ -752,6 +752,7 @@ def round_list_of_tuples(val):
     valstr_list = []
     valstr_list_tot = []
     for l in val:
+        valstr_list = []
         for v in l:
             vstr = '%s' % (round(v, 5))
             if len(vstr) > 7:
