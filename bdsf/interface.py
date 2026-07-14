@@ -5,14 +5,7 @@ interactive environment such as IPython. Many are also used by the
 custom IPython shell defined in pybdsf.
 
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
-try:
-    # For Python 2, use raw_input() for input()
-    input = raw_input
-except NameError:
-    pass
+import os
 
 
 def process(img, **kwargs):
@@ -26,11 +19,9 @@ def process(img, **kwargs):
     Any options given as keyword arguments will override existing ones stored
     in img.opts.
     """
-    from . import default_chain, _run_op_list
-    from .image import Image
+    from . import _run_op_list
     from . import mylogger
     from .functions import set_up_output_paths
-    import os
 
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
@@ -355,11 +346,7 @@ def load_pars(filename):
     Returns None (and original error) if no file can be loaded successfully.
     """
     from .image import Image
-    from . import mylogger
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import pickle
+    import pickle
 
     # First, check if input is a dictionary
     if isinstance(filename, dict):
@@ -381,12 +368,7 @@ def save_pars(img, savefile=None, quiet=False):
 
     The save file is a "pickled" opts dictionary.
     """
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import pickle
-    from . import tc
-    import sys
+    import pickle
 
     if savefile is None or savefile == '':
         basename = os.path.basename(img.opts.filename) + '.pybdsf.sav'
@@ -409,8 +391,6 @@ def list_pars(img, opts_list=None, banner=None, use_groups=True):
     use_groups - whether to use the group information for each
                  parameter.
     """
-    from . import tc
-    import sys
 
     # Get all options as a list sorted by name
     opts = img.opts.to_list()
@@ -443,8 +423,6 @@ def set_pars(img, **kwargs):
     Allows partial names for parameters as long as they are unique. Parameters
     are set to default values if par = ''.
     """
-    import re
-    import sys
     from .image import Image
 
     # Enumerate all options
@@ -452,7 +430,7 @@ def set_pars(img, **kwargs):
 
     # Check that parameters are valid options and are unique
     full_key = []
-    for i, key in enumerate(kwargs):
+    for key in kwargs:
         chk_key = checkpars(opts, key)
         if chk_key == []:
             raise RuntimeError("Input parameter '" + key + "' not recognized.")
@@ -487,7 +465,6 @@ def group_opts(opts):
     "hidden" group are excluded from the returned list (as defined in opts.py).
     """
     groups = []
-    gp = []
     for i in range(len(opts)):
         grp = opts[i][1].group()
         if grp is not None and grp not in groups:
@@ -533,11 +510,9 @@ def print_opts(grouped_opts_list, img, banner=None):
     to set the bold color in the profiles to white, as it defaults to red,
     which is a bit hard on the eyes in this case.
     """
-    from .image import Image
-    import os
     from . import functions as func
 
-    termy, termx = func.getTerminalSize() # note: returns row, col -> y, x
+    _, termx = func.getTerminalSize() # note: returns row, col -> y, x
     minwidth = 28 # minimum width for parameter names and values
 
     # Define colors for output
@@ -611,7 +586,7 @@ def print_opts(grouped_opts_list, img, banner=None):
                 len_without_formatting = len(k) + len(str(val)) + 5
             else:
                 len_without_formatting = len(k) + len(str(val)) + 4
-            for i in range(len_without_formatting, minwidth):
+            for _ in range(len_without_formatting, minwidth):
                 parvalstr += '.'
             parvalstr += ' ' + valstr
             if "'" not in valstr:
@@ -625,7 +600,7 @@ def print_opts(grouped_opts_list, img, banner=None):
             # Print suboptions, indented 2 spaces from main options in sc color
             parent_opt = grouped_opts_list[indx-1]
             parent_val = img.opts.__getattribute__(parent_opt[0])
-            if parent_val == True:
+            if parent_val:
                 for og in o:
                     k = og[0]
                     v = og[1]
@@ -659,7 +634,7 @@ def print_opts(grouped_opts_list, img, banner=None):
                         len_without_formatting = len(k) + len(str(val)) + 7
                     else:
                         len_without_formatting = len(k) + len(str(val)) + 6
-                    for i in range(len_without_formatting, minwidth):
+                    for _ in range(len_without_formatting, minwidth):
                         parvalstr += '.'
                     parvalstr += ' ' + valstr
                     if "'" not in valstr:
@@ -678,7 +653,7 @@ def wrap(text, width=80):
         line = []
         len_line = 0
         for word in paragraph.split(' '):
-            word.strip()
+            word = word.strip()
             len_word = len(word)
             if len_line + len_word <= width:
                 line.append(word)
@@ -696,8 +671,7 @@ def checkpars(lines, regex):
     import re
     result = []
     for l in lines:
-        match = re.match(regex,l)
-        if match:
+        if re.match(regex, l):
             result += [l]
     return result
 
@@ -792,7 +766,6 @@ def export_image(img, outfile=None, img_format='fits', pad_image = False,
         'psf_ratio_aper' - PSF peak-to-aperture flux ratio (in units of 1/beam)
         'island_mask' - Island mask image (0 = outside island, 1 = inside island)
     """
-    import os
     from . import functions as func
     from .const import fwsig
     from . import mylogger
@@ -923,7 +896,6 @@ def export_image(img, outfile=None, img_format='fits', pad_image = False,
             print('--> Wrote file ' + repr(filename))
             if use_io == 'rap':
                 # remove the temporary fits file used as a casacore template
-                import os
                 os.remove(filename+'.fits')
 
         return True
@@ -987,7 +959,7 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     from . import output
 
     # First some checking:
-    if not 'gausfit' in img.completed_Ops:
+    if 'gausfit' not in img.completed_Ops:
         print('\033[91mERROR\033[0m: Image has not been fit. Please run process_image first.')
         return False
     if catalog_type == 'shap' and not 'shapelets' in img.completed_Ops:
@@ -1032,7 +1004,6 @@ def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='g
     if filename == 'samp' or filename == 'SAMP':
         import tempfile
         from . import functions as func
-        import os
         if not hasattr(img,'samp_client'):
             s, private_key = func.start_samp_proxy()
             img.samp_client = s
