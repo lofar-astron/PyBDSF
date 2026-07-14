@@ -65,7 +65,7 @@ class Op_threshold(Op):
             v = N.sort(0.5*erfc(N.ravel((data-img.mean_arr)/img.rms_arr)/sq2))
             pcrit = None
             
-            # Find the largest index k (from size down to 1) 
+            # Find the largest index k (from 'size' down to 1) 
             # such that p-value <= slope * k / size
             for k in range(size, 0, -1):
                 # Benjamini-Yekutieli FDR condition
