@@ -4,10 +4,10 @@ Defines functions that write the results of source detection in a
 variety of formats. These are then used as methods of Image objects
 and/or are called by the outlist operation if output_all is True.
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
 from .image import Op
+
+import astropy.units as u
+from astropy.coordinates import SkyCoord, FK4, FK5
 
 
 class Op_outlist(Op):
@@ -175,37 +175,32 @@ def dec2ddmmss(deg):
 
 
 def B1950toJ2000(Bcoord):
-    """ Precess using Aoki et al. 1983. Same results as NED to ~0.2asec """
-    from math import sin, cos, pi, sqrt, asin, acos
-    import numpy as N
+    """
+    Convert FK4 B1950 coordinates to FK5 J2000.
 
-    rad = 180.0/pi
-    ra, dec = Bcoord
+    Uses Astropy's FK4->FK5 transformation based on
+    modern IAU 2006/2010 standards.
 
-    A = N.array([-1.62557e-6, -0.31919e-6, -0.13843e-6])
-    M = N.array([[0.9999256782, 0.0111820609, 0.00485794], [-0.0111820610, 0.9999374784, -0.0000271474],
-                 [-0.0048579477, -0.0000271765, 0.9999881997]])
+    Results differ from the classical Aoki et al. (1983)
+    implementation used by PyBDSF by about 0.1-0.3 arcsec.
+    """
 
-    r0 = N.zeros(3)
-    r0[0] = cos(dec/rad) * cos(ra/rad)
-    r0[1] = cos(dec/rad) * sin(ra/rad)
-    r0[2] = sin(dec/rad)
+    ra_deg, dec_deg = Bcoord
 
-    r0A = N.sum(r0*A)
-    r1 = r0 - A + r0A*r0
-    r = N.sum(M.transpose()*r1, axis=1)
+    c_b1950 = SkyCoord(
+        ra=ra_deg * u.deg,
+        dec=dec_deg * u.deg,
+        frame=FK4(equinox="B1950")
+    )
 
-    rscal = sqrt(N.sum(r*r))
-    decj = asin(r[2]/rscal)*rad
+    c_j2000 = c_b1950.transform_to(
+        FK5(equinox="J2000")
+    )
 
-    d1 = r[0] / rscal / cos(decj/rad)
-    d2 = r[1] / rscal / cos(decj/rad)
-    raj = acos(d1)*rad
-    if d2 < 0.0:
-        raj = 360.0 - raj
-
-    Jcoord = [raj, decj]
-    return Jcoord
+    return [
+        c_j2000.ra.degree,
+        c_j2000.dec.degree
+    ]
 
 
 def write_bbs_gaul(img, filename=None, srcroot=None, patch=None,
@@ -977,7 +972,7 @@ def list_and_sort_gaussians(img, patch=None, root=None,
                           'included in the output sky model.')
         for p in unique_patch_ids:
             if p != 0:
-                in_patch = N.where(patchnums == p)
+                in_patch = N.where(N.array(patchnums) == p)
                 outlist.append(N.array(gauslist)[in_patch].tolist())
                 outnames.append(N.array(gausname)[in_patch].tolist())
                 patchnames.append('patch_'+str(p))
