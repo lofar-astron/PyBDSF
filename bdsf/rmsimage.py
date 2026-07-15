@@ -65,8 +65,9 @@ def mapcoord_threaded(a, axs, *args, ncores=None, **kwargs):
         )
 
 
+    available_cpus = len(os.sched_getaffinity(0))
     if ncores is None:
-        ncores = min(32, (os.cpu_count() or 1) + 4)
+        ncores = min(32, (available_cpus or 1) + 4)
 
     output = kwargs.pop("output", None)
     order = kwargs.get("order", 3)
