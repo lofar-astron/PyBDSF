@@ -32,6 +32,39 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     to equivalent of meshgrid(*axs)
 
     """
+    def tworker_fallback(i, cl1):
+        cl = np.meshgrid(*([cl1]+axs[1:]))[-1::-1]
+        start, end = indices[i], indices[i+1]
+        out_slice = [slice(None)] * output.ndim
+        out_slice[1] = slice(start, end)
+        ndimage.map_coordinates(a, cl, prefilter=False, output=output[tuple(out_slice)], *args, **kwargs)
+
+    def tworker_tiled(r0, r1):
+        start0, end0 = r0
+        start1, end1 = r1
+        
+        sub_ax0 = ax0[start0:end0]
+        sub_ax1 = ax1[start1:end1]
+        
+        h = end1 - start1
+        w = end0 - start0
+        
+        # Allocate a contiguous float64 array and use 
+        # lossless numpy broadcasting
+        coords = np.empty((2, h, w), dtype=np.float64)
+        coords[0, :, :] = sub_ax1[:, None]  # Y-axis
+        coords[1, :, :] = sub_ax0[None, :]  # X-axis
+        
+        out_slice = (slice(start1, end1), slice(start0, end0))
+        
+        ndimage.map_coordinates(
+            a, coords, 
+            prefilter=False, 
+            output=output[out_slice], 
+            *args, **kwargs
+        )
+
+
     if ncores is None:
         ncores = min(32, (os.cpu_count() or 1) + 4)
 
@@ -53,13 +86,6 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
         chunks = np.array_split(axs[0], ncores)
         chunk_sizes = [len(c) for c in chunks]
         indices = [0] + np.cumsum(chunk_sizes).tolist()
-
-        def tworker_fallback(i, cl1):
-            cl = np.meshgrid(*([cl1]+axs[1:]))[-1::-1]
-            start, end = indices[i], indices[i+1]
-            out_slice = [slice(None)] * output.ndim
-            out_slice[1] = slice(start, end)
-            ndimage.map_coordinates(a, cl, prefilter=False, output=output[tuple(out_slice)], *args, **kwargs)
 
         with ThreadPoolExecutor(max_workers=ncores) as te:
             futures = [te.submit(tworker_fallback, i, chunk) for i, chunk in enumerate(chunks)]
@@ -88,31 +114,6 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     
     # Prepare coordinate pairs to eliminate task assignment delays
     tasks = [(r0, r1) for r1 in ranges_1 for r0 in ranges_0]
-
-    def tworker_tiled(r0, r1):
-        start0, end0 = r0
-        start1, end1 = r1
-        
-        sub_ax0 = ax0[start0:end0]
-        sub_ax1 = ax1[start1:end1]
-        
-        h = end1 - start1
-        w = end0 - start0
-        
-        # Allocate a contiguous float64 array and use 
-        # lossless numpy broadcasting
-        coords = np.empty((2, h, w), dtype=np.float64)
-        coords[0, :, :] = sub_ax1[:, None]  # Y-axis
-        coords[1, :, :] = sub_ax0[None, :]  # X-axis
-        
-        out_slice = (slice(start1, end1), slice(start0, end0))
-        
-        ndimage.map_coordinates(
-            a, coords, 
-            prefilter=False, 
-            output=output[out_slice], 
-            *args, **kwargs
-        )
 
     # If the image is very small, run it in the main thread, 
     # bypassing ThreadPoolExecutor
