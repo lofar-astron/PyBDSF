@@ -76,8 +76,8 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     if order > 1:
         a = ndimage.spline_filter(a, order, output=np.float64, mode=mode)
 
-    # Fallback for non-2D cases
-    if len(axs) != 2:
+    # Fallback for 3D cases
+    if len(axs) > 2:
         if output is None:
             shape = [len(axs[1]), len(axs[0])] + [len(ax) for ax in axs[2:]]
             out_dtype = np.float64 if order > 1 else a.dtype
