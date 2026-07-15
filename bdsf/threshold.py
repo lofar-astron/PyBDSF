@@ -13,7 +13,7 @@ Masked images aren't handled properly yet.
 from __future__ import absolute_import
 
 import numpy as N
-from .image import Op, Image, NArray
+from .image import Op
 from math import sqrt,pi,log
 from scipy.special import erfc, erfcinv
 from . import const
@@ -28,7 +28,7 @@ class Op_threshold(Op):
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Threshold ")
         data = img.ch0_arr
-        mask = img.mask_arr
+        mask = img.mask_arr # not implemented yet
         opts = img.opts
         size = N.prod(img.ch0_arr.shape)
         sq2  = sqrt(2)
@@ -69,8 +69,6 @@ class Op_threshold(Op):
                     break
             if pcrit is None:
                 raise RuntimeError("FDR thresholding failed. Please check the input image for problems.")
-            dumr1 = 1.0-2.0*pcrit
-            dumr = 8.0/3.0/pi*(pi-3.0)/(4.0-pi)
             # Inverse of the complementary error function
             sigcrit = erfcinv(2.0 * pcrit) * sq2
             if pcrit == 0.0:
