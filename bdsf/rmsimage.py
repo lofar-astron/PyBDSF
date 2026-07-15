@@ -23,7 +23,7 @@ from .functions import read_image_from_file
 from . import multi_proc as mp
 
 
-def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
+def mapcoord_threaded(a, axs, *args, ncores=None, **kwargs):
     """Threaded map_coordinates on cartesian coordinate grid (meshgrid)
 
     :param a: Array to be regridded
