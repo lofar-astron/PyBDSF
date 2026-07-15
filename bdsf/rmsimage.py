@@ -141,21 +141,21 @@ class Op_rmsimage(Op):
         image = ch0_images[0]
         shape = image.shape
         isl_size_bright = []
-        isl_area_highthresh = []
         threshold = start_thresh
+        rank = len(shape)
+        connectivity = ndimage.generate_binary_structure(rank, rank)
         if do_adapt:
             mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
+                isl_area_highthresh = []
                 if img.masked:
                     act_pixels = ~(mask.copy())
                     act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
                 else:
                     act_pixels = (image-cmean)/threshold >= crms
                 threshold *= 0.8
-                rank = len(image.shape)
-                connectivity = ndimage.generate_binary_structure(rank, rank)
                 labels, count = ndimage.label(act_pixels, connectivity)
                 slices = ndimage.find_objects(labels)
                 for idx, s in enumerate(slices):
@@ -175,8 +175,6 @@ class Op_rmsimage(Op):
             act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
         else:
             act_pixels = (image-cmean)/threshold >= crms
-        rank = len(image.shape)
-        connectivity = ndimage.generate_binary_structure(rank, rank)
         labels, count = ndimage.label(act_pixels, connectivity)
         slices = ndimage.find_objects(labels)
         isl_size = []
