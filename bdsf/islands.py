@@ -345,11 +345,12 @@ class Island(object):
         self.shape = data.shape
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
-        in_bbox_and_unmasked = N.where(~N.isnan(bbox_rms_im))
-        self.rms = bbox_rms_im[in_bbox_and_unmasked].mean()
-        in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
-        self.mean = bbox_mean_im[in_bbox_and_unmasked].mean()
-        self.islmean = bbox_mean_im[in_bbox_and_unmasked].mean()
+        # Create mask for calculation of thew mean valuses
+        valid_island_pixels = ~self.mask_active & ~N.isnan(bbox_rms_im) & ~N.isnan(bbox_mean_im)
+        # Calculate mean valuse only on the island area
+        self.rms = bbox_rms_im[valid_island_pixels].mean()
+        self.mean = bbox_mean_im[valid_island_pixels].mean()
+        self.islmean = self.mean
         valid_pixels = ~self.mask_active & ~N.isnan(self.image) # pixels that are both: inside the island and not NaN
         self.total_flux = N.nansum(self.image[valid_pixels])/beamarea
         pixels_in_isl = N.sum(~N.isnan(self.image[~self.mask_active]))  # number of unmasked pixels assigned to current island
