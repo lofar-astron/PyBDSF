@@ -345,6 +345,7 @@ class Island(object):
         self.shape = data.shape
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
+        in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
         # Create mask for calculation of thew mean valuses
         valid_island_pixels = ~self.mask_active & ~N.isnan(bbox_rms_im) & ~N.isnan(bbox_mean_im)
         # Calculate mean valuse only on the island area
