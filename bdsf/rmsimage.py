@@ -80,11 +80,11 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     # Limit the tile size: 
     # max 1000: to avoid evicting data from the CPU L3 cache (~16 MB)
     # min 100:  so the Python array creation overhead doesn't exceed computation time
-    TILE_SIZE = max(100, min(1000, ideal_tile_size))
+    tile_size = max(100, min(1000, ideal_tile_size))
     
     # Generate coordinate ranges for individual tiles
-    ranges_0 = [(i, min(i + TILE_SIZE, len0)) for i in range(0, len0, TILE_SIZE)]
-    ranges_1 = [(i, min(i + TILE_SIZE, len1)) for i in range(0, len1, TILE_SIZE)]
+    ranges_0 = [(i, min(i + tile_size, len0)) for i in range(0, len0, tile_size)]
+    ranges_1 = [(i, min(i + tile_size, len1)) for i in range(0, len1, tile_size)]
     
     # Prepare coordinate pairs to eliminate task assignment delays
     tasks = [(r0, r1) for r1 in ranges_1 for r0 in ranges_0]
