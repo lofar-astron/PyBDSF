@@ -270,8 +270,8 @@ class Op_gausfit(Op):
                     print('SPLITTING ISLAND INTO ', n_subisl, ' PARTS FOR ISLAND ', isl.island_id)
                 for i_sub in range(n_subisl):
                     islcp = isl.copy(img.pixel_beamarea())
-                    islcp.mask_active = N.where(sub_labels == i_sub+1, False, True)
-                    islcp.mask_noisy = N.where(sub_labels == i_sub+1, False, True)
+                    islcp.mask_active = (sub_labels != i_sub+1)
+                    islcp.mask_noisy = (sub_labels != i_sub+1)
                     size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea()*2.0
                     if opts.peak_fit and size_subisl > peak_size:
                         sgaul, sfgaul = self.fit_island_iteratively(img, islcp, iter_ngmax=iter_ngmax, opts=opts)
@@ -441,9 +441,8 @@ class Op_gausfit(Op):
             # If all else fails, try to use moment analysis
             if verbose:
                 print('All else has failed, trying moment analysis')
-            inisl = N.where(~isl.mask_active)
             mask_id = N.zeros(isl.image.shape, dtype=N.int32) - 1
-            mask_id[inisl] = isl.island_id
+            mask_id[~isl.mask_active] = isl.island_id
             try:
                 pixel_beamarea = img.pixel_beamarea()
                 mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, pixel_beamarea, True)
@@ -650,7 +649,7 @@ class Op_gausfit(Op):
                 compact = []
                 invmask = []
                 for ished in range(nshed):
-                    shedmask = N.where(watershed == ished+2, False, True) + isl.mask_active  # good unmasked pixels = 0
+                    shedmask = (watershed != ished+2) | isl.mask_active  # good unmasked pixels = False
                     imm = nd.binary_dilation(~shedmask, N.ones((3, 3), int))
                     xbad, ybad = N.where((imm == 1)*(im > im[xm[ished+1], ym[ished+1]]))
                     imm[xbad, ybad] = 0

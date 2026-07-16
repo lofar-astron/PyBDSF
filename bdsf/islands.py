@@ -356,7 +356,7 @@ class Island(object):
         valid_pixels = ~self.mask_active & ~N.isnan(self.image) & ~N.isnan(bbox_mean_im)
         self.total_flux = N.nansum((self.image - bbox_mean_im)[valid_pixels]) / beamarea
         pixels_in_isl = N.sum(~N.isnan(self.image[~self.mask_active]))  # number of unmasked pixels assigned to current island
-        self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
+        self.total_fluxE = func.nanmean(bbox_rms_im[valid_pixels]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
         self.border = self.get_border()
         self.gaul = []
         self.fgaul = []
