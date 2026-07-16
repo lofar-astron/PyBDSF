@@ -55,8 +55,8 @@ class Op_make_residimage(Op):
             mask = img.rms_mask
         else:
             mask = img.mask_arr
-        if isinstance(img.mask_arr, N.ndarray):
-            pix_masked = N.where(img.mask_arr == True)
+        if isinstance(mask, N.ndarray):
+            pix_masked = N.where(mask == True)
             model_gaus[pix_masked] = N.nan
             resid_gaus[pix_masked] = N.nan
 
