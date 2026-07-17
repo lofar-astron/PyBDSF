@@ -8,20 +8,19 @@ where for 3D case it will calculate maps for each plane (=
 Stokes images).
 """
 import os
-from math import sqrt, log
+from math import sqrt, log, floor, ceil
 import itertools
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from scipy import interpolate, ndimage
 
-from .image import Op, Image, NArray, List
+from .image import Op
 from . import const
 from . import mylogger
 from . import functions as func
 from .functions import read_image_from_file
 from . import multi_proc as mp
-from . import _cbdsm
 
 
 def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
@@ -116,40 +115,47 @@ class Op_rmsimage(Op):
         img.use_rms_map = None
         img.mean_map_type = None
 
+        crms = crmss[0]
         # 'size' of brightest source
         kappa1 = 3.0
+        # Calculate the full diameter of the brightest source in pixels.
+        # Assume a 2D Gaussian beam profile: I_max * exp(-r^2 / (2*sigma^2))
+        # The formula finds the diameter 2r where the brightness drops to 3x the noise level
+        # (kappa1 * crms). Solving for 2r gives: 2 * sigma * sqrt(2 * ln(I_max / (3 * sigma_noise)))
         try:
             brightsize = int(round(2.*img.beam[0]/cdelt[0]/fwsig*
                                sqrt(2.*log(img.max_value/(kappa1*crms)))))
-        except:
+        # Fallback: 2-sigma beam
+        # If the image contains no sources, `img.max_value` might be 
+        # smaller than the noise threshold (kappa1 * crms). This would make the fraction < 1, 
+        # causing `log()` to return a negative number, and `sqrt()` to raise a math domain error.
+        except (ValueError, ZeroDivisionError):
             brightsize = int(round(2.*img.beam[0]/cdelt[0]/fwsig))
+
         mylog.info('Estimated size of brightest source (pixels) = '+str(brightsize))
 
         # Using clipped mean and rms and a starting threshold of 500 sigma,
         # search for bright sources. If fewer than 5 are found, reduce
         # threshold until limit set by adapt_thresh is hit.
         cmean = cmeans[0]
-        crms = crmss[0]
         image = ch0_images[0]
         shape = image.shape
         isl_size_bright = []
-        isl_area_highthresh = []
-        isl_peak = []
-        max_isl_brightsize = 0.0
         threshold = start_thresh
+        rank = len(shape)
+        connectivity = ndimage.generate_binary_structure(rank, rank)
         if do_adapt:
             mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
+                isl_area_highthresh = []
                 if img.masked:
                     act_pixels = ~(mask.copy())
                     act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
                 else:
                     act_pixels = (image-cmean)/threshold >= crms
                 threshold *= 0.8
-                rank = len(image.shape)
-                connectivity = ndimage.generate_binary_structure(rank, rank)
                 labels, count = ndimage.label(act_pixels, connectivity)
                 slices = ndimage.find_objects(labels)
                 for idx, s in enumerate(slices):
@@ -158,28 +164,21 @@ class Op_rmsimage(Op):
                     isl_area_highthresh.append(size_area)
                     isl_maxposn.append(tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+\
                           np.array((s[0].start, s[1].start))))
-                    isl_peak.append(ndimage.maximum(image[s], labels[s], idx+1))
 
         # Check islands found above at thresh_isl threshold to determine if
         # the bright source is embedded inside a large island or not. If it is,
         # exclude it from the bright-island list. Also find the size of the
         # largest island at this threshold to set the large-scale rms_box
-        bright_threshold = threshold
         threshold = 10.0
         if img.masked:
             act_pixels = ~(mask.copy())
             act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
         else:
             act_pixels = (image-cmean)/threshold >= crms
-        rank = len(image.shape)
-        connectivity = ndimage.generate_binary_structure(rank, rank)
         labels, count = ndimage.label(act_pixels, connectivity)
         slices = ndimage.find_objects(labels)
         isl_size = []
         isl_size_highthresh = []
-        isl_size_lowthresh = []
-        isl_snr = []
-        thratio = threshold/bright_threshold
         for idx, s in enumerate(slices):
             isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
             isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+
@@ -189,9 +188,7 @@ class Op_rmsimage(Op):
                 bright_indx = isl_maxposn.index(isl_maxposn_lowthresh)
                 if isl_area_lowthresh < 25.0 or isl_area_lowthresh/isl_area_highthresh[bright_indx] < 8.0:
                     isl_pos.append(isl_maxposn_lowthresh)
-                    isl_size_lowthresh.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
                     isl_size_highthresh.append(isl_size_bright[bright_indx])
-                    isl_snr.append(isl_peak[bright_indx]/crms)
 
         if len(isl_size) == 0:
             max_isl_size = 0.0
@@ -200,11 +197,8 @@ class Op_rmsimage(Op):
         mylog.info('Maximum extent of largest 10-sigma island using clipped rms (pixels) = '+str(max_isl_size))
         if len(isl_size_highthresh) == 0:
             max_isl_size_highthresh = 0.0
-            max_isl_size_lowthresh = 0.0
         else:
             max_isl_size_highthresh = max(isl_size_highthresh)
-            max_isl_size_lowthresh = max(isl_size_lowthresh)
-            avg_max_isl_size = (max_isl_size_highthresh + max_isl_size_lowthresh) / 2.0
 
         if hasattr(img, '_adapt_rms_isl_pos'):
             isl_pos = img._adapt_rms_isl_pos # set isl_pos to existing value (for wavelet analysis)
@@ -375,9 +369,8 @@ class Op_rmsimage(Op):
             if pol == 'I':
                 # Apply mask to mean_map and rms_map by setting masked values to NaN
                 if isinstance(mask, np.ndarray):
-                    pix_masked = np.where(mask == True)
-                    mean[pix_masked] = np.nan
-                    rms[pix_masked] = np.nan
+                    mean[mask] = np.nan
+                    rms[mask] = np.nan
 
                 img.mean_arr = mean
                 img.rms_arr = rms
@@ -404,9 +397,8 @@ class Op_rmsimage(Op):
                     else:
                         resdir = img.basedir + '/background/'
                     if not os.path.exists(resdir): os.makedirs(resdir)
-                    zero_pixels = np.where(rms <= 0.0)
                     rms_nonzero = rms.copy()
-                    rms_nonzero[zero_pixels] = np.nan
+                    rms_nonzero[rms <= 0.0] = np.nan
                     func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
             else:
@@ -427,12 +419,9 @@ class Op_rmsimage(Op):
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(rms[unmasked])
-            maxrms = np.max(rms[unmasked])
+            stdsub = np.std(rms[~img.mask_arr])
         else:
             stdsub = np.std(rms)
-            maxrms = np.max(rms)
 
         rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of rms image = ', stdsub*1000.0, 'mJy'))
@@ -457,12 +446,9 @@ class Op_rmsimage(Op):
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(mean[unmasked])
-            maxmean = np.max(mean[unmasked])
+            stdsub = np.std(mean[~img.mask_arr])
         else:
             stdsub = np.std(mean)
-            maxmean = np.max(mean)
         rms_expect = img.clipped_rms/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of mean image = ', stdsub*1000.0, 'mJy'))
         mylog.debug('%s %10.6f %s' % ('Expected standard deviation = ', rms_expect*1000.0, 'mJy'))
@@ -488,7 +474,6 @@ class Op_rmsimage(Op):
         """Calls map_2d and checks for problems"""
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Calcmaps ")
         rms_ok = False
-        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Rmsimage.Calcmaps ")
         opts = img.opts
         kappa = map_opts[0]
         spline_rank = opts.spline_rank
@@ -587,10 +572,8 @@ class Op_rmsimage(Op):
                 calculated map
         do_adapt: use adaptive binning
         """
-        mask_small = mask
-        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask_small, kappa, box, ncores)
+        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask, kappa, box, ncores)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)][-1::-1]
-        pt_src_scale = box[0]
         if do_adapt:
             out_rms2 = np.zeros(rms_map1.shape, dtype=np.float32)
             out_mean2 = np.zeros(rms_map1.shape, dtype=np.float32)
@@ -774,7 +757,7 @@ class Op_rmsimage(Op):
             rms_map[co] = cr
 
         # Check if all regions have too few unmasked pixels
-        if mask is not None and np.size(np.where(mean_map != np.inf)) == 0:
+        if mask is not None and not np.any(mean_map != np.inf):
             raise RuntimeError("No unmasked regions from which to determine "\
                          "mean and rms maps")
 
@@ -873,8 +856,7 @@ class Op_rmsimage(Op):
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
         # np.inf)
-        unmasked_boxes = np.where(mean_map != np.inf)
-        if np.size(unmasked_boxes,1) < mapshape[0]*mapshape[1]:
+        if np.count_nonzero(mean_map != np.inf) < mapshape[0]*mapshape[1]:
             mean_map = self.fill_masked_regions(mean_map)
             rms_map = self.fill_masked_regions(rms_map)
 
@@ -910,10 +892,10 @@ class Op_rmsimage(Op):
                 goodcutout = cutout[cutout != magic]
                 num_unmasked = len(goodcutout)
                 if num_unmasked > 0:
-                    themap[x, y] = np.nansum(goodcutout)/float(len(goodcutout))
+                    themap[x, y] = np.nanmean(goodcutout)
                 delx += 1
                 dely += 1
-        themap[np.where(np.isnan(themap))] = 0.0
+        themap[np.isnan(themap)] = 0.0
         return themap
 
     def pad_array(self, arr, new_shape):
@@ -960,28 +942,16 @@ class Op_rmsimage(Op):
 
         return arr_pad
 
-    def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
 
-        bstat = func.bstat#_cbdsm.bstat
-        a, b, c, d = ind; i, j = co
-        if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
-            if cnt > 198: cm = m; cr = r
-            mean_map[i, j], rms_map[i, j] = cm, cr
-        else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
-            if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
-                if cnt > 198: cm = m; cr = r
-                mean_map[i, j], rms_map[i, j] = cm, cr
-            else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
-                    mean_map[i, j], rms_map[i, j] = cm, cr
-                else: # too few unmasked pixels --> set mean/rms to inf
-                    mean_map[i, j], rms_map[i, j] = np.inf, np.inf
+    def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
+        """
+        Delegates calculations to 'for_masked_mp', and then
+        stores results into the global 2D map arrays.
+        """
+
+        i, j = co
+        cm, cr = self.for_masked_mp(mask, arr, ind, kappa)
+        mean_map[i, j], rms_map[i, j] = cm, cr
 
 
     def for_masked_mp(self, mask, arr, ind, kappa):
@@ -998,9 +968,18 @@ class Op_rmsimage(Op):
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
             else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                if npix_unmasked > 5: # same logic as in 'for_masked'
+                    # First take the same windows for which the mask was calculated
+                    # and then select only the unmasked pixels
+                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    cm = np.median(valid_pixels)
+                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
+                    # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
+                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+                    
+                    # Protection against zero noise (e.g. all pixels have the same value)
+                    if cr == 0.0:
+                        cr = np.std(valid_pixels) # final fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
@@ -1038,7 +1017,6 @@ class Op_rmsimage(Op):
         compressed image (e.g. it has no exact counterpart, and it's value
         should be obtained by interpolation)
         """
-        from math import floor, ceil
         res = np.zeros(size, dtype=np.float32)
 
         for i in range(len(arr) - 1):

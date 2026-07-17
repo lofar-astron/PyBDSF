@@ -17,16 +17,27 @@ import traceback
 
 import numpy
 
-# Try to determine the number of CPU cores _available_ to the current process,
-# similar to what the Linux `nproc` command does. If that fails, return the
-# total number of CPU cores in the machine.
-try:
-    _ncpus = len(os.sched_getaffinity(0))
-except AttributeError:
-    _ncpus = multiprocessing.cpu_count()
+def nproc():
+    """
+    Return the number of CPU cores _available_ to the current process, similar
+    to what the Linux `nproc` command does. This can be less than the total
+    number of CPU cores in the machine.
+    NOTE: This function uses `os.sched_getaffinity()`, which is not available
+    on every OS. Use `os.cpu_count()` as fall-back; return 1 in the rare case
+    that `os.cpu_count()` returns `None`.
+    """
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return os.cpu_count() or 1
 
-# Set the start method to "fork". Other methods don't work with our codebase.
-multiprocessing.set_start_method('fork')
+_ncpus = nproc()
+
+# PyBDSF currently relies on fork-style multiprocessing.
+# The spawn and forkserver start methods are not supported because
+# parts of the codebase assume inherited interpreter state and are
+# not safe for re-import during process startup.
+fork_context = multiprocessing.get_context("fork")
 
 __all__ = ('parallel_map',)
 
@@ -181,7 +192,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     if numcores < 1:
         numcores = 1
 
-    manager = multiprocessing.Manager()
+    manager = fork_context.Manager()
 
     out_q = manager.Queue()
     err_q = manager.Queue()
@@ -220,7 +231,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     while len(sequence[-1]) == 0:
         sequence.pop()
 
-    procs = [multiprocessing.Process(target=worker,
+    procs = [fork_context.Process(target=worker,
              args=(function, ii, chunk, out_q, err_q, lock, bar, bar_state,
                    preserve_order))
              for ii, chunk in enumerate(sequence)]
