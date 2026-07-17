@@ -66,7 +66,7 @@ def mapcoord_threaded(a, axs, *args, ncores=None, **kwargs):
 
 
     if ncores is None:
-        ncores = min(32, (mp.nproc or 1) + 4)
+        ncores = mp.nproc()
 
     output = kwargs.pop("output", None)
     order = kwargs.get("order", 3)
