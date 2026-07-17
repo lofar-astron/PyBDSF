@@ -1390,7 +1390,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSF image', tfile.name)
     else:
         # Write image to FITS file
-        if outdir is None:
+        if not outdir:
             outdir = img.indir
         os.makedirs(outdir, exist_ok=True)
         outfilename = os.path.join(outdir, filename)
