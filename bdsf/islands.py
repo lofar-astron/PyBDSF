@@ -354,11 +354,9 @@ class Island(object):
         self.shape = data.shape
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
-        in_bbox_and_unmasked = N.where(~N.isnan(bbox_rms_im))
-        self.rms = bbox_rms_im[in_bbox_and_unmasked].mean()
-        in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
-        self.mean = bbox_mean_im[in_bbox_and_unmasked].mean()
-        self.islmean = bbox_mean_im[in_bbox_and_unmasked].mean()
+        self.rms = N.nanmean(bbox_rms_im)
+        self.mean = N.nanmean(bbox_mean_im)
+        self.islmean = self.mean
         # Create a mask for pixels that are:
         # a) within the island
         # b) not NaN in both the image and the background map
