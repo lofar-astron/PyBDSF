@@ -55,8 +55,8 @@ class Op_make_residimage(Op):
             mask = img.rms_mask
         else:
             mask = img.mask_arr
-        if isinstance(img.mask_arr, N.ndarray):
-            pix_masked = N.where(img.mask_arr == True)
+        if isinstance(mask, N.ndarray):
+            pix_masked = N.where(mask == True)
             model_gaus[pix_masked] = N.nan
             resid_gaus[pix_masked] = N.nan
 
@@ -87,7 +87,7 @@ class Op_make_residimage(Op):
 
         if img.opts.residual_stats_do:
             # Calculate some statistics for the Gaussian residual image
-            resid_gaus_non_masked = resid_gaus[~N.isnan(img.ch0_arr)]
+            resid_gaus_non_masked = resid_gaus[~N.isnan(resid_gaus)]
             mean = N.mean(resid_gaus_non_masked, axis=None)
             std_dev = N.std(resid_gaus_non_masked, axis=None)
             skew = stats.skew(resid_gaus_non_masked, axis=None)
