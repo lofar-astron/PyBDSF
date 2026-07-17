@@ -55,7 +55,7 @@ class Op_threshold(Op):
         if img.thresh=='fdr':
             cdelt = img.wcs_obj.acdelt[:2]
             bm = (img.beam[0], img.beam[1])
-            area_pix = int(round((N.prod(bm) * pi / (4.0*log(2.0))) / abs(N.prod(cdelt))))
+            area_pix = round(pi/(4.0*log(2.0)) * (N.prod(bm) / abs(N.prod(cdelt))))
             s0 = 0
             for i in range(area_pix):
                 s0 +=  1.0/(i+1)
