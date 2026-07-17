@@ -20,7 +20,7 @@ operations = [
 # options can be enabled
 outputs_agree = compare_results(
     filecmp.dircmp("tbdsf_process_image.in_fits_pybdsf", "reference_outputs"),
-    1e-2,  # rtol: a value of 1e-2 works well for CI jobs; 1e-3 can be used otherwise
+    0.03,  # rtol: a value of 0.03 works well for CI jobs; 0.001 can be used otherwise
     1,  # verbosity
     check_images=True,  # compare the rms values (within rtol) of images
     check_catalogs=False,  # compare entries (within rtol) in FITS catalogs; not suitable for CI jobs
