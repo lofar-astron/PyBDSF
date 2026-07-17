@@ -380,7 +380,7 @@ class Op_rmsimage(Op):
                         resdir = img.basedir + '/wavelet/background/'
                     else:
                         resdir = img.basedir + '/background/'
-                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    os.makedirs(resdir, exist_ok=True)
                     func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', rms, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.rmsd_I.fits'))
                 if opts.savefits_meanim or opts.output_all:
@@ -388,7 +388,7 @@ class Op_rmsimage(Op):
                         resdir = img.basedir + '/wavelet/background/'
                     else:
                         resdir = img.basedir + '/background/'
-                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    os.makedirs(resdir, exist_ok=True)
                     func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', mean, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.mean_I.fits'))
                 if opts.savefits_normim or opts.output_all:
@@ -396,7 +396,7 @@ class Op_rmsimage(Op):
                         resdir = img.basedir + '/wavelet/background/'
                     else:
                         resdir = img.basedir + '/background/'
-                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    os.makedirs(resdir, exist_ok=True)
                     rms_nonzero = rms.copy()
                     rms_nonzero[rms <= 0.0] = np.nan
                     func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)

@@ -1330,8 +1330,7 @@ def convert_casacore_header(casacore_image, tmpdir):
     except ImportError as err:
         import pyfits
 
-    if not os.path.exists(tmpdir):
-        os.makedirs(tmpdir)
+    os.makedirs(tmpdir, exist_ok=True)
     tfile = tempfile.NamedTemporaryFile(delete=False, dir=tmpdir)
     casacore_image.tofits(tfile.name)
     hdr = pyfits.getheader(tfile.name)
@@ -1393,8 +1392,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         # Write image to FITS file
         if outdir is None:
             outdir = img.indir
-        if not os.path.exists(outdir) and outdir != '':
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
         outfilename = os.path.join(outdir, filename)
         if os.path.isfile(outfilename):
             if clobber:
@@ -1548,8 +1546,7 @@ def get_name(img, map_name):
         pi_text = 'I'
     suffix = '/w%i_%s/' % (img.j, pi_text)
     dir = img.tempdir + suffix
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+    os.makedirs(dir, exist_ok=True)
     return dir + map_name + '.bin'
 
 def connect(mask):
@@ -2231,8 +2228,7 @@ def set_up_output_paths(opts):
         output_basedir = os.path.abspath(outdir)
 
     # Make the output directory if needed
-    if not os.path.exists(output_basedir):
-        os.makedirs(output_basedir)
+    os.makedirs(output_basedir, exist_ok=True)
 
     # Check that we have write permission to the base directory
     if not os.access(output_basedir, os.W_OK):
