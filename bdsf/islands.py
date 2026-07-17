@@ -132,7 +132,16 @@ class Op_islands(Op):
             pyrank = N.zeros(ch0_shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
-                pyrank[tuple(isl.bbox)] += N.invert(isl.mask_active) * (i + 1)
+                
+                # Get a boolean mask of the active pixels belonging to this specific island.
+                # In 'mask_active', True = background/masked, False = active island.
+                island_mask = N.invert(isl.mask_active)
+                
+                # Update the pyrank map slice
+                # For pixels where 'island_mask' is True, assign the new island ID (i + 1).
+                # For background pixels (False), preserve whatever values already exist in 'pyrank'
+                # at those coordinates, preventing ID accumulation on overlapping regions.
+                pyrank[tuple(isl.bbox)] = N.where(island_mask, i + 1, pyrank[tuple(isl.bbox)])
             pyrank -= 1  # align pyrank values with island ids and set regions outside of islands to -1
 
             img.pyrank = pyrank
@@ -345,15 +354,16 @@ class Island(object):
         self.shape = data.shape
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
-        in_bbox_and_unmasked = N.where(~N.isnan(bbox_rms_im))
-        self.rms = bbox_rms_im[in_bbox_and_unmasked].mean()
-        in_bbox_and_unmasked = N.where(~N.isnan(bbox_mean_im))
-        self.mean = bbox_mean_im[in_bbox_and_unmasked].mean()
-        self.islmean = bbox_mean_im[in_bbox_and_unmasked].mean()
-        valid_pixels = ~self.mask_active & ~N.isnan(self.image) # pixels that are both: inside the island and not NaN
-        self.total_flux = N.nansum(self.image[valid_pixels])/beamarea
+        self.rms = N.nanmean(bbox_rms_im)
+        self.mean = N.nanmean(bbox_mean_im)
+        self.islmean = self.mean
+        # Create a mask for pixels that are:
+        # a) within the island
+        # b) not NaN in both the image and the background map
+        valid_pixels = ~self.mask_active & ~N.isnan(self.image) & ~N.isnan(bbox_mean_im)
+        self.total_flux = N.nansum((self.image - bbox_mean_im)[valid_pixels]) / beamarea
         pixels_in_isl = N.sum(~N.isnan(self.image[~self.mask_active]))  # number of unmasked pixels assigned to current island
-        self.total_fluxE = func.nanmean(bbox_rms_im[in_bbox_and_unmasked]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
+        self.total_fluxE = func.nanmean(bbox_rms_im[valid_pixels]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
         self.border = self.get_border()
         self.gaul = []
         self.fgaul = []
