@@ -6,6 +6,8 @@ custom IPython shell defined in pybdsf.
 
 """
 import os
+from .image import Image
+import shutil
 
 
 def process(img, **kwargs):
@@ -510,9 +512,9 @@ def print_opts(grouped_opts_list, img, banner=None):
     to set the bold color in the profiles to white, as it defaults to red,
     which is a bit hard on the eyes in this case.
     """
-    from . import functions as func
 
-    _, termx = func.getTerminalSize() # note: returns row, col -> y, x
+    tsize = shutil.get_terminal_size(fallback=(0, 0))
+    termx = tsize.columns
     minwidth = 28 # minimum width for parameter names and values
 
     # Define colors for output
@@ -726,6 +728,7 @@ def round_list_of_tuples(val):
     valstr_list = []
     valstr_list_tot = []
     for l in val:
+        valstr_list = []
         for v in l:
             vstr = '%s' % (round(v, 5))
             if len(vstr) > 7:
