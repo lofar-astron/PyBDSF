@@ -8,6 +8,7 @@ custom IPython shell defined in pybdsf.
 import os
 from .image import Image
 import shutil
+import pickle
 
 
 def process(img, **kwargs):
@@ -347,8 +348,6 @@ def load_pars(filename):
     filename - name of options file to load or a dictionary of opts.
     Returns None (and original error) if no file can be loaded successfully.
     """
-    from .image import Image
-    import pickle
 
     # First, check if input is a dictionary
     if isinstance(filename, dict):
@@ -370,7 +369,6 @@ def save_pars(img, savefile=None, quiet=False):
 
     The save file is a "pickled" opts dictionary.
     """
-    import pickle
 
     if savefile is None or savefile == '':
         basename = os.path.basename(img.opts.filename) + '.pybdsf.sav'
