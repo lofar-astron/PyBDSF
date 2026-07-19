@@ -731,7 +731,7 @@ def plot_sed(src, ax):
     y = N.array(src.specin_flux)
     ey = N.array(src.specin_fluxE)
     x = N.array(src.specin_freq)
-    ax.errorbar(N.log10(x/1e6), N.log10(y), yerr=ey/y, fmt='bo')
+    ax.errorbar(N.log10(x/1e6), N.log10(y), yerr=(ey/y)/N.log(10), fmt='bo')
     ax.plot(N.log10(x/1e6), N.log10(norm)+N.log10(x/src.specin_freq0)*spin,
             '-g', label="alpha = %.2f" % (spin,))
     pos = sky2pix(src.posn_sky_centroid)
