@@ -135,7 +135,7 @@ class Op_shapelets(Op):
         if fixed[2]==0:
             (n, m)=image.shape
             nmax=int(round(sqrt(1.0*n*n+m*m)/beam_pix[1]))-1
-            nmax=min(max(nmax*2+2,10),10)                      # totally ad hoc
+            nmax = max(nmax * 2 + 2, 10) # min. 10, no upper limit for now
             npix = N.prod(image.shape)-N.sum(mask)
             if nmax*nmax >= n*m : nmax = int(floor(sqrt(npix-1)))  # -1 is for when n*m is a perfect square
             if mode == 'fit':   # make sure npara <= npix
