@@ -2,7 +2,6 @@
 
 This will do all the shapelet analysis of islands in an image
 """
-from __future__ import absolute_import
 
 from .image import *
 from .islands import *
@@ -17,6 +16,7 @@ except ImportError: # will be 3.x series
     pass
 from . import functions as func
 from .gausfit import find_bbox
+import numpy as N
 
 
 class Op_shapelets(Op):
@@ -114,7 +114,6 @@ class Op_shapelets(Op):
         specified as an argument, then fixed is taken as 0."""
         from math import sqrt, log, floor
         from . import functions as func
-        import numpy as N
 
         if fixed[0]==1 and beta is None: fixed[0]=0
         if fixed[1]==1 and cen is None: fixed[1]=0
