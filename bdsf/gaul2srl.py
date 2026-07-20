@@ -14,13 +14,12 @@ Each gaussian object gaus has gaus.source_id, the source id.
 
 Also, each island object of img.islands list has the source object island.source
 """
-from __future__ import absolute_import
 
 from .image import *
 from .islands import *
-from .interface import wrap
 from . import mylogger
 import numpy as N
+from . import functions as func
 N.seterr(divide='raise')
 
 
@@ -216,7 +215,6 @@ class Op_gaul2srl(Op):
 
     def in_same_island(self, pair, img, g_list, isl, subim, subn, subm, delc):
         """ Whether two gaussians belong to the same source or not. """
-        from . import functions as func
 
         def same_island_min(pair, g_list, subim, delc, tol=0.5):
             """ If the difference between the lower peak and the minimum of the reconstructed fluxes along the line joining the peak positions
@@ -310,8 +308,6 @@ class Op_gaul2srl(Op):
             same_isl1_min, same_isl1_cont = same_island_min(pair, g_list, subim, delc, tol)
             same_isl2 = same_island_dist(pair, g_list, tol/2.0)
 
-        g1 = g_list[pair[0]]
-
         same_island = (same_isl1_min and same_isl2) or same_isl1_cont
 
         return same_island
@@ -322,8 +318,6 @@ class Op_gaul2srl(Op):
         """ Same as gaul_to_source.f. isrc is same as k in the fortran version. """
         from math import pi, sqrt
         from .const import fwsig
-        from scipy import ndimage
-        from . import functions as func
 
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Gaul2Srl  ")
         dum = img.beam[0]*img.beam[1]
@@ -436,7 +430,7 @@ class Op_gaul2srl(Op):
         try:
             sra, sdec = img.pix2sky([mompara[1]+delc[0], mompara[2]+delc[1]])
             mra, mdec = img.pix2sky(posn)
-        except RuntimeError as err:
+        except RuntimeError:
             # Invalid pixel wcs coordinate
             sra, sdec = 0.0, 0.0
             mra, mdec = 0.0, 0.0
@@ -553,7 +547,6 @@ class Op_gaul2srl(Op):
 ##################################################################################################
 
     def make_subim(self, subn, subm, g_list, delc, mc=False):
-        from . import functions as func
 
         subim = N.zeros((subn, subm), dtype=N.float32)
         x, y = N.indices((subn, subm))
@@ -574,14 +567,12 @@ class Op_gaul2srl(Op):
 ##################################################################################################
 
     def make_mask(self, isl, subn, subm, nsrc, src_id, g_list, delc):
-        from . import functions as func
                                         # define stuff for calculating gaussian
         boxx, boxy = isl.bbox
         subn = boxx.stop-boxx.start; subm = boxy.stop-boxy.start
         x, y = N.indices((subn, subm))
                                         # construct image of each source in the island
         src_image = N.zeros((subn, subm, nsrc), dtype=N.float32)
-        nn = 1
         for isrc in range(nsrc):
             if nsrc == 1:
                 g_sublist = g_list
@@ -607,8 +598,6 @@ class Op_gaul2srl(Op):
 ##################################################################################################
 #  Define class Source
 ##################################################################################################
-
-from .image import *
 
 class Source(object):
     """ Instances of this class store sources made from grouped gaussians. """
