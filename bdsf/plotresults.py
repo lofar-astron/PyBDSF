@@ -700,7 +700,7 @@ def xy_to_radec_str(x, y):
     ra, dec = pix2sky([x, y])
 
     ra = ra2hhmmss(ra)
-    sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.1f" % (ra[2])).zfill(3)
+    sra = str(ra[0]).zfill(2)+':'+str(ra[1]).zfill(2)+':'+str("%.1f" % (ra[2])).zfill(4)
     dec = dec2ddmmss(dec)
     decsign = ('-' if dec[3] < 0 else '+')
     sdec = decsign+str(dec[0]).zfill(2)+':'+str(dec[1]).zfill(2)+':'+str("%.1f" % (dec[2])).zfill(3)
