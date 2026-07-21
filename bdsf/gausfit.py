@@ -365,7 +365,7 @@ class Op_gausfit(Op):
             ngmax = ng1+2
         if verbose:
             print('Initializing, ini_gausfit is', ini_gausfit, 'gaul =', gaul, 'ngmax =', ngmax)
-        while iter < 5:
+        while iter < 15:
             iter += 1
             if verbose:
                 print('In Gaussian flag loop, iter =', iter)
@@ -389,7 +389,7 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
-            while iter < 5:
+            while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
@@ -408,7 +408,7 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
-            while iter < 5:
+            while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
@@ -427,7 +427,7 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
-            while iter < 5:
+            while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
