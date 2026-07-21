@@ -57,13 +57,13 @@ class Op_preprocess(Op):
             
             # Combine newly blanked pixels with the main mask
             if hasattr(img, 'mask_arr') and img.mask_arr is not None:
-                img.mask_arr = img.mask_arr | nan_mask
+                img.mask_arr |= nan_mask
             else:
                 img.mask_arr = nan_mask
                 
             # Combine newly blanked pixels with the rms_mask
             if hasattr(img, 'rms_mask') and img.rms_mask is not None:
-                img.rms_mask = img.rms_mask | nan_mask
+                img.rms_mask |= nan_mask
             
             img.blankpix = N.sum(img.mask_arr)
 
