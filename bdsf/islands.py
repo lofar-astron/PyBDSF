@@ -243,10 +243,10 @@ class Op_islands(Op):
             mean = img.mean_arr
             labels = func.make_src_mask(image.shape, isl_posn_pix, isl_radius_pix)
             if img.masked:
-                aper_mask = N.where(labels.astype(bool) & ~mask)
+                aper_mask = labels.astype(bool) & ~mask
             else:
-                aper_mask = N.where(labels.astype(bool))
-            if N.size(aper_mask) >= img.minpix_isl and N.size(aper_mask) <= img.maxpix_isl:
+                aper_mask = labels.astype(bool)
+            if aper_mask.sum() >= img.minpix_isl and aper_mask.sum() <= img.maxpix_isl:
                 labels[aper_mask] = idx
                 s = [slice(max(0, isl_posn_pix[0] - isl_radius_pix - 1),
                      min(image.shape[0], isl_posn_pix[0] + isl_radius_pix + 1)),
