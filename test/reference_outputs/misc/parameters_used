@@ -164,5 +164,4 @@ thresh                                  None
 thresh_isl                              3.0
 thresh_pix                              5.0
 trim_box                                None
-use_scipy_fft                           True
 verbose_fitting                         False
