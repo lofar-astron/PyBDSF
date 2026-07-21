@@ -7,15 +7,13 @@ of fdr_alpha). If thresh is None, then the false detection
 probability is first calculated, and if the number of false source
 pixels is more than fdr_ratio times the estimated number of true source
 pixels, then FDR is chosen, else the hard threshold option is chosen.
-
-Masked images aren't handled properly yet.
 """
 from __future__ import absolute_import
 
 import numpy as N
-from .image import Op, Image, NArray
+from .image import Op
 from math import sqrt,pi,log
-from scipy.special import erfc
+from scipy.special import erfc, erfcinv
 from . import const
 from . import mylogger
 
@@ -30,8 +28,24 @@ class Op_threshold(Op):
         data = img.ch0_arr
         mask = img.mask_arr
         opts = img.opts
-        size = N.prod(img.ch0_arr.shape)
         sq2  = sqrt(2)
+
+        # Handle mask if it exists and contains masked pixels (True = masked)
+        if mask is not None and N.any(mask):
+            valid = ~mask
+            data_valid = data[valid]
+            
+            # Safe filtering in case mean or rms are scalars instead of arrays
+            mean_valid = img.mean_arr[valid] if isinstance(img.mean_arr, N.ndarray) else img.mean_arr
+            rms_valid = img.rms_arr[valid] if isinstance(img.rms_arr, N.ndarray) else img.rms_arr
+            
+            # Size is the count of unmasked pixels only
+            size = data_valid.size
+        else:
+            data_valid = data
+            mean_valid = img.mean_arr
+            rms_valid = img.rms_arr
+            size = N.prod(data.shape)
 
         if img.opts.thresh is None:
             source_p = self.get_srcp(img)
@@ -51,6 +65,7 @@ class Op_threshold(Op):
         else:
             img.thresh = img.opts.thresh
 
+        # https://iopscience.iop.org/article/10.1086/338316
         if img.thresh=='fdr':
             cdelt = img.wcs_obj.acdelt[:2]
             bm = (img.beam[0], img.beam[1])
@@ -60,22 +75,22 @@ class Op_threshold(Op):
             for i in range(area_pix):
                 s0 +=  1.0/(i+1)
             slope = opts.fdr_alpha/s0
-            # sort erf of normalised image as vector
-            v = N.sort(0.5*erfc(N.ravel((data-img.mean_arr)/img.rms_arr)/sq2))[::-1]
+            # Compute and sort p-values only for unmasked data
+            # Boolean indexing flattens the array automatically
+            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2))
             pcrit = None
-            for i,x in enumerate(v):
-                if x < slope*i/size:
-                    pcrit = x
+            
+            # Find the largest index k (from 'size' down to 1) 
+            # such that p-value <= slope * k / size
+            for k in range(size, 0, -1):
+                # Benjamini-Yekutieli FDR condition
+                if v[k-1] <= slope * k / size:
+                    pcrit = v[k-1]
                     break
             if pcrit is None:
                 raise RuntimeError("FDR thresholding failed. Please check the input image for problems.")
-            dumr1 = 1.0-2.0*pcrit
-            dumr = 8.0/3.0/pi*(pi-3.0)/(4.0-pi)
-            # approx for inv(erfc)
-            sigcrit = sqrt(-2.0/pi/dumr-log(1.0-dumr1*dumr1)/2.0+  \
-                          sqrt((2.0/pi/dumr+log(1.0-dumr1*dumr1)/2.0)* \
-                          (2.0/pi/dumr+log(1.0-dumr1*dumr1)/2.0)-      \
-                          log(1.0-dumr1*dumr1)/dumr))*sq2
+            # Inverse of the complementary error function
+            sigcrit = erfcinv(2.0 * pcrit) * sq2
             if pcrit == 0.0:
                 img.thresh = 'hard'
             else:
