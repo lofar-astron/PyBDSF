@@ -81,8 +81,7 @@ class Op_readimage(Op):
         if img.do_cache:
             mylog.info('Using disk caching.')
             tmpdir = os.path.join(img.outdir, img.parentname+'_tmp')
-            if not os.path.exists(tmpdir):
-                os.makedirs(tmpdir)
+            os.makedirs(tmpdir, exist_ok=True)
             img._tempdir_parent = TempDir(tmpdir)
             img.tempdir = TempDir(tempfile.mkdtemp(dir=tmpdir))
             import atexit, shutil
@@ -137,8 +136,7 @@ class Op_readimage(Op):
                     os.system("rm -fr " + img.basedir + '/*')
 
             # Make the final output directory
-            if not os.path.exists(img.basedir):
-                os.makedirs(img.basedir)
+            os.makedirs(img.basedir, exist_ok=True)
 
         del data
         img.completed_Ops.append('readimage')
