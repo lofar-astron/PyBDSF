@@ -13,6 +13,8 @@ provides all functionality required by the specific fitters.
 """
 from __future__ import print_function
 from __future__ import absolute_import
+import sys
+import traceback
 
 from .image import *
 from . import mylogger
@@ -463,6 +465,13 @@ class Op_gausfit(Op):
                                                       isl.image, size)
             except ValueError:
                 pass
+            except IndexError as e:
+                tbk = sys.exc_info()[2]
+                print('Warning: Ignoring IndexError in moment analysis', e, file=sys.stderr)
+                print('Traceback of thread is:', file=sys.stderr)
+                print('-------------------------', file=sys.stderr)
+                traceback.print_tb(tbk, file=sys.stderr)
+                print('-------------------------', file=sys.stderr)
 
         # Return whatever we got
         if verbose:
@@ -831,7 +840,7 @@ class Op_gausfit(Op):
         # Chceck for NaN and Inf
         if not N.all(N.isfinite(g)) or s1 == 0.0 or s2 == 0.0:
             return -1
-            
+
         # Reject unphysical amplitudes, larger than float32 (~3.4e38)
         if abs(A) > 1e38:
             return -1
