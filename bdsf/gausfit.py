@@ -468,6 +468,7 @@ class Op_gausfit(Op):
             except IndexError as e:
                 tbk = sys.exc_info()[2]
                 print('Warning: Ignoring IndexError in moment analysis', e, file=sys.stderr)
+                print('Image shape: ', fit_image.shape, file=sys.stderr)
                 print('Traceback of thread is:', file=sys.stderr)
                 print('-------------------------', file=sys.stderr)
                 traceback.print_tb(tbk, file=sys.stderr)
