@@ -1,4 +1,3 @@
-# some functions
 from __future__ import print_function
 from __future__ import absolute_import
 from shutil import get_terminal_size
@@ -66,64 +65,6 @@ def shapeletfit(cf, Bset, cfshape):
 
     return y
 
-def ilist(x):
-    """ integer part of a list of floats. """
-
-    fn = lambda x : [int(round(i)) for i in x]
-    return fn(x)
-
-def cart2polar(cart, cen):
-    """ convert cartesian coordinates to polar coordinates around cen. theta is
-    zero for +ve xaxis and goes counter clockwise. cart is a numpy array [x,y] where
-    x and y are numpy arrays of all the (>0) values of coordinates."""
-    import math
-
-    polar = N.zeros(cart.shape)
-    pi = math.pi
-    rad = 180.0/pi
-
-    cc = N.transpose(cart)
-    cc = (cc-cen)*(cc-cen)
-    polar[0] = N.sqrt(N.sum(cc,1))
-    th = N.arctan2(cart[1]-cen[1],cart[0]-cen[0])*rad
-    polar[1] = N.where(th > 0, th, 360+th)
-
-    return polar
-
-
-def polar2cart(polar, cen):
-    """ convert polar coordinates around cen to cartesian coordinates. theta is
-    zero for +ve xaxis and goes counter clockwise. polar is a numpy array of [r], [heta]
-    and cart is a numpy array [x,y] where x and y are numpy arrays of all the (>0)
-    values of coordinates."""
-    import math
-
-    cart = N.zeros(polar.shape)
-    pi = math.pi
-    rad = 180.0/pi
-
-    cart[0]=polar[0]*N.cos(polar[1]/rad)+cen[0]
-    cart[1]=polar[0]*N.sin(polar[1]/rad)+cen[1]
-
-    return cart
-
-def gaus_pixval(g, pix):
-    """ Calculates the value at a pixel pix due to a gaussian object g. """
-    from .const import fwsig, pi
-    from math import sin, cos, exp
-
-    cen = g.centre_pix
-    peak = g.peak_flux
-    bmaj_p, bmin_p, bpa_p = g.size_pix
-
-    a4 = bmaj_p/fwsig; a5 = bmin_p/fwsig
-    a6 = (bpa_p+90.0)*pi/180.0
-    spa = sin(a6); cpa = cos(a6)
-    dr1 = ((pix[0]-cen[0])*cpa + (pix[1]-cen[1])*spa)/a4
-    dr2 = ((pix[1]-cen[1])*cpa - (pix[0]-cen[0])*spa)/a5
-    pixval = peak*exp(-0.5*(dr1*dr1+dr2*dr2))
-
-    return pixval
 
 def atanproper(dumr, dx, dy):
     from math import pi
@@ -288,94 +229,6 @@ def drawellipse(g):
 
     return x2, y2
 
-def drawsrc(src):
-    import math
-    import numpy as N
-    import matplotlib.path as mpath
-    Path = mpath.Path
-    paths = []
-    xmin = []
-    xmax = []
-    ymin = []
-    ymax = []
-    ellx = []
-    elly = []
-    for indx, g in enumerate(src.gaussians):
-        gellx, gelly = drawellipse(g)
-        ellx += gellx.tolist()
-        elly += gelly.tolist()
-    yarr = N.array(elly)
-    minyarr = N.min(yarr)
-    maxyarr = N.max(yarr)
-    xarr = N.array(ellx)
-    for i in range(10):
-        inblock = N.where(yarr > minyarr + float(i)*(maxyarr-minyarr)/10.0)
-        yarr = yarr[inblock]
-        xarr = xarr[inblock]
-        inblock = N.where(yarr < minyarr + float(i+1)*(maxyarr-minyarr)/10.0)
-        xmin.append(N.min(xarr[inblock])-1.0)
-        xmax.append(N.max(xarr[inblock])+1.0)
-        ymin.append(N.mean(yarr[inblock]))
-        ymax.append(N.mean(yarr[inblock]))
-
-    xmax.reverse()
-    ymax.reverse()
-    pathdata = [(Path.MOVETO, (xmin[0], ymin[0]))]
-    for i in range(10):
-        pathdata.append((Path.LINETO, (xmin[i], ymin[i])))
-        pathdata.append((Path.CURVE3, (xmin[i], ymin[i])))
-    pathdata.append((Path.LINETO, ((xmin[9]+xmax[0])/2.0, (ymin[9]+ymax[0])/2.0+1.0)))
-    for i in range(10):
-        pathdata.append((Path.LINETO, (xmax[i], ymax[i])))
-        pathdata.append((Path.CURVE3, (xmax[i], ymax[i])))
-    pathdata.append((Path.LINETO, ((xmin[0]+xmax[9])/2.0, (ymin[0]+ymax[9])/2.0-1.0)))
-    pathdata.append((Path.CLOSEPOLY, (xmin[0], ymin[0])))
-    codes, verts = zip(*pathdata)
-    path = Path(verts, codes)
-    return path
-
-def mask_fwhm(g, fac1, fac2, delc, shap):
-    """ take gaussian object g and make a mask (as True) for pixels which are outside (less flux)
-        fac1*FWHM and inside (more flux) fac2*FWHM. Also returns the values as well."""
-    import math
-    import numpy as N
-    from .const import fwsig
-
-    x, y = N.indices(shap)
-    params = g2param(g)
-    params[1] -= delc[0]; params[2] -= delc[1]
-    gau = gaus_2d(params, x, y)
-    dumr1 = 0.5*fac1*fwsig
-    dumr2 = 0.5*fac2*fwsig
-    flux1= params[0]*math.exp(-0.5*dumr1*dumr1)
-    flux2 = params[0]*math.exp(-0.5*dumr2*dumr2)
-    mask = (gau <= flux1) * (gau > flux2)
-    gau = gau * mask
-
-    return mask, gau
-
-def flatten(x):
-    """flatten(sequence) -> list
-    Taken from http://kogs-www.informatik.uni-hamburg.de/~meine/python_tricks
-
-    Returns a single, flat list which contains all elements retrieved
-    from the sequence and all recursively contained sub-sequences
-    (iterables).
-
-    Examples:
-    >>> [1, 2, [3,4], (5,6)]
-    [1, 2, [3, 4], (5, 6)]
-    >>> flatten([[[1,2,3], (42,None)], [4,5], [6], 7, MyVector(8,9,10)])
-    [1, 2, 3, 42, None, 4, 5, 6, 7, 8, 9, 10]"""
-
-    result = []
-    for el in x:
-        #if isinstance(el, (list, tuple)):
-        if hasattr(el, "__iter__") and not isinstance(el, basestring):
-            result.extend(flatten(el))
-        else:
-            result.append(el)
-    return result
 
 def moment(x,mask=None):
     """
@@ -610,72 +463,6 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
 
     return p, success
 
-def deconv(gaus_bm, gaus_c):
-    """ Deconvolves gaus_bm from gaus_c to give gaus_dc.
-        Stolen shamelessly from aips DECONV.FOR.
-        All PA is in degrees."""
-    from math import pi, cos, sin, atan, sqrt
-
-    rad = 180.0/pi
-    gaus_d = [0.0, 0.0, 0.0]
-
-    phi_c = gaus_c[2]+900.0 % 180
-    phi_bm = gaus_bm[2]+900.0 % 180
-    maj2_bm = gaus_bm[0]*gaus_bm[0]; min2_bm = gaus_bm[1]*gaus_bm[1]
-    maj2_c = gaus_c[0]*gaus_c[0]; min2_c = gaus_c[1]*gaus_c[1]
-    theta=2.0*(phi_c-phi_bm)/rad
-    cost = cos(theta)
-    sint = sin(theta)
-
-    rhoc = (maj2_c-min2_c)*cost-(maj2_bm-min2_bm)
-    if rhoc == 0.0:
-        sigic = 0.0
-        rhoa = 0.0
-    else:
-        sigic = atan((maj2_c-min2_c)*sint/rhoc)   # in radians
-        rhoa = ((maj2_bm-min2_bm)-(maj2_c-min2_c)*cost)/(2.0*cos(sigic))
-
-    gaus_d[2] = sigic*rad/2.0+phi_bm
-    dumr = ((maj2_c+min2_c)-(maj2_bm+min2_bm))/2.0
-    gaus_d[0] = dumr-rhoa
-    gaus_d[1] = dumr+rhoa
-    error = 0
-    if gaus_d[0] < 0.0: error += 1
-    if gaus_d[1] < 0.0: error += 1
-
-    gaus_d[0] = max(0.0,gaus_d[0])
-    gaus_d[1] = max(0.0,gaus_d[1])
-    gaus_d[0] = sqrt(abs(gaus_d[0]))
-    gaus_d[1] = sqrt(abs(gaus_d[1]))
-    if gaus_d[0] < gaus_d[1]:
-        sint = gaus_d[0]
-        gaus_d[0] = gaus_d[1]
-        gaus_d[1] = sint
-        gaus_d[2] = gaus_d[2]+90.0
-
-    gaus_d[2] = gaus_d[2]+900.0 % 180
-    if gaus_d[0] == 0.0:
-        gaus_d[2] = 0.0
-    else:
-        if gaus_d[1] == 0.0:
-            if (abs(gaus_d[2]-phi_c) > 45.0) and (abs(gaus_d[2]-phi_c) < 135.0):
-                gaus_d[2] = gaus_d[2]+450.0 % 180
-
-# errors
-           #if rhoc == 0.0:
-    #if gaus_d[0] != 0.0:
-    #  ed_1 = gaus_c[0]/gaus_d[0]*e_1
-    #else:
-    #  ed_1 = sqrt(2.0*e_1*gaus_c[0])
-    #if gaus_d[1] != 0.0:
-    #  ed_2 = gaus_c[1]/gaus_d[1]*e_2
-    #else:
-    #  ed_2 = sqrt(2.0*e_2*gaus_c[1])
-    #ed_3 =e_3
-    #else:
-    #  pass
-
-    return gaus_d
 
 def deconv2(gaus_bm, gaus_c):
     """ Deconvolves gaus_bm from gaus_c to give gaus_dc.
@@ -829,77 +616,6 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
 
     return errors
 
-def fit_chisq(x, p, ep, mask, funct, order):
-    import numpy as N
-
-    ind = N.where(N.array(mask)==False)[0]
-    if order == 0:
-        fit = [funct(p)]*len(p)
-    else:
-        fitpara, efit = fit_mask_1d(x, p, ep, mask, funct, True, order)
-        fit = funct(fitpara, x)
-
-    dev = (p-fit)*(p-fit)/(ep*ep)
-    num = order+1
-    csq = N.sum(dev[ind])/(len(fit)-num-1)
-
-    return csq
-
-def calc_chisq(x, y, ey, p, mask, funct, order):
-    import numpy as N
-
-    if order == 0:
-        fit = [funct(y)]*len(y)
-    else:
-        fit = funct(p, x)
-
-    dev = (y-fit)*(y-fit)/(ey*ey)
-    ind = N.where(~N.array(mask))
-    num = order+1
-    csq = N.sum(dev[ind])/(len(mask)-num-1)
-
-    return csq
-
-def get_windowsize_av(S_i, rms_i, chanmask, K, minchan):
-    import numpy as N
-
-    av_window = N.arange(2, int(len(S_i)/minchan)+1)
-    win_size = 0
-    for window in av_window:
-        fluxes, vars, mask = variance_of_wted_windowedmean(S_i, rms_i, chanmask, window)
-        minsnr = N.min(fluxes[~mask]/vars[~mask])
-        if minsnr > K*1.1:                ### K*1.1 since fitted peak can be less than wted peak
-            win_size = window  # is the size of averaging window
-            break
-
-    return win_size
-
-def variance_of_wted_windowedmean(S_i, rms_i, chanmask, window_size):
-    from math import sqrt
-    import numpy as N
-
-    nchan = len(S_i)
-    nwin = nchan/window_size
-    wt = 1/rms_i/rms_i
-    wt = wt/N.median(wt)
-    fluxes = N.zeros(nwin); vars = N.zeros(nwin); mask = N.zeros(nwin, bool)
-    for i in range(nwin):
-        strt = i*window_size; stp = (i+1)*window_size
-        if i == nwin-1: stp = nchan
-        ind = N.arange(strt,stp)
-        m = chanmask[ind]
-        index = [arg for ii,arg in enumerate(ind) if not m[ii]]
-        if len(index) > 0:
-            s = S_i[index]; r = rms_i[index]; w = wt[index]
-            fluxes[i] = N.sum(s*w)/N.sum(w)
-            vars[i] = 1.0/sqrt(N.sum(1.0/r/r))
-            mask[i] = N.prod(m)
-        else:
-            fluxes[i] = 0
-            vars[i] = 0
-            mask[i] = True
-
-    return fluxes, vars, mask
 
 def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj=False):
     """ fitcode : 0=fit all; 1=fit amp; 2=fit amp, posn; 3=fit amp, size """
@@ -1066,14 +782,6 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
 
     return opw, markers
 
-def get_kwargs(kwargs, key, typ, default):
-    obj = True
-    if key in kwargs:
-        obj = kwargs[key]
-    if not isinstance(obj, typ):
-        obj = default
-
-    return obj
 
 def read_image_from_file(filename, img, indir, quiet=False):
     """ Reads data and header from indir/filename.
@@ -1982,16 +1690,6 @@ def start_samp_proxy():
     private_key = result['samp.private-key']
     s.samp.hub.declareMetadata(private_key, metadata)
     return s, private_key
-
-
-def stop_samp_proxy(img):
-    """Stops (unregisters) a SAMP proxy"""
-    import os
-
-    if hasattr(img, 'samp_client'):
-        lockfile = os.path.expanduser('~/.samp')
-        if os.path.exists(lockfile):
-            img.samp_client.samp.hub.unregister(img.samp_key)
 
 
 def send_fits_image(s, private_key, name, file_path):
