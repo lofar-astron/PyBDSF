@@ -68,7 +68,7 @@ class Op_make_residimage(Op):
                 resdir = img.basedir + '/wavelet/residual/'
             else:
                 resdir = img.basedir + '/residual/'
-            if not os.path.exists(resdir): os.makedirs(resdir)
+            os.makedirs(resdir, exist_ok=True)
             func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', resid_gaus, img, resdir)
             mylog.info('%s %s' % ('Writing', resdir+img.imagename+'.resid_gaus.fits'))
         if img.opts.output_all or img.opts.savefits_modelim:
@@ -76,7 +76,7 @@ class Op_make_residimage(Op):
                 moddir = img.basedir + '/wavelet/model/'
             else:
                 moddir = img.basedir + '/model/'
-            if not os.path.exists(moddir): os.makedirs(moddir)
+            os.makedirs(moddir, exist_ok=True)
             func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0_arr - resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 

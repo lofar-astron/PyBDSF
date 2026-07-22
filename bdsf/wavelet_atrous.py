@@ -52,12 +52,9 @@ class Op_wavelet_atrous(Op):
             mylog.info("Decomposing gaussian residual image into a-trous wavelets")
             bdir = img.basedir + '/wavelet/'
             if img.opts.output_all:
-                if not os.path.isdir(bdir):
-                    os.makedirs(bdir)
-                if not os.path.isdir(bdir + '/residual/'):
-                    os.makedirs(bdir + '/residual/')
-                if not os.path.isdir(bdir + '/model/'):
-                    os.makedirs(bdir + '/model/')
+                os.makedirs(bdir, exist_ok=True)
+                os.makedirs(bdir + '/residual/', exist_ok=True)
+                os.makedirs(bdir + '/model/', exist_ok=True)
             dobdsm = img.opts.atrous_bdsm_do
             filter = {'tr': {'size': 3, 'vec': [1. / 4, 1. / 2, 1. / 4], 'name': 'Triangle'},
                       'b3': {'size': 5, 'vec': [1. / 16, 1. / 4, 3. / 8, 1. / 4, 1. / 16], 'name': 'B3 spline'}}
