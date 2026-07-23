@@ -575,9 +575,9 @@ class Op_readimage(Op):
         if angdist12 > 0.0:
             result = angdist * pixdist12 / angdist12
             if N.isnan(result) or result <= 0.0:
-                result = N.mean(img.wcs_obj.acdelt[0:2])
+                result = angdist / N.mean(img.wcs_obj.acdelt[0:2])  # Convert degrees to pixels: [deg] / [deg/pix]
         else:
-            result = N.mean(img.wcs_obj.acdelt[0:2])
+            result = angdist / N.mean(img.wcs_obj.acdelt[0:2])      # Convert degrees to pixels: [deg] / [deg/pix]
         return result
 
 
