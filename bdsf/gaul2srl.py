@@ -359,7 +359,10 @@ class Op_gaul2srl(Op):
                 maxpeak = para[0]
             else:
                 maxpeak = maxv
-            posn = para[1:3]-(0.5*N.sum(s_imsize)-1)/2.0+N.array([maxx, maxy])-1+delc
+            # Calculate the sub-image center independently for X and Y axes
+            subim_center = (N.array(s_imsize, dtype=N.float32) - 1) / 2.0
+            # subim_center is a vector [center_X, center_Y], e.g., [4.5, 9.5]
+            posn = para[1:3] - subim_center + N.array([maxx, maxy]) - 1 + delc
         else:
             maxpeak = maxv
             posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
