@@ -20,8 +20,7 @@ class Op_outlist(Op):
             import os
             if len(img.gaussians) > 0:
                 dir = img.basedir + '/catalogues/'
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
+                os.makedirs(dir, exist_ok=True)
                 self.write_bbs(img, dir)
                 self.write_lsm(img, dir)
                 self.write_gaul(img, dir)
@@ -32,8 +31,7 @@ class Op_outlist(Op):
                 self.write_ds9(img, dir, objtype='srl')
                 self.write_gaul_FITS(img, dir)
                 self.write_srl_FITS(img, dir)
-            if not os.path.exists(img.basedir + '/misc/'):
-                os.makedirs(img.basedir + '/misc/')
+            os.makedirs(img.basedir + '/misc/', exist_ok=True)
             self.write_opts(img, img.basedir + '/misc/')
             self.save_opts(img, img.basedir + '/misc/')
             img.completed_Ops.append('outlist')
@@ -827,8 +825,7 @@ def write_islands(img):
 
     # write out island properties for reference since achaar doesnt work.
     filename = img.basedir + '/misc/'
-    if not os.path.exists(filename):
-        os.makedirs(filename)
+    os.makedirs(filename, exist_ok=True)
     filename = filename + 'island_file'
 
     if img.j == 0:
@@ -930,7 +927,9 @@ def list_and_sort_gaussians(img, patch=None, root=None,
                 gausflux = []
                 gausindx = []
             if use_mask:
-                patchnums.append(mask_labels[g.centre_pix[0], g.centre_pix[1]])
+                x_pix = round(g.centre_pix[0])
+                y_pix = round(g.centre_pix[1])
+                patchnums.append(mask_labels[x_pix, y_pix])
 
         if patch == 'source':
             sorted_gauslist = list(gauslist)

@@ -68,12 +68,11 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=Fals
         try:
             result = f(val)
         except Exception as e:
-            etype, val, tbk = sys.exc_info()
-            print('Thread raised exception', e)
-            print('Traceback of thread is:')
-            print('-------------------------')
-            traceback.print_tb(tbk)
-            print('-------------------------')
+            print("Thread raised exception", e, file=sys.stderr)
+            print("Traceback of thread is:", file=sys.stderr)
+            print("-------------------------", file=sys.stderr)
+            traceback.print_exception(e, file=sys.stderr)
+            print("-------------------------", file=sys.stderr)
             err_q.put(e)
             return
 

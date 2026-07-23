@@ -81,8 +81,7 @@ class Op_readimage(Op):
         if img.do_cache:
             mylog.info('Using disk caching.')
             tmpdir = os.path.join(img.outdir, img.parentname+'_tmp')
-            if not os.path.exists(tmpdir):
-                os.makedirs(tmpdir)
+            os.makedirs(tmpdir, exist_ok=True)
             img._tempdir_parent = TempDir(tmpdir)
             img.tempdir = TempDir(tempfile.mkdtemp(dir=tmpdir))
             import atexit, shutil
@@ -137,8 +136,7 @@ class Op_readimage(Op):
                     os.system("rm -fr " + img.basedir + '/*')
 
             # Make the final output directory
-            if not os.path.exists(img.basedir):
-                os.makedirs(img.basedir)
+            os.makedirs(img.basedir, exist_ok=True)
 
         del data
         img.completed_Ops.append('readimage')
@@ -582,6 +580,7 @@ class Op_readimage(Op):
             result = N.mean(img.wcs_obj.acdelt[0:2])
         return result
 
+
     def pixdist2angdist(self, img, pixdist, pa, location=None):
         """Returns the angular distance in degrees for a given distance in pixels
 
@@ -594,12 +593,50 @@ class Op_readimage(Op):
         else:
             x1, y1 = location
 
-        x0 = x1 - pixdist / 2.0 * N.sin(pa * N.pi / 180.0)
-        y0 = y1 - pixdist / 2.0 * N.cos(pa * N.pi / 180.0)
-        ra0, dec0 = img.pix2sky([x0, y0])
-        x2 = x1 + pixdist / 2.0 * N.sin(pa * N.pi / 180.0)
-        y2 = y1 + pixdist / 2.0 * N.cos(pa * N.pi / 180.0)
-        ra2, dec2 = img.pix2sky([x2, y2])
+        # Trigonometry and bitwise identity
+        # Instead of calling N.sin/N.cos 4 times for each point separately, 
+        # the displacement parameters (dx, dy) are computed only once.
+        # The exact ordering of floating-point operations `(pa * N.pi) / 180.0` 
+        # and numpy functions (N.sin/N.cos) are preserved. This guarantees 
+        # identical results compared to the original.
+        pa_rad = (pa * N.pi) / 180.0
+        sin_pa = N.sin(pa_rad)
+        cos_pa = N.cos(pa_rad)
+        half_dist = pixdist / 2.0
+        
+        dx = half_dist * sin_pa
+        dy = half_dist * cos_pa
+
+        x0 = x1 - dx
+        y0 = y1 - dy
+        x2 = x1 + dx
+        y2 = y1 + dy
+
+        wcs_obj = img.wcs_obj
+        naxis = wcs_obj.naxis
+
+        # Eliminating the try...except bottleneck
+        # The original attempted to force a 2D array (xy_arr2). For multi-dimensional 
+        # radio data, this triggered a lot of C-level exceptions, 
+        # degrading performance. Now dynamically allocate a C-contiguous array 
+        # matching the number of axes (naxis) from the header
+        xy_arrN = N.zeros((2, naxis), dtype=N.float64)
+        
+        # Fill only the spatial coordinates (X, Y). The remaining dimensions 
+        # (e.g. spectral or polarization axes) default to 0.0
+        xy_arrN[0, 0] = x0
+        xy_arrN[0, 1] = y0
+        xy_arrN[1, 0] = x2
+        xy_arrN[1, 1] = y2
+
+        # Vectorization and bypassing .tolist() overhead
+        # Instead of invoking the slow `img.pix2sky` wrapper element by element, 
+        # pass both coordinates to the WCS in a single, vectorized call
+        sky = wcs_obj.wcs_pix2world(xy_arrN, 0)
+
+        # Direct array access avoiding conversion overhead
+        ra0, dec0 = sky[0, 0], sky[0, 1]
+        ra2, dec2 = sky[1, 0], sky[1, 1]
 
         angdist12 = func.angsep(ra0, dec0, ra2, dec2) # degrees
         return angdist12
