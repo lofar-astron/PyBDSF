@@ -170,22 +170,45 @@ class Op_readimage(Op):
 
         # Here we define p2s and s2p to allow celestial coordinate
         # transformations. Transformations for other axes (e.g.,
-        # spectral) are striped out.
+        # spectral) are stripped out.
         def p2s(self, xy):
-            xy = list(xy)
-            for i in range(self.naxis-2):
-                xy.append(0)
-            if hasattr(self, 'wcs_pix2world'):
-                try:
-                    xy_arr = N.array([xy[0:2]])
-                    sky = self.wcs_pix2world(xy_arr, 0)
-                except:
-                    xy_arr = N.array([xy])
-                    sky = self.wcs_pix2world(xy_arr, 0)
-            else:
-                xy_arr = N.array([xy])
-                sky = self.wcs_pix2sky(xy_arr, 0)
-            return sky.tolist()[0][0:2]
+            try:
+                # If buffer exists, executes instantly
+                buf = self._p2s_buf
+            except AttributeError:
+                # Initialization executed only on the first call
+                has_p2w = hasattr(self, 'wcs_pix2world')
+                self._p2s_wcs_func = self.wcs_pix2world if has_p2w else self.wcs_pix2sky
+                
+                # Test acceptance of array dimensions by WCS library
+                if has_p2w:
+                    try:
+                        self.wcs_pix2world(N.array([list(xy)[0:2]]), 0)
+                        use_padded = False
+                    except Exception:
+                        use_padded = True
+                else:
+                    use_padded = True
+                
+                # Preallocate the buffer once
+                if use_padded:
+                    self._p2s_buf = N.zeros((1, self.naxis), dtype=N.float64)
+                else:
+                    self._p2s_buf = N.zeros((1, 2), dtype=N.float64)
+                
+                buf = self._p2s_buf
+
+            # Extract coordinates directly into the preallocated buffer
+            buf[0, 0] = xy[0]
+            buf[0, 1] = xy[1]
+            
+            # Direct call to the cached WCS function reference
+            sky = self._p2s_wcs_func(buf, 0)
+            
+            # .item() fetches data directly from C-memory as native Python floats,
+            # bypassing NumPy slice instantiation and .tolist()
+            return [sky.item(0), sky.item(1)]
+
 
         def s2p(self, rd):
             rd = list(rd)
