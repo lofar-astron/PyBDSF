@@ -927,9 +927,9 @@ def list_and_sort_gaussians(img, patch=None, root=None,
                 gausflux = []
                 gausindx = []
             if use_mask:
-                x_pix = int(round(g.centre_pix[0]))
-                y_pix = int(round(g.centre_pix[1]))
-                patchnums.append(mask_labels[y_pix, x_pix])
+                x_pix = round(g.centre_pix[0])
+                y_pix = round(g.centre_pix[1])
+                patchnums.append(mask_labels[x_pix, y_pix])
 
         if patch == 'source':
             sorted_gauslist = list(gauslist)
