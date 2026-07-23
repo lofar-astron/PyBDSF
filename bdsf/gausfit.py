@@ -24,7 +24,6 @@ import scipy.ndimage as nd
 from . import multi_proc as mp
 import itertools
 
-
 class Op_gausfit(Op):
     """Fit a number of 2D gaussians to each island.
 
@@ -448,12 +447,9 @@ class Op_gausfit(Op):
                 mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, pixel_beamarea, True)
                 mompara[5] += 90.0
                 if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
-                    x1 = int(N.floor(mompara[1]))
-                    y1 = int(N.floor(mompara[2]))
-                    t = (mompara[1]-x1)/(x1+1-x1)
-                    u = (mompara[2]-y1)/(y1+1-y1)
-                    s_peak = ((1.0-t) * (1.0-u) * fit_image[x1, y1] + t * (1.0-u) * fit_image[x1+1, y1] +
-                              t * u * fit_image[x1+1, y1+1] + (1.0-t) * u * fit_image[x1, y1+1])
+                    s_peak = nd.map_coordinates(fit_image,
+                                                [ [mompara[1], mompara[2]] ],
+                                                order = 1)[0]
                     mompara[0] = s_peak
                     par = mompara.tolist()
                     par[3] /= fwsig
