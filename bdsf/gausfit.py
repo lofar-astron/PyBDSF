@@ -23,6 +23,7 @@ if has_pl:
 import scipy.ndimage as nd
 from . import multi_proc as mp
 import itertools
+import sys
 
 
 class Op_gausfit(Op):
@@ -463,6 +464,14 @@ class Op_gausfit(Op):
                                                       isl.image, size)
             except ValueError:
                 pass
+
+            except IndexError:
+                print("IndexError in fit_island():", file=sys.stderr)
+                try:
+                    print(f"  {fit_image.shape=}", file=sys.stderr)
+                    print(f"  {mompara=}, {x1=}, {y1=}, {t=}, {u=}", file=sys.stderr)
+                except (AttributeError, NameError):
+                    pass
 
         # Return whatever we got
         if verbose:
