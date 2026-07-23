@@ -1137,10 +1137,6 @@ class Opts(object):
                              doc = "Restrict sources to "\
                                  "be only of type 'S'",
                              group = "psf_vary_do")
-    psf_stype_only = Bool(True,
-                             doc = "Restrict sources to "\
-                                 "be only of type 'S'",
-                             group = "psf_vary_do")
     psf_fwhm = Option(None, Tuple(Float(), Float(), Float()),
                              doc = "FWHM of the PSF. Specify as (maj, "\
                                  "min, pos ang E of N) in degrees. "\

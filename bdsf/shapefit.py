@@ -2,7 +2,6 @@
 
 This will do all the shapelet analysis of islands in an image
 """
-from __future__ import absolute_import
 
 from .image import *
 from .islands import *
@@ -17,6 +16,7 @@ except ImportError: # will be 3.x series
     pass
 from . import functions as func
 from .gausfit import find_bbox
+import numpy as N
 
 
 class Op_shapelets(Op):
@@ -114,7 +114,6 @@ class Op_shapelets(Op):
         specified as an argument, then fixed is taken as 0."""
         from math import sqrt, log, floor
         from . import functions as func
-        import numpy as N
 
         if fixed[0]==1 and beta is None: fixed[0]=0
         if fixed[1]==1 and cen is None: fixed[1]=0
@@ -135,7 +134,7 @@ class Op_shapelets(Op):
         if fixed[2]==0:
             (n, m)=image.shape
             nmax=int(round(sqrt(1.0*n*n+m*m)/beam_pix[1]))-1
-            nmax=min(max(nmax*2+2,10),10)                      # totally ad hoc
+            nmax = max(nmax * 2 + 2, 10) # min. 10, no upper limit for now
             npix = N.prod(image.shape)-N.sum(mask)
             if nmax*nmax >= n*m : nmax = int(floor(sqrt(npix-1)))  # -1 is for when n*m is a perfect square
             if mode == 'fit':   # make sure npara <= npix

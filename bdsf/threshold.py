@@ -7,8 +7,6 @@ of fdr_alpha). If thresh is None, then the false detection
 probability is first calculated, and if the number of false source
 pixels is more than fdr_ratio times the estimated number of true source
 pixels, then FDR is chosen, else the hard threshold option is chosen.
-
-Masked images aren't handled properly yet.
 """
 from __future__ import absolute_import
 
@@ -28,10 +26,26 @@ class Op_threshold(Op):
     def __call__(self, img):
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Threshold ")
         data = img.ch0_arr
-        mask = img.mask_arr # not implemented yet
+        mask = img.mask_arr
         opts = img.opts
-        size = N.prod(img.ch0_arr.shape)
         sq2  = sqrt(2)
+
+        # Handle mask if it exists and contains masked pixels (True = masked)
+        if mask is not None and N.any(mask):
+            valid = ~mask
+            data_valid = data[valid]
+            
+            # Safe filtering in case mean or rms are scalars instead of arrays
+            mean_valid = img.mean_arr[valid] if isinstance(img.mean_arr, N.ndarray) else img.mean_arr
+            rms_valid = img.rms_arr[valid] if isinstance(img.rms_arr, N.ndarray) else img.rms_arr
+            
+            # Size is the count of unmasked pixels only
+            size = data_valid.size
+        else:
+            data_valid = data
+            mean_valid = img.mean_arr
+            rms_valid = img.rms_arr
+            size = N.prod(data.shape)
 
         if img.opts.thresh is None:
             source_p = self.get_srcp(img)
@@ -60,8 +74,9 @@ class Op_threshold(Op):
             for i in range(area_pix):
                 s0 +=  1.0/(i+1)
             slope = opts.fdr_alpha/s0
-            # Sort p-values in ascending order for correct FDR implementation
-            v = N.sort(0.5*erfc(N.ravel((data-img.mean_arr)/img.rms_arr)/sq2))
+            # Compute and sort p-values only for unmasked data
+            # Boolean indexing flattens the array automatically
+            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2))
             pcrit = None
             
             # Find the largest index k (from 'size' down to 1) 
