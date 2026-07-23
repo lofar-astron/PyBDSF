@@ -448,7 +448,8 @@ class Op_gausfit(Op):
                 mompara[5] += 90.0
                 if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
                     s_peak = nd.map_coordinates(fit_image,
-                                                [ [mompara[1], mompara[2]] ],
+                                                [ [mompara[1]],
+                                                  [mompara[2]] ],
                                                 order = 1)[0]
                     mompara[0] = s_peak
                     par = mompara.tolist()
