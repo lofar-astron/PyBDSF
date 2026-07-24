@@ -162,7 +162,7 @@ class Op_rmsimage(Op):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
                     size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     isl_area_highthresh.append(size_area)
-                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+\
+                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+\
                           np.array((s[0].start, s[1].start))))
 
         # Check islands found above at thresh_isl threshold to determine if
