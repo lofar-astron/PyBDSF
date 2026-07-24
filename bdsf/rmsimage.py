@@ -979,7 +979,9 @@ class Op_rmsimage(Op):
                     
                     # Protection against zero noise (e.g. all pixels have the same value)
                     if cr == 0.0:
-                        cr = np.std(valid_pixels) # final fallback
+                        cr = np.std(valid_pixels) # fallback
+                        if cr == 0.0:
+                            cr = np.inf           # finall fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
