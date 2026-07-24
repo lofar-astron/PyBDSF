@@ -51,7 +51,7 @@ class Op_psf_vary(Op):
                 psf_min = opts.psf_fwhm[1] # FWHM in deg
                 psf_pa = opts.psf_fwhm[2] # PA in deg
                 mylogger.userinfo(mylog, 'Using constant PSF (major, minor, pos angle)',
-                      '(%.5e, %.5e, %s) degrees' % (psf_maj, psf_maj,
+                      '(%.5e, %.5e, %s) degrees' % (psf_maj, psf_min,
                                                 round(psf_pa, 1)))
             else:
                 # Use did not specify a constant PSF to use, so estimate it
@@ -128,7 +128,7 @@ class Op_psf_vary(Op):
 
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
                 flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
-                if len(flag_unresolved) == 0:
+                if N.sum(flag_unresolved) == 0:
                     mylog.warning('Insufficient number of sources to determine PSF variation.\nTry changing the PSF options or specify a (constant) PSF with the "psf_fwhm" option')
                     return
 
