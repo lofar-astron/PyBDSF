@@ -811,7 +811,7 @@ class Op_psf_vary(Op):
         gycens_pix = g_gauls[3]
         peak = g_gauls[1]
 
-        psfimsize = int(round(max(beam[0], beam[1])/max(cdelt[0], cdelt[1]) * factor))    # fac X fwhm; fac ~ 2
+        psfimsize = int(round(max(beam[0], beam[1])/max(abs(cdelt[0]), abs(cdelt[1])) * factor))    # fac X fwhm; fac ~ 2
         psfimage = N.zeros((psfimsize, psfimsize), dtype=N.float32)
         cs2=cutoutsize2 = int(round(psfimsize*(1. + 2./factor)/2.))  # size/2. factor => to avoid edge effects etc
         cc = cutoutcen_ind=[cs2, cs2]
