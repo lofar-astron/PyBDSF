@@ -863,7 +863,7 @@ class Op_psf_vary(Op):
 
         if plot:
             pl.figure(None)
-            colours=['b','g','r','c','m','y','k']*(len(xt)/7+1)
+            colours = [ 'b','g','r','c','m','y','k' ] * (len(xt) // 7+1 )
             pl.axis([0.0, image.shape[0], 0.0, image.shape[1]])
             pl.title('Tesselated image with tile centres and unresolved sources')
             for i in range(ntile):
