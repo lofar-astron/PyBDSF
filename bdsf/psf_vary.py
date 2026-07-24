@@ -51,7 +51,7 @@ class Op_psf_vary(Op):
                 psf_min = opts.psf_fwhm[1] # FWHM in deg
                 psf_pa = opts.psf_fwhm[2] # PA in deg
                 mylogger.userinfo(mylog, 'Using constant PSF (major, minor, pos angle)',
-                      '(%.5e, %.5e, %s) degrees' % (psf_maj, psf_maj,
+                      '(%.5e, %.5e, %s) degrees' % (psf_maj, psf_min,
                                                 round(psf_pa, 1)))
             else:
                 # Use did not specify a constant PSF to use, so estimate it
