@@ -354,7 +354,6 @@ class Island(object):
         self.shape = data.shape
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
-
         # Create mask for calculation of the mean and RMS values
         valid_island_pixels = ~self.mask_active & ~N.isnan(bbox_rms_im) & ~N.isnan(bbox_mean_im)
         
@@ -372,7 +371,7 @@ class Island(object):
         self.total_flux = N.nansum((self.image - bbox_mean_im)[valid_pixels]) / beamarea
 
         pixels_in_isl = N.sum(valid_pixels)
-        self.total_fluxE = func.nanmean(bbox_rms_im[valid_pixels]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
+        self.total_fluxE = N.nanmean(bbox_rms_im[valid_pixels]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
         self.border = self.get_border()
         self.gaul = []
         self.fgaul = []
