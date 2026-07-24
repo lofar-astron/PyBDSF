@@ -116,6 +116,12 @@ def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
         for proc in procs:
             proc.start()
 
+        # First fetch the results from the queue
+        raw_results = []
+        for _ in range(num):
+            raw_results.append(out_q.get())
+
+        # Only now wait for processes ending
         for proc in procs:
             proc.join()
             if proc.exitcode != 0:
@@ -131,17 +137,16 @@ def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
         die(procs)
         raise err_q.get()
 
+    # Reconstruct results from 'raw_results' list
     if preserve_order:
         results = [None] * total_items
-        for i in range(num):
-            idx, result = out_q.get()
+        for idx, result in raw_results:
             for item_idx, item_result in result:
                 results[item_idx] = item_result
         return results
 
     results = [None] * num
-    for i in range(num):
-        idx, result = out_q.get()
+    for idx, result in raw_results:
         results[idx] = result
 
     result_list = []
@@ -193,8 +198,8 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
 
     manager = fork_context.Manager()
 
-    out_q = manager.Queue()
-    err_q = manager.Queue()
+    out_q = fork_context.Queue()
+    err_q = fork_context.Queue()
     lock = manager.Lock()
     bar_state = manager.dict()
     if bar is not None:
