@@ -9,6 +9,7 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 
 """
 
+import gc
 import heapq
 import multiprocessing
 import os
@@ -50,48 +51,77 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=Fals
     :param f  : callable function that accepts argument from iterable
     :param ii  : process ID
     :param chunk: slice of input iterable
-    :param out_q: process-safe output queue
-    :param err_q: process-safe queue to populate on exception
+    :param out_q: process-safe output queue (SimpleQueue)
+    :param err_q: process-safe queue to populate on exception (SimpleQueue)
     :param lock : lock object (kept for signature compatibility)
     :param bar: statusbar to update during fit
     :param bar_state: dictionary holding shared memory Values for statusbar state
     :param preserve_order: whether chunk entries carry their original index
     """
+    # Disable the garbage collector in the worker process. 
+    # This prevents the GC from touching object headers of large arrays 
+    # inherited via fork, thus avoiding massive Copy-on-Write memory overhead.
+    gc.disable()
+
     vals = []
+    
+    # Create local reference to append method for faster lookups in tight loop
+    append_val = vals.append
 
-    for entry in chunk:
-        if preserve_order:
-            val_idx, val = entry
-        else:
-            val = entry
-        try:
-            result = f(val)
-        except Exception as e:
-            print("Thread raised exception", e, file=sys.stderr)
-            print("Traceback of thread is:", file=sys.stderr)
-            print("-------------------------", file=sys.stderr)
-            traceback.print_exception(e, file=sys.stderr)
-            print("-------------------------", file=sys.stderr)
-            err_q.put(e)
-            return
+    # Loop Unswitching: Check the condition once outside the loop to avoid
+    # evaluating it on every single item.
+    if preserve_order:
+        for val_idx, val in chunk:
+            try:
+                result = f(val)
+            except Exception as e:
+                print("Thread raised exception", e, file=sys.stderr)
+                print("Traceback of thread is:", file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                traceback.print_exception(e, file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                err_q.put(e)
+                return
 
-        if preserve_order:
-            vals.append((val_idx, result))
-        else:
-            vals.append(result)
+            append_val((val_idx, result))
 
-        if bar is not None:
-            # Access shared memory values directly without manager overhead
-            if bool(bar_state['started'].value):
-                bar.pos = bar_state['pos'].value
-                bar.spin_pos = bar_state['spin_pos'].value
-                bar.started = bool(bar_state['started'].value)
-                increment = bar.increment()
-                bar_state['started'].value = int(bar.started)
-                bar_state['pos'].value += increment
-                bar_state['spin_pos'].value += increment
-                if bar_state['spin_pos'].value >= 4:
-                    bar_state['spin_pos'].value = 0
+            if bar is not None:
+                if bool(bar_state['started'].value):
+                    bar.pos = bar_state['pos'].value
+                    bar.spin_pos = bar_state['spin_pos'].value
+                    bar.started = bool(bar_state['started'].value)
+                    increment = bar.increment()
+                    bar_state['started'].value = int(bar.started)
+                    bar_state['pos'].value += increment
+                    bar_state['spin_pos'].value += increment
+                    if bar_state['spin_pos'].value >= 4:
+                        bar_state['spin_pos'].value = 0
+    else:
+        for val in chunk:
+            try:
+                result = f(val)
+            except Exception as e:
+                print("Thread raised exception", e, file=sys.stderr)
+                print("Traceback of thread is:", file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                traceback.print_exception(e, file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                err_q.put(e)
+                return
+
+            append_val(result)
+
+            if bar is not None:
+                if bool(bar_state['started'].value):
+                    bar.pos = bar_state['pos'].value
+                    bar.spin_pos = bar_state['spin_pos'].value
+                    bar.started = bool(bar_state['started'].value)
+                    increment = bar.increment()
+                    bar_state['started'].value = int(bar.started)
+                    bar_state['pos'].value += increment
+                    bar_state['spin_pos'].value += increment
+                    if bar_state['spin_pos'].value >= 4:
+                        bar_state['spin_pos'].value = 0
 
     out_q.put((ii, vals))
 
@@ -117,7 +147,7 @@ def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
             proc.start()
 
         # Retrieve results from queue BEFORE joining processes to avoid
-        # IPC pipe buffer deadlocks with context.Queue
+        # IPC pipe buffer deadlocks
         raw_results = []
         for _ in range(num):
             raw_results.append(out_q.get())
@@ -178,7 +208,6 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         raise TypeError("input '%s' is not iterable" %
                         repr(sequence))
 
-    # Removed numpy.array(..., dtype=object) casting to prevent deep inspection overhead
     sequence_list = list(sequence)
     size = len(sequence_list)
 
@@ -195,13 +224,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     if numcores < 1:
         numcores = 1
 
-    # Use fast context-native queues instead of Manager proxy queues
-    out_q = fork_context.Queue()
-    err_q = fork_context.Queue()
+    out_q = fork_context.SimpleQueue()
+    err_q = fork_context.SimpleQueue()
     lock = None
 
-    # Use un-locked shared memory Value objects for statusbar state
-    # to eliminate IPC Manager overhead
     bar_state = {}
     if bar is not None:
         bar_state['pos'] = fork_context.Value('i', int(bar.pos), lock=False)
@@ -213,8 +239,6 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
 
     preserve_order = False
     if weights is None or numcores == size:
-        # Native Python split equivalent to numpy.array_split
-        # (no numpy overhead)
         n_each_section, extras = divmod(size, numcores)
         section_sizes = ([n_each_section + 1] * extras) + ([n_each_section] * (numcores - extras))
         
@@ -250,6 +274,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
                    preserve_order))
              for ii, chunk in enumerate(sequence)]
 
+    # Freeze the garbage collector in the main process before spawning forks.
+    # Prevent the GC from altering their memory headers and triggering
+    # system-wide Copy-on-Write memory duplication across worker processes.
+    gc.freeze()
     try:
         results = run_tasks(procs, err_q, out_q, len(sequence),
                             preserve_order=preserve_order, total_items=size)
@@ -264,3 +292,5 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
                 proc.terminate()
                 proc.join()
         raise
+    finally:
+        gc.unfreeze()
