@@ -148,9 +148,9 @@ def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
 
         # Retrieve results from queue BEFORE joining processes to avoid
         # IPC pipe buffer deadlocks
-        raw_results = []
-        for _ in range(num):
-            raw_results.append(out_q.get())
+        raw_results = [None] * num
+        for i in range(num):
+            raw_results[i] = out_q.get()
 
         for proc in procs:
             proc.join()
