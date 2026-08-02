@@ -134,12 +134,12 @@ class Op_wavelet_atrous(Op):
                         wopts['mean_map'] = 'const'
                         wopts['rms_box'] = None
                     else:
-                        wopts['rms_box'] = (bs, bs/3)
+                        wopts['rms_box'] = (bs, bs//3)
                         if hasattr(img, '_adapt_rms_isl_pos'):
                             bs_bright = max(5 * y1, img.rms_box_bright[0])
                             if bs_bright < bs/1.5:
                                 wopts['adaptive_rms_box'] = True
-                                wopts['rms_box_bright'] = (bs_bright, bs_bright/3)
+                                wopts['rms_box_bright'] = (bs_bright, bs_bright//3)
                             else:
                                 wopts['adaptive_rms_box'] = False
                     if j <= 3:
