@@ -243,10 +243,10 @@ class Op_islands(Op):
             mean = img.mean_arr
             labels = func.make_src_mask(image.shape, isl_posn_pix, isl_radius_pix)
             if img.masked:
-                aper_mask = N.where(labels.astype(bool) & ~mask)
+                aper_mask = labels.astype(bool) & ~mask
             else:
-                aper_mask = N.where(labels.astype(bool))
-            if N.size(aper_mask) >= img.minpix_isl and N.size(aper_mask) <= img.maxpix_isl:
+                aper_mask = labels.astype(bool)
+            if aper_mask.sum() >= img.minpix_isl and aper_mask.sum() <= img.maxpix_isl:
                 labels[aper_mask] = idx
                 s = [slice(max(0, isl_posn_pix[0] - isl_radius_pix - 1),
                      min(image.shape[0], isl_posn_pix[0] + isl_radius_pix + 1)),
@@ -354,7 +354,6 @@ class Island(object):
         self.shape = data.shape
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
-
         # Create mask for calculation of the mean and RMS values
         valid_island_pixels = ~self.mask_active & ~N.isnan(bbox_rms_im) & ~N.isnan(bbox_mean_im)
         
@@ -372,7 +371,7 @@ class Island(object):
         self.total_flux = N.nansum((self.image - bbox_mean_im)[valid_pixels]) / beamarea
 
         pixels_in_isl = N.sum(valid_pixels)
-        self.total_fluxE = func.nanmean(bbox_rms_im[valid_pixels]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
+        self.total_fluxE = N.nanmean(bbox_rms_im[valid_pixels]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
         self.border = self.get_border()
         self.gaul = []
         self.fgaul = []
