@@ -379,8 +379,8 @@ def moment(x,mask=None):
     for i, val in N.ndenumerate(x):
         if not mask[i]:
             m1 += val
-        m2 += val*N.array(i)
-        m3 += val*N.array(i)*N.array(i)
+            m2 += val*N.array(i)
+            m3 += val*N.array(i)*N.array(i)
     m2 /= m1
     if N.all(m3/m1 > m2*m2):
         m3 = N.sqrt(m3/m1-m2*m2)
