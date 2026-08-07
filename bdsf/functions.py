@@ -827,7 +827,7 @@ def fit_chisq(x, p, ep, mask, funct, order):
 
     dev = (p-fit)*(p-fit)/(ep*ep)
     num = order+1
-    csq = N.sum(dev[ind])/(len(fit)-num-1)
+    csq = N.sum(dev[ind])/(len(ind)-num-1)
 
     return csq
 
@@ -842,7 +842,7 @@ def calc_chisq(x, y, ey, p, mask, funct, order):
     dev = (y-fit)*(y-fit)/(ey*ey)
     ind = N.where(~N.array(mask))
     num = order+1
-    csq = N.sum(dev[ind])/(len(mask)-num-1)
+    csq = N.sum(dev[ind])/(len(ind)-num-1)
 
     return csq
 
