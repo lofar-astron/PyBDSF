@@ -353,7 +353,7 @@ class Op_gaul2srl(Op):
                 maxpeak = para[0]
             else:
                 maxpeak = maxv
-            posn = para[1:3]-(0.5*N.sum(s_imsize)-1)/2.0+N.array([maxx, maxy])-1+delc
+            posn = para[1:3] + blc + delc
         else:
             maxpeak = maxv
             posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
