@@ -51,7 +51,7 @@ class Op_psf_vary(Op):
                 psf_min = opts.psf_fwhm[1] # FWHM in deg
                 psf_pa = opts.psf_fwhm[2] # PA in deg
                 mylogger.userinfo(mylog, 'Using constant PSF (major, minor, pos angle)',
-                      '(%.5e, %.5e, %s) degrees' % (psf_maj, psf_maj,
+                      '(%.5e, %.5e, %s) degrees' % (psf_maj, psf_min,
                                                 round(psf_pa, 1)))
             else:
                 # Use did not specify a constant PSF to use, so estimate it
@@ -811,7 +811,7 @@ class Op_psf_vary(Op):
         gycens_pix = g_gauls[3]
         peak = g_gauls[1]
 
-        psfimsize = int(round(max(beam[0], beam[1])/max(cdelt[0], cdelt[1]) * factor))    # fac X fwhm; fac ~ 2
+        psfimsize = int(round(max(beam[0], beam[1])/max(abs(cdelt[0]), abs(cdelt[1])) * factor))    # fac X fwhm; fac ~ 2
         psfimage = N.zeros((psfimsize, psfimsize), dtype=N.float32)
         cs2=cutoutsize2 = int(round(psfimsize*(1. + 2./factor)/2.))  # size/2. factor => to avoid edge effects etc
         cc = cutoutcen_ind=[cs2, cs2]
@@ -863,7 +863,7 @@ class Op_psf_vary(Op):
 
         if plot:
             pl.figure(None)
-            colours=['b','g','r','c','m','y','k']*(len(xt)/7+1)
+            colours = [ 'b','g','r','c','m','y','k' ] * (len(xt) // 7+1 )
             pl.axis([0.0, image.shape[0], 0.0, image.shape[1]])
             pl.title('Tesselated image with tile centres and unresolved sources')
             for i in range(ntile):

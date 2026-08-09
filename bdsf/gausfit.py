@@ -23,6 +23,7 @@ if has_pl:
 import scipy.ndimage as nd
 from . import multi_proc as mp
 import itertools
+import sys
 
 
 class Op_gausfit(Op):
@@ -270,8 +271,8 @@ class Op_gausfit(Op):
                     print('SPLITTING ISLAND INTO ', n_subisl, ' PARTS FOR ISLAND ', isl.island_id)
                 for i_sub in range(n_subisl):
                     islcp = isl.copy(img.pixel_beamarea())
-                    islcp.mask_active = N.where(sub_labels == i_sub+1, False, True)
-                    islcp.mask_noisy = N.where(sub_labels == i_sub+1, False, True)
+                    islcp.mask_active = (sub_labels != i_sub+1)
+                    islcp.mask_noisy = (sub_labels != i_sub+1)
                     size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea()*2.0
                     if opts.peak_fit and size_subisl > peak_size:
                         sgaul, sfgaul = self.fit_island_iteratively(img, islcp, iter_ngmax=iter_ngmax, opts=opts)
@@ -365,7 +366,7 @@ class Op_gausfit(Op):
             ngmax = ng1+2
         if verbose:
             print('Initializing, ini_gausfit is', ini_gausfit, 'gaul =', gaul, 'ngmax =', ngmax)
-        while iter < 5:
+        while iter < 15:
             iter += 1
             if verbose:
                 print('In Gaussian flag loop, iter =', iter)
@@ -389,7 +390,7 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
-            while iter < 5:
+            while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
@@ -408,7 +409,7 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
-            while iter < 5:
+            while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
@@ -427,7 +428,7 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
-            while iter < 5:
+            while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
@@ -441,9 +442,8 @@ class Op_gausfit(Op):
             # If all else fails, try to use moment analysis
             if verbose:
                 print('All else has failed, trying moment analysis')
-            inisl = N.where(~isl.mask_active)
             mask_id = N.zeros(isl.image.shape, dtype=N.int32) - 1
-            mask_id[inisl] = isl.island_id
+            mask_id[~isl.mask_active] = isl.island_id
             try:
                 pixel_beamarea = img.pixel_beamarea()
                 mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, pixel_beamarea, True)
@@ -464,6 +464,14 @@ class Op_gausfit(Op):
                                                       isl.image, size)
             except ValueError:
                 pass
+
+            except IndexError:
+                print("IndexError in fit_island():", file=sys.stderr)
+                try:
+                    print(f"  {fit_image.shape=}", file=sys.stderr)
+                    print(f"  {mompara=}, {x1=}, {y1=}, {t=}, {u=}", file=sys.stderr)
+                except (AttributeError, NameError):
+                    pass
 
         # Return whatever we got
         if verbose:
@@ -650,7 +658,7 @@ class Op_gausfit(Op):
                 compact = []
                 invmask = []
                 for ished in range(nshed):
-                    shedmask = N.where(watershed == ished+2, False, True) + isl.mask_active  # good unmasked pixels = 0
+                    shedmask = (watershed != ished+2) | isl.mask_active  # good unmasked pixels = False
                     imm = nd.binary_dilation(~shedmask, N.ones((3, 3), int))
                     xbad, ybad = N.where((imm == 1)*(im > im[xm[ished+1], ym[ished+1]]))
                     imm[xbad, ybad] = 0
@@ -682,7 +690,7 @@ class Op_gausfit(Op):
                         invmask[i] = invmask[i]*newmask
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
             for i in range(nshed):
-                size = sqrt(N.sum(invmask))/fwsig
+                size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
                 x, y = N.indices(im.shape)
@@ -829,7 +837,12 @@ class Op_gausfit(Op):
         A, x1, x2, s1, s2, th = g
         s1, s2 = map(abs, [s1, s2])
         flag = 0
-        if N.any(N.isnan(g)) or s1 == 0.0 or s2 == 0.0:
+        # Chceck for NaN and Inf
+        if not N.all(N.isfinite(g)) or s1 == 0.0 or s2 == 0.0:
+            return -1
+            
+        # Reject unphysical amplitudes, larger than float32 (~3.4e38)
+        if abs(A) > 1e38:
             return -1
 
         if s1 < s2:   # s1 etc are sigma

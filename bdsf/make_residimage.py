@@ -55,8 +55,8 @@ class Op_make_residimage(Op):
             mask = img.rms_mask
         else:
             mask = img.mask_arr
-        if isinstance(img.mask_arr, N.ndarray):
-            pix_masked = N.where(img.mask_arr == True)
+        if isinstance(mask, N.ndarray):
+            pix_masked = N.where(mask == True)
             model_gaus[pix_masked] = N.nan
             resid_gaus[pix_masked] = N.nan
 
@@ -68,7 +68,7 @@ class Op_make_residimage(Op):
                 resdir = img.basedir + '/wavelet/residual/'
             else:
                 resdir = img.basedir + '/residual/'
-            if not os.path.exists(resdir): os.makedirs(resdir)
+            os.makedirs(resdir, exist_ok=True)
             func.write_image_to_file(img.use_io, img.imagename + '.resid_gaus.fits', resid_gaus, img, resdir)
             mylog.info('%s %s' % ('Writing', resdir+img.imagename+'.resid_gaus.fits'))
         if img.opts.output_all or img.opts.savefits_modelim:
@@ -76,7 +76,7 @@ class Op_make_residimage(Op):
                 moddir = img.basedir + '/wavelet/model/'
             else:
                 moddir = img.basedir + '/model/'
-            if not os.path.exists(moddir): os.makedirs(moddir)
+            os.makedirs(moddir, exist_ok=True)
             func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0_arr - resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 
@@ -87,7 +87,7 @@ class Op_make_residimage(Op):
 
         if img.opts.residual_stats_do:
             # Calculate some statistics for the Gaussian residual image
-            resid_gaus_non_masked = resid_gaus[~N.isnan(img.ch0_arr)]
+            resid_gaus_non_masked = resid_gaus[~N.isnan(resid_gaus)]
             mean = N.mean(resid_gaus_non_masked, axis=None)
             std_dev = N.std(resid_gaus_non_masked, axis=None)
             skew = stats.skew(resid_gaus_non_masked, axis=None)

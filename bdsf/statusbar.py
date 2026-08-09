@@ -2,7 +2,7 @@
 """Display an animated statusbar"""
 import sys
 import time
-from . import functions as func
+import shutil
 
 class StatusBar():
     # class variables:
@@ -36,10 +36,8 @@ class StatusBar():
 
     # find number of columns in terminal
     def __getsize(self):
-        try:
-            rows, columns = func.getTerminalSize()
-        except ValueError:
-            rows = columns = 0
+        tsize = shutil.get_terminal_size(fallback=(0, 0))
+        columns = tsize.columns
             
         if int(columns) > self.max + 2 + 44 + (len(str(self.max))*2 + 2):
             self.columns = self.max

@@ -248,22 +248,29 @@ def shapelet_getroot(xfn, yfn, xco, xcen, ycen):
     elif yfn.max()*yfn.min() >= 0.:
         error=1
 
-    minint=0; minintold=0
-    for i in range(1,npoint):
-        if yfn[i-1]*yfn[i] < 0.:
-            if minintold == 0:  # so take nearest to centre
+    minint=0
+    minintold=0
+    for i in range(1, npoint):
+        # Check if there is a sign change (zero crossing)
+        if yfn[i-1] * yfn[i] < 0.:
+            
+            if minintold == 0:  
+                # First root found. Choose the point closer to zero on the Y axis
                 if abs(yfn[i-1]) < abs(yfn[i]):
-                    minint=i-1
+                    minint = i - 1
                 else:
-                    minint=i
+                    minint = i
+                minintold = minint  
+                
             else:
-                dnew=func.dist_2pt([xco,xfn[i]], [xcen,ycen])
-                dold=func.dist_2pt([xco,xfn[minintold]], [xcen,ycen])
-        if dnew <= dold:
-            minint=i
-        else:
-            minint=minintold
-            minintold=minint
+                # Found another root and calculate both roots distance from the centre
+                dnew = func.dist_2pt([xco, xfn[i]], [xcen, ycen])
+                dold = func.dist_2pt([xco, xfn[minintold]], [xcen, ycen])
+                
+                # If the new root is closer to the centre, update the variables
+                if dnew <= dold:
+                    minint = i
+                    minintold = minint
 
     if minint < 1 or minint > npoint: error=1
     if error != 1:

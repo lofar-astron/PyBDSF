@@ -37,20 +37,6 @@ def wenss_fit(c,x):
     y = N.sqrt(c[0]*c[0]+c[1]*c[1]/(x*x))
     return y
 
-def nanmean(x):
-    """ Mean of array with NaN """
-    import numpy as N
-
-    sum = N.nansum(x)
-    n = N.sum(~N.isnan(x))
-
-    if n > 0:
-        mean = sum/n
-    else:
-        mean = float("NaN")
-
-    return mean
-
 def shapeletfit(cf, Bset, cfshape):
     """ The function """
     import numpy as N
@@ -396,7 +382,9 @@ def trans_gaul(q):
 def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     """ Compute 2d gaussian parameters from moment analysis, for an island with
         multiple gaussians. Compute only for gaussian with index (mask value) isrc.
-        Returns normalised peak, centroid, fwhm and P.A. assuming North is top.
+        This is the final fallback in Gaussian fitting. Simply fits a single, broad
+        Gaussian to the remaining emission, which rarely gets flagged.
+        Returns normalised peak, centroid, FWHM and P.A. assuming North is top.
     """
     from math import sqrt, atan, pi
     from .const import fwsig
@@ -994,7 +982,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 data = fits[0].data
             fits.close()
             data = data.transpose(*indx_out) # transpose axes to final order
-            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
             if naxis > 4:
                 data = data.reshape(shape_out_untrimmed) # Add axes if needed
                 data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
@@ -1004,7 +992,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
             # With casacore, just read in the whole image and then trim
             data = inputimage.getdata()
             data = data.transpose(*indx_out) # transpose axes to final order
-            data.shape = data.shape[0:4] # trim unused dimensions (if any)
+            data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
             data = data.reshape(shape_out_untrimmed) # Add axes if needed
             data = data[:, :, xmin:xmax, ymin:ymax] # trim to trim_box
 
@@ -1019,7 +1007,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         else:
             data = inputimage.getdata()
         data = data.transpose(*indx_out) # transpose axes to final order
-        data.shape = data.shape[0:4] # trim unused dimensions (if any)
+        data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
         data = data.reshape(shape_out) # Add axes if needed
 
     mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
@@ -1038,8 +1026,7 @@ def convert_casacore_header(casacore_image, tmpdir):
     except ImportError as err:
         import pyfits
 
-    if not os.path.exists(tmpdir):
-        os.makedirs(tmpdir)
+    os.makedirs(tmpdir, exist_ok=True)
     tfile = tempfile.NamedTemporaryFile(delete=False, dir=tmpdir)
     casacore_image.tofits(tfile.name)
     hdr = pyfits.getheader(tfile.name)
@@ -1099,10 +1086,9 @@ def write_image_to_file(use, filename, image, img, outdir=None,
         send_fits_image(img.samp_client, img.samp_key, 'PyBDSF image', tfile.name)
     else:
         # Write image to FITS file
-        if outdir is None:
+        if not outdir:
             outdir = img.indir
-        if not os.path.exists(outdir) and outdir != '':
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
         outfilename = os.path.join(outdir, filename)
         if os.path.isfile(outfilename):
             if clobber:
@@ -1256,8 +1242,7 @@ def get_name(img, map_name):
         pi_text = 'I'
     suffix = '/w%i_%s/' % (img.j, pi_text)
     dir = img.tempdir + suffix
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+    os.makedirs(dir, exist_ok=True)
     return dir + map_name + '.bin'
 
 def connect(mask):
@@ -1278,14 +1263,28 @@ def area_polygon(points):
     triangle with the centre """
     import numpy as N
 
+    # Unpack the input coordinates into separate arrays for x and y
     x, y = points
+    # Calculate the number of triangles. The vertices are angle-ordered, so
+    # we connect consecutive pairs (i and i+1) with the center, forming len(x) - 1 triangles.
     n_tri = len(x)-1
+    # Find the centroid of the polygon
     cenx, ceny = N.mean(x), N.mean(y)
 
     area = 0.0
+    # Loop through each pair of consecutive vertices to calculate individual triangle areas
     for i in range(n_tri):
+        # Define the three vertices of the current triangle:
+        # p1 is the center point, p2 is the current vertex, and p3 is the next consecutive vertex.
         p1, p2, p3 = N.array([cenx, ceny]), N.array([x[i], y[i]]), N.array([x[i+1], y[i+1]])
-        t_area= N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
+        # Create two vectors originating from the center point (p1) to the outer vertices (p2 and p3)
+        v1 = p2 - p1
+        v2 = p3 - p1
+        # Calculate the area of the triangle using the 2D cross-product.
+        # The absolute value of (v1_x * v2_y - v1_y * v2_x) represents the area spanned by v1 and v2.
+        # Dividing this value by 2.0 gives the triangle area.
+        t_area = abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.0
+        # Add the area of the current triangle into the total polygon area
         area += t_area
 
     return area
@@ -1313,7 +1312,9 @@ def convexhull_deficiency(isl):
 
     def area_of_triangle(p1, p2, p3):
         """calculate area of any triangle given co-ordinates of the corners"""
-        return N.linalg.norm(N.cross((p2 - p1), (p3 - p1)))/2.
+        v1 = p2 - p1
+        v2 = p3 - p1
+        return abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.
 
     def convex_hull(points):
         """Calculate subset of points that make a convex hull around points
@@ -1594,7 +1595,7 @@ def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
         return [0.0, 0.0]
     aper_flux = N.nansum(aper_im[aper_mask])/beamarea # Jy
     pixels_in_source = N.sum(~N.isnan(aper_im[aper_mask])) # number of unmasked pixels assigned to current source
-    aper_fluxE = nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
+    aper_fluxE = N.nanmean(aper_rms[aper_mask]) * N.sqrt(pixels_in_source/beamarea) # Jy
     return [aper_flux, aper_fluxE]
 
 def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
@@ -1636,19 +1637,6 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     submask_slice = [slice(int(xlo), int(xhi)), slice(int(ylo), int(yhi))]
     mask[tuple(submask_slice)] = submask
     return mask
-
-def getTerminalSize():
-    """Returns the terminal size as a tuple (lines, columns).
-    
-    Uses the built-in shutil module, ensuring cross-platform
-    compatibility
-    """
-    # shutil.get_terminal_size accepts a fallback in the format (columns, lines)
-    # We use (0, 0) as the fallback to match the original function's behavior
-    size = get_terminal_size(fallback=(0, 0))
-    
-    # Return the result as (lines, columns)
-    return size.lines, size.columns
 
 def eval_func_tuple(f_args):
     """Takes a tuple of a function and args, evaluates and returns result
@@ -1913,8 +1901,7 @@ def set_up_output_paths(opts):
         output_basedir = os.path.abspath(outdir)
 
     # Make the output directory if needed
-    if not os.path.exists(output_basedir):
-        os.makedirs(output_basedir)
+    os.makedirs(output_basedir, exist_ok=True)
 
     # Check that we have write permission to the base directory
     if not os.access(output_basedir, os.W_OK):

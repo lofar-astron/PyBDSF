@@ -36,11 +36,42 @@ class Op_preprocess(Op):
             pols = ['I'] # assume I is always present
             ch0images = [img.ch0_arr]
 
-        if hasattr(img, 'rms_mask'):
+        opts = img.opts
+
+        # Identify outside universe pixels FIRST
+        if opts.check_outsideuniv:
+            mylogger.userinfo(mylog, "Checking for pixels outside the universe")
+            noutside_univ = self.outside_univ(img)
+            img.noutside_univ = noutside_univ
+            # Use img.ch0_arr.shape instead of undefined 'image.shape'
+            frac_blank = round(float(noutside_univ)/float(img.ch0_arr.shape[0]*img.ch0_arr.shape[1]),3)
+            mylogger.userinfo(mylog, "Number of additional pixels blanked", str(noutside_univ)
+                              +' ('+str(frac_blank*100.0)+'%)')
+        else:
+            noutside_univ = 0
+
+        # Update existing masks using OR rather than overwriting
+        if noutside_univ > 0:
+            nan_mask = N.isnan(img.ch0_arr)
+            img.masked = True
+            
+            # Combine newly blanked pixels with the main mask
+            if hasattr(img, 'mask_arr') and img.mask_arr is not None:
+                img.mask_arr |= nan_mask
+            else:
+                img.mask_arr = nan_mask
+                
+            # Combine newly blanked pixels with the rms_mask
+            if hasattr(img, 'rms_mask') and img.rms_mask is not None:
+                img.rms_mask |= nan_mask
+            
+            img.blankpix = N.sum(img.mask_arr)
+
+        # Finally, assign the local 'mask' variable to be used by bstat
+        if hasattr(img, 'rms_mask') and img.rms_mask is not None:
             mask = img.rms_mask
         else:
             mask = img.mask_arr
-        opts = img.opts
 
         for ipol, pol in enumerate(pols):
             image = ch0images[ipol]
@@ -66,28 +97,7 @@ class Op_preprocess(Op):
                 img.clipped_rms_QUV.append(crms)
                 mylog.info('%s %s %s %.4f %s %s %.4f %s ' % ("sigma clipped mean (Stokes ", pol, ") = ", cmean*1000.0, \
                            'mJy and ','sigma clipped rms = ',crms*1000.0, 'mJy'))
-
         image = img.ch0_arr
-        # Check if pixels are outside the universe
-        if opts.check_outsideuniv:
-            mylogger.userinfo(mylog, "Checking for pixels outside the universe")
-            noutside_univ = self.outside_univ(img)
-            img.noutside_univ = noutside_univ
-            frac_blank = round(float(noutside_univ)/float(image.shape[0]*image.shape[1]),3)
-            mylogger.userinfo(mylog, "Number of additional pixels blanked", str(noutside_univ)
-                              +' ('+str(frac_blank*100.0)+'%)')
-        else:
-            noutside_univ = 0
-
-        # If needed, (re)mask the image
-        if noutside_univ > 0:
-            mask = N.isnan(img.ch0_arr)
-            masked = mask.any()
-            img.masked = masked
-            if masked:
-                img.mask_arr = mask
-            img.blankpix = N.sum(mask)
-
 
         ### max/min pixel value & coordinates
         shape = image.shape[0:2]

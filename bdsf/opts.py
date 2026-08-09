@@ -703,12 +703,6 @@ class Opts(object):
                                  "fitting is done on only the wavelet scale under "\
                                  "consideration.",
                              group = "atrous_do")
-    use_scipy_fft = Bool(True,
-                             doc = "Use fast SciPy FFT for convolution\n"\
-                                 "If True, the SciPy FFT function will be used instead "\
-                                 "of the custom version. The SciPy version is much "\
-                                 "faster but also uses much more memory.",
-                             group = "atrous_do")
 
     #--------------------------------FLAGGING OPTIONS--------------------------------
     flag_smallsrc = Bool(False,
@@ -1132,10 +1126,6 @@ class Opts(object):
                                  "used to determine the PSF variation, even if they are deemed "\
                                  "to be resolved. This corrects for the unreliability at high SNRs in the "\
                                  "algorithm used to find unresolved sources. The minimum value is 20.0",
-                             group = "psf_vary_do")
-    psf_stype_only = Bool(True,
-                             doc = "Restrict sources to "\
-                                 "be only of type 'S'",
                              group = "psf_vary_do")
     psf_stype_only = Bool(True,
                              doc = "Restrict sources to "\

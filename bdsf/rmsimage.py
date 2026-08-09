@@ -23,7 +23,7 @@ from .functions import read_image_from_file
 from . import multi_proc as mp
 
 
-def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
+def mapcoord_threaded(a, axs, *args, ncores=None, **kwargs):
     """Threaded map_coordinates on cartesian coordinate grid (meshgrid)
 
     :param a: Array to be regridded
@@ -32,36 +32,100 @@ def mapcoord_threaded(a, axs, *args, ncores=8, **kwargs):
     to equivalent of meshgrid(*axs)
 
     """
-    output = kwargs.get("output", None)
-    kwargs["output"] = None
-    # Prefilter only once to awoid repeated work in the workers. See
-    # _interpolation.py in scipy
+    def tworker_fallback(i, cl1):
+        cl = np.meshgrid(*([cl1]+axs[1:]))[-1::-1]
+        start, end = indices[i], indices[i+1]
+        out_slice = [slice(None)] * output.ndim
+        out_slice[1] = slice(start, end)
+        ndimage.map_coordinates(a, cl, prefilter=False, output=output[tuple(out_slice)], *args, **kwargs)
+
+    def tworker_tiled(r0, r1):
+        start0, end0 = r0
+        start1, end1 = r1
+        
+        sub_ax0 = ax0[start0:end0]
+        sub_ax1 = ax1[start1:end1]
+        
+        h = end1 - start1
+        w = end0 - start0
+        
+        # Allocate a contiguous float64 array and use 
+        # lossless numpy broadcasting
+        coords = np.empty((2, h, w), dtype=np.float64)
+        coords[0, :, :] = sub_ax1[:, None]  # Y-axis
+        coords[1, :, :] = sub_ax0[None, :]  # X-axis
+        
+        out_slice = (slice(start1, end1), slice(start0, end0))
+        
+        ndimage.map_coordinates(
+            a, coords, 
+            prefilter=False, 
+            output=output[out_slice], 
+            *args, **kwargs
+        )
+
+
+    if ncores is None:
+        ncores = mp.nproc()
+
+    output = kwargs.pop("output", None)
     order = kwargs.get("order", 3)
+    mode = kwargs.get("mode", "constant")
+    
+    # Filter the original image only once in the main thread
     if order > 1:
-        a = ndimage.spline_filter(a, order,
-                                  output=np.float64,
-                                  mode=kwargs.get("mode", "constant"))
+        a = ndimage.spline_filter(a, order, output=np.float64, mode=mode)
 
-    def tworker(cl1):
-        # Construct the subset of meshgrid to which worker has been
-        # applied.
-        # NB: The axis reversal is specific to this program. The indexing parameter
-        # does not do exactly the same thing
-        cl = np.meshgrid( * ([cl1]+axs[1:]))[-1::-1]
-        return ndimage.map_coordinates(a,
-                                       cl,
-                                       # NB we pulled the pre-filter out
-                                       prefilter=False,
-                                       *args, **kwargs)
+    # Fallback for 3D cases
+    if len(axs) > 2:
+        if output is None:
+            shape = [len(axs[1]), len(axs[0])] + [len(ax) for ax in axs[2:]]
+            out_dtype = np.float64 if order > 1 else a.dtype
+            output = np.empty(shape, dtype=out_dtype)
+        
+        chunks = np.array_split(axs[0], ncores)
+        chunk_sizes = [len(c) for c in chunks]
+        indices = [0] + np.cumsum(chunk_sizes).tolist()
 
-    with ThreadPoolExecutor(max_workers=ncores) as te:
-        res=te.map(tworker,
-                   axs[0])
-        res=np.hstack(list(res))
-        if output is not None:
-            np.copyto(output, res)
-        return res
+        with ThreadPoolExecutor(max_workers=ncores) as te:
+            futures = [te.submit(tworker_fallback, i, chunk) for i, chunk in enumerate(chunks)]
+            for f in futures:
+                f.result() # Re-raise exceptions if any occurred in the threads
+        return output
 
+    # Cache blocking (tiling)
+    ax0, ax1 = axs[0], axs[1]
+    len0, len1 = len(ax0), len(ax1)
+    
+    if output is None:
+        output = np.empty((len1, len0), dtype=np.float32)
+
+    # Aim to split the image to generate enough tasks for all cores
+    ideal_tile_size = int(max(len0, len1) / (np.sqrt(ncores) or 1))
+    
+    # Limit the tile size: 
+    # max 1000: to avoid evicting data from the CPU L3 cache (~16 MB)
+    # min 100:  so the Python array creation overhead doesn't exceed computation time
+    tile_size = max(100, min(1000, ideal_tile_size))
+    
+    # Generate coordinate ranges for individual tiles
+    ranges_0 = [(i, min(i + tile_size, len0)) for i in range(0, len0, tile_size)]
+    ranges_1 = [(i, min(i + tile_size, len1)) for i in range(0, len1, tile_size)]
+    
+    # Prepare coordinate pairs to eliminate task assignment delays
+    tasks = [(r0, r1) for r1 in ranges_1 for r0 in ranges_0]
+
+    # If the image is very small, run it in the main thread, 
+    # bypassing ThreadPoolExecutor
+    if len(tasks) == 1:
+        tworker_tiled(tasks[0][0], tasks[0][1])
+    else:
+        with ThreadPoolExecutor(max_workers=ncores) as te:
+            futures = [te.submit(tworker_tiled, r0, r1) for r0, r1 in tasks]
+            for f in futures:
+                f.result() # Catches any potential exceptions raised in threads
+
+    return output
 
 class Op_rmsimage(Op):
     """Calculate rms & noise maps
@@ -141,21 +205,21 @@ class Op_rmsimage(Op):
         image = ch0_images[0]
         shape = image.shape
         isl_size_bright = []
-        isl_area_highthresh = []
         threshold = start_thresh
+        rank = len(shape)
+        connectivity = ndimage.generate_binary_structure(rank, rank)
         if do_adapt:
             mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
+                isl_area_highthresh = []
                 if img.masked:
                     act_pixels = ~(mask.copy())
                     act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
                 else:
                     act_pixels = (image-cmean)/threshold >= crms
                 threshold *= 0.8
-                rank = len(image.shape)
-                connectivity = ndimage.generate_binary_structure(rank, rank)
                 labels, count = ndimage.label(act_pixels, connectivity)
                 slices = ndimage.find_objects(labels)
                 for idx, s in enumerate(slices):
@@ -175,8 +239,6 @@ class Op_rmsimage(Op):
             act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
         else:
             act_pixels = (image-cmean)/threshold >= crms
-        rank = len(image.shape)
-        connectivity = ndimage.generate_binary_structure(rank, rank)
         labels, count = ndimage.label(act_pixels, connectivity)
         slices = ndimage.find_objects(labels)
         isl_size = []
@@ -371,9 +433,8 @@ class Op_rmsimage(Op):
             if pol == 'I':
                 # Apply mask to mean_map and rms_map by setting masked values to NaN
                 if isinstance(mask, np.ndarray):
-                    pix_masked = np.where(mask == True)
-                    mean[pix_masked] = np.nan
-                    rms[pix_masked] = np.nan
+                    mean[mask] = np.nan
+                    rms[mask] = np.nan
 
                 img.mean_arr = mean
                 img.rms_arr = rms
@@ -383,7 +444,7 @@ class Op_rmsimage(Op):
                         resdir = img.basedir + '/wavelet/background/'
                     else:
                         resdir = img.basedir + '/background/'
-                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    os.makedirs(resdir, exist_ok=True)
                     func.write_image_to_file(img.use_io, img.imagename + '.rmsd_I.fits', rms, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.rmsd_I.fits'))
                 if opts.savefits_meanim or opts.output_all:
@@ -391,7 +452,7 @@ class Op_rmsimage(Op):
                         resdir = img.basedir + '/wavelet/background/'
                     else:
                         resdir = img.basedir + '/background/'
-                    if not os.path.exists(resdir): os.makedirs(resdir)
+                    os.makedirs(resdir, exist_ok=True)
                     func.write_image_to_file(img.use_io, img.imagename + '.mean_I.fits', mean, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.mean_I.fits'))
                 if opts.savefits_normim or opts.output_all:
@@ -399,10 +460,9 @@ class Op_rmsimage(Op):
                         resdir = img.basedir + '/wavelet/background/'
                     else:
                         resdir = img.basedir + '/background/'
-                    if not os.path.exists(resdir): os.makedirs(resdir)
-                    zero_pixels = np.where(rms <= 0.0)
+                    os.makedirs(resdir, exist_ok=True)
                     rms_nonzero = rms.copy()
-                    rms_nonzero[zero_pixels] = np.nan
+                    rms_nonzero[rms <= 0.0] = np.nan
                     func.write_image_to_file(img.use_io, img.imagename + '.norm_I.fits', (image-mean)/rms_nonzero, img, resdir)
                     mylog.info('%s %s' % ('Writing ', resdir+img.imagename+'.norm_I.fits'))
             else:
@@ -423,8 +483,7 @@ class Op_rmsimage(Op):
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(rms[unmasked])
+            stdsub = np.std(rms[~img.mask_arr])
         else:
             stdsub = np.std(rms)
 
@@ -451,8 +510,7 @@ class Op_rmsimage(Op):
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
         if img.masked:
-            unmasked = np.where(~img.mask_arr)
-            stdsub = np.std(mean[unmasked])
+            stdsub = np.std(mean[~img.mask_arr])
         else:
             stdsub = np.std(mean)
         rms_expect = img.clipped_rms/img.rms_box[0]*fw_pix
@@ -763,7 +821,7 @@ class Op_rmsimage(Op):
             rms_map[co] = cr
 
         # Check if all regions have too few unmasked pixels
-        if mask is not None and np.size(np.where(mean_map != np.inf)) == 0:
+        if mask is not None and not np.any(mean_map != np.inf):
             raise RuntimeError("No unmasked regions from which to determine "\
                          "mean and rms maps")
 
@@ -862,8 +920,7 @@ class Op_rmsimage(Op):
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
         # np.inf)
-        unmasked_boxes = np.where(mean_map != np.inf)
-        if np.size(unmasked_boxes,1) < mapshape[0]*mapshape[1]:
+        if np.count_nonzero(mean_map != np.inf) < mapshape[0]*mapshape[1]:
             mean_map = self.fill_masked_regions(mean_map)
             rms_map = self.fill_masked_regions(rms_map)
 
@@ -902,7 +959,7 @@ class Op_rmsimage(Op):
                     themap[x, y] = np.nanmean(goodcutout)
                 delx += 1
                 dely += 1
-        themap[np.where(np.isnan(themap))] = 0.0
+        themap[np.isnan(themap)] = 0.0
         return themap
 
     def pad_array(self, arr, new_shape):
@@ -949,28 +1006,16 @@ class Op_rmsimage(Op):
 
         return arr_pad
 
-    def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
 
-        bstat = func.bstat#_cbdsm.bstat
-        a, b, c, d = ind; i, j = co
-        if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
-            if cnt > 198: cm = m; cr = r
-            mean_map[i, j], rms_map[i, j] = cm, cr
-        else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
-            if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
-                if cnt > 198: cm = m; cr = r
-                mean_map[i, j], rms_map[i, j] = cm, cr
-            else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
-                    mean_map[i, j], rms_map[i, j] = cm, cr
-                else: # too few unmasked pixels --> set mean/rms to inf
-                    mean_map[i, j], rms_map[i, j] = np.inf, np.inf
+    def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
+        """
+        Delegates calculations to 'for_masked_mp', and then
+        stores results into the global 2D map arrays.
+        """
+
+        i, j = co
+        cm, cr = self.for_masked_mp(mask, arr, ind, kappa)
+        mean_map[i, j], rms_map[i, j] = cm, cr
 
 
     def for_masked_mp(self, mask, arr, ind, kappa):
@@ -987,9 +1032,18 @@ class Op_rmsimage(Op):
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
             else:
-                if npix_unmasked > 5: # just find simple mean/rms
-                    cm = np.mean(arr[pix_unmasked])
-                    cr = np.std(arr[pix_unmasked])
+                if npix_unmasked > 5: # same logic as in 'for_masked'
+                    # First take the same windows for which the mask was calculated
+                    # and then select only the unmasked pixels
+                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    cm = np.median(valid_pixels)
+                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
+                    # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
+                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+                    
+                    # Protection against zero noise (e.g. all pixels have the same value)
+                    if cr == 0.0:
+                        cr = np.std(valid_pixels) # final fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
