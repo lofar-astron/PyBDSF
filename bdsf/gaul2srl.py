@@ -517,8 +517,8 @@ class Op_gaul2srl(Op):
         size_skyE = [sqrt(mompara3E**2 + errors[3]**2) * sqrt(cdeltsq),
                      sqrt(mompara4E**2 + errors[4]**2) * sqrt(cdeltsq),
                      sqrt(mompara5E**2 + errors[5]**2)]
-        sraE, sdecE = (sqrt(mompara1E**2 + errors[1]**2) * sqrt(cdeltsq),
-                       sqrt(mompara2E**2 + errors[2]**2) * sqrt(cdeltsq))
+        sraE = N.sqrt(mompara1E**2 + errors[1]**2) * img.wcs_obj.acdelt[0]
+        sdecE = sqrt(mompara2E**2 + errors[2]**2) * img.wcs_obj.acdelt[1]
         deconv_size_skyE = size_skyE # set deconvolved errors to non-deconvolved ones
 
         # Find aperture flux
