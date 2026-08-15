@@ -933,7 +933,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
             p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
             sys.stdout = original_stdout  # turn STDOUT back on
     else:
-        p, sucess = None, 1
+        p, success = None, 1
 
     para = N.zeros(6*ngaus)
     para[N.where(ind==1)[0]] = p
