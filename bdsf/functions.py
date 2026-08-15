@@ -508,7 +508,7 @@ def imageshift(image, shift):
     f1=scipy.fft.fft(image, shape[0], axis=0)
     f2=scipy.fft.fft(f1, shape[1], axis=1)
 
-    s=ndimage.fourier_shift(f2,shift, axis=0)
+    s=ndimage.fourier_shift(f2, shift)
 
     y1=scipy.fft.ifft(s, shape[1], axis=1)
     y2=scipy.fft.ifft(y1, shape[0], axis=0)
