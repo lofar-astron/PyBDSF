@@ -243,10 +243,7 @@ def corrected_size(size):
     csize[0] = size[0]*fwsig
     csize[1] = size[1]*fwsig
     bpa = size[2]
-    pa = bpa-90.0
-    pa = pa % 360
-    if pa < 0.0: pa = pa + 360.0
-    if pa > 180.0: pa = pa - 180.0
+    pa = (bpa - 90.0) % 180.0
     csize[2] = pa
 
     return csize
