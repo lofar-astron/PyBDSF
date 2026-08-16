@@ -243,6 +243,8 @@ def corrected_size(size):
     csize[0] = size[0]*fwsig
     csize[1] = size[1]*fwsig
     bpa = size[2]
+    # Convert to astronomical P.A. and wrap to [0, 180) degrees
+    # Ellipses are rotationally symmetric by 180°, making orientation > 180° redundant
     pa = (bpa - 90.0) % 180.0
     csize[2] = pa
 
