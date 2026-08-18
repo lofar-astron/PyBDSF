@@ -1804,7 +1804,8 @@ def isl_tosplit(isl, opts):
     index = 0
     n_subisl3, labels3, isl_pixs3 = open_isl(isl.mask_active, 3)
     n_subisl5, labels5, isl_pixs5 = open_isl(isl.mask_active, 5)
-    isl_pixs3, isl_pixs5 = N.array(isl_pixs3), N.array(isl_pixs5)
+    isl_pixs3 = N.array(isl_pixs3) if isl_pixs3 is not None else None
+    isl_pixs5 = N.array(isl_pixs5) if isl_pixs5 is not None else None
 
                                 # take open 3 or 5
     open3, open5 = False, False
