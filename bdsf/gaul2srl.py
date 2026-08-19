@@ -335,8 +335,8 @@ class Op_gaul2srl(Op):
         n, m = subim_src.shape[0:2]
         bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
         ssubimsize = max(int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
-        blc[0] = max(0, maxx-(ssubimsize-1)/2); blc[1] = max(0, maxy-(ssubimsize-1)/2)
-        trc[0] = min(n, maxx+(ssubimsize-1)/2); trc[1] = min(m, maxy+(ssubimsize-1)/2)
+        blc[0] = max(0, maxx-(ssubimsize-1)//2); blc[1] = max(0, maxy-(ssubimsize-1)//2)
+        trc[0] = min(n, maxx+(ssubimsize-1)//2); trc[1] = min(m, maxy+(ssubimsize-1)//2)
         s_imsize = trc - blc + 1
 
         p_ini = [maxv, (s_imsize[0]-1)/2.0*1.1, (s_imsize[1]-1)/2.0*1.1, bm_pix[0]/fwsig*1.3, \
