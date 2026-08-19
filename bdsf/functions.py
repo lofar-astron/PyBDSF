@@ -678,8 +678,8 @@ def deconv2(gaus_bm, gaus_c):
 
     rad = 180.0/pi
 
-    phi_c = gaus_c[2]+900.0 % 180.0
-    phi_bm = gaus_bm[2]+900.0 % 180.0
+    phi_c = gaus_c[2] % 180.0
+    phi_bm = gaus_bm[2] % 180.0
     theta1 = phi_c / rad
     theta2 = phi_bm / rad
     bmaj1 = gaus_c[0]
