@@ -379,8 +379,8 @@ def moment(x,mask=None):
     for i, val in N.ndenumerate(x):
         if not mask[i]:
             m1 += val
-        m2 += val*N.array(i)
-        m3 += val*N.array(i)*N.array(i)
+            m2 += val*N.array(i)
+            m3 += val*N.array(i)*N.array(i)
     m2 /= m1
     if N.all(m3/m1 > m2*m2):
         m3 = N.sqrt(m3/m1-m2*m2)
@@ -678,8 +678,8 @@ def deconv2(gaus_bm, gaus_c):
 
     rad = 180.0/pi
 
-    phi_c = gaus_c[2]+900.0 % 180.0
-    phi_bm = gaus_bm[2]+900.0 % 180.0
+    phi_c = gaus_c[2] % 180.0
+    phi_bm = gaus_bm[2] % 180.0
     theta1 = phi_c / rad
     theta2 = phi_bm / rad
     bmaj1 = gaus_c[0]
@@ -1106,7 +1106,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if img.use_io == 'fits':
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            except IOError as err:
+            except OSError as err:
                 img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
         if img.use_io == 'rap':
@@ -1115,7 +1115,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 return None
             try:
                 inputimage = pim.image(image_file)
-            except IOError as err:
+            except OSError as err:
                 img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
     else:
@@ -1125,13 +1125,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
         try:
             fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             img.use_io = 'fits'
-        except IOError as err:
+        except OSError as err:
             e_pyfits = str(err)
             if has_casacore:
                 try:
                     inputimage = pim.image(image_file)
                     img.use_io = 'rap'
-                except IOError as err:
+                except OSError as err:
                     e_casacore = str(err)
                     failed_read = True
                     img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
