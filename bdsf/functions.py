@@ -1106,7 +1106,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if img.use_io == 'fits':
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            except IOError as err:
+            except OSError as err:
                 img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
         if img.use_io == 'rap':
@@ -1115,7 +1115,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 return None
             try:
                 inputimage = pim.image(image_file)
-            except IOError as err:
+            except OSError as err:
                 img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
     else:
@@ -1125,13 +1125,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
         try:
             fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             img.use_io = 'fits'
-        except IOError as err:
+        except OSError as err:
             e_pyfits = str(err)
             if has_casacore:
                 try:
                     inputimage = pim.image(image_file)
                     img.use_io = 'rap'
-                except IOError as err:
+                except OSError as err:
                     e_casacore = str(err)
                     failed_read = True
                     img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'
