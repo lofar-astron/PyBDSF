@@ -267,8 +267,12 @@ def drawellipse(g):
     size = [param[3], param[4], param[5]]
     size_fwhm = corrected_size(size)
     th=N.arange(0, 370, 10)
-    x1=size_fwhm[0]*N.cos(th/rad)
-    y1=size_fwhm[1]*N.sin(th/rad)
+
+    # Not dividing those by 2, since the intention is to encircle the area down to the treshold
+    # level, not to the FWHM level
+    x1 = size_fwhm[0] * N.cos(th/rad)
+    y1 = size_fwhm[1] * N.sin(th/rad)
+
     x2=x1*N.cos(param[5]/rad)-y1*N.sin(param[5]/rad)+param[1]
     y2=x1*N.sin(param[5]/rad)+y1*N.cos(param[5]/rad)+param[2]
 
