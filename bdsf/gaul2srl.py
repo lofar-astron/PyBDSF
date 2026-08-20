@@ -484,26 +484,25 @@ class Op_gaul2srl(Op):
                     mompara4_MC[i] = mompara_MC[4]
                     mompara5_MC[i] = mompara_MC[5]
                 except:
-                    mompara0_MC[i] = mompara[0]
-                    mompara1_MC[i] = mompara[1]
-                    mompara2_MC[i] = mompara[2]
-                    mompara3_MC[i] = mompara[3]
-                    mompara4_MC[i] = mompara[4]
-                    mompara5_MC[i] = mompara[5]
-            mompara0E = N.std(mompara0_MC)
-            mompara1E = N.std(mompara1_MC)
+                    mompara0_MC[i] = N.nan
+                    mompara1_MC[i] = N.nan
+                    mompara2_MC[i] = N.nan
+                    mompara3_MC[i] = N.nan
+                    mompara4_MC[i] = N.nan
+                    mompara5_MC[i] = N.nan
+            mompara1E = N.nanstd(mompara1_MC)
             if mompara1E > 2.0*mompara[1]:
                 mompara1E = 2.0*mompara[1] # Don't let errors get too large
-            mompara2E = N.std(mompara2_MC)
+            mompara2E = N.nanstd(mompara2_MC)
             if mompara2E > 2.0*mompara[2]:
                 mompara2E = 2.0*mompara[2] # Don't let errors get too large
-            mompara3E = N.std(mompara3_MC)
+            mompara3E = N.nanstd(mompara3_MC)
             if mompara3E > 2.0*mompara[3]:
                 mompara3E = 2.0*mompara[3] # Don't let errors get too large
-            mompara4E = N.std(mompara4_MC)
+            mompara4E = N.nanstd(mompara4_MC)
             if mompara4E > 2.0*mompara[4]:
                 mompara4E = 2.0*mompara[4] # Don't let errors get too large
-            mompara5E = N.std(mompara5_MC)
+            mompara5E = N.nanstd(mompara5_MC)
             if mompara5E > 2.0*mompara[5]:
                 mompara5E = 2.0*mompara[5] # Don't let errors get too large
         else:
