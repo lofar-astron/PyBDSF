@@ -58,9 +58,9 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=Fals
     :param bar_state: dictionary holding shared memory Values for statusbar state
     :param preserve_order: whether chunk entries carry their original index
     """
-    # Disable the garbage collector in the worker process. 
-    # This prevents the GC from touching object headers of large arrays 
-    # inherited via fork, thus avoiding massive Copy-on-Write memory overhead.
+    # Disable the garbage collector in the worker process.
+    # CoW memory overhead is already mitigated by gc.freeze() in the main thread,
+    # but disabling GC here prevents unnecessary pauses during heavy NumPy computations.
     gc.disable()
 
     vals = []
