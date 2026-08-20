@@ -236,6 +236,9 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
 
     preserve_order = False
     if weights is None or numcores == size:
+        # Manually split the list to avoid O(N) memory overhead 
+        # caused by numpy.array_split(), which implicitly calls np.asarray() 
+        # on standard Python lists.
         n_each_section, extras = divmod(size, numcores)
         section_sizes = ([n_each_section + 1] * extras) + ([n_each_section] * (numcores - extras))
         
