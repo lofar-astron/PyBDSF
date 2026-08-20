@@ -64,9 +64,6 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=Fals
     gc.disable()
 
     vals = []
-    
-    # Create local reference to append method for faster lookups in tight loop
-    append_val = vals.append
 
     # Loop Unswitching: Check the condition once outside the loop to avoid
     # evaluating it on every single item.
@@ -83,7 +80,7 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=Fals
                 err_q.put(e)
                 return
 
-            append_val((val_idx, result))
+            vals.append((val_idx, result))
 
             if bar is not None:
                 if bool(bar_state['started'].value):
@@ -109,7 +106,7 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=Fals
                 err_q.put(e)
                 return
 
-            append_val(result)
+            vals.append(result)
 
             if bar is not None:
                 if bool(bar_state['started'].value):
