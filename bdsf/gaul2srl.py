@@ -228,7 +228,9 @@ class Op_gaul2srl(Op):
             x1, y1 = map(int, N.floor(pix1)-delc); x2, y2 = map(int, N.floor(pix2)-delc)
             pix1 = N.array(N.unravel_index(N.argmax(subim[x1:x1+2,y1:y1+2]), (2,2)))+[x1,y1]
             pix2 = N.array(N.unravel_index(N.argmax(subim[x2:x2+2,y2:y2+2]), (2,2)))+[x2,y2]
-            if pix1[1] >= subn: pix1[1] = pix1[1]-1
+            if pix1[0] >= subn: pix1[0] = pix1[0]-1
+            if pix1[1] >= subm: pix1[1] = pix1[1]-1
+            if pix2[0] >= subn: pix2[0] = pix2[0]-1
             if pix2[1] >= subm: pix2[1] = pix2[1]-1
             pix1 = pix1.astype(float) #N.array(map(float, pix1))
             pix2 = pix2.astype(float) #N.array(map(float, pix2))
