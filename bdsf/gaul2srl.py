@@ -253,10 +253,8 @@ class Op_gaul2srl(Op):
                     xline = N.round((pix1[0]-pix2[0])/(pix1[1]-pix2[1])* \
                            (min(pix1[1],pix2[1])+N.arange(maxline)-pix1[1])+pix1[0])
                 rpixval = N.zeros(maxline, dtype=N.float32)
-                xbig = N.where(xline >= N.size(subim,0))
-                xline[xbig] = N.size(subim,0) - 1
-                ybig = N.where(yline >= N.size(subim,1))
-                yline[ybig] = N.size(subim,1) - 1
+                xline = N.clip(xline, 0, N.size(subim,0) - 1)
+                yline = N.clip(yline, 0, N.size(subim,1) - 1)
                 for i in range(maxline):
                     pixval = subim[int(xline[i]), int(yline[i])]
                     rpixval[i] = pixval
