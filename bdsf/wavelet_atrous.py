@@ -85,7 +85,7 @@ class Op_wavelet_atrous(Op):
                     min_size = min(max_isl_shape) * 4.0
                 else:
                     min_size = min(resid.shape)
-                jmax = int(floor(log((min_size / 3.0 * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0)) + 1
+                jmax = floor(log(((min_size // 3) * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0) + 1
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
             img.wavelet_lpf = lpf
