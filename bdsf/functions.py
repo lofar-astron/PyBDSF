@@ -501,22 +501,35 @@ def std(y):
         return s*sqrt(float(l)/(l-1))
 
 def imageshift(image, shift):
-    """ Shifts a 2d-image by the tuple (shift). Positive shift is to the right and upwards.
-    This is done by fourier shifting. """
-    import scipy.fft
-    from scipy import ndimage
+    """
+    Shift a 2D image using Fourier phase shifts.
 
-    shape=image.shape
+    Parameters
+    ----------
+    image : 2D array_like
+        Input image array.
+    shift : tuple or list of float
+        Shift values in pixels along (y, x) axes. Positive y shifts
+        the image upwards, and positive x shifts it to the right.
 
-    f1=scipy.fft.fft(image, shape[0], axis=0)
-    f2=scipy.fft.fft(f1, shape[1], axis=1)
+    Returns
+    -------
+    shifted_image : ndarray
+        Shifted image (real values).
+    """
 
-    s=ndimage.fourier_shift(f2,shift, axis=0)
+    from scipy.fft import fft2, ifft2
+    from scipy.ndimage import fourier_shift
 
-    y1=scipy.fft.ifft(s, shape[1], axis=1)
-    y2=scipy.fft.ifft(y1, shape[0], axis=0)
+    # Reverse y-shift sign (-shift[0]) because in array indexing,
+    # axis 0 increases downwards, but positive shift should move upwards.
+    actual_shift = (-shift[0], shift[1])
 
-    return y2.real
+    f2 = fft2(image)
+    s = fourier_shift(f2, actual_shift)
+    f4 = ifft2(s)
+
+    return f4.real
 
 def trans_gaul(q):
     " transposes a tuple "
