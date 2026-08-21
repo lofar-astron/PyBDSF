@@ -218,21 +218,28 @@ def g2param(g, adj=False):
 
     return params
 
+
 def g2param_err(g, adj=False):
     """Convert errors on gaussian object g to param list [Eamp, Ecenx, Eceny, Esigx, Esigy, Etheta] """
     from .const import fwsig
-    from math import pi
 
     A = g.peak_fluxE
-    if adj and hasattr(g, 'size_pix_adj'):
-        sigx, sigy, th = g.size_pix_adj
+    if adj and hasattr(g, 'size_pix_adj') and hasattr(g, 'size_pix'):
+        scale_x = g.size_pix_adj[0] / g.size_pix[0] if g.size_pix[0] > 0 else 1.0
+        scale_y = g.size_pix_adj[1] / g.size_pix[1] if g.size_pix[1] > 0 else 1.0
+        sigx = g.size_pixE[0] * scale_x
+        sigy = g.size_pixE[1] * scale_y
+        th = g.size_pixE[2]
     else:
         sigx, sigy, th = g.size_pixE
+
     cenx, ceny = g.centre_pixE
-    sigx = sigx/fwsig; sigy = sigy/fwsig
+    sigx = sigx / fwsig
+    sigy = sigy / fwsig
     params = [A, cenx, ceny, sigx, sigy, th]
 
     return params
+
 
 def corrected_size(size):
     """ convert major and minor axis from sigma to fwhm and angle from horizontal to P.A. """
@@ -1807,11 +1814,9 @@ def isl_tosplit(isl, opts):
     size_extra5 = opts.splitisl_size_extra5
     frac_bigisl3 = opts.splitisl_frac_bigisl3
 
-    connected, count = connect(isl.mask_active)
     index = 0
     n_subisl3, labels3, isl_pixs3 = open_isl(isl.mask_active, 3)
     n_subisl5, labels5, isl_pixs5 = open_isl(isl.mask_active, 5)
-    isl_pixs3, isl_pixs5 = N.array(isl_pixs3), N.array(isl_pixs5)
 
                                 # take open 3 or 5
     open3, open5 = False, False
@@ -1827,8 +1832,6 @@ def isl_tosplit(isl, opts):
     else:
         if open3: index = 3; n_subisl = n_subisl3; labels = labels3
         else: index = 0
-    convex_def =  convexhull_deficiency(isl)
-    #print 'CONVEX = ',convex_def
 
     if opts.plot_islands:
         try:
