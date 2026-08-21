@@ -228,7 +228,9 @@ class Op_gaul2srl(Op):
             x1, y1 = map(int, N.floor(pix1)-delc); x2, y2 = map(int, N.floor(pix2)-delc)
             pix1 = N.array(N.unravel_index(N.argmax(subim[x1:x1+2,y1:y1+2]), (2,2)))+[x1,y1]
             pix2 = N.array(N.unravel_index(N.argmax(subim[x2:x2+2,y2:y2+2]), (2,2)))+[x2,y2]
-            if pix1[1] >= subn: pix1[1] = pix1[1]-1
+            if pix1[0] >= subn: pix1[0] = pix1[0]-1
+            if pix1[1] >= subm: pix1[1] = pix1[1]-1
+            if pix2[0] >= subn: pix2[0] = pix2[0]-1
             if pix2[1] >= subm: pix2[1] = pix2[1]-1
             pix1 = pix1.astype(float) #N.array(map(float, pix1))
             pix2 = pix2.astype(float) #N.array(map(float, pix2))
@@ -253,10 +255,8 @@ class Op_gaul2srl(Op):
                     xline = N.round((pix1[0]-pix2[0])/(pix1[1]-pix2[1])* \
                            (min(pix1[1],pix2[1])+N.arange(maxline)-pix1[1])+pix1[0])
                 rpixval = N.zeros(maxline, dtype=N.float32)
-                xbig = N.where(xline >= N.size(subim,0))
-                xline[xbig] = N.size(subim,0) - 1
-                ybig = N.where(yline >= N.size(subim,1))
-                yline[ybig] = N.size(subim,1) - 1
+                xline = N.clip(xline, 0, N.size(subim,0) - 1)
+                yline = N.clip(yline, 0, N.size(subim,1) - 1)
                 for i in range(maxline):
                     pixval = subim[int(xline[i]), int(yline[i])]
                     rpixval[i] = pixval
@@ -335,8 +335,8 @@ class Op_gaul2srl(Op):
         n, m = subim_src.shape[0:2]
         bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
         ssubimsize = max(int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
-        blc[0] = max(0, maxx-(ssubimsize-1)/2); blc[1] = max(0, maxy-(ssubimsize-1)/2)
-        trc[0] = min(n, maxx+(ssubimsize-1)/2); trc[1] = min(m, maxy+(ssubimsize-1)/2)
+        blc[0] = max(0, maxx-(ssubimsize-1)//2); blc[1] = max(0, maxy-(ssubimsize-1)//2)
+        trc[0] = min(n, maxx+(ssubimsize-1)//2); trc[1] = min(m, maxy+(ssubimsize-1)//2)
         s_imsize = trc - blc + 1
 
         p_ini = [maxv, (s_imsize[0]-1)/2.0*1.1, (s_imsize[1]-1)/2.0*1.1, bm_pix[0]/fwsig*1.3, \
@@ -353,7 +353,7 @@ class Op_gaul2srl(Op):
                 maxpeak = para[0]
             else:
                 maxpeak = maxv
-            posn = para[1:3]-(0.5*N.sum(s_imsize)-1)/2.0+N.array([maxx, maxy])-1+delc
+            posn = para[1:3] + blc + delc
         else:
             maxpeak = maxv
             posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
@@ -484,26 +484,25 @@ class Op_gaul2srl(Op):
                     mompara4_MC[i] = mompara_MC[4]
                     mompara5_MC[i] = mompara_MC[5]
                 except:
-                    mompara0_MC[i] = mompara[0]
-                    mompara1_MC[i] = mompara[1]
-                    mompara2_MC[i] = mompara[2]
-                    mompara3_MC[i] = mompara[3]
-                    mompara4_MC[i] = mompara[4]
-                    mompara5_MC[i] = mompara[5]
-            mompara0E = N.std(mompara0_MC)
-            mompara1E = N.std(mompara1_MC)
+                    mompara0_MC[i] = N.nan
+                    mompara1_MC[i] = N.nan
+                    mompara2_MC[i] = N.nan
+                    mompara3_MC[i] = N.nan
+                    mompara4_MC[i] = N.nan
+                    mompara5_MC[i] = N.nan
+            mompara1E = N.nanstd(mompara1_MC)
             if mompara1E > 2.0*mompara[1]:
                 mompara1E = 2.0*mompara[1] # Don't let errors get too large
-            mompara2E = N.std(mompara2_MC)
+            mompara2E = N.nanstd(mompara2_MC)
             if mompara2E > 2.0*mompara[2]:
                 mompara2E = 2.0*mompara[2] # Don't let errors get too large
-            mompara3E = N.std(mompara3_MC)
+            mompara3E = N.nanstd(mompara3_MC)
             if mompara3E > 2.0*mompara[3]:
                 mompara3E = 2.0*mompara[3] # Don't let errors get too large
-            mompara4E = N.std(mompara4_MC)
+            mompara4E = N.nanstd(mompara4_MC)
             if mompara4E > 2.0*mompara[4]:
                 mompara4E = 2.0*mompara[4] # Don't let errors get too large
-            mompara5E = N.std(mompara5_MC)
+            mompara5E = N.nanstd(mompara5_MC)
             if mompara5E > 2.0*mompara[5]:
                 mompara5E = 2.0*mompara[5] # Don't let errors get too large
         else:
