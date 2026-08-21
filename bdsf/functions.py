@@ -1803,11 +1803,9 @@ def isl_tosplit(isl, opts):
     size_extra5 = opts.splitisl_size_extra5
     frac_bigisl3 = opts.splitisl_frac_bigisl3
 
-    connected, count = connect(isl.mask_active)
     index = 0
     n_subisl3, labels3, isl_pixs3 = open_isl(isl.mask_active, 3)
     n_subisl5, labels5, isl_pixs5 = open_isl(isl.mask_active, 5)
-    isl_pixs3, isl_pixs5 = N.array(isl_pixs3), N.array(isl_pixs5)
 
                                 # take open 3 or 5
     open3, open5 = False, False
@@ -1823,8 +1821,6 @@ def isl_tosplit(isl, opts):
     else:
         if open3: index = 3; n_subisl = n_subisl3; labels = labels3
         else: index = 0
-    convex_def =  convexhull_deficiency(isl)
-    #print 'CONVEX = ',convex_def
 
     if opts.plot_islands:
         try:
