@@ -243,10 +243,9 @@ def corrected_size(size):
     csize[0] = size[0]*fwsig
     csize[1] = size[1]*fwsig
     bpa = size[2]
-    pa = bpa-90.0
-    pa = pa % 360
-    if pa < 0.0: pa = pa + 360.0
-    if pa > 180.0: pa = pa - 180.0
+    # Convert to astronomical P.A. and wrap to [0, 180) degrees
+    # Ellipses are rotationally symmetric by 180°, making orientation > 180° redundant
+    pa = (bpa - 90.0) % 180.0
     csize[2] = pa
 
     return csize
@@ -267,8 +266,12 @@ def drawellipse(g):
     size = [param[3], param[4], param[5]]
     size_fwhm = corrected_size(size)
     th=N.arange(0, 370, 10)
-    x1=size_fwhm[0]*N.cos(th/rad)
-    y1=size_fwhm[1]*N.sin(th/rad)
+
+    # Not dividing those by 2, since the intention is to encircle the area down to the treshold
+    # level, not to the FWHM level
+    x1 = size_fwhm[0] * N.cos(th/rad)
+    y1 = size_fwhm[1] * N.sin(th/rad)
+
     x2=x1*N.cos(param[5]/rad)-y1*N.sin(param[5]/rad)+param[1]
     y2=x1*N.sin(param[5]/rad)+y1*N.cos(param[5]/rad)+param[2]
 
@@ -379,8 +382,8 @@ def moment(x,mask=None):
     for i, val in N.ndenumerate(x):
         if not mask[i]:
             m1 += val
-        m2 += val*N.array(i)
-        m3 += val*N.array(i)*N.array(i)
+            m2 += val*N.array(i)
+            m3 += val*N.array(i)*N.array(i)
     m2 /= m1
     if N.all(m3/m1 > m2*m2):
         m3 = N.sqrt(m3/m1-m2*m2)
@@ -682,8 +685,8 @@ def deconv2(gaus_bm, gaus_c):
 
     rad = 180.0/pi
 
-    phi_c = gaus_c[2]+900.0 % 180.0
-    phi_bm = gaus_bm[2]+900.0 % 180.0
+    phi_c = gaus_c[2] % 180.0
+    phi_bm = gaus_bm[2] % 180.0
     theta1 = phi_c / rad
     theta2 = phi_bm / rad
     bmaj1 = gaus_c[0]
@@ -937,7 +940,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
             p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
             sys.stdout = original_stdout  # turn STDOUT back on
     else:
-        p, sucess = None, 1
+        p, success = None, 1
 
     para = N.zeros(6*ngaus)
     para[N.where(ind==1)[0]] = p
@@ -1110,7 +1113,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         if img.use_io == 'fits':
             try:
                 fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
-            except IOError as err:
+            except OSError as err:
                 img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
         if img.use_io == 'rap':
@@ -1119,7 +1122,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
                 return None
             try:
                 inputimage = pim.image(image_file)
-            except IOError as err:
+            except OSError as err:
                 img._reason = f'Problem reading {image_file}.\nOriginal error: {err}'
                 return None
     else:
@@ -1129,13 +1132,13 @@ def read_image_from_file(filename, img, indir, quiet=False):
         try:
             fits = pyfits.open(image_file, mode="readonly", ignore_missing_end=True)
             img.use_io = 'fits'
-        except IOError as err:
+        except OSError as err:
             e_pyfits = str(err)
             if has_casacore:
                 try:
                     inputimage = pim.image(image_file)
                     img.use_io = 'rap'
-                except IOError as err:
+                except OSError as err:
                     e_casacore = str(err)
                     failed_read = True
                     img._reason = 'File is not a valid FITS, CASA, or HDF5 image.'

@@ -157,11 +157,11 @@ class Op_make_residimage(Op):
 
             if img.opts.residual_stats_do:
                 # Calculate some statistics for the Shapelet residual image
-                non_masked = N.where(~N.isnan(img.ch0_arr))
-                mean = N.mean(resid_shap[non_masked], axis=None)
-                std_dev = N.std(resid_shap[non_masked], axis=None)
-                skew = stats.skew(resid_shap[non_masked], axis=None)
-                kurt = stats.kurtosis(resid_shap[non_masked], axis=None)
+                resid_shap_non_masked = resid_shap[~N.isnan(resid_shap)]
+                mean = N.mean(resid_shap_non_masked, axis=None)
+                std_dev = N.std(resid_shap_non_masked, axis=None)
+                skew = stats.skew(resid_shap_non_masked, axis=None)
+                kurt = stats.kurtosis(resid_shap_non_masked, axis=None)
                 mylog.info("Statistics of the Shapelet residual image:")
                 mylog.info("        mean: %.3e (Jy/beam)" % mean)
                 mylog.info("    std. dev: %.3e (Jy/beam)" % std_dev)
