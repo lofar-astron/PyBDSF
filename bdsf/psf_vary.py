@@ -560,7 +560,7 @@ class Op_psf_vary(Op):
         wtstdbm = N.sqrt((dumrar - wtavbm*wtavbm*sumwt)*sumwt/dd)
 
         avpa  = N.sum(bpa*flagwt-180.0*flagwt*N.array(bpa >= 90))/sumwt
-        stdpa = N.sum(bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
+        stdpa = N.sum(bpa*bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
         stdpa = sqrt(abs((stdpa-avpa*avpa*sumwt)*sumwt/dd))
         if stdpa < wtstdbm[2]:
             wtstdbm[2] = stdpa
