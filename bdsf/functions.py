@@ -424,18 +424,20 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
                 p0=N.array([yfit[N.argmax(xfit)]] + [1.])
             if funct == sp_in:
                 ind1 = N.where(yfit > 0.)[0]
-                if len(ind1) >= 2:
-                    low = ind1[0]; hi = ind1[-1]
-                    sp = N.log(yfit[low]/yfit[hi])/N.log(xfit[low]/xfit[hi])
-                    p0=N.array([yfit[low]/pow(xfit[low], sp), sp] + [0.]*(order-1))
-                elif len(ind1) == 1:
-                    idx = ind1[0]
-                    x0 = xfit[idx]
-                    y0 = yfit[idx]
-                    alpha0 = -0.8
-                    p0 = N.array([y0 / pow(x0, alpha0), alpha0] + [0.]*(order-1))
+                if len(ind1) >= 1:
+                    low = ind1[0]
+                    
+                    if len(ind1) >= 2:
+                        hi = ind1[-1]
+                        sp = N.log(yfit[low]/yfit[hi])/N.log(xfit[low]/xfit[hi])
+                    else: # len(ind1) == 1
+                        sp = -0.8
+                        
+                    # Calculations for both p0 cases
+                    p0 = N.array([yfit[low]/pow(xfit[low], sp), sp] + [0.]*(order-1))
                 else:
                     return [0, 0], [0, 0]
+
         res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
         try:
             (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
