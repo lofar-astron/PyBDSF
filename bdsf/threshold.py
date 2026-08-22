@@ -117,7 +117,7 @@ class Op_threshold(Op):
         scnum = sc.n
         index = 0
         for i,s in enumerate(scflux):
-            if s < smin_L:
+            if s > smin_L:
                 index = i
                 break
         n1 = scnum[index]; n2 = scnum[-1]
