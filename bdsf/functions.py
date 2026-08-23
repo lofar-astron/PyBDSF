@@ -516,24 +516,20 @@ def imageshift(image, shift):
     image : 2D array_like
         Input image array.
     shift : tuple or list of float
-        Shift values in pixels along (y, x) axes. Positive y shifts
-        the image upwards, and positive x shifts it to the right.
+        Shift values in pixels along (y, x) axes.
 
     Returns
     -------
     shifted_image : ndarray
         Shifted image (real values).
     """
-
     from scipy.fft import fft2, ifft2
     from scipy.ndimage import fourier_shift
 
-    # Reverse y-shift sign (-shift[0]) because in array indexing,
-    # axis 0 increases downwards, but positive shift should move upwards.
-    actual_shift = (-shift[0], shift[1])
-
+    # Direct shift without modifying signs, as the shift tuple 
+    # strictly corresponds to the axes.
     f2 = fft2(image)
-    s = fourier_shift(f2, actual_shift)
+    s = fourier_shift(f2, shift)
     f4 = ifft2(s)
 
     return f4.real
