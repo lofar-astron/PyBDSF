@@ -463,7 +463,7 @@ class Op_gaul2srl(Op):
         errors = func.get_errors(img, plist, isl.rms)
 
         if img.opts.do_mc_errors:
-            nMC = 20
+            nMC = 200
             mompara0_MC = N.zeros(nMC, dtype=N.float32)
             mompara1_MC = N.zeros(nMC, dtype=N.float32)
             mompara2_MC = N.zeros(nMC, dtype=N.float32)
