@@ -520,7 +520,7 @@ def imageshift(image, shift):
 
     Returns
     -------
-    f4.real : ndarray
+    ndarray
         Shifted image (real values).
     """
     from scipy.fft import fft2, ifft2
