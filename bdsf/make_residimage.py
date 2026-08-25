@@ -203,31 +203,31 @@ class Op_make_residimage(Op):
         ind = N.where(~isl.mask_active)
         resid = resid[ind]
         if type == 'gaus':
-            isl.gresid_rms = N.std(resid)
-            isl.gresid_mean = N.mean(resid)
+            isl.gresid_rms = N.nanstd(resid)
+            isl.gresid_mean = N.nanmean(resid)
         else:
-            isl.sresid_rms = N.std(resid)
-            isl.sresid_mean = N.mean(resid)
+            isl.sresid_rms = N.nanstd(resid)
+            isl.sresid_mean = N.nanmean(resid)
         if hasattr(isl, 'sources'):
             for src in isl.sources:
                 if type == 'gaus':
-                    src.gresid_rms = N.std(resid)
-                    src.gresid_mean = N.mean(resid)
+                    src.gresid_rms = N.nanstd(resid)
+                    src.gresid_mean = N.nanmean(resid)
                 else:
-                    src.sresid_rms = N.std(resid)
-                    src.sresid_mean = N.mean(resid)
+                    src.sresid_rms = N.nanstd(resid)
+                    src.sresid_mean = N.nanmean(resid)
                 for g in src.gaussians:
                     if type == 'gaus':
-                        g.gresid_rms = N.std(resid)
-                        g.gresid_mean = N.mean(resid)
+                        g.gresid_rms = N.nanstd(resid)
+                        g.gresid_mean = N.nanmean(resid)
                     else:
-                        g.sresid_rms = N.std(resid)
-                        g.sresid_mean = N.mean(resid)
+                        g.sresid_rms = N.nanstd(resid)
+                        g.sresid_mean = N.nanmean(resid)
         if hasattr(isl, 'dsources'):
             for dsrc in isl.dsources: # Handle dummy sources (if any)
                 if type == 'gaus':
-                    dsrc.gresid_rms = N.std(resid)
-                    dsrc.gresid_mean = N.mean(resid)
+                    dsrc.gresid_rms = N.nanstd(resid)
+                    dsrc.gresid_mean = N.nanmean(resid)
                 else:
-                    dsrc.sresid_rms = N.std(resid)
-                    dsrc.sresid_mean = N.mean(resid)
+                    dsrc.sresid_rms = N.nanstd(resid)
+                    dsrc.sresid_mean = N.nanmean(resid)
