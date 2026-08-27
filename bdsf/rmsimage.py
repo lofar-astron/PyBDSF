@@ -1036,14 +1036,14 @@ class Op_rmsimage(Op):
                     # First take the same windows for which the mask was calculated
                     # and then select only the unmasked pixels
                     valid_pixels = arr[a:b, c:d][pix_unmasked]
-                    cm = np.median(valid_pixels)
+                    cm = np.nanmedian(valid_pixels)
                     # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
                     # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
-                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+                    cr = np.nanmedian(np.abs(valid_pixels - cm)) * 1.4826
                     
                     # Protection against zero noise (e.g. all pixels have the same value)
                     if cr == 0.0:
-                        cr = np.std(valid_pixels) # fallback
+                        cr = np.nanstd(valid_pixels) # fallback
                         if cr == 0.0:
                             cr = np.inf           # finall fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
