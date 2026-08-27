@@ -794,6 +794,17 @@ def watershed(image, mask=None, markers=None, beam=None, thr=None):
     return opw, markers
 
 
+def mknative(a):
+    """
+    Convert array a to native byteorder and return
+    """
+    if a.dtype.isnative:
+        return a
+    else:
+        # Strip the byte order from dtype string
+        nobodtype = str(a.dtype)[1:]
+        return a.astype("="+nobodtype)
+
 def read_image_from_file(filename, img, indir, quiet=False):
     """ Reads data and header from indir/filename.
 
@@ -1035,6 +1046,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
         data = data.reshape(data.shape[0:4]) # trim unused dimensions (if any)
         data = data.reshape(shape_out) # Add axes if needed
 
+    data = mknative(data)
     mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
 
     return data, hdr
