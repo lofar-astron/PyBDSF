@@ -9,6 +9,7 @@ Adapted from a module by Brian Refsdal at SAO, available at AstroPython
 
 """
 
+import gc
 import heapq
 import multiprocessing
 import os
@@ -50,48 +51,74 @@ def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=Fals
     :param f  : callable function that accepts argument from iterable
     :param ii  : process ID
     :param chunk: slice of input iterable
-    :param out_q: thread-safe output queue
-    :param err_q: thread-safe queue to populate on exception
-    :param lock : thread-safe lock to protect a resource
-           ( useful in extending parallel_map() )
+    :param out_q: process-safe output queue (SimpleQueue)
+    :param err_q: process-safe queue to populate on exception (SimpleQueue)
+    :param lock : lock object (kept for signature compatibility)
     :param bar: statusbar to update during fit
-    :param bar_state: statusbar state dictionary
+    :param bar_state: dictionary holding shared memory Values for statusbar state
     :param preserve_order: whether chunk entries carry their original index
     """
+    # Disable the garbage collector in the worker process.
+    # CoW memory overhead is already mitigated by gc.freeze() in the main thread,
+    # but disabling GC here prevents unnecessary pauses during heavy NumPy computations.
+    gc.disable()
+
     vals = []
 
-    for entry in chunk:
-        if preserve_order:
-            val_idx, val = entry
-        else:
-            val = entry
-        try:
-            result = f(val)
-        except Exception as e:
-            print("Thread raised exception", e, file=sys.stderr)
-            print("Traceback of thread is:", file=sys.stderr)
-            print("-------------------------", file=sys.stderr)
-            traceback.print_exception(e, file=sys.stderr)
-            print("-------------------------", file=sys.stderr)
-            err_q.put(e)
-            return
+    # Loop Unswitching: Check the condition once outside the loop to avoid
+    # evaluating it on every single item.
+    if preserve_order:
+        for val_idx, val in chunk:
+            try:
+                result = f(val)
+            except Exception as e:
+                print("Thread raised exception", e, file=sys.stderr)
+                print("Traceback of thread is:", file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                traceback.print_exception(e, file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                err_q.put(e)
+                return
 
-        if preserve_order:
             vals.append((val_idx, result))
-        else:
+
+            if bar is not None:
+                if bool(bar_state['started'].value):
+                    bar.pos = bar_state['pos'].value
+                    bar.spin_pos = bar_state['spin_pos'].value
+                    bar.started = bool(bar_state['started'].value)
+                    increment = bar.increment()
+                    bar_state['started'].value = int(bar.started)
+                    bar_state['pos'].value += increment
+                    bar_state['spin_pos'].value += increment
+                    if bar_state['spin_pos'].value >= 4:
+                        bar_state['spin_pos'].value = 0
+    else:
+        for val in chunk:
+            try:
+                result = f(val)
+            except Exception as e:
+                print("Thread raised exception", e, file=sys.stderr)
+                print("Traceback of thread is:", file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                traceback.print_exception(e, file=sys.stderr)
+                print("-------------------------", file=sys.stderr)
+                err_q.put(e)
+                return
+
             vals.append(result)
 
-        if bar is not None:
-            if bar_state['started']:
-                bar.pos = bar_state['pos']
-                bar.spin_pos = bar_state['spin_pos']
-                bar.started = bar_state['started']
-                increment = bar.increment()
-                bar_state['started'] = bar.started
-                bar_state['pos'] += increment
-                bar_state['spin_pos'] += increment
-                if bar_state['spin_pos'] >= 4:
-                    bar_state['spin_pos'] = 0
+            if bar is not None:
+                if bool(bar_state['started'].value):
+                    bar.pos = bar_state['pos'].value
+                    bar.spin_pos = bar_state['spin_pos'].value
+                    bar.started = bool(bar_state['started'].value)
+                    increment = bar.increment()
+                    bar_state['started'].value = int(bar.started)
+                    bar_state['pos'].value += increment
+                    bar_state['spin_pos'].value += increment
+                    if bar_state['spin_pos'].value >= 4:
+                        bar_state['spin_pos'].value = 0
 
     out_q.put((ii, vals))
 
@@ -102,8 +129,8 @@ def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
     the resultant array. Checks error queue for any exceptions.
 
     :param procs: list of Process objects
-    :param out_q: thread-safe output queue
     :param err_q: thread-safe queue to populate on exception
+    :param out_q: thread-safe output queue
     :param num : length of resultant array
     :param preserve_order: whether worker outputs carry original item indices
     :param total_items: total number of items to reconstruct
@@ -115,6 +142,12 @@ def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
     try:
         for proc in procs:
             proc.start()
+
+        # Retrieve results from queue BEFORE joining processes to avoid
+        # IPC pipe buffer deadlocks
+        raw_results = [None] * num
+        for i in range(num):
+            raw_results[i] = out_q.get()
 
         for proc in procs:
             proc.join()
@@ -133,15 +166,13 @@ def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
 
     if preserve_order:
         results = [None] * total_items
-        for i in range(num):
-            idx, result = out_q.get()
+        for idx, result in raw_results:
             for item_idx, item_result in result:
                 results[item_idx] = item_result
         return results
 
     results = [None] * num
-    for i in range(num):
-        idx, result = out_q.get()
+    for idx, result in raw_results:
         results[idx] = result
 
     result_list = []
@@ -175,11 +206,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
                         repr(sequence))
 
     sequence_list = list(sequence)
-    sequence = numpy.array(sequence_list, dtype=object)
-    size = len(sequence)
+    size = len(sequence_list)
 
     if size == 1:
-        results = list(map(function, sequence))
+        results = list(map(function, sequence_list))
         if bar is not None:
             bar.stop()
         return results
@@ -191,23 +221,32 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     if numcores < 1:
         numcores = 1
 
-    manager = fork_context.Manager()
+    out_q = fork_context.SimpleQueue()
+    err_q = fork_context.SimpleQueue()
+    lock = None
 
-    out_q = manager.Queue()
-    err_q = manager.Queue()
-    lock = manager.Lock()
-    bar_state = manager.dict()
+    bar_state = {}
     if bar is not None:
-        bar_state['pos'] = bar.pos
-        bar_state['spin_pos'] = bar.spin_pos
-        bar_state['started'] = bar.started
+        bar_state['pos'] = fork_context.Value('i', int(bar.pos), lock=False)
+        bar_state['spin_pos'] = fork_context.Value('i', int(bar.spin_pos), lock=False)
+        bar_state['started'] = fork_context.Value('i', int(bar.started), lock=False)
 
     if size < numcores:
         numcores = size
 
     preserve_order = False
     if weights is None or numcores == size:
-        sequence = numpy.array_split(sequence, numcores)
+        # Manually split the list to avoid O(N) memory overhead 
+        # caused by numpy.array_split(), which implicitly calls np.asarray() 
+        # on standard Python lists.
+        n_each_section, extras = divmod(size, numcores)
+        section_sizes = ([n_each_section + 1] * extras) + ([n_each_section] * (numcores - extras))
+        
+        sequence = []
+        start = 0
+        for sec_size in section_sizes:
+            sequence.append(sequence_list[start:start + sec_size])
+            start += sec_size
     else:
         preserve_order = True
         weight_array = numpy.asarray(weights, dtype=numpy.float64)
@@ -235,6 +274,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
                    preserve_order))
              for ii, chunk in enumerate(sequence)]
 
+    # Freeze the garbage collector in the main process before spawning forks.
+    # Prevent the GC from altering their memory headers and triggering
+    # system-wide Copy-on-Write memory duplication across worker processes.
+    gc.freeze()
     try:
         results = run_tasks(procs, err_q, out_q, len(sequence),
                             preserve_order=preserve_order, total_items=size)
@@ -249,3 +292,5 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
                 proc.terminate()
                 proc.join()
         raise
+    finally:
+        gc.unfreeze()
