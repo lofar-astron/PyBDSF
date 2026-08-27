@@ -449,12 +449,7 @@ class Op_gausfit(Op):
                 mompara = func.momanalmask_gaus(fit_image, mask_id, isl.island_id, pixel_beamarea, True)
                 mompara[5] += 90.0
                 if not N.isnan(mompara[1]) and not N.isnan(mompara[2]):
-                    x1 = int(N.floor(mompara[1]))
-                    y1 = int(N.floor(mompara[2]))
-                    t = (mompara[1]-x1)/(x1+1-x1)
-                    u = (mompara[2]-y1)/(y1+1-y1)
-                    s_peak = ((1.0-t) * (1.0-u) * fit_image[x1, y1] + t * (1.0-u) * fit_image[x1+1, y1] +
-                              t * u * fit_image[x1+1, y1+1] + (1.0-t) * u * fit_image[x1, y1+1])
+                    s_peak = float(nd.map_coordinates(fit_image, [[mompara[1]], [mompara[2]]], order=1, mode='nearest')[0])
                     mompara[0] = s_peak
                     par = mompara.tolist()
                     par[3] /= fwsig
@@ -464,14 +459,6 @@ class Op_gausfit(Op):
                                                       isl.image, size)
             except ValueError:
                 pass
-
-            except IndexError:
-                print("IndexError in fit_island():", file=sys.stderr)
-                try:
-                    print(f"  {fit_image.shape=}", file=sys.stderr)
-                    print(f"  {mompara=}, {x1=}, {y1=}, {t=}, {u=}", file=sys.stderr)
-                except (AttributeError, NameError):
-                    pass
 
         # Return whatever we got
         if verbose:
