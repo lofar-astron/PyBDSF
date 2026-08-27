@@ -128,7 +128,7 @@ class Op_psf_vary(Op):
 
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
                 flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
-                if len(flag_unresolved) == 0:
+                if N.sum(flag_unresolved) == 0:
                     mylog.warning('Insufficient number of sources to determine PSF variation.\nTry changing the PSF options or specify a (constant) PSF with the "psf_fwhm" option')
                     return
 
