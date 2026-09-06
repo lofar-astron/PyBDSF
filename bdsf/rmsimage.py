@@ -484,6 +484,8 @@ class Op_rmsimage(Op):
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
         # Subsample RMS map at box step size to evaluate variance on coarse grid
         # rather than smoothed interpolation
+        # Determines the sampling step size in pixels (RMS box step)
+        # and enfore a minimum value to prevent a zero-step slice
         step = max(1, int(img.rms_box[1]))
         if img.masked:
             sub_rms = rms[::step, ::step]
