@@ -1023,14 +1023,20 @@ class Op_rmsimage(Op):
         bstat = func.bstat #_cbdsm.bstat
         a, b, c, d = ind
         if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
-            if cnt > 198: cm = m; cr = r
+            _, _, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
+            if cnt > 198: # use MAD
+                sub_arr = arr[a:b, c:d]
+                cm = np.nanmedian(sub_arr)
+                cr = np.nanmedian(np.abs(sub_arr - cm)) * 1.4826
         else:
             pix_unmasked = np.where(mask[a:b, c:d] == False)
             npix_unmasked = np.size(pix_unmasked,1)
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
-                if cnt > 198: cm = m; cr = r
+                _, _, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                if cnt > 198: # use MAD
+                    sub_arr = arr[a:b, c:d][pix_unmasked]
+                    cm = np.nanmedian(sub_arr)
+                    cr = np.nanmedian(np.abs(sub_arr - cm)) * 1.4826
             else:
                 if npix_unmasked > 5: # same logic as in 'for_masked'
                     # First take the same windows for which the mask was calculated
