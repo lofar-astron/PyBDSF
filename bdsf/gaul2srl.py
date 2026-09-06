@@ -502,7 +502,26 @@ class Op_gaul2srl(Op):
             mompara4E = N.nanstd(mompara4_MC)
             if mompara4E > 2.0*mompara[4]:
                 mompara4E = 2.0*mompara[4] # Don't let errors get too large
-            mompara5E = N.nanstd(mompara5_MC)
+
+            # Use circular statistics for Position Angle error.
+            # Multiply by 2.0 to map the 180 deg axial symmetry of an ellipse 
+            # onto a 360-degree circular space, preventing opposite vectors from cancelling out.
+            pa_rad = N.deg2rad(mompara5_MC * 2.0)
+            
+            mean_sin = N.nanmean(N.sin(pa_rad))
+            mean_cos = N.nanmean(N.cos(pa_rad))
+            
+            # R is the length of the mean resultant vector
+            R = N.sqrt(mean_sin**2 + mean_cos**2)
+            
+            # Calculate the circular std.
+            # Divide by 2.0 to map the error back to the original 180 deg space.
+            if R > 0 and not N.isnan(R):
+                circ_std_rad = N.sqrt(max(0.0, -2.0 * N.log(R))) / 2.0
+                mompara5E = N.rad2deg(circ_std_rad)
+            else:
+                mompara5E = N.nan
+
             if mompara5E > 2.0*mompara[5]:
                 mompara5E = 2.0*mompara[5] # Don't let errors get too large
         else:
