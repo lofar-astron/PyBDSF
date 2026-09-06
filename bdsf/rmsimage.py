@@ -482,10 +482,15 @@ class Op_rmsimage(Op):
         cdelt = img.wcs_obj.acdelt[:2]
         bm = (img.beam[0], img.beam[1])
         fw_pix = sqrt(np.prod(bm)/abs(np.prod(cdelt)))
+        # Subsample RMS map at box step size to evaluate variance on coarse grid
+        # rather than smoothed interpolation
+        step = max(1, int(img.rms_box[1]))
         if img.masked:
-            stdsub = np.std(rms[~img.mask_arr])
+            sub_rms = rms[::step, ::step]
+            sub_mask = img.mask_arr[::step, ::step]
+            stdsub = np.std(sub_rms[~sub_mask])
         else:
-            stdsub = np.std(rms)
+            stdsub = np.std(rms[::step, ::step])
 
         rms_expect = img.clipped_rms/sqrt(2)/img.rms_box[0]*fw_pix
         mylog.debug('%s %10.6f %s' % ('Standard deviation of rms image = ', stdsub*1000.0, 'mJy'))
