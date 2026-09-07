@@ -36,8 +36,7 @@ class StatusBar():
 
     # find number of columns in terminal
     def __getsize(self):
-        tsize = shutil.get_terminal_size(fallback=(0, 0))
-        columns = tsize.columns
+        columns = shutil.get_terminal_size().columns
             
         if int(columns) > self.max + 2 + 44 + (len(str(self.max))*2 + 2):
             self.columns = self.max
@@ -54,7 +53,7 @@ class StatusBar():
         # Update terminal size with each frame rendering
         self.__getsize()
 
-        sys.stdout.write('\x1b[1G')
+        sys.stdout.write('\r')
 
         # Handle the case where there are no items to process (prevents from
         # dividing by zero later)
@@ -66,7 +65,6 @@ class StatusBar():
             # so the progress bar adapts to possible window resizing.
             self.comp = int(float(self.pos) / self.max * self.columns)
             sys.stdout.write(self.color + self.text + '[' + '=' * self.comp + self.busy_char + '-'*(self.columns - self.comp - 1) + '] ' + str(self.pos) + '/' + str(self.max) + '\033[0m')
-            sys.stdout.write('\x1b[' + str(self.comp + 2 + 44) + 'G')
         sys.stdout.flush()
         return
 
