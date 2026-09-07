@@ -444,11 +444,10 @@ class Op_gaul2srl(Op):
 
         # update all objects etc
         tot = 0.0
-        totE_sq = 0.0
+        totE = 0.0
         for g in g_sublist:
             tot += g.total_flux
-            totE_sq += g.total_fluxE**2
-        totE = sqrt(totE_sq)
+            totE += g.total_fluxE
         size_pix = [mompara[3], mompara[4], mompara[5]]
         size_sky = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
         size_sky_uncorr = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]], use_wcs=False)
