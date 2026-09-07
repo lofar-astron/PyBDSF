@@ -36,11 +36,7 @@ class StatusBar():
 
     # find number of columns in terminal
     def __getsize(self):
-        if not sys.stdout.isatty():
-            columns = 80
-        else:
-            tsize = shutil.get_terminal_size(fallback=(0, 0))
-            columns = tsize.columns
+        columns = shutil.get_terminal_size().columns
             
         if int(columns) > self.max + 2 + 44 + (len(str(self.max))*2 + 2):
             self.columns = self.max
