@@ -336,7 +336,7 @@ class Op_gausfit(Op):
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
 
-        thr1 = isl.mean + opts.thresh_isl*isl.rms
+        thr1 = opts.thresh_isl*isl.rms
         thr0 = thr1
         g3_only = opts.fix_to_beam
         peak = fcn.find_peak()[0]
@@ -501,7 +501,7 @@ class Op_gausfit(Op):
             opts = img.opts
         thresh_isl = opts.thresh_isl
         thresh = opts.fittedimage_clip
-        thr = isl.mean + thresh_isl * isl.rms
+        thr = thresh_isl * isl.rms
 
         if opts.verbose_fitting:
             print('Iteratively fitting island ', isl.island_id)
@@ -580,7 +580,7 @@ class Op_gausfit(Op):
         while domore:
             domore = False
             av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im1, mask)
-            if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
+            if stdnew > isl.rms and maxv >= thr and maxv >= 2.0*isl.rms:
                 domore = True
                 x1, y1 = N.array(iniposn).transpose()
                 dumr = N.sqrt((maxp[0]-x1)*(maxp[0]-x1)+(maxp[1]-y1)*(maxp[1]-y1))
