@@ -156,10 +156,6 @@ class Op_gausfit(Op):
             gaul = gaus_list[idx][0]
             fgaul = gaus_list[idx][1]
             dgaul = []
-            if len(gaul) > 0:
-                gidx = gaul[-1][0]  # save last index value for use with fgaul below
-            else:
-                gidx = 0
             gaul = [Gaussian(img, par, idx, gidx)
                     for (gidx, par) in enumerate(gaul)]
 
@@ -182,7 +178,8 @@ class Op_gausfit(Op):
                 dgaul = [Gaussian(img, par, idx, -1)]
 
             # Now make the list of flagged Gaussians, if any
-            fgaul = [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
+            start_fgidx = len(gaul)
+            fgaul = [Gaussian(img, par, idx, start_fgidx + gidx2, flag)
                      for (gidx2, (flag, par)) in enumerate(fgaul)]
 
             isl.gaul = gaul
