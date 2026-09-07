@@ -767,11 +767,11 @@ class Op_rmsimage(Op):
             use_extrapolation = False
 
         if use_extrapolation:
-            boxcount = 1 + (imgshape - BS)/SS
+            boxcount = 1 + (imgshape - BS) // SS
             bounds   = np.asarray((boxcount-1)*SS + BS < imgshape, dtype=int)
             mapshape = 2 + boxcount + bounds
         else:
-            boxcount = 1 + imgshape/SS
+            boxcount = 1 + imgshape // SS
             bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
