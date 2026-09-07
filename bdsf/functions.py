@@ -1796,12 +1796,14 @@ def bstat(indata, mask, kappa_npixbeam):
     import numpy
     from scipy.special import erf, erfcinv
 
-    # Flatten array
     skpix = indata.flatten()
-    if mask is not None:
+    if mask is None:
+        valid_pixels = numpy.where(~numpy.isnan(skpix))
+    else:
         msk_flat = mask.flatten()
-        unmasked = numpy.where(~msk_flat)
-        skpix = skpix[unmasked]
+        valid_pixels = numpy.where(~msk_flat & ~numpy.isnan(skpix))
+    
+    skpix = skpix[valid_pixels]
 
     skpix.sort()
     ct = skpix.size
