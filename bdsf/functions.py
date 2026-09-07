@@ -1451,12 +1451,14 @@ def assign_leftovers(mask, open, nisl, labels):
         c_list = list(set(c_list))     # to avoid duplicates
         vals = N.array([labels[c] for c in c_list])
         belongs = list(set(vals[N.nonzero(vals)]))
+
         if len(belongs) == 0:
-            # No suitable islands found => mask pixels
+            # No suitable islands found, so mask individual pixels
             for cc in coords:
-                mask = (mlabels == ii)
-#             mask[cc] = True
-                return None, mask
+                # Convert 'cc' to a tuple to properly index the 2D numpy array
+                mask[tuple(cc)] = True
+            return labels, mask
+            
         if len(belongs) == 1:
             for cc in coords:
                 labels[tuple(cc)] = belongs[0]
