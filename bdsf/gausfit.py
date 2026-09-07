@@ -1140,18 +1140,21 @@ class Gaussian(object):
             self.deconv_size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
             self.deconv_size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
         else:
-            # These are flagged Gaussians, so don't calculate sky values or errors
-            errors = [0]*7
-            self.centre_sky = [0., 0.]
-            self.centre_skyE = [0., 0.]
-            self.size_sky = [0., 0., 0.]
-            self.size_sky_uncorr = [0., 0., 0.]
-            self.size_skyE = [0., 0.]
-            self.size_skyE_uncorr = [0., 0., 0.]
-            self.deconv_size_sky = [0., 0., 0.]
-            self.deconv_size_sky_uncorr = [0., 0., 0.]
-            self.deconv_size_skyE = [0., 0., 0.]
-            self.deconv_size_skyE_uncorr = [0., 0., 0.]
+            # These are flagged Gaussians, so set errors and uncalculated values to NaN
+            errors = [N.nan] * 7
+            nan_sky2 = [N.nan, N.nan]
+            nan_sky3 = [N.nan, N.nan, N.nan]
+            
+            self.centre_sky = nan_sky2
+            self.centre_skyE = nan_sky2
+            self.size_sky = nan_sky3
+            self.size_sky_uncorr = nan_sky3
+            self.size_skyE = nan_sky3
+            self.size_skyE_uncorr = nan_sky3
+            self.deconv_size_sky = nan_sky3
+            self.deconv_size_sky_uncorr = nan_sky3
+            self.deconv_size_skyE = nan_sky3
+            self.deconv_size_skyE_uncorr = nan_sky3
         self.total_flux = tot
         self.total_fluxE = errors[6]
         self.peak_fluxE = errors[0]
