@@ -767,11 +767,11 @@ class Op_rmsimage(Op):
             use_extrapolation = False
 
         if use_extrapolation:
-            boxcount = 1 + (imgshape - BS)/SS
+            boxcount = 1 + (imgshape - BS) // SS
             bounds   = np.asarray((boxcount-1)*SS + BS < imgshape, dtype=int)
             mapshape = 2 + boxcount + bounds
         else:
-            boxcount = 1 + imgshape/SS
+            boxcount = 1 + imgshape // SS
             bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
@@ -934,33 +934,43 @@ class Op_rmsimage(Op):
         return cm, cr
 
 
-    def fill_masked_regions(self, themap, magic=np.inf):
-        """Fill masked regions (defined where values == magic) in themap.
-        """
-        masked_boxes = np.where(themap == magic) # locations of masked regions
-        for i in range(np.size(masked_boxes,1)):
+    def fill_masked_regions(self, themap):
+        """Fill masked regions in themap using local median, with global median fallback."""
+        # Compute global median as a fallback for finite values
+        valid_mask = np.isfinite(themap)
+        global_fallback = np.nanmedian(themap[valid_mask]) if np.any(valid_mask) else 1.0
+
+        # Find coordinates of missing or invalid data
+        masked_boxes = np.where(~np.isfinite(themap))
+        max_delx, max_dely = themap.shape[0], themap.shape[1]
+
+        for i in range(np.size(masked_boxes, 1)):
             num_unmasked = 0
             x, y = masked_boxes[0][i], masked_boxes[1][i]
             delx = dely = 1
-            while num_unmasked == 0:
-                x1 = x - delx
-                if x1 < 0: x1 = 0
-                x2 = x + 1 + delx
-                if x2 > themap.shape[0]: x2 = themap.shape[0]
-                y1 = y - dely
-                if y1 < 0: y1 = 0
-                y2 = y + 1 + dely
-                if y2 > themap.shape[1]: y2 = themap.shape[1]
+
+            # Search local neighborhood by expanding radius, bounded by image dimensions
+            while num_unmasked == 0 and (delx <= max_delx or dely <= max_dely):
+                x1 = max(0, x - delx)
+                x2 = min(themap.shape[0], x + 1 + delx)
+                y1 = max(0, y - dely)
+                y2 = min(themap.shape[1], y + 1 + dely)
 
                 cutout = themap[x1:x2, y1:y2].ravel()
-                goodcutout = cutout[cutout != magic]
+                # Extract valid finite values
+                goodcutout = cutout[np.isfinite(cutout)]
                 num_unmasked = len(goodcutout)
+
                 if num_unmasked > 0:
-                    themap[x, y] = np.nanmean(goodcutout)
+                    # Use local median from the unmasked neighborhood
+                    themap[x, y] = np.nanmedian(goodcutout)
+
                 delx += 1
                 dely += 1
-        themap[np.isnan(themap)] = 0.0
-        return themap
+
+        # Replace any remaining non-finite values with global RMS median
+        return np.nan_to_num(themap, nan=global_fallback, posinf=global_fallback, neginf=global_fallback)
+
 
     def pad_array(self, arr, new_shape):
         """Returns a padded array by mirroring around the edges."""
