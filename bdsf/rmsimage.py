@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from scipy import interpolate, ndimage
+from scipy.stats import median_abs_deviation
 
 from .image import Op
 from . import const
@@ -1033,23 +1034,27 @@ class Op_rmsimage(Op):
         bstat = func.bstat #_cbdsm.bstat
         a, b, c, d = ind
         if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
-            if cnt > 198: cm = m; cr = r
+            _, _, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
+            if cnt > 198:
+                sub_arr = arr[a:b, c:d]
+                cm = np.nanmedian(sub_arr)
+                cr = median_abs_deviation(sub_arr, axis=None, nan_policy='omit', scale='normal')
         else:
             pix_unmasked = np.where(mask[a:b, c:d] == False)
             npix_unmasked = np.size(pix_unmasked,1)
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
-                if cnt > 198: cm = m; cr = r
+                _, _, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                if cnt > 198:
+                    sub_arr = arr[a:b, c:d][pix_unmasked]
+                    cm = np.nanmedian(sub_arr)
+                    cr = median_abs_deviation(sub_arr, axis=None, nan_policy='omit', scale='normal')
             else:
                 if npix_unmasked > 5: # same logic as in 'for_masked'
                     # First take the same windows for which the mask was calculated
                     # and then select only the unmasked pixels
                     valid_pixels = arr[a:b, c:d][pix_unmasked]
                     cm = np.nanmedian(valid_pixels)
-                    # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
-                    # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
-                    cr = np.nanmedian(np.abs(valid_pixels - cm)) * 1.4826
+                    cr = median_abs_deviation(valid_pixels, axis=None, nan_policy='omit', scale='normal')
                     
                     # Protection against zero noise (e.g. all pixels have the same value)
                     if cr == 0.0:
