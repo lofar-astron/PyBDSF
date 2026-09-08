@@ -485,7 +485,7 @@ class Op_rmsimage(Op):
         # Subsample RMS map at box step size to evaluate variance on coarse grid
         # rather than smoothed interpolation
         # Determines the sampling step size in pixels (RMS box step)
-        # and enfore a minimum value to prevent a zero-step slice
+        # and enforce a minimum value to prevent a zero-step slice
         step = max(1, int(img.rms_box[1]))
         if img.masked:
             sub_rms = rms[::step, ::step]
