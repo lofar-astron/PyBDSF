@@ -738,12 +738,12 @@ def arrstatmask(im, mask):
 
     ind = N.where(~mask)
     im1 = im[ind]
-    av = N.mean(im1)
-    std = N.std(im1)
-    maxv = N.max(im1)
+    av = N.nanmean(im1)
+    std = N.nanstd(im1)
+    maxv = N.nanmax(im1)
     x, y = N.where(im == maxv)
     xmax = x[0]; ymax = y[0]
-    minv = N.min(im1)
+    minv = N.nanmin(im1)
     x, y = N.where(im == minv)
     xmin = x[0]; ymin = y[0]
 
