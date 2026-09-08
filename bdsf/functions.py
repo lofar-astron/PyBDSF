@@ -244,9 +244,12 @@ def moment(x,mask=None):
             m1 += val
             m2 += val*N.array(i)
             m3 += val*N.array(i)*N.array(i)
-    m2 /= m1
-    if N.all(m3/m1 > m2*m2):
-        m3 = N.sqrt(m3/m1-m2*m2)
+    if m1[0] != 0:
+        m2 /= m1
+        m3 = N.sqrt(N.maximum(m3/m1 - m2*m2, 0.0))
+    else:
+        m2.fill(0.0)
+        m3.fill(0.0)
     return m1, m2, m3
 
 def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
@@ -1793,12 +1796,14 @@ def bstat(indata, mask, kappa_npixbeam):
     import numpy
     from scipy.special import erf, erfcinv
 
-    # Flatten array
     skpix = indata.flatten()
-    if mask is not None:
+    if mask is None:
+        valid_pixels = numpy.where(~numpy.isnan(skpix))
+    else:
         msk_flat = mask.flatten()
-        unmasked = numpy.where(~msk_flat)
-        skpix = skpix[unmasked]
+        valid_pixels = numpy.where(~msk_flat & ~numpy.isnan(skpix))
+    
+    skpix = skpix[valid_pixels]
 
     skpix.sort()
     ct = skpix.size
