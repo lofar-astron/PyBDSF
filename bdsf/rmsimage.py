@@ -187,15 +187,16 @@ class Op_rmsimage(Op):
         # Assume a 2D Gaussian beam profile: I_max * exp(-r^2 / (2*sigma^2))
         # The formula finds the diameter 2r where the brightness drops to 3x the noise level
         # (kappa1 * crms). Solving for 2r gives: 2 * sigma * sqrt(2 * ln(I_max / (3 * sigma_noise)))
+        # cdelt was already converted to abs() in readimage.py
         try:
-            brightsize = round(2.*img.beam[0]/abs(cdelt[0])/fwsig*
+            brightsize = round(2.*img.beam[0]/cdelt[0]/fwsig*
                                sqrt(2.*log(img.max_value/(kappa1*crms))))
         # Fallback: 2-sigma beam
         # If the image contains no sources, `img.max_value` might be 
         # smaller than the noise threshold (kappa1 * crms). This would make the fraction < 1, 
         # causing `log()` to return a negative number, and `sqrt()` to raise a math domain error.
         except (ValueError, ZeroDivisionError):
-            brightsize = round(2.*img.beam[0]/abs(cdelt[0])/fwsig)
+            brightsize = round(2.*img.beam[0]/cdelt[0]/fwsig)
 
         mylog.info('Estimated size of brightest source (pixels) = '+str(brightsize))
 
