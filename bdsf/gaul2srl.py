@@ -20,6 +20,7 @@ from .islands import *
 from . import mylogger
 import numpy as N
 from . import functions as func
+from scipy.stats import circstd
 N.seterr(divide='raise')
 
 
@@ -502,7 +503,13 @@ class Op_gaul2srl(Op):
             mompara4E = N.nanstd(mompara4_MC)
             if mompara4E > 2.0*mompara[4]:
                 mompara4E = 2.0*mompara[4] # Don't let errors get too large
-            mompara5E = N.nanstd(mompara5_MC)
+
+            # Use circular statistics for Position Angle error.
+            valid_mompara5_MC = mompara5_MC[~N.isnan(mompara5_MC)]
+            if len(valid_mompara5_MC) > 0:
+                mompara5E = circstd(valid_mompara5_MC, high=180.0, low=0.0)
+            else:
+                mompara5E = N.nan
             if mompara5E > 2.0*mompara[5]:
                 mompara5E = 2.0*mompara[5] # Don't let errors get too large
         else:
