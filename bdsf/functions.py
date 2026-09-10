@@ -32,9 +32,9 @@ def adaptive_stat(data, statistic, threshold, threshold_type='percent'):
 
     # Determine the limit depending on the threshold type
     if threshold_type == 'percent':
-        limit = (threshold / 100.0) * arr.size
+        limit = N.clip(threshold / 100.0, 0, 1) * arr.size
     elif threshold_type == 'count':
-        limit = threshold
+        limit = N.clip(int(threshold), 0, arr.size))
     else:
         raise ValueError("The threshold_type parameter must be either 'percent' or 'count'.")
 
