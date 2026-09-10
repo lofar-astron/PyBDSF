@@ -12,7 +12,7 @@ except NameError:
 
 def adaptive_stat(data, statistic, threshold, threshold_type='percent'):
     """
-    Calculates a specific statistic (mean, median, or std) taking into account the number of NaNs.
+    Calculates a specific statistic (mean, median, or std) taking into account the number of NaNs. If the number of NaNs is below the threshold, NaNs are ignored. Otherwise the result will be NaN.
 
     Parameters:
     - data: numpy array or list (e.g., an image).
