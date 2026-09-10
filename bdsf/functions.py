@@ -17,7 +17,7 @@ def adaptive_stat(data, statistic, threshold, threshold_type='percent'):
     Parameters:
     - data: numpy array or list (e.g., an image).
     - statistic: string specifying the statistic to compute ('mean', 'median', or 'std').
-    - threshold: threshold value (numeric).
+    - threshold: threshold value (numeric); maximum number or percentage of NaNs that is tolerated.
     - threshold_type: 'percent' (default) or 'count' (specific number of elements).
 
     Returns:
