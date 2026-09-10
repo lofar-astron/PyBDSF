@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from shutil import get_terminal_size
+import numpy as N
 
 try:
     # For Python 2
@@ -8,9 +9,59 @@ try:
 except NameError:
     basestring = str
 
+
+def adaptive_stat(data, statistic, threshold, threshold_type='percent'):
+    """
+    Calculates a specific statistic (mean, median, or std) taking into account the number of NaNs.
+
+    Parameters:
+    - data: numpy array or list (e.g., an image).
+    - statistic: string specifying the statistic to compute ('mean', 'median', or 'std').
+    - threshold: threshold value (numeric).
+    - threshold_type: 'percent' (default) or 'count' (specific number of elements).
+
+    Returns:
+    - The calculated statistic (float).
+    """
+    arr = N.asarray(data).flatten()
+
+    if arr.size == 0:
+        return N.nan
+
+    nan_count = N.isnan(arr).sum()
+
+    # Determine the limit depending on the threshold type
+    if threshold_type == 'percent':
+        limit = (threshold / 100.0) * arr.size
+    elif threshold_type == 'count':
+        limit = threshold
+    else:
+        raise ValueError("The threshold_type parameter must be either 'percent' or 'count'.")
+
+    # Map the requested statistic to the appropriate numpy functions
+    if statistic == 'mean':
+        nan_func = N.nanmean
+        classic_func = N.mean
+    elif statistic == 'median':
+        nan_func = N.nanmedian
+        classic_func = N.median
+    elif statistic == 'std':
+        nan_func = N.nanstd
+        classic_func = N.std
+    else:
+        raise ValueError("The statistic parameter must be 'mean', 'median', or 'std'.")
+
+    # Below the threshold: ignore NaNs (use nan* functions)
+    if nan_count < limit:
+        return nan_func(arr)
+
+    # Above or equal to the threshold: use classic functions (do not ignore NaNs)
+    else:
+        return classic_func(arr)
+
+
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
-    import numpy as N
     y=N.zeros(len(x))
     for i in range(len(c)):
         y += c[i]*(x**i)
@@ -18,7 +69,6 @@ def poly(c,x):
 
 def sp_in(c, x):
     """ Spectral index in freq-flux space """
-    import numpy as N
 
     order = len(c)-1
     if order == 1:
@@ -33,13 +83,11 @@ def sp_in(c, x):
 
 def wenss_fit(c,x):
     """ sqrt(c0*c0 + c1^2/x^2)"""
-    import numpy as N
     y = N.sqrt(c[0]*c[0]+c[1]*c[1]/(x*x))
     return y
 
 def shapeletfit(cf, Bset, cfshape):
     """ The function """
-    import numpy as N
 
     ordermax = Bset.shape[0]
     y = (Bset[0,0,::]).flatten()
@@ -92,7 +140,6 @@ def gaus_2d(c, x, y):
     """ x and y are 2d arrays with the x and y positions.
     c = [amp, x0, y0, sigx, sigy, pa_deg] """
     import math
-    import numpy as N
 
     # Pre-calculate rotation parameters outside of matrix operations
     rad = 180.0/math.pi
@@ -126,7 +173,6 @@ def gaus_2d_itscomplicated(c, x, y, p_tofix, ind):
     are gaussian parameters to fix. ind is a list with 0, 1; 1 = fit; 0 = fix. """
 
     import math
-    import numpy as N
 
     val = N.zeros(x.shape)
     indx = N.array(ind)
@@ -199,7 +245,6 @@ def corrected_size(size):
     return csize
 
 def drawellipse(g):
-    import numpy as N
     from .gausfit import Gaussian
 
     rad = 180.0/N.pi
@@ -232,7 +277,6 @@ def moment(x,mask=None):
     for which mask is False are used, if mask is given. Works for any
     dimension of x.
     """
-    import numpy as N
 
     if mask is None:
         mask=N.zeros(x.shape, dtype=bool)
@@ -259,7 +303,6 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
     """
     from scipy.optimize import leastsq
     from math import sqrt, pow
-    import numpy as N
     import sys
 
     ind=N.where(~N.array(mask))[0]
@@ -360,7 +403,6 @@ def angsep(ra1, dec1, ra2, dec2):
 def std(y):
     """ Returns unbiased standard deviation. """
     from math import sqrt
-    import numpy as N
 
     l=len(y)
     s=N.std(y)
@@ -416,7 +458,6 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     """
     from math import sqrt, atan, pi
     from .const import fwsig
-    import numpy as N
     N.seterr(all='ignore')
 
     m1 = N.zeros(2); m2 = N.zeros(2); m11 = 0.0; tot = 0.0
@@ -447,7 +488,6 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
     """ Fit 2d gaussian to data with x and y also being 2d numpy arrays with x and y positions.
         Takes an optional error array and a mask array (True => pixel is masked). """
     from scipy.optimize import leastsq
-    import numpy as N
     import sys
 
     if mask is not None and mask.shape != data.shape:
@@ -563,7 +603,6 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
     from .const import fwsig
     from math import sqrt, log, pow, pi
     from . import mylogger
-    import numpy as N
 
     mylog = mylogger.logging.getLogger("PyBDSF.Compute")
 
@@ -634,7 +673,6 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
 def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj=False):
     """ fitcode : 0=fit all; 1=fit amp; 2=fit amp, posn; 3=fit amp, size """
     from scipy.optimize import leastsq
-    import numpy as N
     import sys
 
     if mask is not None and mask.shape != image.shape:
@@ -698,7 +736,6 @@ def gaussian_fcn(g, x1, x2):
     """
     from math import radians, sin, cos
     from .const import fwsig
-    import numpy as N
 
     if isinstance(g, list):
         A, C1, C2, S1, S2, Th = g
@@ -719,7 +756,6 @@ def gaussian_fcn(g, x1, x2):
 
 def mclean(im1, c, beam):
     """ Simple image plane clean of one gaussian at posn c and size=beam """
-    import numpy as N
 
     amp = im1[c]
     b1, b2, b3 = beam
@@ -734,7 +770,6 @@ def mclean(im1, c, beam):
 
 def arrstatmask(im, mask):
     """ Basic statistics for a masked array. dont wanna use numpy.ma """
-    import numpy as N
 
     ind = N.where(~mask)
     im1 = im[ind]
@@ -752,7 +787,6 @@ def arrstatmask(im, mask):
 def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     """ Gets the peaks in an image """
     from copy import deepcopy as cp
-    import numpy as N
 
     if im_pos is None:
         im_pos = im
@@ -774,7 +808,6 @@ def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     return inipeak, iniposn, im1
 
 def watershed(image, mask=None, markers=None, beam=None, thr=None):
-    import numpy as N
     from copy import deepcopy as cp
     import scipy.ndimage as nd
     #import matplotlib.pyplot as pl
@@ -808,7 +841,6 @@ def read_image_from_file(filename, img, indir, quiet=False):
     """
     from . import mylogger
     import os
-    import numpy as N
     from astropy.io import fits as pyfits
     from astropy.wcs import WCS
     from copy import deepcopy as cp
@@ -1070,7 +1102,6 @@ def convert_casacore_header(casacore_image, tmpdir):
 def write_image_to_file(use, filename, image, img, outdir=None,
                         pad_image=False, clobber=True, is_mask=False):
     """ Writes image array to outdir/filename"""
-    import numpy as N
     import os
     from . import mylogger
 
@@ -1174,7 +1205,6 @@ def write_image_to_file(use, filename, image, img, outdir=None,
 def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, ymin=0,
                     is_mask=False, shape=None):
     """Makes a simple FITS hdulist appropriate for single-channel images"""
-    import numpy as np
     from astropy.io import fits as pyfits
 
     # If mask, expand to all channels and Stokes for compatibility with casa
@@ -1182,7 +1212,7 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
         shape_out = shape
     else:
         shape_out = [1, 1, imagedata.shape[0], imagedata.shape[1]]
-    hdu = pyfits.PrimaryHDU(np.resize(imagedata, shape_out))
+    hdu = pyfits.PrimaryHDU(N.resize(imagedata, shape_out))
     hdulist = pyfits.HDUList([hdu])
     header = hdulist[0].header
 
@@ -1232,7 +1262,6 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
 
 def retrieve_map(img, map_name):
     """Returns a map cached on disk."""
-    import numpy as N
     import os
 
     filename = get_name(img, map_name)
@@ -1245,7 +1274,6 @@ def retrieve_map(img, map_name):
 
 def store_map(img, map_name, map_data):
     """Caches a map to disk."""
-    import numpy as N
 
     filename = get_name(img, map_name)
     outfile = open(filename, 'wb')
@@ -1289,7 +1317,6 @@ def connect(mask):
 def area_polygon(points):
     """ Given an ANGLE ORDERED array points of [[x], [y]], find the total area by summing each successsive
     triangle with the centre """
-    import numpy as N
 
     # Unpack the input coordinates into separate arrays for x and y
     x, y = points
@@ -1324,7 +1351,6 @@ def convexhull_deficiency(isl):
 
     import random
     import time
-    import numpy as N
     import scipy.ndimage as nd
 
     def _angle_to_point(point, centre):
@@ -1391,7 +1417,6 @@ def convexhull_deficiency(isl):
 def open_isl(mask, index):
     """ Do an opening on a mask, divide left over pixels among opened sub islands. Mask = True => masked pixel """
     import scipy.ndimage as nd
-    import numpy as N
 
     connectivity = nd.generate_binary_structure(2,2)
     ft = N.ones((index,index), int)
@@ -1411,7 +1436,6 @@ def open_isl(mask, index):
 
 def check_1pixcontacts(open):
     import scipy.ndimage as nd
-    import numpy as N
     from copy import deepcopy as cp
 
     connectivity = nd.generate_binary_structure(2,2)
@@ -1434,7 +1458,6 @@ def assign_leftovers(mask, open, nisl, labels):
     Easiest is to assign to the sub island with least size.
     """
     import scipy.ndimage as nd
-    import numpy as N
     from copy import deepcopy as cp
 
     n, m = mask.shape
@@ -1531,7 +1554,6 @@ def approx_equal(x, y, *args, **kwargs):
 
 def isl_tosplit(isl, opts):
     """ Splits an island and sends back parameters """
-    import numpy as N
 
     size_extra5 = opts.splitisl_size_extra5
     frac_bigisl3 = opts.splitisl_frac_bigisl3
@@ -1579,7 +1601,6 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
 
     Returns [flux, fluxE]
     """
-    import numpy as N
 
     if aperture_pix is None:
         return [0.0, 0.0]
@@ -1611,7 +1632,6 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
 
 def aperture_flux(aperture_pix, posn_pix, aper_im, aper_rms, beamarea):
     """Returns aperture flux and error"""
-    import numpy as N
 
     dist_mask = generate_aperture(aper_im.shape[0], aper_im.shape[1], posn_pix[0], posn_pix[1], aperture_pix)
     aper_mask = N.where(dist_mask.astype(bool))
@@ -1633,7 +1653,6 @@ def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
 def make_src_mask(mask_size, posn_pix, aperture_pix):
     """Makes an island mask (1 = inside aperture) for a given source position.
     """
-    import numpy as N
 
     xsize, ysize = mask_size
     if aperture_pix is None:
@@ -1770,7 +1789,6 @@ def make_curvature_map(subim):
     curvature. These regions then define distinct sources.
     """
     import scipy.signal as sg
-    import numpy as N
     import sys
 
     # Make average curavature map:
@@ -1871,10 +1889,9 @@ def centered(arr, newshape):
     This function is a copy of the private _centered() function in
     scipy.signal.signaltools
     """
-    import numpy as np
 
-    newshape = np.asarray(newshape)
-    currshape = np.array(arr.shape)
+    newshape = N.asarray(newshape)
+    currshape = N.array(arr.shape)
     startind = (currshape - newshape) // 2
     endind = startind + newshape
     myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
