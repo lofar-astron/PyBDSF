@@ -23,7 +23,7 @@ def adaptive_stat(data, statistic, threshold, threshold_type='percent'):
     Returns:
     - The calculated statistic (float).
     """
-    arr = N.asarray(data).flatten()
+    arr = N.asarray(data)
 
     if arr.size == 0:
         return N.nan
@@ -34,7 +34,7 @@ def adaptive_stat(data, statistic, threshold, threshold_type='percent'):
     if threshold_type == 'percent':
         limit = N.clip(threshold / 100.0, 0, 1) * arr.size
     elif threshold_type == 'count':
-        limit = N.clip(int(threshold), 0, arr.size))
+        limit = N.clip(int(threshold), 0, arr.size)
     else:
         raise ValueError("The threshold_type parameter must be either 'percent' or 'count'.")
 
