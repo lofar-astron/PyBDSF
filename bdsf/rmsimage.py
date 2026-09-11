@@ -249,11 +249,15 @@ class Op_rmsimage(Op):
             isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+
                                           np.array((s[0].start, s[1].start)))
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
-            if do_adapt and isl_maxposn_lowthresh in isl_maxposn:
-                bright_indx = isl_maxposn.index(isl_maxposn_lowthresh)
-                if isl_area_lowthresh < 25.0 or isl_area_lowthresh/isl_area_highthresh[bright_indx] < 8.0:
-                    isl_pos.append(isl_maxposn_lowthresh)
-                    isl_size_highthresh.append(isl_size_bright[bright_indx])
+            if do_adapt and len(isl_maxposn) > 0:
+                dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
+                # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
+                # so we allow for a small arbitrary distance between the two positions
+                if min(dists) <= 2.5:
+                    bright_indx = int(np.argmin(dists))
+                    if isl_area_lowthresh < 25.0 or isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0:
+                        isl_pos.append(isl_maxposn_lowthresh)
+                        isl_size_highthresh.append(isl_size_bright[bright_indx])
 
         if len(isl_size) == 0:
             max_isl_size = 0.0
