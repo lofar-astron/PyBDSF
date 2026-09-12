@@ -663,7 +663,7 @@ def check_islands_for_overlap(img, wimg):
             for wvg in wvisl.gaul:
                 tot_flux += wvg.total_flux
                 wvg.valid = True
-                
+
             if idx in wav_ids:
                 # Localized generation of orig_islands
                 # Instead of indexing a pre-allocated global array, generate the same data subset
@@ -673,6 +673,10 @@ def check_islands_for_overlap(img, wimg):
                 
                 if len(orig_idx) == 1:
                     merge_islands(img, img.islands[orig_idx[0]], wvisl)
+                    # Update pyrank and orig_rankim_bool slices for the expanded island
+                    m_isl = img.islands[orig_idx[0]]
+                    img.pyrank[tuple(m_isl.bbox)][~m_isl.mask_active] = m_isl.island_id
+                    orig_rankim_bool[tuple(m_isl.bbox)][~m_isl.mask_active] = True
                 else:
                     merge_islands(img, img.islands[orig_idx[0]], wvisl)
                     for oidx in orig_idx[1:]:
@@ -695,6 +699,9 @@ def check_islands_for_overlap(img, wimg):
                         pyrank[tuple(isl.bbox)][~isl.mask_active] = i
                     img.pyrank = pyrank
                     
+                    # Refresh boolean map after full pyrank rebuild
+                    orig_rankim_bool = img.pyrank > -1
+                    
                     # Regenerate the global gaussian list to keep gaus_num and island_id properly synchronized
                     img.gaussians = [g for isl in img.islands for g in isl.gaul]
                     
@@ -716,6 +723,10 @@ def check_islands_for_overlap(img, wimg):
                 new_isl.island_id = isl_id
                 img.islands.append(new_isl)
                 copy_gaussians(img, new_isl, wvisl)
+
+                # Update pyrank and orig_rankim_bool for the newly added island
+                img.pyrank[bbox][~new_isl.mask_active] = isl_id
+                orig_rankim_bool[bbox][~new_isl.mask_active] = True
 
         if not img.opts.quiet:
             bar.increment()
