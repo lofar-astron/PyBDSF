@@ -919,9 +919,8 @@ class Op_rmsimage(Op):
                     axes[i][-2] = imgshape[i] - .5
             axes[i][-1] = imgshape[i] - 1
 
-        # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
-        # np.inf)
-        if np.count_nonzero(mean_map != np.inf) < mapshape[0]*mapshape[1]:
+        # Step 5: fill in boxes with < 5 unmasked pixels (set to finite values)
+        if np.count_nonzero(np.isfinite(mean_map)) < mapshape[0]*mapshape[1]:
             mean_map = self.fill_masked_regions(mean_map)
             rms_map = self.fill_masked_regions(rms_map)
 
