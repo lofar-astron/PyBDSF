@@ -52,6 +52,12 @@ class Op_threshold(Op):
 
         if img.opts.thresh is None:
             source_p = self.get_srcp(img)
+            # Scale the estimated true source pixels (source_p) proportionally to the unmasked area.
+            # Use N.prod(data.shape) to calculate the total number of pixels across all image 
+            # dimensions.
+            total_size = N.prod(data.shape)
+            if size < total_size:
+                source_p *= float(size) / total_size
             cutoff = 5.0
             false_p = 0.5*erfc(cutoff/sq2)*size
             if false_p < opts.fdr_ratio*source_p:
