@@ -220,14 +220,15 @@ class Op_wavelet_atrous(Op):
                                     if not hasattr(g, 'valid'):
                                         g.valid = False
                                     if not g.valid:
-                                        try:
-                                            isl_id = img.pyrank[int(g.centre_pix[0] + 1), int(g.centre_pix[1] + 1)]
-                                        except IndexError:
+                                        x = round(g.centre_pix[0])
+                                        y = round(g.centre_pix[1])
+                                        if 0 <= x < img.pyrank.shape[0] and 0 <= y < img.pyrank.shape[1]:
+                                            isl_id = img.pyrank[x, y]
+                                        else:
                                             isl_id = -1
                                         if isl_id >= 0:
                                             isl = img.islands[isl_id]
-                                            gcenter = (int(g.centre_pix[0] - isl.origin[0]),
-                                                       int(g.centre_pix[1] - isl.origin[1]))
+                                            gcenter = (x - isl.origin[0], y - isl.origin[1])
                                             if not isl.mask_active[gcenter]:
                                                 gaus_id += 1
                                                 gcp = Gaussian(img, g.parameters[:], isl.island_id, gaus_id)
