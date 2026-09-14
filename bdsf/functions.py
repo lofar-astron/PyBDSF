@@ -1208,7 +1208,7 @@ def make_fits_image(imagedata, wcsobj, beam, freq, equinox, telescope, xmin=0, y
     # Add frequency info
     header['RESTFRQ'] = freq
     header['CRVAL4'] = freq
-    header['CDELT4'] = 3e8
+    # header['CDELT4'] = 3e8
     header['CRPIX4'] = 1.0
     header['CUNIT4'] = 'HZ'
     header['CTYPE4'] = 'FREQ'
