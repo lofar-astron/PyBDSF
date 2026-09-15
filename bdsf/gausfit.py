@@ -457,8 +457,9 @@ class Op_gausfit(Op):
                               t * u * fit_image[x1+1, y1+1] + (1.0-t) * u * fit_image[x1, y1+1])
                     mompara[0] = s_peak
                     par = mompara.tolist()
-                    par[3] /= fwsig
-                    par[4] /= fwsig
+                    # Moment analysis is not resistant for returning too small sources.
+                    par[3] = max(par[3] / fwsig, beam[0])
+                    par[4] = max(par[4] / fwsig, beam[1])
                     gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
                                                       isl.image, size)
