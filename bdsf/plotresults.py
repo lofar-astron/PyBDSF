@@ -563,10 +563,10 @@ def on_press(event):
         y_start = int(min(ymin, ymax))
         y_end = int(max(ymin, ymax))
 
-        xmin = max(0, x_start)
-        xmax = min(img_ch0.shape[0], x_end)
-        ymin = max(0, y_start)
-        ymax = min(img_ch0.shape[1], y_end)
+        xmin = max(0, min(img_ch0.shape[0], x_start))
+        xmax = max(0, min(img_ch0.shape[0], x_end))
+        ymin = max(0, min(img_ch0.shape[1], y_start))
+        ymax = max(0, min(img_ch0.shape[1], y_end))
 
         flux = N.nansum(img_ch0[xmin:xmax, ymin:ymax])/pixels_per_beam
         mask = N.isnan(img_ch0[xmin:xmax, ymin:ymax])
