@@ -101,8 +101,10 @@ class Op_preprocess(Op):
 
         ### max/min pixel value & coordinates
         shape = image.shape[0:2]
-        if mask is not None:
-            img.blankpix = N.sum(mask)
+        if hasattr(img, 'mask_arr') and img.mask_arr is not None:
+            img.blankpix = N.sum(img.mask_arr)
+        else:
+            img.blankpix = 0
         if img.blankpix == 0:
             max_idx = image.argmax()
             min_idx = image.argmin()
