@@ -390,6 +390,7 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
+            # Protection against 
             while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
