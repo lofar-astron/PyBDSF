@@ -64,8 +64,6 @@ class Op_preprocess(Op):
             # Combine newly blanked pixels with the rms_mask
             if hasattr(img, 'rms_mask') and img.rms_mask is not None:
                 img.rms_mask |= nan_mask
-            
-            img.blankpix = N.sum(img.mask_arr)
 
         # Finally, assign the local 'mask' variable to be used by bstat
         if hasattr(img, 'rms_mask') and img.rms_mask is not None:
