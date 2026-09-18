@@ -31,7 +31,6 @@ class Op_new_op(Op):
 ## type-checking works properly.
 Opts.my_new_opt = Float(33, doc="docstring")
 """
-from __future__ import absolute_import
 
 from .tc import Int, Float, Bool, String, Tuple, Enum, \
     Option, NArray, Instance, tInstance, List, Any, TCInit, tcError

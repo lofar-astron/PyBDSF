@@ -11,8 +11,6 @@ class and a number of fitter routines in _cbdsm module.
 MGFunction class implements multi-gaussian function and
 provides all functionality required by the specific fitters.
 """
-from __future__ import print_function
-from __future__ import absolute_import
 
 from .image import *
 from . import mylogger

@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
 from shutil import get_terminal_size
 
 try:
