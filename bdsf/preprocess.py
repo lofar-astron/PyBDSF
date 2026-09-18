@@ -3,7 +3,6 @@
 Calculates some basic statistics of the image and sets up processing
 parameters for PyBDSF.
 """
-from __future__ import absolute_import
 
 import numpy as N
 from . import _cbdsm

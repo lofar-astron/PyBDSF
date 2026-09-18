@@ -4,7 +4,6 @@ Defines operation Op_collapse which collapses 3D image. Calculates and
 stores mean and rms (normal and clipped) per channel anyway for further
 use, even if weights are unity.
 """
-from __future__ import absolute_import
 
 import numpy as N
 from .image import *
