@@ -368,6 +368,10 @@ class Island(object):
         valid_pixels = ~self.mask_active & ~N.isnan(self.image) & ~N.isnan(bbox_mean_im)
         
         # Calculate background-subtracted total flux
+        # TODO:It was added in https://github.com/lofar-astron/PyBDSF/pull/350 and the span of the histogram
+        # therein shows, that there are vary rare outliers way beyond the central part. Probably it is
+        # due to imperfection in background estimation earlier in the code and this issue sould be
+        # investigated further and fixed. If this fails, some treshold should be overimposed here.
         self.total_flux = N.nansum((self.image - bbox_mean_im)[valid_pixels]) / beamarea
 
         pixels_in_isl = N.sum(valid_pixels)

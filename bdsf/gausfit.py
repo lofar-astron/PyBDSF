@@ -390,6 +390,11 @@ class Op_gausfit(Op):
             iter = 0
             ng1 = 0
             ngmax = 25
+            # TODO: Protection against overflagging (removing too many components) should be added here.
+            # The threshold should be adaptive, not fixed. Possibly based on Akaike Information Criterion
+            # or the control of the reduced chi^2 (if the residuals did not increase significantly).
+            # Also protection against oscilation of the results. If the results oscilation is detected, the best
+            # result should be returned.
             while iter < 15:
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
