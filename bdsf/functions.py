@@ -522,7 +522,7 @@ def deconv2(gaus_bm, gaus_c):
             bmaj = sqrt(0.5*(s+t))
             bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         bmin = 0.0
-        if 0.5*(s-t) < limit and alpha > -limit and beta > -limit:
+        if 0.5*(s-t) < -limit and alpha > -limit and beta > -limit:
             ifail = 1
         else:
             ifail = 2
