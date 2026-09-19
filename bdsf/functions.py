@@ -528,6 +528,10 @@ def deconv2(gaus_bm, gaus_c):
         else:
             ifail = 2
     else:
+        # TODO / NOTE: A symmetric tolerance check is needed here.
+        # When a source is identical or nearly identical to the beam, round-off noise
+        # causes s - t to fluctuate randomly around 0. So ifail = 0 vs 1 depends on the
+        # sign of the rounding noise.
         bmaj = sqrt(0.5*(s+t))
         bmin = sqrt(0.5*(s-t))
         if abs(gamma) + abs(alpha-beta) == 0.0:
