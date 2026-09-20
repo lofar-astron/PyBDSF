@@ -426,6 +426,9 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     for coord in index:
         tot += subim[coord]
         m1 += N.array(coord)*subim[coord]
+    if not (tot > 0.0): # no positive flux or NaN
+        mompara.fill(N.nan)
+        return mompara
     mompara[0] = tot/bmar_p
     mompara[1:3] = m1/tot
 
