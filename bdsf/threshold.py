@@ -117,13 +117,26 @@ class Op_threshold(Op):
         smin_L = img.clipped_rms*cutoff*((1.4e9/freq)**spin)
         scflux = sc.s
         scnum = sc.n
+        # index = 0
+        # for i,s in enumerate(scflux):
+        #     if s > smin_L:
+        #         index = i
+        #         self.logger.warning("Detection threshold lies outside the calibrated source-count range.")
+        #         self.logger.warning("Source count estimate in threshold method selection is extrapolated.")
+        #         break
+        if smin_L < scflux[0] or smin_L > scflux[-1]:
+            self.logger.warning("Detection threshold lies outside the calibrated source-count range.")
+            self.logger.warning("Source count estimate in threshold method selection is extrapolated.")
+
         index = 0
-        for i,s in enumerate(scflux):
+        for i, s in enumerate(scflux):
             if s > smin_L:
                 index = i
-                self.logger.warning("Detection threshold lies outside the calibrated source-count range.")
-                self.logger.warning("Source count estimate in threshold method selection is extrapolated.")
                 break
+        else:
+            # smin_L is above the calibrated range:
+            # use the last two source-count points to determine the extrapolated slope.
+            index = len(scflux) - 2
         n1 = scnum[index]; n2 = scnum[-1]
         s1 = scflux[index]; s2 = scflux[-1]
         alpha = 1.0-log(n1/n2)/log(s1/s2)
