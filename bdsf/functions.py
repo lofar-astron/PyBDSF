@@ -621,11 +621,11 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
                 # When the size was fixed to that of the beam during the fit, set
                 # uncertainties on the size to zero and reduce the error in the fluxes
                 # by sqrt(2) (see Eq. 25 of Condon 1997)
+                e_peak /= sq2
+                e_tot = abs(pp[6]) * e_peak / abs(pp[0])
                 e_maj = 0.0
                 e_min = 0.0
                 e_pa = 0.0
-                e_peak /= sq2
-                e_tot /= sq2
             errors = errors + [e_peak, e_x0, e_y0, e_maj, e_min, e_pa, e_tot]
 
     return errors
