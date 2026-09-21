@@ -14,6 +14,13 @@ from tessellation_reference import implementations
 
 
 def cases(seed=20260921, random_cases=200, large_cases=4):
+    """Yield (name, routine, arguments) for exact comparisons with Fortran.
+
+    Each image layout exercises two simple weight choices, hard assignment,
+    several fuzzy tolerances, and roundness. Random images are seeded; larger
+    rectangular images also exercise partial blocks. Final cases target weight
+    extremes and floating-point boundaries that ordinary random inputs miss.
+    """
     rng = np.random.default_rng(seed)
     fixed = [
         ("one-generator", (17, 23), [8.5], [12.5]),
@@ -55,6 +62,8 @@ def cases(seed=20260921, random_cases=200, large_cases=4):
             71, 69, [1., 71.], [1., 69.], [1., 1.], weights, 0.05, "s")
     yield "single-pixel", "pytess_simple", (1, 1, [1.], [1.], [1.], [1.], 0.05, "s")
     for weight in (np.nextafter(1., 0.), np.nextafter(1., 2.)):
+        # Adjacent representable weights/tolerances probe rounding-sensitive
+        # decisions without introducing an approximate comparison tolerance.
         for eps in (np.nextafter(0., 1.), np.nextafter(0.05, 0.), np.nextafter(0.05, 1.)):
             for code in ("s", "c"):
                 yield "near-equal-distances", "pytess_simple", (
@@ -62,6 +71,11 @@ def cases(seed=20260921, random_cases=200, large_cases=4):
 
 
 def check_case(python, fortran, name, routine, args):
+    """Require identical values, dtype and shape, plus Fortran output layout.
+
+    Both modules receive the same arguments. Assertion errors carry the case
+    name, allowing a failing layout to be located in ``cases``.
+    """
     expected = getattr(fortran, routine)(*args)
     actual = getattr(python, routine)(*args)
     np.testing.assert_array_equal(actual, expected, err_msg=name, strict=True)
@@ -69,6 +83,12 @@ def check_case(python, fortran, name, routine, args):
 
 
 def check_roundness_reductions(python, fortran):
+    """Compare centroids and inverse radii directly with the Fortran helper.
+
+    Duplicate generators create an empty tile. Matching its NaNs and the
+    nonempty tiles' exact reductions checks behavior that final labels alone
+    could conceal. The Fortran helper fills the supplied arrays in place.
+    """
     n, m = 131, 137
     x, y = np.array([10., 25., 78., 78., 120.]), np.array([16., 110., 65., 65., 100.])
     labels = fortran.pytess_simple(n, m, x, y, np.ones(5), np.ones(5), 0.05, "s")
@@ -89,6 +109,11 @@ def check_roundness_reductions(python, fortran):
 
 
 def check_invalid_inputs(python):
+    """Check explicit ValueError handling and return the number of cases.
+
+    Do not call the Fortran oracle on these inputs: some cause undefined labels
+    or invalid memory accesses rather than a meaningful reference result.
+    """
     simple = (4, 5, [1.], [1.], [1.], [1.], 0.05, "s")
     invalid = []
     for index, value in [(0, 0), (2, []), (3, [np.nan]), (5, [0.]),
@@ -108,6 +133,12 @@ def check_invalid_inputs(python):
 
 
 def main():
+    """Run the comparison CLI, report progress, and stop at the first failure.
+
+    Default output summarizes groups and modes. ``--verbose`` prints every
+    comparison; failure context is printed in either mode before re-raising.
+    Reference setup time is reported separately from time spent checking.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--random-cases", type=int, default=200)
     parser.add_argument("--seed", type=int, default=20260921)
