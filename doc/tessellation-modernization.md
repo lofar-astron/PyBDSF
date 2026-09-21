@@ -189,3 +189,76 @@ matrices were rerun successfully. Ruff and `git diff --check` also passed.
 - The original private F2PY helper entry points are not a supported application
   API. The two public-to-the-caller routine signatures (including optional
   `ngens`) are preserved. The Fortran helper routines remain in the test oracle.
+
+## Comparison with the alternative Python port
+
+The implementation in branch `python-tessellation-opencode-big-pickle`, inspected
+in `/home/marcel/code/PyBDSF.opencode/bdsf/tess.py`, reproduced the reported
+`duplicate-generators/roundness` failure: **390 of 391 pixels differed** from
+Fortran. This investigation did not modify either implementation.
+
+The case uses a 17 x 23 image and generators at `(4, 6)`, `(4, 6)` and
+`(15, 19)`. Ties go to the first generator, so the first assignment gives:
+
+| Generator | First-pass pixels |
+| --- | ---: |
+| 1 | 212 |
+| 2 | 0 |
+| 3 | 179 |
+
+In the alternative port's `_tile_roundness`, masked divisions leave the empty
+tile's centroid and inverse mean radius (`roundpix`) at zero. The second-pass
+score multiplies by `roundpix**2`, making that generator's score zero throughout
+the image. It consequently captures 390 pixels; generator 1 retains one pixel
+through tie-breaking. The Fortran result instead assigns 211 pixels to generator
+1 and 180 to generator 3. The Codex implementation matched that result exactly.
+
+Fortran computes NaN quantities for the empty tile. Its strict
+`distance < minimum` comparison never selects that candidate. The Codex port
+explicitly excludes unusable candidates. A correction to the alternative port
+should exclude empty and zero-radius tiles from the second-pass minimum search;
+substituting zero for an undefined inverse radius changes the assignment rule.
+
+Two additional compatibility concerns were identified by inspection, separately
+from this reproduced failure: the alternative port substitutes squared-distance
+expressions and accumulates radii in C order rather than the original Fortran
+order. These can change near-tie results through floating-point rounding. Fixing
+the empty-tile bug alone therefore does not establish exact equivalence.
+
+## Why NumPy can outperform the original Fortran
+
+The main advantage is a reduction in the amount of work. The original Fortran
+compares every pixel with every generator. The Python implementation evaluates
+conservative distance bounds for 16 x 16 blocks, discards candidates that cannot
+win anywhere in a block, and computes pixel-level distances only for the
+remaining candidates. A block with a single candidate can be filled directly.
+NumPy executes its array arithmetic in compiled native code; Python coordinates
+these operations rather than executing each pixel calculation itself.
+
+An instrumented weighted example used a 1024 x 1024 image, 256 generators and
+`numpy.random.default_rng(20260921)`. Generator coordinates were drawn with
+`rng.uniform(1, 1024, (2, 256))`, followed by weights from
+`rng.uniform(0.5, 2.0, 256)`. Counting candidates with the implementation's bounds
+and conservative margin gave:
+
+| Work | Count |
+| --- | ---: |
+| Original pixel-generator distance evaluations | 268,435,456 |
+| Block-generator bound pairs | 1,048,576 |
+| Remaining pixel-generator distance evaluations | 1,748,736 |
+| Blocks filled without pixel-level distance calculations | 1,580 of 4,096 |
+| Mean retained candidates per block | 2.0535 |
+
+Bounds cost arithmetic too, so these counts are not themselves a speedup ratio.
+They explain why a measured speedup around 20x is plausible even after Python
+overhead, bounds calculations and memory traffic. This count is a separate
+reproducible illustration, not the exact generator sample used in every
+benchmark row. The benchmark reference is optimized Fortran compiled with
+`-O3 -fno-fast-math`.
+
+Fortran using the same pruning strategy could plausibly match or outperform the
+NumPy implementation. The observed gain is primarily algorithmic, not evidence
+that Python arithmetic is faster than compiled Fortran. The benefit depends on
+generator count and layout; with few generators or ineffective pruning, the
+advantage shrinks. Worst-case pixel-distance work can still approach the
+original all-pixels/all-generators search.
