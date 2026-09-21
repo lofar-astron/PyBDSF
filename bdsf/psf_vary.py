@@ -11,7 +11,7 @@ import scipy
 import scipy.signal as S
 from . import _cbdsm
 from . import functions as func
-from . import _pytesselate as _pytess
+from . import _tessellation as _pytess
 from . import shapelets as sh
 from scipy.optimize import leastsq
 from . import nat
