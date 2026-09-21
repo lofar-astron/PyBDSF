@@ -20,6 +20,13 @@ from tessellation_reference import ROOT, implementations
 
 
 def main():
+    """Benchmark the requested size/count matrix and optionally save JSON.
+
+    Speedup is median Fortran time divided by median Python time, so values
+    above one favor Python. Every timed workload must first pass exact parity.
+    ``--min-speedup`` optionally enforces a per-workload performance floor;
+    raw samples are written before reporting a missed floor.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sizes", type=int, nargs="+", default=[512, 1024])
     parser.add_argument("--generators", type=int, nargs="+", default=[2, 8, 64, 256])
@@ -39,6 +46,8 @@ def main():
             x, y = rng.uniform(1, size, (2, count))
             snr = np.full(count, 10.)
             weights = rng.uniform(0.5, 2., count)
+            # Reuse coordinates across modes and inputs across implementations.
+            # Roundness derives its own weights; unity uses explicit ones.
             for mode in ("unity", "weighted", "fuzzy", "roundness"):
                 routine = "pytess_roundness" if mode == "roundness" else "pytess_simple"
                 args = (size, size, x, y, snr)
@@ -46,21 +55,28 @@ def main():
                     args += (np.ones(count) if mode == "unity" else weights,)
                 args += (0.05, "c" if mode == "fuzzy" else "s")
                 functions = [getattr(fortran, routine), getattr(python, routine)]
+                # Validation and warmup happen outside the timed region.
                 np.testing.assert_array_equal(functions[0](*args), functions[1](*args), strict=True)
                 for fn in functions:
                     fn(*args)
                 times = [[], []]
                 for repetition in range(options.repeat):
+                    # Alternate first runner to reduce consistent ordering bias
+                    # from cache state or CPU frequency changes.
                     for index in ((0, 1) if repetition % 2 == 0 else (1, 0)):
                         start = perf_counter()
                         functions[index](*args)
                         times[index].append(perf_counter() - start)
                 ft, pt = (median(t) for t in times)
+                # Keep every sample so readers can assess variability, not just
+                # the displayed median. JSON durations are in seconds.
                 rows.append(dict(shape=[size, size], generators=count, mode=mode,
                                  fortran_seconds=times[0], python_seconds=times[1],
                                  fortran_median=ft, python_median=pt, speedup=ft / pt))
                 print(f"{size:4}x{size:<4} {count:10} {mode:10} {ft*1000:11.3f} {pt*1000:11.3f} {ft/pt:9.2f}x",
                       flush=True)
+    # The source hash ties results to the measured implementation; environment
+    # metadata helps distinguish code changes from compiler/platform effects.
     report = dict(python=sys.version, numpy=np.__version__, platform=platform.platform(),
                   processor=platform.processor(), seed=options.seed,
                   implementation_sha256=hashlib.sha256((ROOT / "bdsf" / "_tessellation.py").read_bytes()).hexdigest(),

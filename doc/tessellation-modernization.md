@@ -1,5 +1,16 @@
 # Tessellation modernization work log
 
+## Python documentation update
+
+Expanded docstrings and inline comments in the implementation and all three
+support scripts. These explain argument and output contracts, one-based labels,
+broadcast array shapes, block pruning, fuzzy encoding, tie-breaking, exact
+roundness reductions, reference compilation/caching, and benchmark methodology.
+An AST comparison with docstrings removed confirmed that executable code is
+unchanged in all four files; Ruff also passed. Historical benchmark source
+hashes still identify the files as they existed when measured, before these
+documentation-only edits.
+
 ## Check-script reporting update
 
 The equivalence script now reports reference setup, progress through deterministic,
