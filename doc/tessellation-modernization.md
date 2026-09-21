@@ -1,5 +1,14 @@
 # Tessellation modernization work log
 
+## Check-script reporting update
+
+The equivalence script now reports reference setup, progress through deterministic,
+randomized and large-image cases, invalid-input and intermediate-roundness checks,
+per-mode comparison totals, and elapsed time. Use `--verbose` (or `-v`) to see
+every comparison's name, image dimensions, generator count, mode, epsilon and
+result. Failed comparisons always print their context before the traceback.
+The numerical checks and generated inputs are unchanged.
+
 ## Objective
 
 Replace the two tessellation routines in `src/fortran` with Python source using
