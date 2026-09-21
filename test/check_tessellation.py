@@ -5,6 +5,8 @@ Requires NumPy, a C compiler and gfortran (plus Meson for NumPy 2).
 """
 
 import argparse
+from collections import Counter
+from time import perf_counter
 
 import numpy as np
 
@@ -110,15 +112,56 @@ def main():
     parser.add_argument("--random-cases", type=int, default=200)
     parser.add_argument("--seed", type=int, default=20260921)
     parser.add_argument("--large-cases", type=int, default=4)
+    parser.add_argument("-v", "--verbose", action="store_true", help="Print every comparison")
     options = parser.parse_args()
+    print("Tessellation equivalence check (exact equality, no tolerance)", flush=True)
+    print(f"Seed: {options.seed}; random images: {options.random_cases}; large images: {options.large_cases}", flush=True)
+    print("Loading Python implementation and building/loading the Fortran reference...", flush=True)
+    started = perf_counter()
     python, fortran = implementations()
+    print(f"Implementations ready ({perf_counter() - started:.2f}s)", flush=True)
     count = 0
+    totals = Counter()
+    phase = None
+    phase_count = 0
+    checked_at = perf_counter()
     for name, routine, args in cases(options.seed, options.random_cases, options.large_cases):
-        check_case(python, fortran, name, routine, args)
+        current_phase = ("Randomized images" if name.startswith("random-") else
+                         "Large images" if name.startswith("large-") else
+                         "Deterministic and edge cases")
+        if current_phase != phase:
+            if phase is not None:
+                print(f"  PASS: {phase_count} comparisons", flush=True)
+            print(f"\n{current_phase}", flush=True)
+            phase, phase_count = current_phase, 0
+        detail = f"{name}: {args[0]}x{args[1]}, {len(args[2])} generators, {routine}, code={args[-1]}, eps={args[-2]}"
+        if options.verbose:
+            print(f"  Checking {detail}", flush=True)
+        try:
+            check_case(python, fortran, name, routine, args)
+        except Exception:
+            print(f"  FAIL: {detail}", flush=True)
+            raise
         count += 1
+        phase_count += 1
+        mode = "Roundness" if routine == "pytess_roundness" else "Simple hard" if args[-1] == "s" else "Simple fuzzy"
+        totals[mode] += 1
+        if options.verbose:
+            print("    PASS", flush=True)
+        elif phase_count % 250 == 0:
+            print(f"  {phase_count} comparisons passed; latest: {name}", flush=True)
+    print(f"  PASS: {phase_count} comparisons", flush=True)
+    print("\nChecking invalid inputs...", flush=True)
     invalid = check_invalid_inputs(python)
+    print(f"  PASS: {invalid} invalid inputs rejected", flush=True)
+    print("Checking roundness centroids and inverse mean radii...", flush=True)
     check_roundness_reductions(python, fortran)
-    print(f"PASS: {count} exact array comparisons; {invalid} invalid-input checks; exact roundness reductions")
+    print("  PASS: exact intermediate results, including empty-tile NaNs", flush=True)
+    print(f"\nPASS: {count} exact array comparisons in {perf_counter() - checked_at:.2f}s", flush=True)
+    for mode, total in totals.items():
+        print(f"  {mode}: {total}")
+    print(f"  Invalid-input checks: {invalid}")
+    print(f"  Total elapsed time (including reference setup): {perf_counter() - started:.2f}s")
 
 
 if __name__ == "__main__":
