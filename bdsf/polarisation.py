@@ -6,7 +6,6 @@ by gaul2srl. The position angle is defined from North, with positive angles
 towards East.
 
 """
-from __future__ import absolute_import
 
 from .image import *
 from .islands import *

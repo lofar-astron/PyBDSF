@@ -10,8 +10,6 @@ If this (scipy.ndimage.label) isn't fixed by the time we need 3D source
 extraction, one will have to adopt my old pixel-runs algorithm for 3D data.
 Check out islands.py rev. 1362 from repository for it.
 """
-from __future__ import absolute_import
-from __future__ import division
 
 import numpy as N
 import scipy.ndimage as nd
