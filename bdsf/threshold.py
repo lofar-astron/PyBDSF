@@ -130,7 +130,7 @@ class Op_threshold(Op):
         else:
             # smin_L is above the calibrated range:
             # use the last two source-count points to determine the extrapolated slope.
-            index = len(scflux) - 2
+            index = - 2
         n1 = scnum[index]; n2 = scnum[-1]
         s1 = scflux[index]; s2 = scflux[-1]
         alpha = 1.0-log(n1/n2)/log(s1/s2)
