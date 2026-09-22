@@ -979,47 +979,8 @@ class Op_rmsimage(Op):
 
     def pad_array(self, arr, new_shape):
         """Returns a padded array by mirroring around the edges."""
-        # Assume that padding is the same for both axes and is equal
-        # around all edges.
-        half_size = int((new_shape[0] - arr.shape[0]) / 2)
-        arr_pad = np.zeros( (new_shape), dtype=arr.dtype)
-
-        # left band
-        band = arr[:half_size, :]
-        arr_pad[:half_size, half_size:-half_size] =  np.flipud( band )
-
-        # right band
-        band = arr[-half_size:, :]
-        arr_pad[-half_size:, half_size:-half_size] = np.flipud( band )
-
-        # bottom band
-        band = arr[:, :half_size]
-        arr_pad[half_size:-half_size, :half_size] = np.fliplr( band )
-
-        # top band
-        band = arr[:, -half_size:]
-        arr_pad[half_size:-half_size, -half_size:] =  np.fliplr( band )
-
-        # central band
-        arr_pad[half_size:-half_size, half_size:-half_size] = arr
-
-        # bottom left corner
-        band = arr[:half_size,:half_size]
-        arr_pad[:half_size,:half_size] = np.flipud(np.fliplr(band))
-
-        # top right corner
-        band = arr[-half_size:,-half_size:]
-        arr_pad[-half_size:,-half_size:] = np.flipud(np.fliplr(band))
-
-        # top left corner
-        band = arr[:half_size,-half_size:]
-        arr_pad[:half_size,-half_size:] = np.flipud(np.fliplr(band))
-
-        # bottom right corner
-        band = arr[-half_size:,:half_size]
-        arr_pad[-half_size:,:half_size] = np.flipud(np.fliplr(band))
-
-        return arr_pad
+        pad_width = int((new_shape[0] - arr.shape[0]) / 2)
+        return np.pad(arr, pad_width=pad_width, mode='symmetric')
 
 
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
