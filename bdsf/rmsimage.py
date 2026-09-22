@@ -14,7 +14,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from scipy import interpolate, ndimage
-from scipy.stats import median_abs_deviation
 
 from .image import Op
 from . import const
@@ -896,15 +895,7 @@ class Op_rmsimage(Op):
 
         # Step 3: correct(extrapolate) borders of the image
         def correct_borders(map):
-            map[0, :] = map[1, :]
-            map[:, 0] = map[:, 1]
-            map[-1, :] = map[-2, :]
-            map[:, -1] = map[:, -2]
-
-            map[0,0] = (map[1,0] + map[0, 1])/2.
-            map[-1,0] = (map[-2, 0] + map[-1, 1])/2.
-            map[0, -1] = (map[0, -2] + map[1, -1])/2.
-            map[-1,-1] = (map[-2, -1] + map[-1, -2])/2.
+            map[:] = np.pad(map[1:-1, 1:-1], pad_width=1, mode='edge')
 
         if use_extrapolation:
             correct_borders(mean_map)
