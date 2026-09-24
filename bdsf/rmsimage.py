@@ -1110,8 +1110,8 @@ class Op_rmsimage(Op):
 
     def make_bright_src_bbox(self, coord, scale, size, shape):
         """Returns bbox given coordinates of center and scale"""
-        xindx = min(shape[0] - 1, max(0, int(coord[0]/scale[0] + 0.5)))
-        yindx = min(shape[1] - 1, max(0, int(coord[1]/scale[1] + 0.5)))
+        xindx = min(shape[0] - 1, max(0, round(coord[0]/scale[0])))
+        yindx = min(shape[1] - 1, max(0, round(coord[1]/scale[1])))
         xlow = xindx - int(size/2.0)
         if xlow < 0:
             xlow = 0
