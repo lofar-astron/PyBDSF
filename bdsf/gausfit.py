@@ -908,9 +908,6 @@ class Op_gausfit(Op):
         if opts.flag_smallsrc:
             if s1*s2 < opts.flag_minsize_bm*beam[0]*beam[1]:
                 flag += 128
-        if not opts.flag_smallsrc:
-            if s1*s2 == 0.:
-                flag += 128
 
         if ss1/ss2 > 2.0:
             # Only check for fairly elliptical Gaussians, as this condition
