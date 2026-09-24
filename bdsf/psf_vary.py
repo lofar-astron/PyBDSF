@@ -407,7 +407,8 @@ class Op_psf_vary(Op):
                     medstd=0    # calcmedianstd.f
                     for j in y1: medstd += (j-med1)*(j-med1)
                     medstd=math.sqrt(medstd/len(y1))        #
-                    av1=N.mean(y1); std1=N.std(y1, ddof=1)
+                    av1=N.mean(y1)
+                    std1=N.std(y1, ddof=1)
                     # get_medianclip_vec2
                     z=N.transpose([x1, y1])
                     z1=N.transpose([n for n in z if abs(n[1]-med1)<=nsig*medstd])
