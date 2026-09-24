@@ -410,7 +410,8 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
         multiple gaussians. Compute only for gaussian with index (mask value) isrc.
         This is the final fallback in Gaussian fitting. Simply fits a single, broad
         Gaussian to the remaining emission, which rarely gets flagged.
-        Returns normalised peak, centroid, FWHM and P.A. assuming North is top.
+        If the analysis found positive flux, returns normalised peak, centroid, FWHM
+        and P.A. assuming North is top. Otherwise returns NaNs.
     """
     from math import sqrt, atan, pi
     from .const import fwsig
@@ -424,6 +425,9 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     for coord in index:
         tot += subim[coord]
         m1 += N.array(coord)*subim[coord]
+    if not (tot > 0.0): # no positive flux or NaN
+        mompara.fill(N.nan)
+        return mompara
     mompara[0] = tot/bmar_p
     mompara[1:3] = m1/tot
 
