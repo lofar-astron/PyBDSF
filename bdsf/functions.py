@@ -435,8 +435,7 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
 
         mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
         mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-        dumr = atan(abs(2.0*m11/(m2[0]-m2[1])))
-        dumr = atanproper(dumr, m2[0]-m2[1], 2.0*m11)
+        dumr = N.arctan2(2.0*m11, m2[0]-m2[1]) % (2.0*pi)
         mompara[5] = 0.5*dumr*180.0/pi - 90.0
         if mompara[5] < 0.0: mompara[5] += 180.0
     return mompara
