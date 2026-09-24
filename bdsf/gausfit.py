@@ -506,7 +506,8 @@ class Op_gausfit(Op):
         gaul = []
         fgaul = []
         ffimg_tot = N.zeros(isl.shape, dtype=N.float32)
-        peak_val = N.max(isl.image - isl.islmean)
+        resid = isl.image - isl.islmean
+        peak_val = N.max(resid[~isl.mask_active])
         count = 0
         while peak_val >= thr:
             count += 1
@@ -526,7 +527,7 @@ class Op_gausfit(Op):
                     gcopy[3] = S1 # division by fwsig was already done in func.gaussian_fcn()
                     gcopy[4] = S2 # division by fwsig was already done in func.gaussian_fcn()
                     gcopy[5] = Th
-                    A, C1, C2, S1, S2, Th = gcopy
+                    _, C1, C2, S1, S2, Th = gcopy
                     shape = isl.shape
                     b = find_bbox(thresh*isl.rms, gcopy)
                     bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
@@ -535,7 +536,8 @@ class Op_gausfit(Op):
                     ffimg = func.gaussian_fcn(gcopy, x_ax, y_ax)
                     ffimg_tot[bbox] += ffimg
                 peak_val_prev = peak_val
-                peak_val = N.max(isl.image - isl.islmean - ffimg_tot)
+                resid = isl.image - isl.islmean - ffimg_tot
+                peak_val = N.max(resid[~isl.mask_active])
                 if func.approx_equal(peak_val, peak_val_prev):
                     break
             else:
@@ -566,7 +568,6 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = thr
         mask = isl.mask_active
-        av = img.clipped_mean
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
             av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
