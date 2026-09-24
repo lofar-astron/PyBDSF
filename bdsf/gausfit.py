@@ -402,7 +402,8 @@ class Op_gausfit(Op):
             if verbose:
                 print('Fit still not OK, shrinking')
             # If fitting still fails, shrink the island a little and try again
-            fcn = MGFunction(fit_image, nd.binary_dilation(isl.mask_active), 1)
+            fcn = MGFunction(fit_image, sm_isl, 1)
+            dof = N.sum(~sm_isl)
             gaul = []
             iter = 0
             ng1 = 0
@@ -411,7 +412,7 @@ class Op_gausfit(Op):
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                  beam, thr0, peak, shape, isl.mask_active,
+                                                  beam, thr0, peak, shape, sm_isl,
                                                   isl.image, size)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
@@ -421,7 +422,8 @@ class Op_gausfit(Op):
             if verbose:
                 print('Fit still not OK, expanding')
             # If fitting still fails, expand the island a little and try again
-            fcn = MGFunction(fit_image, nd.binary_erosion(isl.mask_active), 1)
+            fcn = MGFunction(fit_image, lg_isl, 1)
+            dof = N.sum(~lg_isl)
             gaul = []
             iter = 0
             ng1 = 0
@@ -430,7 +432,7 @@ class Op_gausfit(Op):
                 iter += 1
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                  beam, thr0, peak, shape, isl.mask_active,
+                                                  beam, thr0, peak, shape, lg_isl,
                                                   isl.image, size)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
