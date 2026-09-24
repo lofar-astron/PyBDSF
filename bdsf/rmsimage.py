@@ -779,13 +779,11 @@ class Op_rmsimage(Op):
             bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
-            new_shape = (arr.shape[0] + 2*pad_border_size, arr.shape[1]
-                         + 2*pad_border_size)
-            arr_pad = self.pad_array(arr, new_shape)
+            arr_pad = np.pad(arr, pad_width=pad_border_size, mode='symmetric')
             if mask is None:
                 mask_pad = None
             else:
-                mask_pad = self.pad_array(mask, new_shape)
+                mask_pad = np.pad(mask, pad_width=pad_border_size, mode='symmetric')
 
         # Make arrays for calculated data
         mapshape = [int(ms) for ms in mapshape]
@@ -894,12 +892,9 @@ class Op_rmsimage(Op):
                                 kappa, [-1, -1])
 
         # Step 3: correct(extrapolate) borders of the image
-        def correct_borders(map):
-            map[:] = np.pad(map[1:-1, 1:-1], pad_width=1, mode='edge')
-
         if use_extrapolation:
-            correct_borders(mean_map)
-            correct_borders(rms_map)
+            mean_map[:] = np.pad(mean_map[1:-1, 1:-1], pad_width=1, mode='edge')
+            rms_map[:] = np.pad(rms_map[1:-1, 1:-1], pad_width=1, mode='edge')
 
         # Step 4: fill in coordinate axes
         for i in range(2):
@@ -966,12 +961,6 @@ class Op_rmsimage(Op):
 
         # Replace any remaining non-finite values with global RMS median
         return np.nan_to_num(themap, nan=global_fallback, posinf=global_fallback, neginf=global_fallback)
-
-
-    def pad_array(self, arr, new_shape):
-        """Returns a padded array by mirroring around the edges."""
-        pad_width = int((new_shape[0] - arr.shape[0]) / 2)
-        return np.pad(arr, pad_width=pad_width, mode='symmetric')
 
 
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
