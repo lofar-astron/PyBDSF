@@ -355,18 +355,6 @@ def angsep(ra1, dec1, ra2, dec2):
     return angle
 
 
-def std(y):
-    """ Returns unbiased standard deviation. """
-    from math import sqrt
-    import numpy as N
-
-    l=len(y)
-    s=N.std(y)
-    if l == 1:
-        return s
-    else:
-        return s*sqrt(float(l)/(l-1))
-
 def imageshift(image, shift):
     """
     Shift a 2D image using Fourier phase shifts.
