@@ -1,6 +1,4 @@
 from shutil import get_terminal_size
-import os
-from contextlib import redirect_stdout
 
 
 def poly(c,x):
@@ -666,9 +664,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
 
         errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
                        N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
-        with open(os.devnull, 'w') as fnull:
-            with redirect_stdout(fnull):
-                p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
+        p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
     else:
         p, success = None, 1
 
