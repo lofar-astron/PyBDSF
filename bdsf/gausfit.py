@@ -401,7 +401,7 @@ class Op_gausfit(Op):
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-                if ng1 == 0 and iter >= 2:
+                if ng1 == 0:
                     if verbose:
                         print('No valid Gaussians found, aborting loop.')
                     break
@@ -425,7 +425,7 @@ class Op_gausfit(Op):
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-                if ng1 == 0 and iter >= 2:
+                if ng1 == 0:
                     if verbose:
                         print('No valid Gaussians found, aborting loop.')
                     break
@@ -449,7 +449,7 @@ class Op_gausfit(Op):
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-                if ng1 == 0 and iter >= 2:
+                if ng1 == 0:
                     if verbose:
                         print('No valid Gaussians found, aborting loop.')
                     break
