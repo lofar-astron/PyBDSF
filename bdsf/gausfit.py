@@ -417,7 +417,7 @@ class Op_gausfit(Op):
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-        lg_isl = nd.binary_erosion(isl.mask_active)
+        lg_isl = nd.binary_erosion(isl.mask_active, border_value=1)
         if (not fitok or len(gaul) == 0) and N.sum(~lg_isl) >= img.minpix_isl:
             if verbose:
                 print('Fit still not OK, expanding')
