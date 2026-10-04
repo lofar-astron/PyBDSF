@@ -398,7 +398,7 @@ class Op_rmsimage(Op):
                         mylogger.userinfo(mylog, 'Using 2D map for background rms')
 
                     if opts.mean_map == 'default' and img.mean_map_type is None:
-                        self.check_meanmap(img, rms)
+                        self.check_meanmap(img, mean)
                     elif opts.mean_map != 'default':
                         img.mean_map_type = opts.mean_map
                     if img.mean_map_type != 'map':
