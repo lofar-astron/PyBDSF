@@ -643,8 +643,8 @@ class Op_gausfit(Op):
         gaul = []
 
         av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
-        mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
         if npeak <= 1:
+            mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
             g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig,
                  mom[4]/fwsig, mom[5])
             gaul.append(g)
