@@ -527,10 +527,7 @@ def deconv2(gaus_bm, gaus_c):
         # sign of the rounding noise.
         bmaj = sqrt(0.5*(s+t))
         bmin = sqrt(0.5*(s-t))
-        if abs(gamma) + abs(alpha-beta) == 0.0:
-            bpa = 0.0
-        else:
-            bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
+        bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         ifail = 0
     return (bmaj, bmin, bpa), ifail
 
