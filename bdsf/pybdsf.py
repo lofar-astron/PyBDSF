@@ -4,7 +4,6 @@ This module initializes the interactive PyBDSF shell, which is a customized
 IPython enviroment. It should be called from the terminal prompt using the
 command "pybdsf".
 """
-from __future__ import print_function
 import bdsf
 from bdsf.image import Image
 import pydoc

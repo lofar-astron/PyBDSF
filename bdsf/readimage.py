@@ -11,7 +11,6 @@ the read_image_from_file in functions.py for details.
 Lastly, wcs and spectal information are stored in the PyWCS
 object img.wcs_obj.
 """
-from __future__ import absolute_import
 
 import numpy as N
 from .image import *

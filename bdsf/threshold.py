@@ -8,7 +8,6 @@ probability is first calculated, and if the number of false source
 pixels is more than fdr_ratio times the estimated number of true source
 pixels, then FDR is chosen, else the hard threshold option is chosen.
 """
-from __future__ import absolute_import
 
 import numpy as N
 from .image import Op
