@@ -693,11 +693,11 @@ class Op_gausfit(Op):
                                 max(0, int(ym[i+1]-avsize/2)):min(im.shape[1], int(ym[i+1]+avsize/2))] = True
                         invmask[i] = invmask[i]*newmask
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
+            x, y = N.indices(im.shape)
             for i in range(nshed):
                 size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
-                x, y = N.indices(im.shape)
                 p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
                 resid = resid + func.gaus_2d(p, x, y)
                 gaul.append(p)
