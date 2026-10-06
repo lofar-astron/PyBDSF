@@ -288,15 +288,7 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
                     return [0, 0], [0, 0]
 
         res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
-        try:
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
-        except TypeError:
-            # This error means no warning argument is available, so redirect stdout to a null device
-            # to suppress printing of (unnecessary) warning messages
-            original_stdout = sys.stdout  # keep a reference to STDOUT
-            sys.stdout = NullDevice()  # redirect the real STDOUT
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
-            sys.stdout = original_stdout  # turn STDOUT back on
+        (p, cov, info, _, _) = leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
 
         if do_err:
             if cov is not None:
@@ -457,16 +449,7 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
         errorfunction = lambda p: N.ravel(gaus_2d(p, x, y) - data)[g_ind]
     else:
         errorfunction = lambda p: N.ravel((gaus_2d(p, x, y) - data)/err)[g_ind]
-    try:
-        p, success = leastsq(errorfunction, p_ini, warning=False)
-    except TypeError:
-        # This error means no warning argument is available, so redirect stdout to a null device
-        # to suppress printing of warning messages
-        original_stdout = sys.stdout  # keep a reference to STDOUT
-        sys.stdout = NullDevice()  # redirect the real STDOUT
-        p, success = leastsq(errorfunction, p_ini)
-        sys.stdout = original_stdout  # turn STDOUT back on
-
+    p, success = leastsq(errorfunction, p_ini)
 
     return p, success
 
