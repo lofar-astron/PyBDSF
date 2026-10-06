@@ -76,7 +76,6 @@ class Op_wavelet_atrous(Op):
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
-                min_size = min(resid.shape)
                 max_isl_shape = (0, 0)
                 for isl in img.islands:
                     if isl.image.shape[0] * isl.image.shape[1] > max_isl_shape[0] * max_isl_shape[1]:
@@ -107,9 +106,12 @@ class Op_wavelet_atrous(Op):
                 numcores = 1
             else:
                 numcores = img.opts.ncores
+
+            b1, b2 = img.pixel_beam()[0:2]
+            cdelt = img.wcs_obj.acdelt[:2]
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
-                im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores)
+                im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores = numcores)
                 im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
                 if img.opts.atrous_sum:
                     w = im_new
@@ -146,14 +148,11 @@ class Op_wavelet_atrous(Op):
                         wopts['ini_gausfit'] = 'default'
                     else:
                         wopts['ini_gausfit'] = 'nobeam'
-                    wid = (l + (l - 1) * (2 ** (j - 1) - 1))
-                    b1, b2 = img.pixel_beam()[0:2]
                     b1 = b1 * fwsig
                     b2 = b2 * fwsig
-                    cdelt = img.wcs_obj.acdelt[:2]
 
                     wimg = Image(wopts)
-                    wimg.beam = (sqrt(wid * wid + b1 * b1) * cdelt[0] * 2.0, sqrt(wid * wid + b2 * b2) * cdelt[1] * 2.0, 0.0)
+                    wimg.beam = (sqrt(y1 * y1 + b1 * b1) * cdelt[0] * 2.0, sqrt(y1 * y1 + b2 * b2) * cdelt[1] * 2.0, 0.0)
                     wimg.orig_beam = img.beam
                     wimg.pixel_beam = img.pixel_beam
                     wimg.pixel_beamarea = img.pixel_beamarea
@@ -391,7 +390,7 @@ class Op_wavelet_atrous(Op):
         wimg.pix2coord = img.pix2coord
         wimg.masked = img.masked
         wimg.mask_arr = img.mask_arr
-        wimg.use_io = img.use_io
+        # wimg.use_io = img.use_io
         wimg.do_cache = img.do_cache
         wimg.tempdir = img.tempdir
         wimg.shape = img.shape
