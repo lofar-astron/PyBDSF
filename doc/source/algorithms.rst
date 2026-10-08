@@ -35,6 +35,8 @@ statistics. Hence if the dispersion of the rms image is higher than 1.1 times th
 the image times the inverse of :math:`\sqrt{2} \times \text{Boxsize}_{\text{pixels}}` then the rms image is taken. Otherwise, the constant
 value of the clipped rms is used.
 
+.. _gaussian_fitting:
+
 Gaussian fitting
 ----------------
 The current procedure for calculating the number of Gaussians to be fit simultaneously to an
@@ -45,6 +47,11 @@ the (unclipped) rms of the residual subimage is greater than the (clipped) rms i
 the maximum pixel in the residue is greater than the threshold for this former rms, and is
 located at least 0.5 beams (and :math:`\sqrt{5}` pixels) away from all previous peaks, then this residual
 peak is identified as a new one.
+
+When this fitting fails to converge for some reason, moment analysis (see
+https://en.wikipedia.org/wiki/Image_moment) is used to approximate the island with
+a single Gaussian. Gaussians determined in this way are flagged by default, but can be unflagged
+by setting the :term:`flag_nofit` parameter to ``False``.
 
 Errors on the Gaussian parameters
 ---------------------------------
