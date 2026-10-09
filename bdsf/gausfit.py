@@ -270,8 +270,8 @@ class Op_gausfit(Op):
             print("Fitting isl #", isl.island_id, '; # pix = ', N.sum(~isl.mask_active), '; size = ', size)
 
         if size > maxsize:
-            tosplit = func.isl_tosplit(isl, opts)
-            if opts.split_isl and tosplit[0] > 0:
+            tosplit = func.isl_tosplit(isl, opts) if opts.split_isl else None
+            if tosplit is not None and tosplit[0] > 0:
                 n_subisl, sub_labels = tosplit[1], tosplit[2]
                 gaul = []
                 fgaul = []
