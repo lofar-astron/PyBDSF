@@ -126,7 +126,7 @@ class Op_psf_vary(Op):
 
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
                 flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
-                if len(flag_unresolved) == 0:
+                if N.sum(flag_unresolved) == 0:
                     mylog.warning('Insufficient number of sources to determine PSF variation.\nTry changing the PSF options or specify a (constant) PSF with the "psf_fwhm" option')
                     return
 
@@ -558,7 +558,7 @@ class Op_psf_vary(Op):
         wtstdbm = N.sqrt((dumrar - wtavbm*wtavbm*sumwt)*sumwt/dd)
 
         avpa  = N.sum(bpa*flagwt-180.0*flagwt*N.array(bpa >= 90))/sumwt
-        stdpa = N.sum(bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
+        stdpa = N.sum(bpa*bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
         stdpa = sqrt(abs((stdpa-avpa*avpa*sumwt)*sumwt/dd))
         if stdpa < wtstdbm[2]:
             wtstdbm[2] = stdpa

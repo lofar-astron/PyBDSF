@@ -95,6 +95,16 @@ class Op_gausfit(Op):
             img.completed_Ops.append('gausfit')
             return img
 
+        large_npix = 2000
+        large = [(isl.island_id, isl.size_active) for isl in img.islands
+                 if isl.size_active > large_npix]
+        if large:
+            large.sort(key=lambda t: -t[1])
+            mylog.warning('%i of %i islands have more than %i pixels; fitting them '
+                          'may take a while (largest: island %s, %i pixels).'
+                          % (len(large), len(img.islands), large_npix,
+                             large[0][0], large[0][1]))
+
         bar = statusbar.StatusBar('Fitting islands with Gaussians .......... : ',
                                   0, img.nisl)
         opts = img.opts
@@ -260,8 +270,8 @@ class Op_gausfit(Op):
             print("Fitting isl #", isl.island_id, '; # pix = ', N.sum(~isl.mask_active), '; size = ', size)
 
         if size > maxsize:
-            tosplit = func.isl_tosplit(isl, opts)
-            if opts.split_isl and tosplit[0] > 0:
+            tosplit = func.isl_tosplit(isl, opts) if opts.split_isl else None
+            if tosplit is not None and tosplit[0] > 0:
                 n_subisl, sub_labels = tosplit[1], tosplit[2]
                 gaul = []
                 fgaul = []
