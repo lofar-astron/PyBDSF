@@ -20,6 +20,7 @@ from .islands import *
 from . import mylogger
 import numpy as N
 from . import functions as func
+from scipy.stats import circstd
 N.seterr(divide='raise')
 
 
@@ -228,7 +229,9 @@ class Op_gaul2srl(Op):
             x1, y1 = map(int, N.floor(pix1)-delc); x2, y2 = map(int, N.floor(pix2)-delc)
             pix1 = N.array(N.unravel_index(N.argmax(subim[x1:x1+2,y1:y1+2]), (2,2)))+[x1,y1]
             pix2 = N.array(N.unravel_index(N.argmax(subim[x2:x2+2,y2:y2+2]), (2,2)))+[x2,y2]
-            if pix1[1] >= subn: pix1[1] = pix1[1]-1
+            if pix1[0] >= subn: pix1[0] = pix1[0]-1
+            if pix1[1] >= subm: pix1[1] = pix1[1]-1
+            if pix2[0] >= subn: pix2[0] = pix2[0]-1
             if pix2[1] >= subm: pix2[1] = pix2[1]-1
             pix1 = pix1.astype(float) #N.array(map(float, pix1))
             pix2 = pix2.astype(float) #N.array(map(float, pix2))
@@ -253,10 +256,8 @@ class Op_gaul2srl(Op):
                     xline = N.round((pix1[0]-pix2[0])/(pix1[1]-pix2[1])* \
                            (min(pix1[1],pix2[1])+N.arange(maxline)-pix1[1])+pix1[0])
                 rpixval = N.zeros(maxline, dtype=N.float32)
-                xbig = N.where(xline >= N.size(subim,0))
-                xline[xbig] = N.size(subim,0) - 1
-                ybig = N.where(yline >= N.size(subim,1))
-                yline[ybig] = N.size(subim,1) - 1
+                xline = N.clip(xline, 0, N.size(subim,0) - 1)
+                yline = N.clip(yline, 0, N.size(subim,1) - 1)
                 for i in range(maxline):
                     pixval = subim[int(xline[i]), int(yline[i])]
                     rpixval[i] = pixval
@@ -335,8 +336,8 @@ class Op_gaul2srl(Op):
         n, m = subim_src.shape[0:2]
         bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
         ssubimsize = max(int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
-        blc[0] = max(0, maxx-(ssubimsize-1)/2); blc[1] = max(0, maxy-(ssubimsize-1)/2)
-        trc[0] = min(n, maxx+(ssubimsize-1)/2); trc[1] = min(m, maxy+(ssubimsize-1)/2)
+        blc[0] = max(0, maxx - (ssubimsize-1) // 2); blc[1] = max(0, maxy - (ssubimsize - 1) // 2)
+        trc[0] = min(n - 1, maxx + (ssubimsize - 1) // 2); trc[1] = min(m - 1, maxy + (ssubimsize - 1) // 2)
         s_imsize = trc - blc + 1
 
         p_ini = [maxv, (s_imsize[0]-1)/2.0*1.1, (s_imsize[1]-1)/2.0*1.1, bm_pix[0]/fwsig*1.3, \
@@ -353,7 +354,7 @@ class Op_gaul2srl(Op):
                 maxpeak = para[0]
             else:
                 maxpeak = maxv
-            posn = para[1:3]-(0.5*N.sum(s_imsize)-1)/2.0+N.array([maxx, maxy])-1+delc
+            posn = para[1:3] + blc + delc
         else:
             maxpeak = maxv
             posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
@@ -444,11 +445,10 @@ class Op_gaul2srl(Op):
 
         # update all objects etc
         tot = 0.0
-        totE_sq = 0.0
+        totE = 0.0
         for g in g_sublist:
             tot += g.total_flux
-            totE_sq += g.total_fluxE**2
-        totE = sqrt(totE_sq)
+            totE += g.total_fluxE
         size_pix = [mompara[3], mompara[4], mompara[5]]
         size_sky = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
         size_sky_uncorr = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]], use_wcs=False)
@@ -463,7 +463,7 @@ class Op_gaul2srl(Op):
         errors = func.get_errors(img, plist, isl.rms)
 
         if img.opts.do_mc_errors:
-            nMC = 20
+            nMC = 200
             mompara0_MC = N.zeros(nMC, dtype=N.float32)
             mompara1_MC = N.zeros(nMC, dtype=N.float32)
             mompara2_MC = N.zeros(nMC, dtype=N.float32)
@@ -484,26 +484,31 @@ class Op_gaul2srl(Op):
                     mompara4_MC[i] = mompara_MC[4]
                     mompara5_MC[i] = mompara_MC[5]
                 except:
-                    mompara0_MC[i] = mompara[0]
-                    mompara1_MC[i] = mompara[1]
-                    mompara2_MC[i] = mompara[2]
-                    mompara3_MC[i] = mompara[3]
-                    mompara4_MC[i] = mompara[4]
-                    mompara5_MC[i] = mompara[5]
-            mompara0E = N.std(mompara0_MC)
-            mompara1E = N.std(mompara1_MC)
+                    mompara0_MC[i] = N.nan
+                    mompara1_MC[i] = N.nan
+                    mompara2_MC[i] = N.nan
+                    mompara3_MC[i] = N.nan
+                    mompara4_MC[i] = N.nan
+                    mompara5_MC[i] = N.nan
+            mompara1E = N.nanstd(mompara1_MC)
             if mompara1E > 2.0*mompara[1]:
                 mompara1E = 2.0*mompara[1] # Don't let errors get too large
-            mompara2E = N.std(mompara2_MC)
+            mompara2E = N.nanstd(mompara2_MC)
             if mompara2E > 2.0*mompara[2]:
                 mompara2E = 2.0*mompara[2] # Don't let errors get too large
-            mompara3E = N.std(mompara3_MC)
+            mompara3E = N.nanstd(mompara3_MC)
             if mompara3E > 2.0*mompara[3]:
                 mompara3E = 2.0*mompara[3] # Don't let errors get too large
-            mompara4E = N.std(mompara4_MC)
+            mompara4E = N.nanstd(mompara4_MC)
             if mompara4E > 2.0*mompara[4]:
                 mompara4E = 2.0*mompara[4] # Don't let errors get too large
-            mompara5E = N.std(mompara5_MC)
+
+            # Use circular statistics for Position Angle error.
+            valid_mompara5_MC = mompara5_MC[~N.isnan(mompara5_MC)]
+            if len(valid_mompara5_MC) > 0:
+                mompara5E = circstd(valid_mompara5_MC, high=180.0, low=0.0)
+            else:
+                mompara5E = N.nan
             if mompara5E > 2.0*mompara[5]:
                 mompara5E = 2.0*mompara[5] # Don't let errors get too large
         else:
@@ -517,9 +522,31 @@ class Op_gaul2srl(Op):
         size_skyE = [sqrt(mompara3E**2 + errors[3]**2) * sqrt(cdeltsq),
                      sqrt(mompara4E**2 + errors[4]**2) * sqrt(cdeltsq),
                      sqrt(mompara5E**2 + errors[5]**2)]
-        sraE = N.sqrt(mompara1E**2 + errors[1]**2) * img.wcs_obj.acdelt[0]
+
+        sraE =  sqrt(mompara1E**2 + errors[1]**2) * img.wcs_obj.acdelt[0]
         sdecE = sqrt(mompara2E**2 + errors[2]**2) * img.wcs_obj.acdelt[1]
-        deconv_size_skyE = size_skyE # set deconvolved errors to non-deconvolved ones
+
+        # Calculate errors for the deconvolved axes using the standard law of error propagation.
+        # Assuming theta_dec = sqrt(theta_obs^2 - theta_beam^2) and a negligible error in beam size,
+        # propagating the uncertainty yields: delta_theta_dec = delta_theta_obs * (theta_obs / theta_dec).
+        deconv_size_skyE = [0.0, 0.0, 0.0]
+
+        # Major axis error
+        if deconv_size_sky[0] > 0.0:
+            deconv_size_skyE[0] = size_skyE[0] * (size_sky[0] / deconv_size_sky[0])
+        else:
+            # Fallback for a point-like source
+            deconv_size_skyE[0] = size_skyE[0]  
+
+        # Minor axis error
+        if deconv_size_sky[1] > 0.0:
+            deconv_size_skyE[1] = size_skyE[1] * (size_sky[1] / deconv_size_sky[1])
+        else:
+            # Fallback for a point-like source
+            deconv_size_skyE[1] = size_skyE[1]
+
+        # Position Angle error is unchanged as a reasonable approximation
+        deconv_size_skyE[2] = size_skyE[2]
 
         # Find aperture flux
         if img.opts.aperture_posn == 'centroid':

@@ -11,8 +11,6 @@ class and a number of fitter routines in _cbdsm module.
 MGFunction class implements multi-gaussian function and
 provides all functionality required by the specific fitters.
 """
-from __future__ import print_function
-from __future__ import absolute_import
 
 from .image import *
 from . import mylogger
@@ -96,6 +94,16 @@ class Op_gausfit(Op):
             img.total_flux_gaus = 0.0
             img.completed_Ops.append('gausfit')
             return img
+
+        large_npix = 2000
+        large = [(isl.island_id, isl.size_active) for isl in img.islands
+                 if isl.size_active > large_npix]
+        if large:
+            large.sort(key=lambda t: -t[1])
+            mylog.warning('%i of %i islands have more than %i pixels; fitting them '
+                          'may take a while (largest: island %s, %i pixels).'
+                          % (len(large), len(img.islands), large_npix,
+                             large[0][0], large[0][1]))
 
         bar = statusbar.StatusBar('Fitting islands with Gaussians .......... : ',
                                   0, img.nisl)
@@ -262,8 +270,8 @@ class Op_gausfit(Op):
             print("Fitting isl #", isl.island_id, '; # pix = ', N.sum(~isl.mask_active), '; size = ', size)
 
         if size > maxsize:
-            tosplit = func.isl_tosplit(isl, opts)
-            if opts.split_isl and tosplit[0] > 0:
+            tosplit = func.isl_tosplit(isl, opts) if opts.split_isl else None
+            if tosplit is not None and tosplit[0] > 0:
                 n_subisl, sub_labels = tosplit[1], tosplit[2]
                 gaul = []
                 fgaul = []
@@ -399,44 +407,50 @@ class Op_gausfit(Op):
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-        sm_isl = nd.binary_dilation(isl.mask_active)
-        if (not fitok or len(gaul) == 0) and N.sum(~sm_isl) >= img.minpix_isl:
-            if verbose:
-                print('Fit still not OK, shrinking')
-            # If fitting still fails, shrink the island a little and try again
-            fcn = MGFunction(fit_image, nd.binary_dilation(isl.mask_active), 1)
-            gaul = []
-            iter = 0
-            ng1 = 0
-            ngmax = 25
-            while iter < 15:
-                iter += 1
-                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
-                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                  beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, size)
-                ng1 = len(gaul)
-                if fitok and len(fgaul) == 0:
-                    break
-        lg_isl = nd.binary_erosion(isl.mask_active)
-        if (not fitok or len(gaul) == 0) and N.sum(~lg_isl) >= img.minpix_isl:
-            if verbose:
-                print('Fit still not OK, expanding')
-            # If fitting still fails, expand the island a little and try again
-            fcn = MGFunction(fit_image, nd.binary_erosion(isl.mask_active), 1)
-            gaul = []
-            iter = 0
-            ng1 = 0
-            ngmax = 25
-            while iter < 15:
-                iter += 1
-                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
-                gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                  beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, size)
-                ng1 = len(gaul)
-                if fitok and len(fgaul) == 0:
-                    break
+        
+        if (not fitok or len(gaul) == 0):
+            sm_isl = nd.binary_dilation(isl.mask_active)
+            if N.sum(~sm_isl) >= img.minpix_isl:
+                if verbose:
+                    print('Fit still not OK, shrinking')
+                # If fitting still fails, shrink the island a little and try again
+                fcn = MGFunction(fit_image, sm_isl, 1)
+                dof = N.sum(~sm_isl)
+                gaul = []
+                iter = 0
+                ng1 = 0
+                ngmax = 25
+                while iter < 15:
+                    iter += 1
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                    gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
+                                                    beam, thr0, peak, shape, sm_isl,
+                                                    isl.image, size)
+                    ng1 = len(gaul)
+                    if fitok and len(fgaul) == 0:
+                        break
+        
+        if (not fitok or len(gaul) == 0):
+            lg_isl = nd.binary_erosion(isl.mask_active)
+            if N.sum(~lg_isl) >= img.minpix_isl:
+                if verbose:
+                    print('Fit still not OK, expanding')
+                # If fitting still fails, expand the island a little and try again
+                fcn = MGFunction(fit_image, lg_isl, 1)
+                dof = N.sum(~lg_isl)
+                gaul = []
+                iter = 0
+                ng1 = 0
+                ngmax = 25
+                while iter < 15:
+                    iter += 1
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                    gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
+                                                    beam, thr0, peak, shape, lg_isl,
+                                                    isl.image, size)
+                    ng1 = len(gaul)
+                    if fitok and len(fgaul) == 0:
+                        break
 
         if not fitok or len(gaul) == 0:
             # If all else fails, try to use moment analysis
@@ -525,8 +539,8 @@ class Op_gausfit(Op):
                     gcopy[1] -= isl.origin[0]
                     gcopy[2] -= isl.origin[1]
                     S1, S2, Th = func.corrected_size(gcopy[3:6])
-                    gcopy[3] = S1
-                    gcopy[4] = S2
+                    gcopy[3] = S1 # division by fwsig was already done in func.gaussian_fcn()
+                    gcopy[4] = S2 # division by fwsig was already done in func.gaussian_fcn()
                     gcopy[5] = Th
                     A, C1, C2, S1, S2, Th = gcopy
                     shape = isl.shape
@@ -689,11 +703,11 @@ class Op_gausfit(Op):
                                 max(0, int(ym[i+1]-avsize/2)):min(im.shape[1], int(ym[i+1]+avsize/2))] = True
                         invmask[i] = invmask[i]*newmask
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
+            x, y = N.indices(im.shape)
             for i in range(nshed):
                 size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
-                x, y = N.indices(im.shape)
                 p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
                 resid = resid + func.gaus_2d(p, x, y)
                 gaul.append(p)
@@ -909,9 +923,6 @@ class Op_gausfit(Op):
             flag += 64
         if opts.flag_smallsrc:
             if s1*s2 < opts.flag_minsize_bm*beam[0]*beam[1]:
-                flag += 128
-        if not opts.flag_smallsrc:
-            if s1*s2 == 0.:
                 flag += 128
 
         if ss1/ss2 > 2.0:
@@ -1140,18 +1151,21 @@ class Gaussian(object):
             self.deconv_size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
             self.deconv_size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
         else:
-            # These are flagged Gaussians, so don't calculate sky values or errors
-            errors = [0]*7
-            self.centre_sky = [0., 0.]
-            self.centre_skyE = [0., 0.]
-            self.size_sky = [0., 0., 0.]
-            self.size_sky_uncorr = [0., 0., 0.]
-            self.size_skyE = [0., 0.]
-            self.size_skyE_uncorr = [0., 0., 0.]
-            self.deconv_size_sky = [0., 0., 0.]
-            self.deconv_size_sky_uncorr = [0., 0., 0.]
-            self.deconv_size_skyE = [0., 0., 0.]
-            self.deconv_size_skyE_uncorr = [0., 0., 0.]
+            # These are flagged Gaussians, so set errors and uncalculated values to NaN
+            errors = [N.nan] * 7
+            nan_sky2 = [N.nan, N.nan]
+            nan_sky3 = [N.nan, N.nan, N.nan]
+            
+            self.centre_sky = nan_sky2
+            self.centre_skyE = nan_sky2
+            self.size_sky = nan_sky3
+            self.size_sky_uncorr = nan_sky3
+            self.size_skyE = nan_sky3
+            self.size_skyE_uncorr = nan_sky3
+            self.deconv_size_sky = nan_sky3
+            self.deconv_size_sky_uncorr = nan_sky3
+            self.deconv_size_skyE = nan_sky3
+            self.deconv_size_skyE_uncorr = nan_sky3
         self.total_flux = tot
         self.total_fluxE = errors[6]
         self.peak_fluxE = errors[0]

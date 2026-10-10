@@ -2,8 +2,6 @@
 
 This module is used to display fits results.
 """
-from __future__ import print_function
-from __future__ import absolute_import
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
@@ -556,21 +554,18 @@ def on_press(event):
                 break
         if not has_image:
             return
-        if xmin < 0:
-            xmin = 0
-        if xmax > img_ch0.shape[0]:
-            xmax = img_ch0.shape[0]
-        if ymin < 0:
-            ymin = 0
-        if ymax > img_ch0.shape[1]:
-            ymax = img_ch0.shape[1]
 
-        # Ensure slice indices are int, then get various values for the
-        # visible region
-        xmin = int(xmin)
-        xmax = int(xmax)
-        ymin = int(ymin)
-        ymax = int(ymax)
+        # Sort the boundaries
+        x_start = int(min(xmin, xmax))
+        x_end = int(max(xmin, xmax))
+        y_start = int(min(ymin, ymax))
+        y_end = int(max(ymin, ymax))
+
+        xmin = max(0, min(img_ch0.shape[0], x_start))
+        xmax = max(0, min(img_ch0.shape[0], x_end))
+        ymin = max(0, min(img_ch0.shape[1], y_start))
+        ymax = max(0, min(img_ch0.shape[1], y_end))
+
         flux = N.nansum(img_ch0[xmin:xmax, ymin:ymax])/pixels_per_beam
         mask = N.isnan(img_ch0[xmin:xmax, ymin:ymax])
         num_pix_unmasked = float(N.size(N.where(mask == False), 1))

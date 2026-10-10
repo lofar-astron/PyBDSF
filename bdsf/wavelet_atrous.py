@@ -85,7 +85,7 @@ class Op_wavelet_atrous(Op):
                     min_size = min(max_isl_shape) * 4.0
                 else:
                     min_size = min(resid.shape)
-                jmax = int(floor(log((min_size / 3.0 * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0)) + 1
+                jmax = floor(log(((min_size // 3) * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0) + 1
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
             img.wavelet_lpf = lpf
@@ -134,12 +134,12 @@ class Op_wavelet_atrous(Op):
                         wopts['mean_map'] = 'const'
                         wopts['rms_box'] = None
                     else:
-                        wopts['rms_box'] = (bs, bs/3)
+                        wopts['rms_box'] = (bs, bs//3)
                         if hasattr(img, '_adapt_rms_isl_pos'):
                             bs_bright = max(5 * y1, img.rms_box_bright[0])
                             if bs_bright < bs/1.5:
                                 wopts['adaptive_rms_box'] = True
-                                wopts['rms_box_bright'] = (bs_bright, bs_bright/3)
+                                wopts['rms_box_bright'] = (bs_bright, bs_bright//3)
                             else:
                                 wopts['adaptive_rms_box'] = False
                     if j <= 3:
@@ -220,14 +220,15 @@ class Op_wavelet_atrous(Op):
                                     if not hasattr(g, 'valid'):
                                         g.valid = False
                                     if not g.valid:
-                                        try:
-                                            isl_id = img.pyrank[int(g.centre_pix[0] + 1), int(g.centre_pix[1] + 1)]
-                                        except IndexError:
+                                        x = round(g.centre_pix[0])
+                                        y = round(g.centre_pix[1])
+                                        if 0 <= x < img.pyrank.shape[0] and 0 <= y < img.pyrank.shape[1]:
+                                            isl_id = img.pyrank[x, y]
+                                        else:
                                             isl_id = -1
                                         if isl_id >= 0:
                                             isl = img.islands[isl_id]
-                                            gcenter = (int(g.centre_pix[0] - isl.origin[0]),
-                                                       int(g.centre_pix[1] - isl.origin[1]))
+                                            gcenter = (x - isl.origin[0], y - isl.origin[1])
                                             if not isl.mask_active[gcenter]:
                                                 gaus_id += 1
                                                 gcp = Gaussian(img, g.parameters[:], isl.island_id, gaus_id)
@@ -663,7 +664,7 @@ def check_islands_for_overlap(img, wimg):
             for wvg in wvisl.gaul:
                 tot_flux += wvg.total_flux
                 wvg.valid = True
-                
+
             if idx in wav_ids:
                 # Localized generation of orig_islands
                 # Instead of indexing a pre-allocated global array, generate the same data subset
@@ -673,6 +674,10 @@ def check_islands_for_overlap(img, wimg):
                 
                 if len(orig_idx) == 1:
                     merge_islands(img, img.islands[orig_idx[0]], wvisl)
+                    # Update pyrank and orig_rankim_bool slices for the expanded island
+                    m_isl = img.islands[orig_idx[0]]
+                    img.pyrank[tuple(m_isl.bbox)][~m_isl.mask_active] = m_isl.island_id
+                    orig_rankim_bool[tuple(m_isl.bbox)][~m_isl.mask_active] = True
                 else:
                     merge_islands(img, img.islands[orig_idx[0]], wvisl)
                     for oidx in orig_idx[1:]:
@@ -695,6 +700,9 @@ def check_islands_for_overlap(img, wimg):
                         pyrank[tuple(isl.bbox)][~isl.mask_active] = i
                     img.pyrank = pyrank
                     
+                    # Refresh boolean map after full pyrank rebuild
+                    orig_rankim_bool = img.pyrank > -1
+                    
                     # Regenerate the global gaussian list to keep gaus_num and island_id properly synchronized
                     img.gaussians = [g for isl in img.islands for g in isl.gaul]
                     
@@ -716,6 +724,10 @@ def check_islands_for_overlap(img, wimg):
                 new_isl.island_id = isl_id
                 img.islands.append(new_isl)
                 copy_gaussians(img, new_isl, wvisl)
+
+                # Update pyrank and orig_rankim_bool for the newly added island
+                img.pyrank[bbox][~new_isl.mask_active] = isl_id
+                orig_rankim_bool[bbox][~new_isl.mask_active] = True
 
         if not img.opts.quiet:
             bar.increment()

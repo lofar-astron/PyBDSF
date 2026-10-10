@@ -8,7 +8,6 @@ probability is first calculated, and if the number of false source
 pixels is more than fdr_ratio times the estimated number of true source
 pixels, then FDR is chosen, else the hard threshold option is chosen.
 """
-from __future__ import absolute_import
 
 import numpy as N
 from .image import Op
@@ -23,8 +22,11 @@ class Op_threshold(Op):
 
     Prerequisites: Module preprocess and rmsimage should be run first.
     """
+    def __init__(self):
+        self.logger = None
+
     def __call__(self, img):
-        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Threshold ")
+        self.logger = mylogger.logging.getLogger("PyBDSF."+img.log+"Threshold ")
         data = img.ch0_arr
         mask = img.mask_arr
         opts = img.opts
@@ -53,15 +55,15 @@ class Op_threshold(Op):
             false_p = 0.5*erfc(cutoff/sq2)*size
             if false_p < opts.fdr_ratio*source_p:
                 img.thresh = 'hard'
-                mylogger.userinfo(mylog, "Expected 5-sigma-clipped false detection rate < fdr_ratio")
-                mylogger.userinfo(mylog, "Using sigma-clipping ('hard') thresholding")
+                mylogger.userinfo(self.logger, "Expected 5-sigma-clipped false detection rate < fdr_ratio")
+                mylogger.userinfo(self.logger, "Using sigma-clipping ('hard') thresholding")
             else:
                 img.thresh = 'fdr'
-                mylogger.userinfo(mylog, "Expected 5-sigma-clipped false detection rate > fdr_ratio")
-                mylogger.userinfo(mylog, "Using FDR (False Detection Rate) thresholding")
-                mylog.debug('%s %g' % ("Estimated number of source pixels (using sourcecounts.py) is ",source_p))
-                mylog.debug('%s %g' % ("Number of false positive pixels expected for 5-sigma is ",false_p))
-                mylog.debug("Threshold for pixels set to : "+str.swapcase(img.thresh))
+                mylogger.userinfo(self.logger, "Expected 5-sigma-clipped false detection rate > fdr_ratio")
+                mylogger.userinfo(self.logger, "Using FDR (False Detection Rate) thresholding")
+                self.logger.debug('%s %g' % ("Estimated number of source pixels (using sourcecounts.py) is ",source_p))
+                self.logger.debug('%s %g' % ("Number of false positive pixels expected for 5-sigma is ",false_p))
+                self.logger.debug("Threshold for pixels set to : "+str.swapcase(img.thresh))
         else:
             img.thresh = img.opts.thresh
 
@@ -69,8 +71,7 @@ class Op_threshold(Op):
         if img.thresh=='fdr':
             cdelt = img.wcs_obj.acdelt[:2]
             bm = (img.beam[0], img.beam[1])
-            area_pix = int(round(N.prod(bm)/(abs(N.prod(cdelt))* \
-                                                      pi/(4.0*log(2.0)))))
+            area_pix = round(pi/(4.0*log(2.0)) * (N.prod(bm) / abs(N.prod(cdelt))))
             s0 = 0
             for i in range(area_pix):
                 s0 +=  1.0/(i+1)
@@ -95,7 +96,7 @@ class Op_threshold(Op):
                 img.thresh = 'hard'
             else:
                 img.thresh_pix = sigcrit
-                mylogger.userinfo(mylog, "FDR threshold (replaces thresh_pix)", str(round(sigcrit, 4)))
+                mylogger.userinfo(self.logger, "FDR threshold (replaces thresh_pix)", str(round(sigcrit, 4)))
         else:
             img.thresh_pix = opts.thresh_pix
 
@@ -117,8 +118,10 @@ class Op_threshold(Op):
         scnum = sc.n
         index = 0
         for i,s in enumerate(scflux):
-            if s < smin_L:
+            if s > smin_L:
                 index = i
+                self.logger.warning("Detection threshold lies outside the calibrated source-count range.")
+                self.logger.warning("Source count estimate in threshold method selection is extrapolated.")
                 break
         n1 = scnum[index]; n2 = scnum[-1]
         s1 = scflux[index]; s2 = scflux[-1]
