@@ -197,7 +197,10 @@ class Op_make_residimage(Op):
         type - specifies 'gaus' or 'shap'
         """
         if len(isl.gaul) == 0:
-            resid = N.zeros(isl.shape, dtype=N.float32)
+            # Difference between assigning NaNs and leaving residual data from 'resid':
+            # - Leaving residual data would measure the local background noise and unmodeled emission.
+            # - Assigning NaNs denotes that no Gaussians were fitted to the island.
+            resid = N.full(isl.shape, N.nan, dtype=N.float32)
 
         ind = N.where(~isl.mask_active)
         resid = resid[ind]
