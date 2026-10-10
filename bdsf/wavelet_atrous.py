@@ -319,10 +319,33 @@ class Op_wavelet_atrous(Op):
             ii = 1 + (2 ** (j - 1)) * (i - 1)
             ff[ii:ii] = [0] * (2 ** (j - 1) - 1)
         kern = N.outer(ff, ff)
-        unmasked = N.nan_to_num(image)
-        im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
+        valid = N.isfinite(image)
+        unmasked = N.where(valid, image, 0.0)
+
+        # Convolve the image with masked pixels replaced by 0
+        im_new = scipy.signal.fftconvolve(
+            unmasked, kern, mode='same'
+        )
+
+        # Calculate the effective kernel weight at each pixel
+        weight = scipy.signal.fftconvolve(
+            valid.astype(float), kern, mode='same'
+        )
+
         if im_new.shape != image.shape:
-            im_new = im_new[0:image.shape[0], 0:image.shape[1]]
+            im_new = im_new[:image.shape[0], :image.shape[1]]
+            weight = weight[:image.shape[0], :image.shape[1]]
+
+        # Normalize using only valid pixels
+        im_new = N.divide(
+            im_new,
+            weight,
+            out=N.full(im_new.shape, N.nan, dtype=float),
+            where=weight > 1e-8
+        )
+
+        # Preserve the original mask
+        im_new[~valid] = N.nan
 
         return im_new
 
