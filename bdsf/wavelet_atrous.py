@@ -6,6 +6,7 @@ import numpy as N
 from .image import *
 from . import mylogger
 import os
+from astropy.convolution import convolve_fft
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
@@ -312,6 +313,7 @@ class Op_wavelet_atrous(Op):
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
             img.completed_Ops.append('wavelet_atrous')
 
+
     def atrous(self, image, filtvec, lpf, j, numcores=1):
 
         ff = filtvec[:]
@@ -319,35 +321,20 @@ class Op_wavelet_atrous(Op):
             ii = 1 + (2 ** (j - 1)) * (i - 1)
             ff[ii:ii] = [0] * (2 ** (j - 1) - 1)
         kern = N.outer(ff, ff)
-        valid = N.isfinite(image)
-        unmasked = N.where(valid, image, 0.0)
 
-        # Convolve the image with masked pixels replaced by 0
-        im_new = scipy.signal.fftconvolve(
-            unmasked, kern, mode='same'
-        )
-
-        # Calculate the effective kernel weight at each pixel
-        weight = scipy.signal.fftconvolve(
-            valid.astype(float), kern, mode='same'
-        )
-
-        if im_new.shape != image.shape:
-            im_new = im_new[:image.shape[0], :image.shape[1]]
-            weight = weight[:image.shape[0], :image.shape[1]]
-
-        # Normalize using only valid pixels
-        im_new = N.divide(
-            im_new,
-            weight,
-            out=N.full(im_new.shape, N.nan, dtype=float),
-            where=weight > 1e-8
-        )
-
-        # Preserve the original mask
-        im_new[~valid] = N.nan
+        data = N.array(image, dtype=float)
+        data[~N.isfinite(data)] = N.nan
+        if not N.isfinite(data).any():
+            return data
+        im_new = convolve_fft(data, kern,
+                              nan_treatment='interpolate',
+                              preserve_nan=True,
+                              boundary='fill', fill_value=0.0,
+                              normalize_kernel=False,
+                              allow_huge=True)
 
         return im_new
+
 
     def setpara_bdsm(self, img):
         chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
