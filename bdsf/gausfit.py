@@ -350,7 +350,6 @@ class Op_gausfit(Op):
         peak = fcn.find_peak()[0]
         dof = isl.size_active
         shape = isl.shape
-        size = isl.size_active/img.pixel_beamarea()*2.0
         gaul = []
         iter = 0
         ng1 = 0
@@ -383,7 +382,7 @@ class Op_gausfit(Op):
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                               beam, thr0, peak, shape, isl.mask_active,
-                                              isl.image, size)
+                                              isl.image, fitok)
             if verbose:
                 print('Leaving flag_gaussians')
             ng1 = len(gaul)
@@ -403,7 +402,7 @@ class Op_gausfit(Op):
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                   beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, size)
+                                                  isl.image, fitok)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
@@ -424,8 +423,8 @@ class Op_gausfit(Op):
                     iter += 1
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                    beam, thr0, peak, shape, sm_isl,
-                                                    isl.image, size)
+                                                      beam, thr0, peak, shape, sm_isl,
+                                                      isl.image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
@@ -446,8 +445,8 @@ class Op_gausfit(Op):
                     iter += 1
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                    beam, thr0, peak, shape, lg_isl,
-                                                    isl.image, size)
+                                                      beam, thr0, peak, shape, lg_isl,
+                                                      isl.image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
@@ -475,7 +474,7 @@ class Op_gausfit(Op):
                     par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
-                                                      isl.image, size)
+                                                      isl.image, fitok)
             except ValueError:
                 pass
 
@@ -813,7 +812,7 @@ class Op_gausfit(Op):
         else:
             return False
 
-    def flag_gaussians(self, gaul, opts, beam, thr, peak, shape, isl_mask, isl_image, size):
+    def flag_gaussians(self, gaul, opts, beam, thr, peak, shape, isl_mask, isl_image, fitok):
         """Flag gaussians according to some rules.
         Splits list of gaussian parameters in 2, where the first
         one is a list of parameters for accepted gaussians, and
@@ -828,12 +827,13 @@ class Op_gausfit(Op):
         peak: peak data value in the current island
         shape: shape of the current island
         isl_mask: island mask
+        fitok: True if normal fitting succeeded, False if not
         """
         good = []
         bad = []
         for g in gaul:
 
-            flag = self._flag_gaussian(g, beam, thr, peak, shape, opts, isl_mask, isl_image, size)
+            flag = self._flag_gaussian(g, beam, thr, peak, shape, opts, isl_mask, isl_image, fitok)
             if flag:
                 bad.append((flag, g))
             else:
@@ -841,7 +841,7 @@ class Op_gausfit(Op):
 
         return good, bad
 
-    def _flag_gaussian(self, g, beam, thr, peak, shape, opts, mask, image, size_bms):
+    def _flag_gaussian(self, g, beam, thr, peak, shape, opts, mask, image, fitok):
         """The actual flagging routine. See above for description.
         """
         from math import sqrt, sin, cos, pi
@@ -854,7 +854,7 @@ class Op_gausfit(Op):
         # Chceck for NaN and Inf
         if not N.all(N.isfinite(g)) or s1 == 0.0 or s2 == 0.0:
             return -1
-            
+
         # Reject unphysical amplitudes, larger than float32 (~3.4e38)
         if abs(A) > 1e38:
             return -1
@@ -945,6 +945,10 @@ class Op_gausfit(Op):
                 elif mask[int(pt[0]), int(pt[1])]:
                     flag += 256
                     break
+
+        if not fitok and opts.flag_nofit:
+            flag += 512
+
         return flag
 
     def fixup_gaussian(self, isl, gaussian):
