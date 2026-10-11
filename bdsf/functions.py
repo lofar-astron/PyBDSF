@@ -400,6 +400,7 @@ def trans_gaul(q):
             y.append(elem)
     return y
 
+
 def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     """ Compute 2d gaussian parameters from moment analysis, for an island with
         multiple gaussians. Compute only for gaussian with index (mask value) isrc.
@@ -410,7 +411,6 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     from math import sqrt, atan, pi
     from .const import fwsig
     import numpy as N
-    N.seterr(all='ignore')
 
     m1 = N.zeros(2); m2 = N.zeros(2); m11 = 0.0; tot = 0.0
     mompara = N.zeros(6)
@@ -419,22 +419,25 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     for coord in index:
         tot += subim[coord]
         m1 += N.array(coord)*subim[coord]
-    mompara[0] = tot/bmar_p
-    mompara[1:3] = m1/tot
 
-    if allpara:
-        for coord in index:
-            co = N.array(coord)
-            m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
-            m11 += N.prod(co - mompara[1:3])*subim[coord]
+    with N.errstate(all='ignore'):
+        mompara[0] = tot/bmar_p
+        mompara[1:3] = m1/tot
 
-        mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-        mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-        dumr = atan(abs(2.0*m11/(m2[0]-m2[1])))
-        dumr = atanproper(dumr, m2[0]-m2[1], 2.0*m11)
-        mompara[5] = 0.5*dumr*180.0/pi - 90.0
-        if mompara[5] < 0.0: mompara[5] += 180.0
+        if allpara:
+            for coord in index:
+                co = N.array(coord)
+                m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
+                m11 += N.prod(co - mompara[1:3])*subim[coord]
+
+            mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+            mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+            dumr = atan(abs(2.0*m11/(m2[0]-m2[1])))
+            dumr = atanproper(dumr, m2[0]-m2[1], 2.0*m11)
+            mompara[5] = 0.5*dumr*180.0/pi - 90.0
+            if mompara[5] < 0.0: mompara[5] += 180.0
     return mompara
+
 
 def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
     """ Fit 2d gaussian to data with x and y also being 2d numpy arrays with x and y positions.
