@@ -24,16 +24,6 @@ from .gaul2srl import Op_gaul2srl
 from .make_residimage import Op_make_residimage
 from .interface import raw_input_no_history
 from . import statusbar
-try:
-    import pyfftw.interfaces
-    pyfftw.interfaces.cache.enable()
-    N.fft.fftn = pyfftw.interfaces.numpy_fft.fftn
-    N.fft.ifftn = pyfftw.interfaces.numpy_fft.ifftn
-    scipy.signal.signaltools.fftn = pyfftw.interfaces.scipy_fftpack.fftn
-    scipy.signal.signaltools.ifftn = pyfftw.interfaces.scipy_fftpack.ifftn
-    has_pyfftw = True
-except ImportError:
-    has_pyfftw = False
 
 
 class Op_wavelet_atrous(Op):
