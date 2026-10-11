@@ -387,9 +387,8 @@ class Op_wavelet_atrous(Op):
         wimg.use_io = 'fits'
 
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
-        from .make_residimage import Op_make_residimage as opp
 
-        dummy = opp()
+        dummy = Op_make_residimage()
         shape = residim.shape
         thresh = opts.fittedimage_clip
 
@@ -400,7 +399,7 @@ class Op_wavelet_atrous(Op):
                     isl = islands[g.wisland_id]
                 else:
                     isl = islands[g.island_id]
-                b = opp.find_bbox(dummy, thresh * isl.rms, g)
+                b = Op_make_residimage.find_bbox(dummy, thresh * isl.rms, g)
                 bbox = N.s_[max(0, int(C1 - b)):min(shape[0], int(C1 + b + 1)),
                             max(0, int(C2 - b)):min(shape[1], int(C2 + b + 1))]
                 x_ax, y_ax = N.mgrid[bbox]
