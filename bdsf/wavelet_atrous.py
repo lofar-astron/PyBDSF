@@ -310,8 +310,6 @@ class Op_wavelet_atrous(Op):
         kern = N.outer(ff, ff)
         unmasked = N.nan_to_num(image)
         im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
-        if im_new.shape != image.shape:
-            im_new = im_new[0:image.shape[0], 0:image.shape[1]]
 
         return im_new
 
