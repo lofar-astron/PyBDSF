@@ -387,7 +387,6 @@ class Op_wavelet_atrous(Op):
         wimg.use_io = 'fits'
 
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
-        from . import functions as func
         from .make_residimage import Op_make_residimage as opp
 
         dummy = opp()
@@ -470,7 +469,6 @@ class Pyramid_source(object):
         self.jlevels = [level0]
 
     def belongs(self, img, isl):
-        from . import functions as func
 
         # Get centroid of island (as integer)
         mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
