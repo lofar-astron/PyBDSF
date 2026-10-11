@@ -684,6 +684,7 @@ def check_islands_for_overlap(img, wimg):
                         merge_islands(img, img.islands[orig_idx[0]], img.islands[oidx])
                     
                     img.islands = [x for x in img.islands if x.island_id not in orig_idx[1:]]
+                    img.nisl = len(img.islands)
                     
                     # Inlining of renumber_islands
                     # Replaced the renumber_islands(img) call. The original function initialized a global matrix
@@ -723,6 +724,7 @@ def check_islands_for_overlap(img, wimg):
                 new_isl.dgaul = []
                 new_isl.island_id = isl_id
                 img.islands.append(new_isl)
+                img.nisl = len(img.islands)
                 copy_gaussians(img, new_isl, wvisl)
 
                 # Update pyrank and orig_rankim_bool for the newly added island
