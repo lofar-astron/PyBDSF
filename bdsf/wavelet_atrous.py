@@ -107,7 +107,6 @@ class Op_wavelet_atrous(Op):
             else:
                 numcores = img.opts.ncores
 
-            b1, b2 = img.pixel_beam()[0:2]
             cdelt = img.wcs_obj.acdelt[:2]
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
@@ -148,6 +147,7 @@ class Op_wavelet_atrous(Op):
                         wopts['ini_gausfit'] = 'default'
                     else:
                         wopts['ini_gausfit'] = 'nobeam'
+                    b1, b2 = img.pixel_beam()[0:2]
                     b1 = b1 * fwsig
                     b2 = b2 * fwsig
 
