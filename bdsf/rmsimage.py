@@ -283,8 +283,6 @@ class Op_rmsimage(Op):
             else:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size*2.0))
             bsize2 = int(max(min(image.shape)/10.0, max_isl_size*5.0))
-            if bsize < min_size_allowed:
-                bsize = min_size_allowed
             if bsize % 10 == 0: bsize += 1
             if bsize2 < min_size_allowed:
                 bsize2 = min_size_allowed
