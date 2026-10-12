@@ -582,7 +582,6 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = thr
         mask = isl.mask_active
-        av = img.clipped_mean
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
             av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
@@ -647,7 +646,6 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = -1e9
         mask = isl.mask_active
-        av = img.clipped_mean
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         npeak = len(iniposn)
         gaul = []
