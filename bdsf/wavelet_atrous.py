@@ -24,16 +24,6 @@ from .gaul2srl import Op_gaul2srl
 from .make_residimage import Op_make_residimage
 from .interface import raw_input_no_history
 from . import statusbar
-try:
-    import pyfftw.interfaces
-    pyfftw.interfaces.cache.enable()
-    N.fft.fftn = pyfftw.interfaces.numpy_fft.fftn
-    N.fft.ifftn = pyfftw.interfaces.numpy_fft.ifftn
-    scipy.signal.signaltools.fftn = pyfftw.interfaces.scipy_fftpack.fftn
-    scipy.signal.signaltools.ifftn = pyfftw.interfaces.scipy_fftpack.ifftn
-    has_pyfftw = True
-except ImportError:
-    has_pyfftw = False
 
 
 class Op_wavelet_atrous(Op):
@@ -76,7 +66,6 @@ class Op_wavelet_atrous(Op):
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
-                min_size = min(resid.shape)
                 max_isl_shape = (0, 0)
                 for isl in img.islands:
                     if isl.image.shape[0] * isl.image.shape[1] > max_isl_shape[0] * max_isl_shape[1]:
@@ -107,9 +96,11 @@ class Op_wavelet_atrous(Op):
                 numcores = 1
             else:
                 numcores = img.opts.ncores
+
+            cdelt = img.wcs_obj.acdelt[:2]
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
-                im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores)
+                im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores = numcores)
                 im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
                 if img.opts.atrous_sum:
                     w = im_new
@@ -146,14 +137,12 @@ class Op_wavelet_atrous(Op):
                         wopts['ini_gausfit'] = 'default'
                     else:
                         wopts['ini_gausfit'] = 'nobeam'
-                    wid = (l + (l - 1) * (2 ** (j - 1) - 1))
                     b1, b2 = img.pixel_beam()[0:2]
                     b1 = b1 * fwsig
                     b2 = b2 * fwsig
-                    cdelt = img.wcs_obj.acdelt[:2]
 
                     wimg = Image(wopts)
-                    wimg.beam = (sqrt(wid * wid + b1 * b1) * cdelt[0] * 2.0, sqrt(wid * wid + b2 * b2) * cdelt[1] * 2.0, 0.0)
+                    wimg.beam = (sqrt(y1 * y1 + b1 * b1) * cdelt[0] * 2.0, sqrt(y1 * y1 + b2 * b2) * cdelt[1] * 2.0, 0.0)
                     wimg.orig_beam = img.beam
                     wimg.pixel_beam = img.pixel_beam
                     wimg.pixel_beamarea = img.pixel_beamarea
@@ -321,8 +310,6 @@ class Op_wavelet_atrous(Op):
         kern = N.outer(ff, ff)
         unmasked = N.nan_to_num(image)
         im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
-        if im_new.shape != image.shape:
-            im_new = im_new[0:image.shape[0], 0:image.shape[1]]
 
         return im_new
 
@@ -391,7 +378,7 @@ class Op_wavelet_atrous(Op):
         wimg.pix2coord = img.pix2coord
         wimg.masked = img.masked
         wimg.mask_arr = img.mask_arr
-        wimg.use_io = img.use_io
+        # wimg.use_io = img.use_io
         wimg.do_cache = img.do_cache
         wimg.tempdir = img.tempdir
         wimg.shape = img.shape
@@ -400,10 +387,8 @@ class Op_wavelet_atrous(Op):
         wimg.use_io = 'fits'
 
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
-        from . import functions as func
-        from .make_residimage import Op_make_residimage as opp
 
-        dummy = opp()
+        dummy = Op_make_residimage()
         shape = residim.shape
         thresh = opts.fittedimage_clip
 
@@ -414,7 +399,7 @@ class Op_wavelet_atrous(Op):
                     isl = islands[g.wisland_id]
                 else:
                     isl = islands[g.island_id]
-                b = opp.find_bbox(dummy, thresh * isl.rms, g)
+                b = Op_make_residimage.find_bbox(dummy, thresh * isl.rms, g)
                 bbox = N.s_[max(0, int(C1 - b)):min(shape[0], int(C1 + b + 1)),
                             max(0, int(C2 - b)):min(shape[1], int(C2 + b + 1))]
                 x_ax, y_ax = N.mgrid[bbox]
@@ -483,7 +468,6 @@ class Pyramid_source(object):
         self.jlevels = [level0]
 
     def belongs(self, img, isl):
-        from . import functions as func
 
         # Get centroid of island (as integer)
         mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
