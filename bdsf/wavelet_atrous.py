@@ -705,6 +705,7 @@ def check_islands_for_overlap(img, wimg):
                     
                     # Regenerate the global gaussian list to keep gaus_num and island_id properly synchronized
                     img.gaussians = [g for isl in img.islands for g in isl.gaul]
+                    img.ngaus = len(img.gaussians)
                     
                 # Recalculate the overlap images, since the islands have changed
                 # Removed global array recalculation block
