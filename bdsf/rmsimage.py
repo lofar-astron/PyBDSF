@@ -926,41 +926,45 @@ class Op_rmsimage(Op):
 
 
     def fill_masked_regions(self, themap):
-        """Fill masked regions in themap using local median, with global median fallback."""
-        # Compute global median as a fallback for finite values
-        valid_mask = np.isfinite(themap)
-        global_fallback = np.nanmedian(themap[valid_mask]) if np.any(valid_mask) else 1.0
+        """Fill invalid regions using local medians from the original map."""
 
-        # Find coordinates of missing or invalid data
-        masked_boxes = np.where(~np.isfinite(themap))
-        max_delx, max_dely = themap.shape[0], themap.shape[1]
+        # Keep the original data unchanged during filling
+        source_map = np.asarray(themap, dtype=float)
+        filled_map = source_map.copy()
 
-        for i in range(np.size(masked_boxes, 1)):
-            num_unmasked = 0
-            x, y = masked_boxes[0][i], masked_boxes[1][i]
-            delx = dely = 1
+        valid_mask = np.isfinite(source_map)
 
-            # Search local neighborhood by expanding radius, bounded by image dimensions
-            while num_unmasked == 0 and (delx <= max_delx or dely <= max_dely):
-                x1 = max(0, x - delx)
-                x2 = min(themap.shape[0], x + 1 + delx)
-                y1 = max(0, y - dely)
-                y2 = min(themap.shape[1], y + 1 + dely)
+        # Preserve the existing fallback behavior if no valid data exist
+        if not np.any(valid_mask):
+            return np.ones_like(source_map, dtype=float)
 
-                cutout = themap[x1:x2, y1:y2].ravel()
-                # Extract valid finite values
+        global_fallback = np.median(source_map[valid_mask])
+
+        # Determine missing cells before filling starts
+        masked_boxes = np.argwhere(~valid_mask)
+        max_radius = max(source_map.shape)
+        nx, ny = source_map.shape
+
+        for x, y in masked_boxes:
+            # Expand the neighborhood until original valid data are found
+            for radius in range(1, max_radius + 1):
+                x1 = max(0, x - radius)
+                x2 = min(nx, x + radius + 1)
+                y1 = max(0, y - radius)
+                y2 = min(ny, y + radius + 1)
+
+                # Read from source_map, not filled_map
+                cutout = source_map[x1:x2, y1:y2]
                 goodcutout = cutout[np.isfinite(cutout)]
-                num_unmasked = len(goodcutout)
 
-                if num_unmasked > 0:
-                    # Use local median from the unmasked neighborhood
-                    themap[x, y] = np.nanmedian(goodcutout)
+                if goodcutout.size > 0:
+                    filled_map[x, y] = np.median(goodcutout)
+                    break
+            else:
+                # Fallback if no valid data were found.
+                filled_map[x, y] = global_fallback
 
-                delx += 1
-                dely += 1
-
-        # Replace any remaining non-finite values with global RMS median
-        return np.nan_to_num(themap, nan=global_fallback, posinf=global_fallback, neginf=global_fallback)
+        return filled_map
 
 
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
