@@ -925,47 +925,46 @@ class Op_rmsimage(Op):
         return cm, cr
 
 
-def fill_masked_regions(self, themap):
-    """Fill invalid regions using local medians from the original map."""
+    def fill_masked_regions(self, themap):
+        """Fill invalid regions using local medians from the original map."""
 
-    # Keep the original data unchanged during filling
-    source_map = np.asarray(themap, dtype=float)
-    filled_map = source_map.copy()
+        # Keep the original data unchanged during filling
+        source_map = np.asarray(themap, dtype=float)
+        filled_map = source_map.copy()
 
-    valid_mask = np.isfinite(source_map)
+        valid_mask = np.isfinite(source_map)
 
-    # Preserve the existing fallback behavior if no valid data exist
-    if not np.any(valid_mask):
-        return np.ones_like(source_map, dtype=float)
+        # Preserve the existing fallback behavior if no valid data exist
+        if not np.any(valid_mask):
+            return np.ones_like(source_map, dtype=float)
 
-    global_fallback = np.median(source_map[valid_mask])
+        global_fallback = np.median(source_map[valid_mask])
 
-    # Determine missing cells before filling starts
-    masked_boxes = np.argwhere(~valid_mask)
-    max_radius = max(source_map.shape)
-    nx, ny = source_map.shape
+        # Determine missing cells before filling starts
+        masked_boxes = np.argwhere(~valid_mask)
+        max_radius = max(source_map.shape)
+        nx, ny = source_map.shape
 
-    for x, y in masked_boxes:
-        # Expand the neighborhood until original valid data are found
-        for radius in range(1, max_radius + 1):
-            x1 = max(0, x - radius)
-            x2 = min(nx, x + radius + 1)
-            y1 = max(0, y - radius)
-            y2 = min(ny, y + radius + 1)
+        for x, y in masked_boxes:
+            # Expand the neighborhood until original valid data are found
+            for radius in range(1, max_radius + 1):
+                x1 = max(0, x - radius)
+                x2 = min(nx, x + radius + 1)
+                y1 = max(0, y - radius)
+                y2 = min(ny, y + radius + 1)
 
-            # Read from source_map, not filled_map
-            cutout = source_map[x1:x2, y1:y2]
-            goodcutout = cutout[np.isfinite(cutout)]
+                # Read from source_map, not filled_map
+                cutout = source_map[x1:x2, y1:y2]
+                goodcutout = cutout[np.isfinite(cutout)]
 
-            if goodcutout.size > 0:
-                filled_map[x, y] = np.median(goodcutout)
-                break
-        else:
-            # Fallback if no valid data were found.
-            filled_map[x, y] = global_fallback
+                if goodcutout.size > 0:
+                    filled_map[x, y] = np.median(goodcutout)
+                    break
+            else:
+                # Fallback if no valid data were found.
+                filled_map[x, y] = global_fallback
 
-    return filled_map
-
+        return filled_map
 
 
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
