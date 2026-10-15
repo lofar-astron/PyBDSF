@@ -187,14 +187,14 @@ class Op_rmsimage(Op):
         # The formula finds the diameter 2r where the brightness drops to 3x the noise level
         # (kappa1 * crms). Solving for 2r gives: 2 * sigma * sqrt(2 * ln(I_max / (3 * sigma_noise)))
         try:
-            brightsize = int(round(2.*img.beam[0]/cdelt[0]/fwsig*
-                               sqrt(2.*log(img.max_value/(kappa1*crms)))))
+            brightsize = round(2.*img.beam[0]/abs(cdelt[0])/fwsig*
+                               sqrt(2.*log(img.max_value/(kappa1*crms))))
         # Fallback: 2-sigma beam
         # If the image contains no sources, `img.max_value` might be 
         # smaller than the noise threshold (kappa1 * crms). This would make the fraction < 1, 
         # causing `log()` to return a negative number, and `sqrt()` to raise a math domain error.
         except (ValueError, ZeroDivisionError):
-            brightsize = int(round(2.*img.beam[0]/cdelt[0]/fwsig))
+            brightsize = round(2.*img.beam[0]/abs(cdelt[0])/fwsig)
 
         mylog.info('Estimated size of brightest source (pixels) = '+str(brightsize))
 
@@ -226,7 +226,7 @@ class Op_rmsimage(Op):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
                     size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     isl_area_highthresh.append(size_area)
-                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+\
+                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+\
                           np.array((s[0].start, s[1].start))))
 
         # Check islands found above at thresh_isl threshold to determine if
@@ -245,14 +245,18 @@ class Op_rmsimage(Op):
         isl_size_highthresh = []
         for idx, s in enumerate(slices):
             isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
-            isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.argmax(image[s]), image[s].shape))+
+            isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+
                                           np.array((s[0].start, s[1].start)))
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
-            if do_adapt and isl_maxposn_lowthresh in isl_maxposn:
-                bright_indx = isl_maxposn.index(isl_maxposn_lowthresh)
-                if isl_area_lowthresh < 25.0 or isl_area_lowthresh/isl_area_highthresh[bright_indx] < 8.0:
-                    isl_pos.append(isl_maxposn_lowthresh)
-                    isl_size_highthresh.append(isl_size_bright[bright_indx])
+            if do_adapt and len(isl_maxposn) > 0:
+                dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
+                # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
+                # so we allow for a small arbitrary distance between the two positions
+                if min(dists) <= 2.5:
+                    bright_indx = int(np.argmin(dists))
+                    if isl_area_lowthresh < 25.0 or isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0:
+                        isl_pos.append(isl_maxposn_lowthresh)
+                        isl_size_highthresh.append(isl_size_bright[bright_indx])
 
         if len(isl_size) == 0:
             max_isl_size = 0.0
@@ -767,21 +771,19 @@ class Op_rmsimage(Op):
             use_extrapolation = False
 
         if use_extrapolation:
-            boxcount = 1 + (imgshape - BS)/SS
+            boxcount = 1 + (imgshape - BS) // SS
             bounds   = np.asarray((boxcount-1)*SS + BS < imgshape, dtype=int)
             mapshape = 2 + boxcount + bounds
         else:
-            boxcount = 1 + imgshape/SS
+            boxcount = 1 + imgshape // SS
             bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
-            new_shape = (arr.shape[0] + 2*pad_border_size, arr.shape[1]
-                         + 2*pad_border_size)
-            arr_pad = self.pad_array(arr, new_shape)
+            arr_pad = np.pad(arr, pad_width=pad_border_size, mode='symmetric')
             if mask is None:
                 mask_pad = None
             else:
-                mask_pad = self.pad_array(mask, new_shape)
+                mask_pad = np.pad(mask, pad_width=pad_border_size, mode='symmetric')
 
         # Make arrays for calculated data
         mapshape = [int(ms) for ms in mapshape]
@@ -890,20 +892,9 @@ class Op_rmsimage(Op):
                                 kappa, [-1, -1])
 
         # Step 3: correct(extrapolate) borders of the image
-        def correct_borders(map):
-            map[0, :] = map[1, :]
-            map[:, 0] = map[:, 1]
-            map[-1, :] = map[-2, :]
-            map[:, -1] = map[:, -2]
-
-            map[0,0] = (map[1,0] + map[0, 1])/2.
-            map[-1,0] = (map[-2, 0] + map[-1, 1])/2.
-            map[0, -1] = (map[0, -2] + map[1, -1])/2.
-            map[-1,-1] = (map[-2, -1] + map[-1, -2])/2.
-
         if use_extrapolation:
-            correct_borders(mean_map)
-            correct_borders(rms_map)
+            mean_map[:] = np.pad(mean_map[1:-1, 1:-1], pad_width=1, mode='edge')
+            rms_map[:] = np.pad(rms_map[1:-1, 1:-1], pad_width=1, mode='edge')
 
         # Step 4: fill in coordinate axes
         for i in range(2):
@@ -934,77 +925,42 @@ class Op_rmsimage(Op):
         return cm, cr
 
 
-    def fill_masked_regions(self, themap, magic=np.inf):
-        """Fill masked regions (defined where values == magic) in themap.
-        """
-        masked_boxes = np.where(themap == magic) # locations of masked regions
-        for i in range(np.size(masked_boxes,1)):
+    def fill_masked_regions(self, themap):
+        """Fill masked regions in themap using local median, with global median fallback."""
+        # Compute global median as a fallback for finite values
+        valid_mask = np.isfinite(themap)
+        global_fallback = np.nanmedian(themap[valid_mask]) if np.any(valid_mask) else 1.0
+
+        # Find coordinates of missing or invalid data
+        masked_boxes = np.where(~np.isfinite(themap))
+        max_delx, max_dely = themap.shape[0], themap.shape[1]
+
+        for i in range(np.size(masked_boxes, 1)):
             num_unmasked = 0
             x, y = masked_boxes[0][i], masked_boxes[1][i]
             delx = dely = 1
-            while num_unmasked == 0:
-                x1 = x - delx
-                if x1 < 0: x1 = 0
-                x2 = x + 1 + delx
-                if x2 > themap.shape[0]: x2 = themap.shape[0]
-                y1 = y - dely
-                if y1 < 0: y1 = 0
-                y2 = y + 1 + dely
-                if y2 > themap.shape[1]: y2 = themap.shape[1]
+
+            # Search local neighborhood by expanding radius, bounded by image dimensions
+            while num_unmasked == 0 and (delx <= max_delx or dely <= max_dely):
+                x1 = max(0, x - delx)
+                x2 = min(themap.shape[0], x + 1 + delx)
+                y1 = max(0, y - dely)
+                y2 = min(themap.shape[1], y + 1 + dely)
 
                 cutout = themap[x1:x2, y1:y2].ravel()
-                goodcutout = cutout[cutout != magic]
+                # Extract valid finite values
+                goodcutout = cutout[np.isfinite(cutout)]
                 num_unmasked = len(goodcutout)
+
                 if num_unmasked > 0:
-                    themap[x, y] = np.nanmean(goodcutout)
+                    # Use local median from the unmasked neighborhood
+                    themap[x, y] = np.nanmedian(goodcutout)
+
                 delx += 1
                 dely += 1
-        themap[np.isnan(themap)] = 0.0
-        return themap
 
-    def pad_array(self, arr, new_shape):
-        """Returns a padded array by mirroring around the edges."""
-        # Assume that padding is the same for both axes and is equal
-        # around all edges.
-        half_size = int((new_shape[0] - arr.shape[0]) / 2)
-        arr_pad = np.zeros( (new_shape), dtype=arr.dtype)
-
-        # left band
-        band = arr[:half_size, :]
-        arr_pad[:half_size, half_size:-half_size] =  np.flipud( band )
-
-        # right band
-        band = arr[-half_size:, :]
-        arr_pad[-half_size:, half_size:-half_size] = np.flipud( band )
-
-        # bottom band
-        band = arr[:, :half_size]
-        arr_pad[half_size:-half_size, :half_size] = np.fliplr( band )
-
-        # top band
-        band = arr[:, -half_size:]
-        arr_pad[half_size:-half_size, -half_size:] =  np.fliplr( band )
-
-        # central band
-        arr_pad[half_size:-half_size, half_size:-half_size] = arr
-
-        # bottom left corner
-        band = arr[:half_size,:half_size]
-        arr_pad[:half_size,:half_size] = np.flipud(np.fliplr(band))
-
-        # top right corner
-        band = arr[-half_size:,-half_size:]
-        arr_pad[-half_size:,-half_size:] = np.flipud(np.fliplr(band))
-
-        # top left corner
-        band = arr[:half_size,-half_size:]
-        arr_pad[:half_size,-half_size:] = np.flipud(np.fliplr(band))
-
-        # bottom right corner
-        band = arr[-half_size:,:half_size]
-        arr_pad[-half_size:,:half_size] = np.flipud(np.fliplr(band))
-
-        return arr_pad
+        # Replace any remaining non-finite values with global RMS median
+        return np.nan_to_num(themap, nan=global_fallback, posinf=global_fallback, neginf=global_fallback)
 
 
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
@@ -1036,14 +992,16 @@ class Op_rmsimage(Op):
                     # First take the same windows for which the mask was calculated
                     # and then select only the unmasked pixels
                     valid_pixels = arr[a:b, c:d][pix_unmasked]
-                    cm = np.median(valid_pixels)
+                    cm = np.nanmedian(valid_pixels)
                     # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
                     # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
-                    cr = np.median(np.abs(valid_pixels - cm)) * 1.4826
+                    cr = np.nanmedian(np.abs(valid_pixels - cm)) * 1.4826
                     
                     # Protection against zero noise (e.g. all pixels have the same value)
                     if cr == 0.0:
-                        cr = np.std(valid_pixels) # final fallback
+                        cr = np.nanstd(valid_pixels) # fallback
+                        if cr == 0.0:
+                            cr = np.inf           # finall fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf

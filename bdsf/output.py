@@ -278,7 +278,7 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
         outl = [img.sources]
         if incl_empty:
             # Append the dummy sources for islands without any unflagged Gaussians
-            outl[0] += img.dsources
+            outl[0] = outl[0] + img.dsources
         outn = []
         for src in img.sources:
             outn.append(root + '_i' + str(src.island_id) + '_s' +
@@ -316,7 +316,7 @@ def write_ascii_list(img, filename=None, sort_by='indx', format='ascii',
         outl = [img.sources]
         if incl_empty:
             # Append the dummy sources for islands without any unflagged Gaussians
-            outl[0] += img.dsources
+            outl[0] = outl[0] + img.dsources
     outstr_list = make_ascii_str(img, outl, objtype=objtype, incl_chan=incl_chan,
                                  incl_empty=incl_empty, format=format)
     if filename is None:
@@ -371,7 +371,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
         outl = [img.sources]
         if incl_empty:
             # Append the dummy sources for islands without any unflagged Gaussians
-            outl[0] += img.dsources
+            outl[0] = outl[0] + img.dsources
     elif objtype == 'shap':
         outl = [[isl for isl in img.islands if hasattr(isl, 'shapelet_nmax')]]
 

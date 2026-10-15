@@ -11,8 +11,6 @@ used by the interactive IPython shell made by pybdsf).
 This module also defines class Op, which is used as a base class for all PyBDSF
 operations.
 """
-from __future__ import print_function
-from __future__ import absolute_import
 
 import numpy as N
 from .opts import *
