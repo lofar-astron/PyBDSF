@@ -383,7 +383,7 @@ class Op_gausfit(Op):
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                               beam, thr0, peak, shape, isl.mask_active,
-                                              isl.image, size)
+                                              fit_image, size)
             if verbose:
                 print('Leaving flag_gaussians')
             ng1 = len(gaul)
@@ -403,7 +403,7 @@ class Op_gausfit(Op):
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                   beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, size)
+                                                  fit_image, size)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
@@ -425,7 +425,7 @@ class Op_gausfit(Op):
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                     beam, thr0, peak, shape, sm_isl,
-                                                    isl.image, size)
+                                                    fit_image, size)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
@@ -447,7 +447,7 @@ class Op_gausfit(Op):
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                     beam, thr0, peak, shape, lg_isl,
-                                                    isl.image, size)
+                                                    fit_image, size)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
@@ -475,7 +475,7 @@ class Op_gausfit(Op):
                     par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
-                                                      isl.image, size)
+                                                      fit_image.image, size)
             except ValueError:
                 pass
 
