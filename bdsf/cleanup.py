@@ -1,7 +1,6 @@
 """
         Does miscellaneous jobs at the end, which assumes all other tasks are run.
 """
-from __future__ import absolute_import
 
 import numpy as N
 import os
