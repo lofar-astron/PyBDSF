@@ -475,7 +475,7 @@ class Op_gausfit(Op):
                     par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
-                                                      fit_image.image, size)
+                                                      fit_image, size)
             except ValueError:
                 pass
 
