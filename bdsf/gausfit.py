@@ -389,6 +389,8 @@ class Op_gausfit(Op):
             ng1 = len(gaul)
             if fitok and len(fgaul) == 0:
                 break
+            # This is deterministic, so the result of next iterations would be the same. Same happens below.
+            # Probably some progress was intended here, but for now just break to avoid unnecessary iterations.
             if ng1 == 0 and iter >= 2:
                 if verbose:
                     print('No valid Gaussians found after 2 iterations, aborting flag loop.')
