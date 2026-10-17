@@ -102,7 +102,8 @@ class Op_wavelet_atrous(Op):
             im_old = img.resid_wavelets_arr
             total_flux = 0.0
             stop_wav = False
-            pix_masked = N.where(N.isnan(resid))
+            pix_masked = N.where(~N.isfinite(resid))
+            has_nonfinite = pix_masked[0].size > 0
             jmin = 1
             if img.opts.ncores is None:
                 numcores = 1
@@ -110,8 +111,11 @@ class Op_wavelet_atrous(Op):
                 numcores = img.opts.ncores
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
-                im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores)
-                im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
+                im_new = self.atrous(
+                    im_old, filter[lpf]['vec'], lpf, j,
+                    numcores=numcores, has_nonfinite=has_nonfinite
+                )
+                im_new[pix_masked] = N.nan  # Preserve the original invalid pixels.
                 if img.opts.atrous_sum:
                     w = im_new
                 else:
@@ -314,7 +318,8 @@ class Op_wavelet_atrous(Op):
             img.completed_Ops.append('wavelet_atrous')
 
 
-    def atrous(self, image, filtvec, lpf, j, numcores=1):
+    def atrous(self, image, filtvec, lpf, j, numcores=1,
+           has_nonfinite=True):
 
         ff = filtvec[:]
         for i in range(1, len(filtvec)):
@@ -322,16 +327,29 @@ class Op_wavelet_atrous(Op):
             ff[ii:ii] = [0] * (2 ** (j - 1) - 1)
         kern = N.outer(ff, ff)
 
+        # Fast path: no NaNs or infinities in the original image
+        if not has_nonfinite:
+            unmasked = N.nan_to_num(image)
+            im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
+            if im_new.shape != image.shape:
+                im_new = im_new[0:image.shape[0], 0:image.shape[1]]
+            return im_new
+
+        # Slow path: use Astropy when invalid pixels are present
         data = N.array(image, dtype=float)
         data[~N.isfinite(data)] = N.nan
+
         if not N.isfinite(data).any():
             return data
-        im_new = convolve_fft(data, kern,
-                              nan_treatment='interpolate',
-                              preserve_nan=True,
-                              boundary='fill', fill_value=0.0,
-                              normalize_kernel=False,
-                              allow_huge=True)
+
+        im_new = convolve_fft(
+            data, kern,
+            nan_treatment='interpolate',
+            preserve_nan=True,
+            boundary='fill', fill_value=0.0,
+            normalize_kernel=False,
+            allow_huge=True
+        )
 
         return im_new
 
