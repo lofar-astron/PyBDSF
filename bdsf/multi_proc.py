@@ -58,6 +58,19 @@ def _run_batch(indices):
     return [(idx, _task_function(_task_sequence[idx])) for idx in indices]
 
 
+def _terminate_workers(executor):
+    """Cancel the pending tasks of the executor and stop its workers"""
+    # ProcessPoolExecutor has no public way to stop running tasks before
+    # Python 3.14 (terminate_workers()), so use its list of worker processes
+    processes = list((executor._processes or {}).values())
+    executor.shutdown(wait=False, cancel_futures=True)
+    for process in processes:
+        if process.is_alive():
+            process.terminate()
+    for process in processes:
+        process.join()
+
+
 def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     """
     A parallelized version of the native Python map function that
@@ -129,9 +142,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
                 if bar is not None and bar.started:
                     bar.increment()
     except BaseException:
-        # Do not wait for the remaining tasks; a worker that was killed
-        # (e.g., by the out-of-memory killer) raises BrokenProcessPool here
-        executor.shutdown(wait=False, cancel_futures=True)
+        # An exception (e.g., KeyboardInterrupt, or BrokenProcessPool after a
+        # worker was killed by the out-of-memory killer) would otherwise leave
+        # the remaining workers running until their tasks finish
+        _terminate_workers(executor)
         raise
     finally:
         _task_function = _task_sequence = None
