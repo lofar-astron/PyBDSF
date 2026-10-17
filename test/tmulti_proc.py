@@ -3,7 +3,9 @@
 Run with: python tmulti_proc.py (exit status 0 if all tests pass)
 """
 import concurrent.futures
+import multiprocessing
 import os
+import signal
 import sys
 import time
 
@@ -93,6 +95,25 @@ def test_killed_worker_raises():
     else:
         raise AssertionError('BrokenProcessPool not raised')
     assert time.time() - start < 30
+
+
+def test_interrupt_stops_workers():
+    def interrupt(signum, frame):
+        raise KeyboardInterrupt
+    old_handler = signal.signal(signal.SIGALRM, interrupt)
+    signal.alarm(2)
+    start = time.time()
+    try:
+        mp.parallel_map(time.sleep, [60] * 4, numcores=2)
+    except KeyboardInterrupt:
+        pass
+    else:
+        raise AssertionError('KeyboardInterrupt not raised')
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+    assert time.time() - start < 30
+    assert not multiprocessing.active_children(), 'workers still running'
 
 
 def test_statusbar():
