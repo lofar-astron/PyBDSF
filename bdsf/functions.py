@@ -599,8 +599,11 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
                 e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
 
                 # The following error is calculated using Eq. 30 of Condon+ (1998)
-                e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
-                e_pa = e_pa * 180.0/pi
+                # The position angle is undefined for a circular Gaussian.
+                if abs(d2) < 1e-12:
+                    e_pa = N.nan
+                else:
+                    e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25)) * 180.0 / pi
 
                 # The following error is calculated using Eq. 36 of Condon+ (1998)
                 e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
