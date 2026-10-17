@@ -1,19 +1,19 @@
 """Multiprocessing module to handle parallelization.
 
-This module can optionally update a statusbar and can divide tasks
-between cores using weights (so that each core gets a set of tasks with
-the same total weight).
+This module can optionally update a statusbar and can use weights to
+schedule the most expensive tasks first.
 
-Adapted from a module by Brian Refsdal at SAO, available at AstroPython
-(http://www.astropython.org/snippet/2010/3/Parallel-map-using-multiprocessing).
-
+The tasks are distributed dynamically over a pool of worker processes, so
+that a worker that finishes early picks up the next task. The worker
+processes are forked after the function and sequence have been stored in
+this module, so they inherit them: only item indices are sent to the workers
+and only the results are sent back.
 """
 
-import heapq
+import concurrent.futures
+import math
 import multiprocessing
 import os
-import sys
-import traceback
 
 import numpy
 
@@ -41,114 +41,21 @@ fork_context = multiprocessing.get_context("fork")
 
 __all__ = ('parallel_map',)
 
+# Function and sequence of the current parallel_map() call, inherited by the
+# forked worker processes
+_task_function = None
+_task_sequence = None
 
-def worker(f, ii, chunk, out_q, err_q, lock, bar, bar_state, preserve_order=False):
+
+def _run_batch(indices):
     """
-    A worker function that maps an input function over a
-    slice of the input iterable.
+    Applies the current task function to the items of the current task
+    sequence with the given indices (in a worker process).
 
-    :param f  : callable function that accepts argument from iterable
-    :param ii  : process ID
-    :param chunk: slice of input iterable
-    :param out_q: thread-safe output queue
-    :param err_q: thread-safe queue to populate on exception
-    :param lock : thread-safe lock to protect a resource
-           ( useful in extending parallel_map() )
-    :param bar: statusbar to update during fit
-    :param bar_state: statusbar state dictionary
-    :param preserve_order: whether chunk entries carry their original index
+    :param indices: indices of the items to process
+    :returns: list of (index, result) tuples
     """
-    vals = []
-
-    for entry in chunk:
-        if preserve_order:
-            val_idx, val = entry
-        else:
-            val = entry
-        try:
-            result = f(val)
-        except Exception as e:
-            print("Thread raised exception", e, file=sys.stderr)
-            print("Traceback of thread is:", file=sys.stderr)
-            print("-------------------------", file=sys.stderr)
-            traceback.print_exception(e, file=sys.stderr)
-            print("-------------------------", file=sys.stderr)
-            err_q.put(e)
-            return
-
-        if preserve_order:
-            vals.append((val_idx, result))
-        else:
-            vals.append(result)
-
-        if bar is not None:
-            if bar_state['started']:
-                bar.pos = bar_state['pos']
-                bar.spin_pos = bar_state['spin_pos']
-                bar.started = bar_state['started']
-                increment = bar.increment()
-                bar_state['started'] = bar.started
-                bar_state['pos'] += increment
-                bar_state['spin_pos'] += increment
-                if bar_state['spin_pos'] >= 4:
-                    bar_state['spin_pos'] = 0
-
-    out_q.put((ii, vals))
-
-
-def run_tasks(procs, err_q, out_q, num, preserve_order=False, total_items=None):
-    """
-    A function that executes populated processes and processes
-    the resultant array. Checks error queue for any exceptions.
-
-    :param procs: list of Process objects
-    :param out_q: thread-safe output queue
-    :param err_q: thread-safe queue to populate on exception
-    :param num : length of resultant array
-    :param preserve_order: whether worker outputs carry original item indices
-    :param total_items: total number of items to reconstruct
-
-    """
-    die = (lambda vals: [val.terminate() for val in vals
-                         if val.exitcode is None])
-
-    try:
-        for proc in procs:
-            proc.start()
-
-        for proc in procs:
-            proc.join()
-            if proc.exitcode != 0:
-                raise RuntimeError(
-                    f"Process {proc.name} died unexpectedly (exit code: {proc.exitcode})"
-                )
-
-    except Exception as e:
-        die(procs)
-        raise e
-
-    if not err_q.empty():
-        die(procs)
-        raise err_q.get()
-
-    if preserve_order:
-        results = [None] * total_items
-        for i in range(num):
-            idx, result = out_q.get()
-            for item_idx, item_result in result:
-                results[item_idx] = item_result
-        return results
-
-    results = [None] * num
-    for i in range(num):
-        idx, result = out_q.get()
-        results[idx] = result
-
-    result_list = []
-    for result in results:
-        result_list += result
-
-    return result_list
+    return [(idx, _task_function(_task_sequence[idx])) for idx in indices]
 
 
 def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
@@ -163,9 +70,13 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     :param sequence: iterable sequence
     :param numcores: number of cores to use (if None, all are used)
     :param bar: statusbar to update during fit
-    :param weights: weights to use when splitting the sequence
+    :param weights: estimated cost of each item; items are processed in order
+        of decreasing weight, one at a time, which keeps the workers evenly
+        loaded when the costs vary a lot
 
     """
+    global _task_function, _task_sequence
+
     if not callable(function):
         raise TypeError("input function '%s' is not callable" %
                         repr(function))
@@ -174,11 +85,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         raise TypeError("input '%s' is not iterable" %
                         repr(sequence))
 
-    sequence_list = list(sequence)
-    sequence = numpy.array(sequence_list, dtype=object)
+    sequence = list(sequence)
     size = len(sequence)
 
-    if size == 1:
+    if size <= 1:
         results = list(map(function, sequence))
         if bar is not None:
             bar.stop()
@@ -190,62 +100,43 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         numcores = _ncpus - 1
     if numcores < 1:
         numcores = 1
-
-    manager = fork_context.Manager()
-
-    out_q = manager.Queue()
-    err_q = manager.Queue()
-    lock = manager.Lock()
-    bar_state = manager.dict()
-    if bar is not None:
-        bar_state['pos'] = bar.pos
-        bar_state['spin_pos'] = bar.spin_pos
-        bar_state['started'] = bar.started
-
     if size < numcores:
         numcores = size
 
-    preserve_order = False
-    if weights is None or numcores == size:
-        sequence = numpy.array_split(sequence, numcores)
+    # Divide the items into batches, which are handed out to the workers as
+    # they become free. With weights, process items one at a time, most
+    # expensive first; otherwise, use a few batches per worker to limit the
+    # communication overhead.
+    if weights is None:
+        order = numpy.arange(size)
+        batch_size = math.ceil(size / (4 * numcores))
     else:
-        preserve_order = True
-        weight_array = numpy.asarray(weights, dtype=numpy.float64)
-        indexed_sequence = list(enumerate(sequence_list))
-        bins = [[] for _ in range(numcores)]
-        heap = [(0.0, idx) for idx in range(numcores)]
-        heapq.heapify(heap)
+        order = numpy.argsort(-numpy.asarray(weights, dtype=numpy.float64),
+                              kind='stable')
+        batch_size = 1
+    batches = [order[start:start + batch_size].tolist()
+               for start in range(0, size, batch_size)]
 
-        weighted_items = zip(indexed_sequence, weight_array.tolist())
-        for (orig_idx, item), weight in sorted(weighted_items,
-                                              key=lambda pair: pair[1],
-                                              reverse=True):
-            current_weight, worker_idx = heapq.heappop(heap)
-            bins[worker_idx].append((orig_idx, item))
-            current_weight += float(weight)
-            heapq.heappush(heap, (current_weight, worker_idx))
-
-        sequence = bins
-
-    while len(sequence[-1]) == 0:
-        sequence.pop()
-
-    procs = [fork_context.Process(target=worker,
-             args=(function, ii, chunk, out_q, err_q, lock, bar, bar_state,
-                   preserve_order))
-             for ii, chunk in enumerate(sequence)]
-
+    results = [None] * size
+    _task_function, _task_sequence = function, sequence
+    executor = concurrent.futures.ProcessPoolExecutor(max_workers=numcores,
+                                                      mp_context=fork_context)
     try:
-        results = run_tasks(procs, err_q, out_q, len(sequence),
-                            preserve_order=preserve_order, total_items=size)
-        if bar is not None:
-            if bar.started:
-                bar.stop()
-        return results
-
-    except KeyboardInterrupt:
-        for proc in procs:
-            if proc.exitcode is None:
-                proc.terminate()
-                proc.join()
+        futures = [executor.submit(_run_batch, batch) for batch in batches]
+        for future in concurrent.futures.as_completed(futures):
+            for idx, result in future.result():
+                results[idx] = result
+                if bar is not None and bar.started:
+                    bar.increment()
+    except BaseException:
+        # Do not wait for the remaining tasks; a worker that was killed
+        # (e.g., by the out-of-memory killer) raises BrokenProcessPool here
+        executor.shutdown(wait=False, cancel_futures=True)
         raise
+    finally:
+        _task_function = _task_sequence = None
+    executor.shutdown()
+
+    if bar is not None and bar.started:
+        bar.stop()
+    return results
