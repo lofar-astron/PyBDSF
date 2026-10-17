@@ -1843,7 +1843,7 @@ def bstat(indata, mask, kappa_npixbeam):
             lower, upper = _ceil_float32(lower), _ceil_float32(upper)
         inside = (skpix >= lower) & (skpix < upper)
         ct = numpy.count_nonzero(inside)
-        if ct > 0:
+        if 0 < ct < npix:
             skpix = skpix[inside]
 
         c1 = abs(ct - lastct)

@@ -828,7 +828,7 @@ class Op_rmsimage(Op):
         # Calculate the mean and rms for all boxes in one go
         cm, cr = self.process_mean_rms_boxes(data, data_mask, inds, kappa,
                                              ncores)
-        internal = (coords[:n_internal, 0], coords[:n_internal, 1])
+        internal = tuple(coords[:n_internal].T)
         mean_map[internal] = cm[:n_internal]
         rms_map[internal] = cr[:n_internal]
 
@@ -837,7 +837,7 @@ class Op_rmsimage(Op):
             raise RuntimeError("No unmasked regions from which to determine "\
                          "mean and rms maps")
 
-        borders = (coords[n_internal:, 0], coords[n_internal:, 1])
+        borders = tuple(coords[n_internal:].T)
         mean_map[borders] = cm[n_internal:]
         rms_map[borders] = cr[n_internal:]
 
@@ -882,7 +882,7 @@ class Op_rmsimage(Op):
         nbox = len(ind_list)
         # Use many chunks, as parallel_map() gives each process an equal number
         # of chunks; this keeps the load imbalance between processes small
-        nchunks = min(nbox, 100 * mp.nproc())
+        nchunks = min(nbox, 100 * (ncores or mp.nproc()))
         edges = np.linspace(0, nbox, nchunks + 1).astype(int)
 
         def process_chunk(k):
@@ -949,7 +949,7 @@ class Op_rmsimage(Op):
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
             else:
-                if npix_unmasked > 5: # same logic as in 'for_masked'
+                if npix_unmasked > 5:
                     # First take the same windows for which the mask was calculated
                     # and then select only the unmasked pixels
                     valid_pixels = arr[a:b, c:d][pix_unmasked]
