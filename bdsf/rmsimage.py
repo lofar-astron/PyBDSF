@@ -424,7 +424,7 @@ class Op_rmsimage(Op):
                 if opts.mean_map == 'zero':
                     val = 0.0
                 else:
-                    val = img.clipped_mean
+                    val = cmeans[ipol]
                 mean[:] = val
                 mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
                                   str(round(val,5))+' Jy/beam')
