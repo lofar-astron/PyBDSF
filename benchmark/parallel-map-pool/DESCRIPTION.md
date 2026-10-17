@@ -31,18 +31,25 @@ results back through a `multiprocessing.Manager` queue.
   object-array conversion are gone.
 - **Status bar:** updated in the parent process as results arrive, instead of
   from the workers through a Manager dict.
+- **Errors and interrupts:** if a worker raises an exception, a worker dies,
+  or the call is interrupted (Ctrl+C), the pending tasks are cancelled and the
+  remaining workers are terminated and joined before the exception is
+  re-raised, as in the old implementation. `ProcessPoolExecutor.shutdown()`
+  alone does not stop running tasks before Python 3.14, so this uses the
+  executor's list of worker processes.
 - **Callers:** gausfit, shapefit, psf_vary and rmsimage are unchanged.
 
 `bdsf/multi_proc.py` is about 170 lines shorter.
 
 ## Testing
 
-- **New test:** `test/tmulti_proc.py`. Its 9 checks all pass:
+- **New test:** `test/tmulti_proc.py`. Its 10 checks all pass:
   - result order is kept, also for generator input and with weights
   - empty, single-item and two-item inputs
   - a closure over a large array works (inherited through fork, not pickled)
   - exceptions in a worker reach the caller
   - a killed worker raises `BrokenProcessPool` instead of hanging
+  - an interrupted call (`KeyboardInterrupt`) leaves no workers running
   - the status bar is incremented once per item and stopped
   - the module-level state is cleared afterwards
 
