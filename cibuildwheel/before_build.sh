@@ -11,6 +11,10 @@
 # Ensure we start with a clean slate
 function cleanup
 {
+  # Remove stale scikit-build state
+  project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  rm -rf "${project_dir}/_skbuild"
+  # Remove stale Boost binaries
   rm -rf "${BOOST_BUILD_DIR}/boost/bin.v2" 
   rm -rf "${BOOST_INSTALL_DIR}"
 }
