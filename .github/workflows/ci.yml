@@ -37,6 +37,15 @@ jobs:
             os.environ[key] = value
             f.write(f"{key}={value}\n")
 
+        # Override BOOST_DOWNLOAD_CACHE environment variable for this workflow.
+        echo "BOOST_DOWNLOAD_CACHE=$HOME/.cache/pybdsf/downloads" >> "$GITHUB_ENV"
+
+    - name: Cache Boost archives
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pybdsf/downloads
+        key: boost-sources-${{ env.BOOST_VERSION }}
+
     - name: Build and install Boost
       run: |
         cibuildwheel/before_all.sh
