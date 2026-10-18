@@ -209,3 +209,41 @@ Lastly, can you also save additional tests you may have written?
 **Claude:** Saved in `benchmark/rmsimage-optimization/` (see `README.md`).
 No new unit tests were written; correctness was checked with the comparison
 scripts and the existing end-to-end test, which `run_comparison.sh` reruns.
+
+---
+
+## 4. No speed-up with numpy 2; `bstat` reverted
+
+**User:** You optimized the `rmsimage` module, but when I run
+`benchmark/run_pybdsf.py` I don't see any clear speed improvements.
+
+**Claude:** The two profiles the user compared were made with different numpy
+versions: master with numpy 2, the branch with numpy 1.26.4. All benchmarks
+in section 2 used numpy 1.26.4. numpy 2 has a much faster (SIMD) float32
+sort, which removes most of the gain of the partition-based `bstat`.
+
+Measured with each version on the same numpy (20 cores):
+
+| | numpy 1.26.4 | numpy 2.5.4 |
+| --- | --- | --- |
+| `bstat`, 150×150 box (master → partition) | 1.2 → 0.3–0.6 ms | 0.2 → 0.2–0.3 ms |
+| `bstat`, full 5762² image | 3.5 → 1.6 s | 0.93 → 1.33 s (slower) |
+| `rms_mean_map`, no mask, box (150, 15) | 13.3 → 5.7 s | 4.1 → 3.8 s |
+| `run_pybdsf.py` | 2:20 → 1:38 | 1:26 → 1:26 |
+
+**User:** Yes, revert bstat and keep the rms_mean_map changes.
+
+**Claude:** `bdsf/functions.py` is back to master (sort-based `bstat`, no
+`_ceil_float32`). With only the `rms_mean_map` changes, the maps are
+bit-identical to master on both numpy versions, and
+`test/tbdsf_process_image.py` passes.
+
+| | numpy 1.26.4 | numpy 2.5.4 |
+| --- | --- | --- |
+| `rms_mean_map`, no mask, box (150, 15) | 13.3 → 12.3 s | 4.1 → 3.2 s |
+| `rms_mean_map`, masked region, box (60, 20) | 2.5 → 1.9 s | 1.7 → 1.0 s |
+| `run_pybdsf.py` | | 1:27, 1:38 → 1:14, 1:13 |
+
+`setup_overlays.sh` was also fixed: it now runs Python with `-I` (so it finds
+the installed package, not the repository's `bdsf/`) and copies `bdsf.libs`
+(bundled libgfortran) next to the package.

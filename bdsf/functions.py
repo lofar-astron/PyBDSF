@@ -1773,16 +1773,6 @@ def make_curvature_map(subim):
     return curv_map
 
 
-def _ceil_float32(value):
-    """Returns the smallest float32 that is >= value"""
-    import numpy
-
-    f = numpy.float32(value)
-    if f < value:
-        f = numpy.nextafter(f, numpy.float32(numpy.inf))
-    return f
-
-
 def bstat(indata, mask, kappa_npixbeam):
     """Numpy version of the c++ bstat routine
 
@@ -1791,23 +1781,20 @@ def bstat(indata, mask, kappa_npixbeam):
     http://dare.uva.nl/document/174052 for details) and, since the Numpy
     functions used here are written in c, there should be no big computational
     penalty in using Python code.
-
-    The pixels are not sorted: the median is found with a partial sort
-    (numpy.partition) and the clipping is done with a boolean selection, which
-    is much faster and selects exactly the same pixels as a search in the
-    sorted array.
     """
     import numpy
     from scipy.special import erf, erfcinv
 
     skpix = indata.flatten()
     if mask is None:
-        valid_pixels = ~numpy.isnan(skpix)
+        valid_pixels = numpy.where(~numpy.isnan(skpix))
     else:
-        valid_pixels = ~mask.flatten() & ~numpy.isnan(skpix)
-
+        msk_flat = mask.flatten()
+        valid_pixels = numpy.where(~msk_flat & ~numpy.isnan(skpix))
+    
     skpix = skpix[valid_pixels]
 
+    skpix.sort()
     ct = skpix.size
     iter = 0
     c1 = 1.0
@@ -1815,7 +1802,8 @@ def bstat(indata, mask, kappa_npixbeam):
     maxiter = 200
     converge_num = 1e-6
     m_raw = numpy.mean(skpix)
-    r_raw = (((skpix-m_raw)**2).sum()/(ct-1))**0.5
+    d2 = (skpix-m_raw)**2
+    r_raw = (d2.sum()/(ct-1))**0.5
 
     while (c1 >= c2) and (iter < maxiter):
         npix = skpix.size
@@ -1827,33 +1815,27 @@ def bstat(indata, mask, kappa_npixbeam):
             if kappa < 3.0:
                 kappa = 3.0
         lastct = ct
-        skpix.partition(npix//2)
         medval = skpix[npix//2]
         if iter == 0:
             sig = r_raw
         else:
             m_new = numpy.mean(skpix)
-            sig = (((skpix-m_raw)**2).sum()/ct - (m_raw-m_new)**2)**0.5
+            sig = (d2.sum()/ct - (m_raw-m_new)**2)**0.5
 
-        # Keep pixels in [medval - kappa*sig, medval + kappa*sig). For float32
-        # pixels, round the limits up to float32, so that the comparisons
-        # give the same result as comparing in double precision
-        lower, upper = medval - kappa*sig, medval + kappa*sig
-        if skpix.dtype == numpy.float32:
-            lower, upper = _ceil_float32(lower), _ceil_float32(upper)
-        inside = (skpix >= lower) & (skpix < upper)
-        ct = numpy.count_nonzero(inside)
-        if 0 < ct < npix:
-            skpix = skpix[inside]
+        wsm1, wsm2 = numpy.searchsorted(skpix, [medval - kappa*sig,
+                                                medval + kappa*sig])
+        ct = wsm2 - wsm1
+        if ct > 0:
+            skpix = skpix[wsm1:wsm2]
+            d2    = d2[wsm1:wsm2]
 
         c1 = abs(ct - lastct)
         c2 = converge_num * lastct
         iter += 1
 
     mean  = numpy.mean(skpix)
-    skpix.partition(skpix.size//2)
     median = skpix[skpix.size//2]
-    sigma =  (((skpix-m_raw)**2).sum()/(ct-1) - (m_raw-mean)**2 * ct/(ct-1) )**0.5
+    sigma =  (d2.sum()/(ct-1) - (m_raw-mean)**2 * ct/(ct-1) )**0.5
     mode = 2.5*median - 1.5*mean
     if sigma > 0.0:
         skew_par = abs(mean - median)/sigma

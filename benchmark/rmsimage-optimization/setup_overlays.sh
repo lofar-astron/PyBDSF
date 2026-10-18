@@ -12,13 +12,15 @@ set -e
 OUT=${1:?usage: $0 <output dir> [git revision]}
 REV=${2:-HEAD}
 REPO=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
-INSTALLED=$("$REPO/venv/bin/python" -c 'import bdsf, os; print(os.path.dirname(bdsf.__file__))' 2>/dev/null)
+INSTALLED=$("$REPO/venv/bin/python" -I -c 'import bdsf, os; print(os.path.dirname(bdsf.__file__))' 2>/dev/null)
 
 mkdir -p "$OUT"
 for v in orig new; do
     rm -rf "$OUT/pkg_$v"
     mkdir -p "$OUT/pkg_$v"
     cp -r "$INSTALLED" "$OUT/pkg_$v/"
+    # Shared libraries bundled with the wheel (e.g. libgfortran)
+    [ -d "$INSTALLED.libs" ] && cp -r "$INSTALLED.libs" "$OUT/pkg_$v/"
 done
 rm -rf "$OUT/src_orig"
 mkdir -p "$OUT/src_orig"
