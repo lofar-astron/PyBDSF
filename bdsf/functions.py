@@ -1615,7 +1615,7 @@ def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
     """Makes a mask (1 = inside aperture) for a circular aperture"""
     import numpy
 
-    x, y = numpy.mgrid[0.5:xsize, 0.5:ysize]
+    x, y = numpy.mgrid[0:xsize, 0:ysize]
     mask = ((x - xcenter)**2 + (y - ycenter)**2 <= radius**2) * 1
     return mask
 
