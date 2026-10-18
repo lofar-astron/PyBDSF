@@ -1,12 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
 from shutil import get_terminal_size
 
-try:
-    # For Python 2
-    basestring = basestring
-except NameError:
-    basestring = str
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
@@ -522,11 +515,16 @@ def deconv2(gaus_bm, gaus_c):
             bmaj = sqrt(0.5*(s+t))
             bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         bmin = 0.0
-        if 0.5*(s-t) < limit and alpha > -limit and beta > -limit:
+        # https://github.com/lofar-astron/PyBDSF/pull/450
+        if 0.5 * (s - t) > -limit and alpha > -limit and beta > -limit:
             ifail = 1
         else:
             ifail = 2
     else:
+        # TODO / NOTE: A symmetric tolerance check is needed here.
+        # When a source is identical or nearly identical to the beam, round-off noise
+        # causes s - t to fluctuate randomly around 0. So ifail = 0 vs 1 depends on the
+        # sign of the rounding noise.
         bmaj = sqrt(0.5*(s+t))
         bmin = sqrt(0.5*(s-t))
         if abs(gamma) + abs(alpha-beta) == 0.0:
@@ -635,7 +633,6 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
     """ fitcode : 0=fit all; 1=fit amp; 2=fit amp, posn; 3=fit amp, size """
     from scipy.optimize import leastsq
     import numpy as N
-    import sys
 
     if mask is not None and mask.shape != image.shape:
         print('Data and mask array dont have the same shape, ignoring mask')
@@ -667,15 +664,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
 
         errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
                        N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
-        try:
-            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-        except TypeError:
-            # This error means no warning argument is available, so redirect stdout to a null device
-            # to suppress printing of warning messages
-            original_stdout = sys.stdout  # keep a reference to STDOUT
-            sys.stdout = NullDevice()  # redirect the real STDOUT
-            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-            sys.stdout = original_stdout  # turn STDOUT back on
+        p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
     else:
         p, success = None, 1
 

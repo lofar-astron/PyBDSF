@@ -2,7 +2,6 @@
 
 It calculates residual image from the list of gaussians and shapelets
 """
-from __future__ import absolute_import
 
 import numpy as N
 from scipy import stats # for skew and kurtosis

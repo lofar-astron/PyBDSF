@@ -20,6 +20,7 @@ from .islands import *
 from . import mylogger
 import numpy as N
 from . import functions as func
+from scipy.stats import circstd
 N.seterr(divide='raise')
 
 
@@ -444,11 +445,10 @@ class Op_gaul2srl(Op):
 
         # update all objects etc
         tot = 0.0
-        totE_sq = 0.0
+        totE = 0.0
         for g in g_sublist:
             tot += g.total_flux
-            totE_sq += g.total_fluxE**2
-        totE = sqrt(totE_sq)
+            totE += g.total_fluxE
         size_pix = [mompara[3], mompara[4], mompara[5]]
         size_sky = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
         size_sky_uncorr = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]], use_wcs=False)
@@ -502,7 +502,13 @@ class Op_gaul2srl(Op):
             mompara4E = N.nanstd(mompara4_MC)
             if mompara4E > 2.0*mompara[4]:
                 mompara4E = 2.0*mompara[4] # Don't let errors get too large
-            mompara5E = N.nanstd(mompara5_MC)
+
+            # Use circular statistics for Position Angle error.
+            valid_mompara5_MC = mompara5_MC[~N.isnan(mompara5_MC)]
+            if len(valid_mompara5_MC) > 0:
+                mompara5E = circstd(valid_mompara5_MC, high=180.0, low=0.0)
+            else:
+                mompara5E = N.nan
             if mompara5E > 2.0*mompara[5]:
                 mompara5E = 2.0*mompara[5] # Don't let errors get too large
         else:
@@ -516,9 +522,31 @@ class Op_gaul2srl(Op):
         size_skyE = [sqrt(mompara3E**2 + errors[3]**2) * sqrt(cdeltsq),
                      sqrt(mompara4E**2 + errors[4]**2) * sqrt(cdeltsq),
                      sqrt(mompara5E**2 + errors[5]**2)]
-        sraE, sdecE = (sqrt(mompara1E**2 + errors[1]**2) * sqrt(cdeltsq),
-                       sqrt(mompara2E**2 + errors[2]**2) * sqrt(cdeltsq))
-        deconv_size_skyE = size_skyE # set deconvolved errors to non-deconvolved ones
+
+        sraE =  sqrt(mompara1E**2 + errors[1]**2) * img.wcs_obj.acdelt[0]
+        sdecE = sqrt(mompara2E**2 + errors[2]**2) * img.wcs_obj.acdelt[1]
+
+        # Calculate errors for the deconvolved axes using the standard law of error propagation.
+        # Assuming theta_dec = sqrt(theta_obs^2 - theta_beam^2) and a negligible error in beam size,
+        # propagating the uncertainty yields: delta_theta_dec = delta_theta_obs * (theta_obs / theta_dec).
+        deconv_size_skyE = [0.0, 0.0, 0.0]
+
+        # Major axis error
+        if deconv_size_sky[0] > 0.0:
+            deconv_size_skyE[0] = size_skyE[0] * (size_sky[0] / deconv_size_sky[0])
+        else:
+            # Fallback for a point-like source
+            deconv_size_skyE[0] = size_skyE[0]  
+
+        # Minor axis error
+        if deconv_size_sky[1] > 0.0:
+            deconv_size_skyE[1] = size_skyE[1] * (size_sky[1] / deconv_size_sky[1])
+        else:
+            # Fallback for a point-like source
+            deconv_size_skyE[1] = size_skyE[1]
+
+        # Position Angle error is unchanged as a reasonable approximation
+        deconv_size_skyE[2] = size_skyE[2]
 
         # Find aperture flux
         if img.opts.aperture_posn == 'centroid':

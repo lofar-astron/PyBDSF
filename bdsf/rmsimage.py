@@ -248,11 +248,15 @@ class Op_rmsimage(Op):
             isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+
                                           np.array((s[0].start, s[1].start)))
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
-            if do_adapt and isl_maxposn_lowthresh in isl_maxposn:
-                bright_indx = isl_maxposn.index(isl_maxposn_lowthresh)
-                if isl_area_lowthresh < 25.0 or isl_area_lowthresh/isl_area_highthresh[bright_indx] < 8.0:
-                    isl_pos.append(isl_maxposn_lowthresh)
-                    isl_size_highthresh.append(isl_size_bright[bright_indx])
+            if do_adapt and len(isl_maxposn) > 0:
+                dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
+                # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
+                # so we allow for a small arbitrary distance between the two positions
+                if min(dists) <= 2.5:
+                    bright_indx = int(np.argmin(dists))
+                    if isl_area_lowthresh < 25.0 or isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0:
+                        isl_pos.append(isl_maxposn_lowthresh)
+                        isl_size_highthresh.append(isl_size_bright[bright_indx])
 
         if len(isl_size) == 0:
             max_isl_size = 0.0
@@ -775,13 +779,11 @@ class Op_rmsimage(Op):
             bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
-            new_shape = (arr.shape[0] + 2*pad_border_size, arr.shape[1]
-                         + 2*pad_border_size)
-            arr_pad = self.pad_array(arr, new_shape)
+            arr_pad = np.pad(arr, pad_width=pad_border_size, mode='symmetric')
             if mask is None:
                 mask_pad = None
             else:
-                mask_pad = self.pad_array(mask, new_shape)
+                mask_pad = np.pad(mask, pad_width=pad_border_size, mode='symmetric')
 
         # Make arrays for calculated data
         mapshape = [int(ms) for ms in mapshape]
@@ -890,20 +892,9 @@ class Op_rmsimage(Op):
                                 kappa, [-1, -1])
 
         # Step 3: correct(extrapolate) borders of the image
-        def correct_borders(map):
-            map[0, :] = map[1, :]
-            map[:, 0] = map[:, 1]
-            map[-1, :] = map[-2, :]
-            map[:, -1] = map[:, -2]
-
-            map[0,0] = (map[1,0] + map[0, 1])/2.
-            map[-1,0] = (map[-2, 0] + map[-1, 1])/2.
-            map[0, -1] = (map[0, -2] + map[1, -1])/2.
-            map[-1,-1] = (map[-2, -1] + map[-1, -2])/2.
-
         if use_extrapolation:
-            correct_borders(mean_map)
-            correct_borders(rms_map)
+            mean_map[:] = np.pad(mean_map[1:-1, 1:-1], pad_width=1, mode='edge')
+            rms_map[:] = np.pad(rms_map[1:-1, 1:-1], pad_width=1, mode='edge')
 
         # Step 4: fill in coordinate axes
         for i in range(2):
@@ -969,51 +960,6 @@ class Op_rmsimage(Op):
 
         # Replace any remaining non-finite values with global RMS median
         return np.nan_to_num(themap, nan=global_fallback, posinf=global_fallback, neginf=global_fallback)
-
-
-    def pad_array(self, arr, new_shape):
-        """Returns a padded array by mirroring around the edges."""
-        # Assume that padding is the same for both axes and is equal
-        # around all edges.
-        half_size = int((new_shape[0] - arr.shape[0]) / 2)
-        arr_pad = np.zeros( (new_shape), dtype=arr.dtype)
-
-        # left band
-        band = arr[:half_size, :]
-        arr_pad[:half_size, half_size:-half_size] =  np.flipud( band )
-
-        # right band
-        band = arr[-half_size:, :]
-        arr_pad[-half_size:, half_size:-half_size] = np.flipud( band )
-
-        # bottom band
-        band = arr[:, :half_size]
-        arr_pad[half_size:-half_size, :half_size] = np.fliplr( band )
-
-        # top band
-        band = arr[:, -half_size:]
-        arr_pad[half_size:-half_size, -half_size:] =  np.fliplr( band )
-
-        # central band
-        arr_pad[half_size:-half_size, half_size:-half_size] = arr
-
-        # bottom left corner
-        band = arr[:half_size,:half_size]
-        arr_pad[:half_size,:half_size] = np.flipud(np.fliplr(band))
-
-        # top right corner
-        band = arr[-half_size:,-half_size:]
-        arr_pad[-half_size:,-half_size:] = np.flipud(np.fliplr(band))
-
-        # top left corner
-        band = arr[:half_size,-half_size:]
-        arr_pad[:half_size,-half_size:] = np.flipud(np.fliplr(band))
-
-        # bottom right corner
-        band = arr[-half_size:,:half_size]
-        arr_pad[-half_size:,:half_size] = np.flipud(np.fliplr(band))
-
-        return arr_pad
 
 
     def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
