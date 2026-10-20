@@ -215,7 +215,7 @@ class Op_rmsimage(Op):
                 isl_maxposn = []
                 isl_area_highthresh = []
                 if img.masked:
-                    act_pixels = ~(mask.copy())
+                    act_pixels = ~mask
                     act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
                 else:
                     act_pixels = (image-cmean)/threshold >= crms
@@ -235,7 +235,7 @@ class Op_rmsimage(Op):
         # largest island at this threshold to set the large-scale rms_box
         threshold = 10.0
         if img.masked:
-            act_pixels = ~(mask.copy())
+            act_pixels = ~mask
             act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
         else:
             act_pixels = (image-cmean)/threshold >= crms
