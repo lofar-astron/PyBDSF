@@ -559,7 +559,7 @@ class Op_gausfit(Op):
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
-            im_pos = -1.0 * func.make_curvature_map(isl.image-isl.islmean)
+            im_pos = -1.0 * func.make_curvature_map(im)
             thr_pos = 0.0
         else:
             im_pos = im
@@ -624,7 +624,7 @@ class Op_gausfit(Op):
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
-            im_pos = -1.0 * func.make_curvature_map(isl.image-isl.islmean)
+            im_pos = -1.0 * func.make_curvature_map(im)
             thr_pos = 0.0
         else:
             im_pos = im
