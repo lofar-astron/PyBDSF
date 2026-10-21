@@ -579,7 +579,7 @@ class Op_gausfit(Op):
         domore = True
         while domore:
             domore = False
-            if len(iniposn) > 25:
+            if nmulsrc1 > 25:
                 # fit_island() discards the whole result when more than 25 maxima are
                 # found (it falls back to the 'simple' method), and iniposn never
                 # shrinks, so there is no point in looking for more of them.
