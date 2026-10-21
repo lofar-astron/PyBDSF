@@ -689,7 +689,7 @@ class Op_gausfit(Op):
                 size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
-                p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
+                p, success = func.fit_gaus2d(im, p_ini, x, y, mask=~invmask[i])
                 resid = resid + func.gaus_2d(p, x, y)
                 gaul.append(p)
             resid = im - resid
