@@ -97,6 +97,7 @@ class Op_wavelet_atrous(Op):
             else:
                 numcores = img.opts.ncores
 
+            cdelt = img.wcs_obj.acdelt[:2]
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
                 im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores = numcores)
