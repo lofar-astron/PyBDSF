@@ -567,7 +567,7 @@ class Op_gausfit(Op):
         mask = isl.mask_active
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im, mask)
             inipeak = [maxv]
             iniposn = [maxp]
         nmulsrc1 = len(iniposn)
@@ -578,9 +578,10 @@ class Op_gausfit(Op):
             if nmulsrc1 > 25:
                 # fit_island() discards the whole result when more than 25 maxima are
                 # found (it falls back to the 'simple' method), and iniposn never
-                # shrinks, so there is no point in looking for more of them.
+                # shrinks (its length is stored in nmulsrc1), so there is no point in
+                # looking for more of them.
                 break
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im1, mask)
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
             if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
                 domore = True
                 x1, y1 = N.array(iniposn).transpose()
