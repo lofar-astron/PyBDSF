@@ -542,10 +542,11 @@ class Op_rmsimage(Op):
         opts = img.opts
         kappa = map_opts[0]
         spline_rank = opts.spline_rank
+        cache = {}
         while not rms_ok:
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
-                        logname=logname, ncores=ncores)
+                        logname=logname, ncores=ncores, cache=cache)
             if img.masked:
                 test = np.any(rms[~img.mask_arr] < 0.0)
             else:
@@ -621,9 +622,23 @@ class Op_rmsimage(Op):
         return mean, rms
 
 
+    def _cached_rms_mean_map(self, cache, arr, mask, kappa, box, ncores):
+        """rms_mean_map with optional cache keyed by (box, kappa).
+
+        The result does not depend on the interpolation order, so it can be
+        reused when calculate_maps retries with a lower spline_rank.
+        """
+        if cache is None:
+            return self.rms_mean_map(arr, mask, kappa, box, ncores)
+        key = (None if box is None else tuple(box), kappa)
+        if key not in cache:
+            cache[key] = self.rms_mean_map(arr, mask, kappa, box, ncores)
+        return cache[key]
+
+
     def map_2d(self, arr, out_mean, out_rms, mask=False,
                kappa=3, box=None, interp=1, do_adapt=False,
-               bright_pt_coords=None, rms_box2=None, logname='', ncores=None):
+               bright_pt_coords=None, rms_box2=None, logname='', ncores=None, cache=None):
         """Calculate mean&rms maps and store them into provided arrays
 
         Parameters:
@@ -637,14 +652,14 @@ class Op_rmsimage(Op):
                 calculated map
         do_adapt: use adaptive binning
         """
-        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask, kappa, box, ncores)
+        axes, mean_map1, rms_map1 = self._cached_rms_mean_map(cache, arr, mask, kappa, box, ncores)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)][-1::-1]
         if do_adapt:
             out_rms2 = np.zeros(rms_map1.shape, dtype=np.float32)
             out_mean2 = np.zeros(rms_map1.shape, dtype=np.float32)
             # Generate rms/mean maps on large scale
             box2 = rms_box2
-            axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores)
+            axes2, mean_map2, rms_map2 = self._cached_rms_mean_map(cache, arr, mask, kappa, box2, ncores)
 
             # Interpolate to get maps on small scale grid
             axes2mod = axes2[:]
