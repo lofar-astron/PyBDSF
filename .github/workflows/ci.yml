@@ -33,9 +33,17 @@ jobs:
         # This is needed, because variables in GITHUB_ENV will not be expanded.
         with open(os.environ["GITHUB_ENV"], "a") as f:
           for key, value in matches:
+            if key == "BOOST_DOWNLOAD_CACHE":  # override for this job
+              value = os.path.expandvars("${HOME}/.cache/pybdsf/downloads")
             value = os.path.expandvars(value.strip('"'))
             os.environ[key] = value
             f.write(f"{key}={value}\n")
+
+    - name: Cache Boost archives
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pybdsf/downloads
+        key: boost-sources-${{ env.BOOST_VERSION }}
 
     - name: Build and install Boost
       run: |
