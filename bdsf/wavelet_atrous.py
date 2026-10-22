@@ -115,7 +115,8 @@ class Op_wavelet_atrous(Op):
                     im_old, filter[lpf]['vec'], lpf, j,
                     numcores=numcores, has_nonfinite=has_nonfinite
                 )
-                im_new[pix_masked] = N.nan  # Preserve the original invalid pixels.
+                if has_nonfinite:
+                    im_new[pix_masked] = N.nan  # Preserve the original invalid pixels.
                 if img.opts.atrous_sum:
                     w = im_new
                 else:
