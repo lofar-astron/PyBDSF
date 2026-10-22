@@ -225,8 +225,8 @@ class Op_rmsimage(Op):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
                     size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     isl_area_highthresh.append(size_area)
-                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+\
-                          np.array((s[0].start, s[1].start))))
+                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.nanargmax(np.where(labels[s] == idx+1, image[s], -np.inf)), image[s].shape))+
+                                        np.array((s[0].start, s[1].start))))
 
         # Check islands found above at thresh_isl threshold to determine if
         # the bright source is embedded inside a large island or not. If it is,
@@ -245,8 +245,8 @@ class Op_rmsimage(Op):
         for idx, s in enumerate(slices):
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
             if do_adapt and len(isl_maxposn) > 0:
-                isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+
-                                              np.array((s[0].start, s[1].start)))
+                isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(np.where(labels[s] == idx+1, image[s], -np.inf)), image[s].shape))+
+                                          np.array((s[0].start, s[1].start)))
                 dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
                 # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
                 # so we allow for a small arbitrary distance between the two positions
