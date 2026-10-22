@@ -407,8 +407,8 @@ class Op_psf_vary(Op):
                     medstd=0    # calcmedianstd.f
                     for j in y1: medstd += (j-med1)*(j-med1)
                     medstd=math.sqrt(medstd/len(y1))        #
-                    av1=N.mean(y1); std1=func.std(y1)
-                    av2=N.mean(x1); std2=func.std(x1)
+                    av1=N.mean(y1)
+                    std1=N.std(y1, ddof=1)
                     # get_medianclip_vec2
                     z=N.transpose([x1, y1])
                     z1=N.transpose([n for n in z if abs(n[1]-med1)<=nsig*medstd])
@@ -694,7 +694,6 @@ class Op_psf_vary(Op):
             xgen, ygen = tilecoord
             xgen = N.asarray(xgen)
             ygen = N.asarray(ygen)
-            ngen = len(xgen)
             i,j = pixel
             dist = N.sqrt((i-xgen)*(i-xgen)+(j-ygen)*(j-ygen))/wts
             minind = dist.argmin()
@@ -758,7 +757,6 @@ class Op_psf_vary(Op):
         wts_n = [n for i,n in enumerate(wts) if i in goodtiles]
 
         r2t = N.zeros(ntile, dtype=int)
-        entry = -1
         for itile in range(ntile):
             if ngenpertile[itile] >= ltnum:
                 r2t[itile] = itile
