@@ -9,7 +9,6 @@ Stokes images).
 """
 import os
 from math import sqrt, log, floor, ceil
-import itertools
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -244,15 +243,15 @@ class Op_rmsimage(Op):
         isl_size = []
         isl_size_highthresh = []
         for idx, s in enumerate(slices):
-            isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
-            isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+
-                                          np.array((s[0].start, s[1].start)))
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
             if do_adapt and len(isl_maxposn) > 0:
+                isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+
+                                              np.array((s[0].start, s[1].start)))
                 dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
                 # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
                 # so we allow for a small arbitrary distance between the two positions
                 if min(dists) <= 2.5:
+                    isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     bright_indx = int(np.argmin(dists))
                     if isl_area_lowthresh < 25.0 or isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0:
                         isl_pos.append(isl_maxposn_lowthresh)
@@ -283,8 +282,6 @@ class Op_rmsimage(Op):
             else:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size*2.0))
             bsize2 = int(max(min(image.shape)/10.0, max_isl_size*5.0))
-            if bsize < min_size_allowed:
-                bsize = min_size_allowed
             if bsize % 10 == 0: bsize += 1
             if bsize2 < min_size_allowed:
                 bsize2 = min_size_allowed
@@ -398,7 +395,7 @@ class Op_rmsimage(Op):
                         mylogger.userinfo(mylog, 'Using 2D map for background rms')
 
                     if opts.mean_map == 'default' and img.mean_map_type is None:
-                        self.check_meanmap(img, rms)
+                        self.check_meanmap(img, mean)
                     elif opts.mean_map != 'default':
                         img.mean_map_type = opts.mean_map
                     if img.mean_map_type != 'map':
@@ -689,7 +686,7 @@ class Op_rmsimage(Op):
                             dist_to_cen = np.sqrt( (x-src_center[0])**2 +
                                                (y-src_center[1])**2 )
                             if dist_to_cen >= med_dist_to_cen:
-                                weights[x,y] = 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0
+                                weights[x,y] = max(0.0, 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0)
                 rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
                 mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
         else:
@@ -792,104 +789,55 @@ class Op_rmsimage(Op):
         rms_map  = np.zeros(mapshape, dtype=np.float32)
         axes     = [np.zeros(len, dtype=np.float32) for len in mapshape]
 
-        # Step 1: internal area of the image
-        # Make a list of coordinates to send to process_mean_rms_maps()
-        coord_list = []
-        ind_list = []
-        for i in range(boxcount[0]):
-            for j in range(boxcount[1]):
-                if use_extrapolation:
-                    coord_list.append((i+1, j+1))
-                else:
-                    coord_list.append((i, j))
-                ind_list.append([i*SS, i*SS+BS, j*SS, j*SS+BS])
-
-        # Now call the parallel mapping function. Returns a list of [mean, rms]
-        # for each coordinate.
+        # Make arrays of all boxes, with their coordinates (rows of coords)
+        # in the maps and their index ranges (rows of inds) in the (padded)
+        # image
         if use_extrapolation:
-            cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                    zip(itertools.repeat(self.process_mean_rms_maps),
-                    ind_list, itertools.repeat(mask), itertools.repeat(arr),
-                    itertools.repeat(kappa)), numcores=ncores)
+            data, data_mask = arr, mask
+            offset, border = 1, -2
         else:
-            cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                    zip(itertools.repeat(self.process_mean_rms_maps),
-                    ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
-                    itertools.repeat(kappa)), numcores=ncores)
+            data, data_mask = arr_pad, mask_pad
+            offset, border = 0, -1
+        nrow, ncol = data.shape
+        ii = np.arange(boxcount[0])
+        jj = np.arange(boxcount[1])
 
-        for i, co in enumerate(coord_list):
-            cm, cr = cm_cr_list[i]
-            mean_map[co] = cm
-            rms_map[co] = cr
+        # Step 1: internal area of the image
+        i, j = (g.ravel() for g in np.meshgrid(ii, jj, indexing='ij'))
+        coords = [np.column_stack((i+offset, j+offset))]
+        inds = [np.column_stack((i*SS, i*SS+BS, j*SS, j*SS+BS))]
+        n_internal = len(i)
+
+        # Step 2: borders of the image
+        if bounds[0]:
+            coords.append(np.column_stack((np.full_like(jj, border), jj+offset)))
+            inds.append(np.column_stack((np.full_like(jj, -BS), np.full_like(jj, nrow),
+                                         jj*SS, jj*SS+BS)))
+        if bounds[1]:
+            coords.append(np.column_stack((ii+offset, np.full_like(ii, border))))
+            inds.append(np.column_stack((ii*SS, ii*SS+BS, np.full_like(ii, -BS),
+                                         np.full_like(ii, ncol))))
+        if bounds.all():
+            coords.append(np.array([[border, border]]))
+            inds.append(np.array([[-BS, nrow, -BS, ncol]]))
+        coords = np.concatenate(coords)
+        inds = np.concatenate(inds)
+
+        # Calculate the mean and rms for all boxes in one go
+        cm, cr = self.process_mean_rms_boxes(data, data_mask, inds, kappa,
+                                             ncores)
+        internal = tuple(coords[:n_internal].T)
+        mean_map[internal] = cm[:n_internal]
+        rms_map[internal] = cr[:n_internal]
 
         # Check if all regions have too few unmasked pixels
         if mask is not None and not np.any(mean_map != np.inf):
             raise RuntimeError("No unmasked regions from which to determine "\
                          "mean and rms maps")
 
-        # Step 2: borders of the image
-        if bounds[0]:
-            coord_list = []
-            ind_list = []
-            for j in range(boxcount[1]):
-                if use_extrapolation:
-                    coord_list.append((-2, j+1))
-                    ind_list.append([-BS, arr.shape[0], j*SS,j*SS+BS])
-                else:
-                    coord_list.append((-1, j))
-                    ind_list.append([-BS, arr_pad.shape[0], j*SS,j*SS+BS])
-            if use_extrapolation:
-                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        zip(itertools.repeat(self.process_mean_rms_maps),
-                        ind_list, itertools.repeat(mask), itertools.repeat(arr),
-                        itertools.repeat(kappa)), numcores=ncores)
-            else:
-                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        zip(itertools.repeat(self.process_mean_rms_maps),
-                        ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
-                        itertools.repeat(kappa)), numcores=ncores)
-
-            for i, co in enumerate(coord_list):
-                cm, cr = cm_cr_list[i]
-                mean_map[co] = cm
-                rms_map[co] = cr
-
-
-        if bounds[1]:
-            coord_list = []
-            ind_list = []
-            for i in range(boxcount[0]):
-                if use_extrapolation:
-                    coord_list.append((i+1, -2))
-                    ind_list.append([i*SS,i*SS+BS, -BS,arr.shape[1]])
-                else:
-                    coord_list.append((i, -1))
-                    ind_list.append([i*SS,i*SS+BS, -BS,arr_pad.shape[1]])
-            if use_extrapolation:
-                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        zip(itertools.repeat(self.process_mean_rms_maps),
-                        ind_list, itertools.repeat(mask), itertools.repeat(arr),
-                        itertools.repeat(kappa)), numcores=ncores)
-            else:
-                cm_cr_list = mp.parallel_map(func.eval_func_tuple,
-                        zip(itertools.repeat(self.process_mean_rms_maps),
-                        ind_list, itertools.repeat(mask_pad), itertools.repeat(arr_pad),
-                        itertools.repeat(kappa)), numcores=ncores)
-
-            for i, co in enumerate(coord_list):
-                cm, cr = cm_cr_list[i]
-                mean_map[co] = cm
-                rms_map[co] = cr
-
-        if bounds.all():
-            if use_extrapolation:
-                ind = [-BS,arr.shape[0], -BS,arr.shape[1]]
-                self.for_masked(mean_map, rms_map, mask, arr, ind,
-                                kappa, [-2, -2])
-            else:
-                ind = [-BS,arr_pad.shape[0], -BS,arr_pad.shape[1]]
-                self.for_masked(mean_map, rms_map, mask_pad, arr_pad, ind,
-                                kappa, [-1, -1])
+        borders = tuple(coords[n_internal:].T)
+        mean_map[borders] = cm[n_internal:]
+        rms_map[borders] = cr[n_internal:]
 
         # Step 3: correct(extrapolate) borders of the image
         if use_extrapolation:
@@ -918,11 +866,33 @@ class Op_rmsimage(Op):
         return axes, mean_map, rms_map
 
 
-    def process_mean_rms_maps(self, ind, mask, arr, kappa):
-        """Finds mean and rms for one region of an input arr"""
-        cm, cr = self.for_masked_mp(mask, arr, ind,
-                        kappa)
-        return cm, cr
+    def process_mean_rms_boxes(self, arr, mask, ind_list, kappa, ncores=None):
+        """Finds mean and rms for all regions of an input arr
+
+        The regions, given by the rows (a, b, c, d) of ind_list, are divided
+        into chunks that are processed in parallel. Only the chunk numbers
+        are passed to the worker processes (which inherit arr and mask), and
+        each chunk returns arrays, to keep the multiprocessing overhead low.
+
+        Returns:
+        cm, cr: arrays with the clipped mean and rms of each region
+        """
+        nbox = len(ind_list)
+        # Use many chunks, as parallel_map() gives each process an equal number
+        # of chunks; this keeps the load imbalance between processes small
+        nchunks = min(nbox, 100 * (ncores or mp.nproc()))
+        edges = np.linspace(0, nbox, nchunks + 1).astype(int)
+
+        def process_chunk(k):
+            chunk = ind_list[edges[k]:edges[k+1]]
+            cm_cr = np.empty((len(chunk), 2))
+            for i, ind in enumerate(chunk):
+                cm_cr[i] = self.for_masked_mp(mask, arr, ind, kappa)
+            return cm_cr
+
+        cm_cr = np.concatenate(mp.parallel_map(process_chunk, range(nchunks),
+                                               numcores=ncores))
+        return cm_cr[:, 0], cm_cr[:, 1]
 
 
     def fill_masked_regions(self, themap):
@@ -963,17 +933,6 @@ class Op_rmsimage(Op):
         return np.nan_to_num(themap, nan=global_fallback, posinf=global_fallback, neginf=global_fallback)
 
 
-    def for_masked(self, mean_map, rms_map, mask, arr, ind, kappa, co):
-        """
-        Delegates calculations to 'for_masked_mp', and then
-        stores results into the global 2D map arrays.
-        """
-
-        i, j = co
-        cm, cr = self.for_masked_mp(mask, arr, ind, kappa)
-        mean_map[i, j], rms_map[i, j] = cm, cr
-
-
     def for_masked_mp(self, mask, arr, ind, kappa):
 
         bstat = func.bstat #_cbdsm.bstat
@@ -988,7 +947,7 @@ class Op_rmsimage(Op):
                 m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
                 if cnt > 198: cm = m; cr = r
             else:
-                if npix_unmasked > 5: # same logic as in 'for_masked'
+                if npix_unmasked > 5:
                     # First take the same windows for which the mask was calculated
                     # and then select only the unmasked pixels
                     valid_pixels = arr[a:b, c:d][pix_unmasked]
