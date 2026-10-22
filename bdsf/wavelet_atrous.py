@@ -97,7 +97,6 @@ class Op_wavelet_atrous(Op):
             else:
                 numcores = img.opts.ncores
 
-            cdelt = img.wcs_obj.acdelt[:2]
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
                 im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores = numcores)
@@ -378,12 +377,12 @@ class Op_wavelet_atrous(Op):
         wimg.pix2coord = img.pix2coord
         wimg.masked = img.masked
         wimg.mask_arr = img.mask_arr
-        # wimg.use_io = img.use_io
         wimg.do_cache = img.do_cache
         wimg.tempdir = img.tempdir
         wimg.shape = img.shape
         wimg.frequency = img.frequency
         wimg.equinox = img.equinox
+        # wimg.use_io = img.use_io
         wimg.use_io = 'fits'
 
     def subtract_wvgaus(self, opts, residim, gaussians, islands):
