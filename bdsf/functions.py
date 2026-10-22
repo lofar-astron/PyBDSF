@@ -420,7 +420,7 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
         tot += subim[coord]
         m1 += N.array(coord)*subim[coord]
 
-    with N.errstate(all='ignore'):
+    with N.errstate(divide='ignore'):
         mompara[0] = tot/bmar_p
         mompara[1:3] = m1/tot
 
