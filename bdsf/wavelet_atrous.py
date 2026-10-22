@@ -337,8 +337,8 @@ class Op_wavelet_atrous(Op):
             return im_new
 
         # Slow path: use Astropy when invalid pixels are present
-        data = N.array(image, dtype=float)
-        data[~N.isfinite(data)] = N.nan
+        data = N.asarray(image, dtype=float)
+        data = N.where(N.isfinite(data), data, N.nan)
 
         if not N.isfinite(data).any():
             return data
