@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
 
 import numpy as N
 from astropy.io import fits as pyfits
@@ -128,7 +126,7 @@ class Op_psf_vary(Op):
 
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
                 flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
-                if len(flag_unresolved) == 0:
+                if N.sum(flag_unresolved) == 0:
                     mylog.warning('Insufficient number of sources to determine PSF variation.\nTry changing the PSF options or specify a (constant) PSF with the "psf_fwhm" option')
                     return
 
@@ -372,17 +370,17 @@ class Op_psf_vary(Op):
 
 ##################################################################################################
 
-    def bindata(self, over, num): #ptpbin,nbin,ptplastbin, same as get_bins in fBDSM.
+    def bindata(self, over, num): #ptpbin, nbin, ptplastbin, same as get_bins in fBDSM.
 
-        if num <= 100: ptpbin=num/5
-        if num > 100: ptpbin=num/10
-        if num > 1000: ptpbin=num/20
-        if ptpbin % 2 == 1: ptpbin=ptpbin+1
-        if num < 10: ptpbin=num
+        if num <= 100: ptpbin = num // 5
+        if num > 100: ptpbin = num // 10
+        if num > 1000: ptpbin = num // 20
+        if ptpbin % 2 == 1: ptpbin = ptpbin + 1
+        if num < 10: ptpbin = num
         ptpbin = float(ptpbin) # cast to float to avoid integer division errors
-        nbin=int((num-ptpbin)/(ptpbin/over)+1)
-        ptplastbin=int((num-1)-(nbin-1)*ptpbin/over)
-        nbin=nbin+1
+        nbin = int( (num-ptpbin) / (ptpbin/over)+1 )
+        ptplastbin = int( (num-1)-(nbin-1)*ptpbin / over )
+        nbin = nbin + 1
 
         return ptpbin, nbin, ptplastbin
 
@@ -560,7 +558,7 @@ class Op_psf_vary(Op):
         wtstdbm = N.sqrt((dumrar - wtavbm*wtavbm*sumwt)*sumwt/dd)
 
         avpa  = N.sum(bpa*flagwt-180.0*flagwt*N.array(bpa >= 90))/sumwt
-        stdpa = N.sum(bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
+        stdpa = N.sum(bpa*bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
         stdpa = sqrt(abs((stdpa-avpa*avpa*sumwt)*sumwt/dd))
         if stdpa < wtstdbm[2]:
             wtstdbm[2] = stdpa

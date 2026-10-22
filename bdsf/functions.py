@@ -1,12 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
 from shutil import get_terminal_size
 
-try:
-    # For Python 2
-    basestring = basestring
-except NameError:
-    basestring = str
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
@@ -244,9 +237,12 @@ def moment(x,mask=None):
             m1 += val
             m2 += val*N.array(i)
             m3 += val*N.array(i)*N.array(i)
-    m2 /= m1
-    if N.all(m3/m1 > m2*m2):
-        m3 = N.sqrt(m3/m1-m2*m2)
+    if m1[0] != 0:
+        m2 /= m1
+        m3 = N.sqrt(N.maximum(m3/m1 - m2*m2, 0.0))
+    else:
+        m2.fill(0.0)
+        m3.fill(0.0)
     return m1, m2, m3
 
 def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
@@ -292,15 +288,7 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
                     return [0, 0], [0, 0]
 
         res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
-        try:
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
-        except TypeError:
-            # This error means no warning argument is available, so redirect stdout to a null device
-            # to suppress printing of (unnecessary) warning messages
-            original_stdout = sys.stdout  # keep a reference to STDOUT
-            sys.stdout = NullDevice()  # redirect the real STDOUT
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
-            sys.stdout = original_stdout  # turn STDOUT back on
+        (p, cov, info, _, _) = leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
 
         if do_err:
             if cov is not None:
@@ -461,16 +449,7 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
         errorfunction = lambda p: N.ravel(gaus_2d(p, x, y) - data)[g_ind]
     else:
         errorfunction = lambda p: N.ravel((gaus_2d(p, x, y) - data)/err)[g_ind]
-    try:
-        p, success = leastsq(errorfunction, p_ini, warning=False)
-    except TypeError:
-        # This error means no warning argument is available, so redirect stdout to a null device
-        # to suppress printing of warning messages
-        original_stdout = sys.stdout  # keep a reference to STDOUT
-        sys.stdout = NullDevice()  # redirect the real STDOUT
-        p, success = leastsq(errorfunction, p_ini)
-        sys.stdout = original_stdout  # turn STDOUT back on
-
+    p, success = leastsq(errorfunction, p_ini)
 
     return p, success
 
@@ -519,17 +498,19 @@ def deconv2(gaus_bm, gaus_c):
             bmaj = sqrt(0.5*(s+t))
             bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         bmin = 0.0
-        if 0.5*(s-t) < limit and alpha > -limit and beta > -limit:
+        # https://github.com/lofar-astron/PyBDSF/pull/450
+        if 0.5 * (s - t) > -limit and alpha > -limit and beta > -limit:
             ifail = 1
         else:
             ifail = 2
     else:
+        # TODO / NOTE: A symmetric tolerance check is needed here.
+        # When a source is identical or nearly identical to the beam, round-off noise
+        # causes s - t to fluctuate randomly around 0. So ifail = 0 vs 1 depends on the
+        # sign of the rounding noise.
         bmaj = sqrt(0.5*(s+t))
         bmin = sqrt(0.5*(s-t))
-        if abs(gamma) + abs(alpha-beta) == 0.0:
-            bpa = 0.0
-        else:
-            bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
+        bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         ifail = 0
     return (bmaj, bmin, bpa), ifail
 
@@ -632,7 +613,6 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
     """ fitcode : 0=fit all; 1=fit amp; 2=fit amp, posn; 3=fit amp, size """
     from scipy.optimize import leastsq
     import numpy as N
-    import sys
 
     if mask is not None and mask.shape != image.shape:
         print('Data and mask array dont have the same shape, ignoring mask')
@@ -664,15 +644,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
 
         errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
                        N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
-        try:
-            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-        except TypeError:
-            # This error means no warning argument is available, so redirect stdout to a null device
-            # to suppress printing of warning messages
-            original_stdout = sys.stdout  # keep a reference to STDOUT
-            sys.stdout = NullDevice()  # redirect the real STDOUT
-            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-            sys.stdout = original_stdout  # turn STDOUT back on
+        p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
     else:
         p, success = None, 1
 
@@ -735,12 +707,12 @@ def arrstatmask(im, mask):
 
     ind = N.where(~mask)
     im1 = im[ind]
-    av = N.mean(im1)
-    std = N.std(im1)
-    maxv = N.max(im1)
+    av = N.nanmean(im1)
+    std = N.nanstd(im1)
+    maxv = N.nanmax(im1)
     x, y = N.where(im == maxv)
     xmax = x[0]; ymax = y[0]
-    minv = N.min(im1)
+    minv = N.nanmin(im1)
     x, y = N.where(im == minv)
     xmin = x[0]; ymin = y[0]
 
@@ -1795,12 +1767,14 @@ def bstat(indata, mask, kappa_npixbeam):
     import numpy
     from scipy.special import erf, erfcinv
 
-    # Flatten array
     skpix = indata.flatten()
-    if mask is not None:
+    if mask is None:
+        valid_pixels = numpy.where(~numpy.isnan(skpix))
+    else:
         msk_flat = mask.flatten()
-        unmasked = numpy.where(~msk_flat)
-        skpix = skpix[unmasked]
+        valid_pixels = numpy.where(~msk_flat & ~numpy.isnan(skpix))
+    
+    skpix = skpix[valid_pixels]
 
     skpix.sort()
     ct = skpix.size
