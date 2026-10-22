@@ -131,9 +131,9 @@ class Op_gaul2srl(Op):
         peak_flux_centroid = peak_flux_max = [g.peak_flux, g.peak_fluxE]
         posn_sky_centroid = posn_sky_max = [g.centre_sky, g.centre_skyE]
         size_sky = [g.size_sky, g.size_skyE]
-        size_sky_uncorr = [g.size_sky_uncorr, g.size_skyE]
+        size_sky_uncorr = [g.size_sky_uncorr, g.size_skyE_uncorr]
         deconv_size_sky = [g.deconv_size_sky, g.deconv_size_skyE]
-        deconv_size_sky_uncorr = [g.deconv_size_sky_uncorr, g.deconv_size_skyE]
+        deconv_size_sky_uncorr = [g.deconv_size_sky_uncorr, g.deconv_size_skyE_uncorr]
         bbox = img.islands[g.island_id].bbox
         ngaus = 1
         island_id = g.island_id
