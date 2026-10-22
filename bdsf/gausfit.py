@@ -385,6 +385,12 @@ class Op_gausfit(Op):
             ng1 = len(gaul)
             if fitok and len(fgaul) == 0:
                 break
+            # This is deterministic, so the result of next iterations would be the same. Same happens below.
+            # Probably some progress was intended here, but for now just break to avoid unnecessary iterations.
+            if ng1 == 0 and iter >= 2:
+                if verbose:
+                    print('No valid Gaussians found after 2 iterations, aborting flag loop.')
+                break
         if (not fitok or len(gaul) == 0) and ini_gausfit != 'simple':
             if verbose:
                 print('Using simple method instead')
@@ -403,7 +409,11 @@ class Op_gausfit(Op):
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-        
+                if ng1 == 0:
+                    if verbose:
+                        print('No valid Gaussians found, aborting loop.')
+                    break
+
         if (not fitok or len(gaul) == 0):
             sm_isl = nd.binary_dilation(isl.mask_active)
             if N.sum(~sm_isl) >= img.minpix_isl:
@@ -425,7 +435,11 @@ class Op_gausfit(Op):
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
-        
+                    if ng1 == 0:
+                        if verbose:
+                            print('No valid Gaussians found, aborting loop.')
+                        break
+
         if (not fitok or len(gaul) == 0):
             lg_isl = nd.binary_erosion(isl.mask_active, border_value=1)
             if N.sum(~lg_isl) >= img.minpix_isl:
@@ -446,6 +460,10 @@ class Op_gausfit(Op):
                                                       isl.image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
+                        break
+                    if ng1 == 0:
+                        if verbose:
+                            print('No valid Gaussians found, aborting loop.')
                         break
 
         if not fitok or len(gaul) == 0:
