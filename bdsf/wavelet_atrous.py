@@ -239,6 +239,7 @@ class Op_wavelet_atrous(Op):
                                                 isl.gaul.append(gcp)
                                                 isl.ngaus += 1
                                                 img.gaussians.append(gcp)
+                                                img.ngaus += 1
                                                 nwvgaus += 1
                                                 tot_flux += gcp.total_flux
                                             else:
