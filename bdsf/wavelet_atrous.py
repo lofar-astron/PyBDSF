@@ -67,6 +67,7 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
+            img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
             if lpf not in ['b3', 'tr']:
@@ -109,6 +110,9 @@ class Op_wavelet_atrous(Op):
                 numcores = img.opts.ncores
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
+                # Clear the largest not needed variables, since FFT needs a lot of RAM
+                w = None          # wavelet image from previous scale
+                wimg = None       # whole image from previous scale
                 im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores)
                 im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
                 if img.opts.atrous_sum:
@@ -203,6 +207,7 @@ class Op_wavelet_atrous(Op):
                                 # Renumber islands:
                                 for wvindx, wvisl in enumerate(wimg.islands):
                                     wvisl.island_id = wvindx
+                                del old_islands, orig_rankim_bool, valid_ids
 
                         if isinstance(op, Op_gausfit):
                             # If opts.atrous_orig_isl then exclude Gaussians outside of
