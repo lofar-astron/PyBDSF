@@ -102,6 +102,7 @@ class Op_wavelet_atrous(Op):
             im_old = img.resid_wavelets_arr
             total_flux = 0.0
             stop_wav = False
+            # NaN and ±inf are both treated as masked
             pix_masked = N.where(~N.isfinite(resid))
             has_nonfinite = pix_masked[0].size > 0
             jmin = 1
@@ -331,7 +332,6 @@ class Op_wavelet_atrous(Op):
 
         # Fast path: no NaNs or infinities in the original image
         if not has_nonfinite:
-            unmasked = N.nan_to_num(image)
             im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
             if im_new.shape != image.shape:
                 im_new = im_new[0:image.shape[0], 0:image.shape[1]]
