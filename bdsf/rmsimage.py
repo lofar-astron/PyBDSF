@@ -214,7 +214,7 @@ class Op_rmsimage(Op):
                 isl_maxposn = []
                 isl_area_highthresh = []
                 if img.masked:
-                    act_pixels = ~(mask.copy())
+                    act_pixels = ~mask
                     act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
                 else:
                     act_pixels = (image-cmean)/threshold >= crms
@@ -234,7 +234,7 @@ class Op_rmsimage(Op):
         # largest island at this threshold to set the large-scale rms_box
         threshold = 10.0
         if img.masked:
-            act_pixels = ~(mask.copy())
+            act_pixels = ~mask
             act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
         else:
             act_pixels = (image-cmean)/threshold >= crms
@@ -653,6 +653,7 @@ class Op_rmsimage(Op):
             ax2 = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(out_rms2.shape, axes2mod)][-1::-1]
             mapcoord_threaded(rms_map2,  ax2, order=interp, output=out_rms2, ncores=ncores)
             mapcoord_threaded(mean_map2, ax2, order=interp, output=out_mean2, ncores=ncores)
+            del rms_map2, mean_map2
             rms_map = out_rms2
             mean_map = out_mean2
 
@@ -689,6 +690,7 @@ class Op_rmsimage(Op):
                                 weights[x,y] = max(0.0, 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0)
                 rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
                 mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
+            del out_rms2, out_mean2
         else:
             rms_map = rms_map1
             mean_map = mean_map1
