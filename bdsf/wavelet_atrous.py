@@ -253,6 +253,7 @@ class Op_wavelet_atrous(Op):
                                     if g.valid:
                                         vg.append(g)
                                 wimg.gaussians = vg
+                                wimg.ngaus = len(vg)
                                 mylogger.userinfo(mylog, "Number of valid wavelet Gaussians", str(nwvgaus))
                             else:
                                 # Keep all Gaussians and merge islands that overlap
@@ -625,6 +626,7 @@ def renumber_islands(img):
     img.pyrank = pyrank
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
     img.gaussians = gaussian_list
+    img.ngaus = len(gaussian_list)
 
 
 def check_islands_for_overlap(img, wimg):
