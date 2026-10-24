@@ -1795,7 +1795,7 @@ def bstat(indata, mask, kappa_npixbeam):
             if kappa < 3.0:
                 kappa = 3.0
         lastct = ct
-        medval = skpix[npix//2]
+        medval = skpix[npix//2] if npix % 2 else 0.5*(skpix[npix//2-1] + skpix[npix//2])
         if iter == 0:
             sig = r_raw
         else:
@@ -1814,7 +1814,8 @@ def bstat(indata, mask, kappa_npixbeam):
         iter += 1
 
     mean  = numpy.mean(skpix)
-    median = skpix[skpix.size//2]
+    n2 = skpix.size
+    median = skpix[n2//2] if n2 % 2 else 0.5*(skpix[n2//2-1] + skpix[n2//2])
     sigma =  (d2.sum()/(ct-1) - (m_raw-mean)**2 * ct/(ct-1) )**0.5
     mode = 2.5*median - 1.5*mean
     if sigma > 0.0:
