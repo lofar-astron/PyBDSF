@@ -67,6 +67,7 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
+            img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
             if lpf not in ['b3', 'tr']:
