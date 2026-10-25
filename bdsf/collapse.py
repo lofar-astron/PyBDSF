@@ -7,8 +7,6 @@ use, even if weights are unity.
 
 import numpy as N
 from .image import *
-from . import _cbdsm
-#_cbdsm.init_numpy()
 from . import mylogger
 from . import functions as func
 

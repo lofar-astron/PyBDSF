@@ -5,7 +5,6 @@ parameters for PyBDSF.
 """
 
 import numpy as N
-from . import _cbdsm
 from .image import *
 from math import pi, sqrt, log
 from . import const

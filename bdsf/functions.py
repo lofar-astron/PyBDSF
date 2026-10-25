@@ -1754,13 +1754,9 @@ def make_curvature_map(subim):
 
 
 def bstat(indata, mask, kappa_npixbeam):
-    """Numpy version of the c++ bstat routine
-
-    Uses the PySE method for calculating the clipped mean and rms of an array.
+    """Uses the PySE method for calculating the clipped mean and rms of an array.
     This method is superior to the c++ bstat routine (see section 2.7.3 of
-    http://dare.uva.nl/document/174052 for details) and, since the Numpy
-    functions used here are written in c, there should be no big computational
-    penalty in using Python code.
+    http://dare.uva.nl/document/174052 for details).
     """
     import numpy
     from scipy.special import erf, erfcinv
