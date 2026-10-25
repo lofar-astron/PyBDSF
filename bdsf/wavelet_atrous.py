@@ -6,9 +6,6 @@ import numpy as N
 from .image import *
 from . import mylogger
 import os
-from . import has_pl
-if has_pl:
-    import matplotlib.pyplot as pl
 from math import log, floor, sqrt
 from .const import fwsig
 from copy import deepcopy as cp
