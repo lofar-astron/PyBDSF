@@ -398,13 +398,6 @@ class Op_readimage(Op):
         If the input frequency info (in the WCS) is not in Hz, it is
         converted.
         """
-        try:
-            from astropy.wcs import WCS
-        except ImportError as err:
-            import warnings
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                from pywcs import WCS
 
         mylog = mylogger.logging.getLogger("PyBDSF.InitFreq")
         if img.opts.frequency_sp is not None and img.image_arr.shape[1] > 1:
