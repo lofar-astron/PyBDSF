@@ -16,7 +16,6 @@ import numpy as N
 from .image import *
 from . import functions as func
 from . import mylogger
-import sys
 import shutil
 import tempfile
 import time
