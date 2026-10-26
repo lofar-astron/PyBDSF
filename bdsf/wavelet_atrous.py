@@ -190,15 +190,18 @@ class Op_wavelet_atrous(Op):
 
                                 # Multiply rank images
                                 old_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
+                                del orig_rankim_bool
 
                                 # Exclude islands that don't overlap with a ch0 island.
                                 valid_ids = set(old_islands.flatten())
+                                del old_islands
                                 for idx, wvisl in enumerate(wimg.islands):
                                     if idx in valid_ids:
                                         wvisl.valid = True
                                         good_isl.append(wvisl)
                                     else:
                                         wvisl.valid = False
+                                del valid_ids
 
                                 wimg.islands = good_isl
                                 wimg.nisl = len(good_isl)
@@ -207,7 +210,6 @@ class Op_wavelet_atrous(Op):
                                 # Renumber islands:
                                 for wvindx, wvisl in enumerate(wimg.islands):
                                     wvisl.island_id = wvindx
-                                del old_islands, orig_rankim_bool, valid_ids
 
                         if isinstance(op, Op_gausfit):
                             # If opts.atrous_orig_isl then exclude Gaussians outside of
