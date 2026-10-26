@@ -941,16 +941,16 @@ class Op_rmsimage(Op):
             m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
         else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
+            mask_win = mask[a:b, c:d]
+            npix_unmasked = mask_win.size - np.count_nonzero(mask_win)
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask_win, kappa)
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5:
                     # First take the same windows for which the mask was calculated
                     # and then select only the unmasked pixels
-                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    valid_pixels = arr[a:b, c:d][~mask_win]
                     cm = np.nanmedian(valid_pixels)
                     # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
                     # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
