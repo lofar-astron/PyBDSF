@@ -348,13 +348,16 @@ class Op_gaul2srl(Op):
         x_ax, y_ax = N.indices(data.shape)
 
         if N.sum(~rmask) >=6:
-            para, ierr = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
+            para, _ = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
             if (0.0<para[1]<s_imsize[0]) and (0.0<para[2]<s_imsize[1]) and \
               para[3]<s_imsize[0] and para[4]<s_imsize[1]:
                 maxpeak = para[0]
+                posn = para[1:3] + blc + delc
             else:
+                # Fit rejected: take both the peak and its position from the
+                # maximum of the model
                 maxpeak = maxv
-            posn = para[1:3] + blc + delc
+                posn = N.array([maxx, maxy]) + N.array(delc)
         else:
             maxpeak = maxv
             posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
