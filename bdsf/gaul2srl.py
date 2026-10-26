@@ -459,10 +459,14 @@ class Op_gaul2srl(Op):
         # Estimate uncertainties in source size and position due to
         # errors in the constituent Gaussians using a Monte Carlo technique.
         # Sum with Condon (1997) errors in quadrature.
-        plist = mompara.tolist()+[tot]
+        plist = mompara.tolist() + [tot]
         plist[0] = s_peak
         plist[3] /= fwsig
         plist[4] /= fwsig
+        # mompara[5] is a position angle (from +y), but get_errors expects the
+        # fit-parameter convention (angle from the x axis) and converts it
+        # with corrected_size(), which subtracts 90 deg. Convert back here.
+        plist[5] += 90.0
         errors = func.get_errors(img, plist, isl.rms)
 
         if img.opts.do_mc_errors:
