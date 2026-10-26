@@ -67,6 +67,7 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
+            img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
             if lpf not in ['b3', 'tr']:
@@ -109,6 +110,9 @@ class Op_wavelet_atrous(Op):
                 numcores = img.opts.ncores
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
+                # Clear the largest not needed variables, since FFT needs a lot of RAM
+                w = None          # wavelet image from previous scale
+                wimg = None       # whole image from previous scale
                 im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores)
                 im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
                 if img.opts.atrous_sum:
@@ -186,15 +190,18 @@ class Op_wavelet_atrous(Op):
 
                                 # Multiply rank images
                                 old_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
+                                del orig_rankim_bool
 
                                 # Exclude islands that don't overlap with a ch0 island.
                                 valid_ids = set(old_islands.flatten())
+                                del old_islands
                                 for idx, wvisl in enumerate(wimg.islands):
                                     if idx in valid_ids:
                                         wvisl.valid = True
                                         good_isl.append(wvisl)
                                     else:
                                         wvisl.valid = False
+                                del valid_ids
 
                                 wimg.islands = good_isl
                                 wimg.nisl = len(good_isl)
