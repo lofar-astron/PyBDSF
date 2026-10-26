@@ -164,10 +164,6 @@ class Op_gausfit(Op):
             gaul = gaus_list[idx][0]
             fgaul = gaus_list[idx][1]
             dgaul = []
-            if len(gaul) > 0:
-                gidx = gaul[-1][0]  # save last index value for use with fgaul below
-            else:
-                gidx = 0
             gaul = [Gaussian(img, par, idx, gidx)
                     for (gidx, par) in enumerate(gaul)]
 
@@ -190,7 +186,8 @@ class Op_gausfit(Op):
                 dgaul = [Gaussian(img, par, idx, -1)]
 
             # Now make the list of flagged Gaussians, if any
-            fgaul = [Gaussian(img, par, idx, gidx + gidx2 + 1, flag)
+            start_fgidx = len(gaul)
+            fgaul = [Gaussian(img, par, idx, start_fgidx + gidx2, flag)
                      for (gidx2, (flag, par)) in enumerate(fgaul)]
 
             isl.gaul = gaul
@@ -382,7 +379,7 @@ class Op_gausfit(Op):
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                               beam, thr0, peak, shape, isl.mask_active,
-                                              isl.image, fitok)
+                                              fit_image, fitok)
             if verbose:
                 print('Leaving flag_gaussians')
             ng1 = len(gaul)
@@ -402,11 +399,13 @@ class Op_gausfit(Op):
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                   beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, fitok)
+                                                  fit_image, fitok)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-        
+
+        island_modified = None
+        island_modified_npix = None
         if (not fitok or len(gaul) == 0):
             sm_isl = nd.binary_dilation(isl.mask_active)
             if N.sum(~sm_isl) >= img.minpix_isl:
@@ -415,6 +414,8 @@ class Op_gausfit(Op):
                 # If fitting still fails, shrink the island a little and try again
                 fcn = MGFunction(fit_image, sm_isl, 1)
                 dof = N.sum(~sm_isl)
+                island_modified = 'shrunk'
+                island_modified_npix = dof
                 gaul = []
                 iter = 0
                 ng1 = 0
@@ -424,19 +425,21 @@ class Op_gausfit(Op):
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr0, peak, shape, sm_isl,
-                                                      isl.image, fitok)
+                                                      fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
         
         if (not fitok or len(gaul) == 0):
-            lg_isl = nd.binary_erosion(isl.mask_active)
+            lg_isl = nd.binary_erosion(isl.mask_active, border_value=1)
             if N.sum(~lg_isl) >= img.minpix_isl:
                 if verbose:
                     print('Fit still not OK, expanding')
                 # If fitting still fails, expand the island a little and try again
                 fcn = MGFunction(fit_image, lg_isl, 1)
                 dof = N.sum(~lg_isl)
+                island_modified = 'expanded'
+                island_modified_npix = dof
                 gaul = []
                 iter = 0
                 ng1 = 0
@@ -446,11 +449,16 @@ class Op_gausfit(Op):
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr0, peak, shape, lg_isl,
-                                                      isl.image, fitok)
+                                                      fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
 
+        if verbose and island_modified is not None and fitok and len(gaul) > 0:
+            print('WARNING: island %s was fit successfully only after the island was %s '
+                  'by a binary operation (active pixels: %i -> %i); the fit may be '
+                  'less reliable' % (isl.island_id, island_modified,
+                                     isl.size_active, island_modified_npix))
         if not fitok or len(gaul) == 0:
             # If all else fails, try to use moment analysis
             if verbose:
@@ -469,7 +477,7 @@ class Op_gausfit(Op):
                     par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
-                                                      isl.image, fitok)
+                                                      fit_image, fitok)
             except ValueError:
                 pass
 
@@ -562,13 +570,12 @@ class Op_gausfit(Op):
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
-            im_pos = -1.0 * func.make_curvature_map(isl.image-isl.islmean)
+            im_pos = -1.0 * func.make_curvature_map(im)
             thr_pos = 0.0
         else:
             im_pos = im
             thr_pos = thr
         mask = isl.mask_active
-        av = img.clipped_mean
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
             av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
@@ -627,20 +634,19 @@ class Op_gausfit(Op):
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
-            im_pos = -1.0 * func.make_curvature_map(isl.image-isl.islmean)
+            im_pos = -1.0 * func.make_curvature_map(im)
             thr_pos = 0.0
         else:
             im_pos = im
             thr_pos = -1e9
         mask = isl.mask_active
-        av = img.clipped_mean
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         npeak = len(iniposn)
         gaul = []
 
         av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
-        mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
         if npeak <= 1:
+            mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
             g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig,
                  mom[4]/fwsig, mom[5])
             gaul.append(g)

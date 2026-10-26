@@ -225,8 +225,8 @@ class Op_rmsimage(Op):
                     isl_size_bright.append(max([s[0].stop-s[0].start, s[1].stop-s[1].start]))
                     size_area = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     isl_area_highthresh.append(size_area)
-                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+\
-                          np.array((s[0].start, s[1].start))))
+                    isl_maxposn.append(tuple(np.array(np.unravel_index(np.nanargmax(np.where(labels[s] == idx+1, image[s], -np.inf)), image[s].shape))+
+                                        np.array((s[0].start, s[1].start))))
 
         # Check islands found above at thresh_isl threshold to determine if
         # the bright source is embedded inside a large island or not. If it is,
@@ -243,15 +243,15 @@ class Op_rmsimage(Op):
         isl_size = []
         isl_size_highthresh = []
         for idx, s in enumerate(slices):
-            isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
-            isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(image[s]), image[s].shape))+
-                                          np.array((s[0].start, s[1].start)))
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
             if do_adapt and len(isl_maxposn) > 0:
+                isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(np.where(labels[s] == idx+1, image[s], -np.inf)), image[s].shape))+
+                                          np.array((s[0].start, s[1].start)))
                 dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
                 # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
                 # so we allow for a small arbitrary distance between the two positions
                 if min(dists) <= 2.5:
+                    isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     bright_indx = int(np.argmin(dists))
                     if isl_area_lowthresh < 25.0 or isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0:
                         isl_pos.append(isl_maxposn_lowthresh)
@@ -282,8 +282,6 @@ class Op_rmsimage(Op):
             else:
                 bsize = int(max(brightsize, min_size_allowed, max_isl_size*2.0))
             bsize2 = int(max(min(image.shape)/10.0, max_isl_size*5.0))
-            if bsize < min_size_allowed:
-                bsize = min_size_allowed
             if bsize % 10 == 0: bsize += 1
             if bsize2 < min_size_allowed:
                 bsize2 = min_size_allowed
@@ -397,7 +395,7 @@ class Op_rmsimage(Op):
                         mylogger.userinfo(mylog, 'Using 2D map for background rms')
 
                     if opts.mean_map == 'default' and img.mean_map_type is None:
-                        self.check_meanmap(img, rms)
+                        self.check_meanmap(img, mean)
                     elif opts.mean_map != 'default':
                         img.mean_map_type = opts.mean_map
                     if img.mean_map_type != 'map':
@@ -423,7 +421,7 @@ class Op_rmsimage(Op):
                 if opts.mean_map == 'zero':
                     val = 0.0
                 else:
-                    val = img.clipped_mean
+                    val = cmeans[ipol]
                 mean[:] = val
                 mylogger.userinfo(mylog, 'Value of background mean' + pol_txt,
                                   str(round(val,5))+' Jy/beam')
@@ -689,7 +687,7 @@ class Op_rmsimage(Op):
                             dist_to_cen = np.sqrt( (x-src_center[0])**2 +
                                                (y-src_center[1])**2 )
                             if dist_to_cen >= med_dist_to_cen:
-                                weights[x,y] = 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0
+                                weights[x,y] = max(0.0, 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0)
                 rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
                 mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
             del out_rms2, out_mean2
