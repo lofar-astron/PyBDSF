@@ -78,7 +78,7 @@ class Op_threshold(Op):
             slope = opts.fdr_alpha/s0
             # Compute and sort p-values only for unmasked data
             # Boolean indexing flattens the array automatically
-            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2))
+            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2), axis=None)
             pcrit = None
             
             # Find the largest index k (from 'size' down to 1) 
