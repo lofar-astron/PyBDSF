@@ -1576,7 +1576,10 @@ def ch0_aperture_flux(img, posn_pix, aperture_pix):
     rms = img.rms_arr
     aper_im = ch0[int(xlo):int(xhi), int(ylo):int(yhi)] - mean[int(xlo):int(xhi), int(ylo):int(yhi)]
     aper_rms = rms[int(xlo):int(xhi), int(ylo):int(yhi)]
-    posn_pix_new = [int(posn_pix[0])-xlo, int(posn_pix[1])-ylo]
+    posn_pix_new = [
+        posn_pix[0] - xlo,
+        posn_pix[1] - ylo,
+    ]
     pixel_beamarea = img.pixel_beamarea()
     aper_flux = aperture_flux(aperture_pix, posn_pix_new, aper_im, aper_rms, pixel_beamarea)
     return aper_flux
