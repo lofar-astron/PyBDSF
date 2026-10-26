@@ -690,7 +690,7 @@ class Op_rmsimage(Op):
                                 weights[x,y] = max(0.0, 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0)
                 rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
                 mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
-            del out_rms2, out_mean2
+            del rms_map1, mean_map1
         else:
             rms_map = rms_map1
             mean_map = mean_map1
