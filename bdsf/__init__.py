@@ -33,6 +33,7 @@ from .psf_vary import Op_psf_vary
 from .cleanup import Op_cleanup
 from ._version import __version__
 from .functions import set_up_output_paths
+import gc
 
 
 default_chain = [Op_readimage(),
@@ -102,6 +103,9 @@ def _run_op_list(img, chain):
     from .interface import raw_input_no_history
     from .gausfit import Op_gausfit
     from . import mylogger
+
+    # Free RAM from previously processed images before loading another
+    gc.collect()
 
     ops = []
     stopat = img.opts.stop_at
