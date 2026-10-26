@@ -418,7 +418,7 @@ class Op_rmsimage(Op):
                                   '(%.2e, %.2e) Jy/beam' % (rms_min, rms_max))
 
             if img.mean_map_type != 'map':
-                if img.mean_map_type == 'zero':
+                if opts.mean_map == 'zero':
                     val = 0.0
                 else:
                     val = img.clipped_mean
