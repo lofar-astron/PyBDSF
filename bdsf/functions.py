@@ -1795,6 +1795,7 @@ def bstat(indata, mask, kappa_npixbeam):
         else:
             npixbeam = abs(kappa_npixbeam)
             kappa = numpy.sqrt(2.0)*erfcinv(1.0 / (2.0*npix/npixbeam))
+            # https://github.com/lofar-astron/PyBDSF/pull/523
             if not (kappa >= 3.0):
                 kappa = 3.0
         lastct = ct
