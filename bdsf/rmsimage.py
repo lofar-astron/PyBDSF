@@ -824,16 +824,16 @@ class Op_rmsimage(Op):
         inds = np.concatenate(inds)
 
         # Calculate the mean and rms for all boxes in one go
-        cm, cr = self.process_mean_rms_boxes(data, data_mask, inds, kappa,
-                                             ncores)
+        cm, cr = self.process_mean_rms_boxes(data, data_mask, inds, kappa, ncores)
+
+        if mask is not None and not np.any(np.isfinite(cm)):
+            raise RuntimeError(
+                "No unmasked regions from which to determine mean and rms maps"
+            )
+
         internal = tuple(coords[:n_internal].T)
         mean_map[internal] = cm[:n_internal]
         rms_map[internal] = cr[:n_internal]
-
-        # Check if all regions have too few unmasked pixels
-        if mask is not None and not np.any(mean_map != np.inf):
-            raise RuntimeError("No unmasked regions from which to determine "\
-                         "mean and rms maps")
 
         borders = tuple(coords[n_internal:].T)
         mean_map[borders] = cm[n_internal:]
