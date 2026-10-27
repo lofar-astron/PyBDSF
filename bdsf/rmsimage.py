@@ -847,15 +847,14 @@ class Op_rmsimage(Op):
         # Step 4: fill in coordinate axes
         for i in range(2):
             if use_extrapolation:
-                axes[i][1:boxcount[i]+1] = (np.arange(boxcount[i])*SS
-                                            + BS/2. - .5)
+                axes[i][1:boxcount[i]+1] = (np.arange(boxcount[i])*SS + BS/2. - .5)
                 if bounds[i]:
                     axes[i][-2] = imgshape[i] - BS/2. - .5
+                axes[i][-1] = imgshape[i] - 1
             else:
                 axes[i][0:boxcount[i]] = np.arange(boxcount[i])*SS - .5
                 if bounds[i]:
-                    axes[i][-2] = imgshape[i] - .5
-            axes[i][-1] = imgshape[i] - 1
+                    axes[i][-1] = imgshape[i] - .5
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
         # np.inf)
