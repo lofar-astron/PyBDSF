@@ -6,9 +6,6 @@ import numpy as N
 from .image import *
 from . import mylogger
 import os
-from . import has_pl
-if has_pl:
-    import matplotlib.pyplot as pl
 from math import log, floor, sqrt
 from .const import fwsig
 from copy import deepcopy as cp
@@ -66,6 +63,7 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
+            img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
             if lpf not in ['b3', 'tr']:
@@ -91,7 +89,6 @@ class Op_wavelet_atrous(Op):
             img.wavelet_jmax = jmax
             mylog.info("Using " + filter[lpf]['name'] + ' filter with J_max = ' + str(jmax))
 
-            img.atrous_islands = []
             img.atrous_gaussians = []
             img.atrous_sources = []
             img.atrous_opts = []
@@ -108,6 +105,9 @@ class Op_wavelet_atrous(Op):
                 numcores = img.opts.ncores
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
+                # Clear the largest not needed variables, since FFT needs a lot of RAM
+                w = None          # wavelet image from previous scale
+                wimg = None       # whole image from previous scale
                 im_new = self.atrous(im_old, filter[lpf]['vec'], lpf, j, numcores=numcores)
                 im_new[pix_masked] = N.nan  # since fftconvolve wont work with blanked pixels
                 if img.opts.atrous_sum:
@@ -184,15 +184,18 @@ class Op_wavelet_atrous(Op):
 
                                 # Multiply rank images
                                 old_islands = orig_rankim_bool * (wimg.pyrank + 1) - 1
+                                del orig_rankim_bool
 
                                 # Exclude islands that don't overlap with a ch0 island.
                                 valid_ids = set(old_islands.flatten())
+                                del old_islands
                                 for idx, wvisl in enumerate(wimg.islands):
                                     if idx in valid_ids:
                                         wvisl.valid = True
                                         good_isl.append(wvisl)
                                     else:
                                         wvisl.valid = False
+                                del valid_ids
 
                                 wimg.islands = good_isl
                                 wimg.nisl = len(good_isl)
@@ -421,89 +424,6 @@ class Op_wavelet_atrous(Op):
                 residim[bbox] = residim[bbox] - ffimg
 
         return residim
-
-    def morphfilter_pyramid(self, img, bdir):
-        from math import ceil, floor
-
-        jmax = img.wavelet_jmax
-        ind = [i for i, isl in enumerate(img.atrous_islands) if len(isl) > 0]
-        ind.reverse()
-        lpyr = []
-        img.npyrsrc = -1
-        if len(ind) > 0:
-            for i in ind:
-                isls = img.atrous_islands[i]
-                for isl in isls:
-                    if i != ind[0]:
-                        dumr = []
-                        for pyrsrc in lpyr:
-                            belongs = pyrsrc.belongs(img, isl)
-                            if belongs:
-                                dumr.append(pyrsrc.pyr_id)
-                        if len(dumr) == 1:
-                            dumr = dumr[0]
-                            pyrsrc = lpyr[dumr]
-                            pyrsrc.add_level(img, i, isl)
-                        else:
-                            pyrsrc = Pyramid_source(img, isl, i)
-                            lpyr.append(pyrsrc)
-                    else:
-                        pyrsrc = Pyramid_source(img, isl, i)
-                        lpyr.append(pyrsrc)
-        img.pyrsrcs = lpyr
-
-        if img.opts.plot_pyramid and has_pl:
-            pl.figure()
-            a = ceil(sqrt(jmax))
-            b = floor(jmax / a)
-            if a * b < jmax:
-                b += 1
-            colours = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-            sh = img.ch0_arr.shape
-            for pyr in img.pyrsrcs:
-                for iisl, isl in enumerate(pyr.islands):
-                    jj = pyr.jlevels[iisl]
-                    col = colours[pyr.pyr_id % 7]
-                    pl.subplot(a, b, jj)
-                    ind = N.where(~isl.mask_active)
-                    pl.plot(ind[0] + isl.origin[0], ind[1] + isl.origin[1], '.', color=col)
-                    pl.axis([0.0, sh[0], 0.0, sh[1]])
-                    pl.title('J = ' + str(jj))
-            pl.savefig(bdir + img.imagename + '.pybdsf.atrous.pyramidsrc.png')
-
-
-class Pyramid_source(object):
-    """ Pyramid_source is a source constructed out of multiple wavelet transform images. """
-
-    def __init__(self, img, island, level0):
-        img.npyrsrc = img.npyrsrc + 1
-        self.pyr_id = img.npyrsrc
-        self.islands = [island]
-        self.jlevels = [level0]
-
-    def belongs(self, img, isl):
-        from . import functions as func
-
-        # Get centroid of island (as integer)
-        mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
-        cen = N.array(mom[1:3]) + isl.origin
-        belong = False
-
-        # Check if lies within any island of self
-        for i, pyrisl in enumerate(self.islands):
-            if N.sum([pyrisl.bbox[j].start <= cen[j] < pyrisl.bbox[j].stop for j in range(2)]) == 2:
-                pix = tuple([cen[j] - pyrisl.origin[j] for j in range(2)])
-                if not pyrisl.mask_active[pix]:
-                    belong = True
-
-        return belong
-
-    def add_level(self, img, level, isl):
-        self.islands.append(isl)
-        self.jlevels.append(level + 1)
-
-
-Image.pyrsrcs = List(tInstance(Pyramid_source), doc="List of Pyramidal sources")
 
 
 def rebase_bbox(box, minv):

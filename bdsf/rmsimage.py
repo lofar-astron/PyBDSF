@@ -824,16 +824,16 @@ class Op_rmsimage(Op):
         inds = np.concatenate(inds)
 
         # Calculate the mean and rms for all boxes in one go
-        cm, cr = self.process_mean_rms_boxes(data, data_mask, inds, kappa,
-                                             ncores)
+        cm, cr = self.process_mean_rms_boxes(data, data_mask, inds, kappa, ncores)
+
+        if mask is not None and not np.any(np.isfinite(cm)):
+            raise RuntimeError(
+                "No unmasked regions from which to determine mean and rms maps"
+            )
+
         internal = tuple(coords[:n_internal].T)
         mean_map[internal] = cm[:n_internal]
         rms_map[internal] = cr[:n_internal]
-
-        # Check if all regions have too few unmasked pixels
-        if mask is not None and not np.any(mean_map != np.inf):
-            raise RuntimeError("No unmasked regions from which to determine "\
-                         "mean and rms maps")
 
         borders = tuple(coords[n_internal:].T)
         mean_map[borders] = cm[n_internal:]
@@ -847,15 +847,14 @@ class Op_rmsimage(Op):
         # Step 4: fill in coordinate axes
         for i in range(2):
             if use_extrapolation:
-                axes[i][1:boxcount[i]+1] = (np.arange(boxcount[i])*SS
-                                            + BS/2. - .5)
+                axes[i][1:boxcount[i]+1] = (np.arange(boxcount[i])*SS + BS/2. - .5)
                 if bounds[i]:
                     axes[i][-2] = imgshape[i] - BS/2. - .5
+                axes[i][-1] = imgshape[i] - 1
             else:
                 axes[i][0:boxcount[i]] = np.arange(boxcount[i])*SS - .5
                 if bounds[i]:
-                    axes[i][-2] = imgshape[i] - .5
-            axes[i][-1] = imgshape[i] - 1
+                    axes[i][-1] = imgshape[i] - .5
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
         # np.inf)
@@ -941,16 +940,16 @@ class Op_rmsimage(Op):
             m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
         else:
-            pix_unmasked = np.where(mask[a:b, c:d] == False)
-            npix_unmasked = np.size(pix_unmasked,1)
+            mask_win = mask[a:b, c:d]
+            npix_unmasked = mask_win.size - np.count_nonzero(mask_win)
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask[a:b, c:d], kappa)
+                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask_win, kappa)
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5:
                     # First take the same windows for which the mask was calculated
                     # and then select only the unmasked pixels
-                    valid_pixels = arr[a:b, c:d][pix_unmasked]
+                    valid_pixels = arr[a:b, c:d][~mask_win]
                     cm = np.nanmedian(valid_pixels)
                     # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
                     # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
