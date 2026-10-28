@@ -76,7 +76,7 @@ class Op_make_residimage(Op):
             else:
                 moddir = img.basedir + '/model/'
             os.makedirs(moddir, exist_ok=True)
-            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0_arr - resid_gaus), img, moddir)
+            func.write_image_to_file(img.use_io, img.imagename + '.model_gaus.fits', (img.ch0_arr - resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 
         ### residual rms and mean per island
