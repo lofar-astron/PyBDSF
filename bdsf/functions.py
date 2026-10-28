@@ -1776,6 +1776,8 @@ def bstat(indata, mask, kappa_npixbeam):
         valid_pixels = numpy.where(~msk_flat & ~numpy.isnan(skpix))
     
     skpix = skpix[valid_pixels]
+    if skpix.size < 2:
+        raise RuntimeError("At least two valid pixels are required for background statistics.")
 
     skpix.sort()
     ct = skpix.size
