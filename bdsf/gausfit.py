@@ -516,7 +516,8 @@ class Op_gausfit(Op):
         gaul = []
         fgaul = []
         ffimg_tot = N.zeros(isl.shape, dtype=N.float32)
-        peak_val = N.max(isl.image - isl.islmean)
+        resid = isl.image - isl.islmean
+        peak_val = N.max(resid[~isl.mask_active])
         count = 0
         while peak_val >= thr:
             count += 1
@@ -536,7 +537,7 @@ class Op_gausfit(Op):
                     gcopy[3] = S1 # division by fwsig was already done in func.gaussian_fcn()
                     gcopy[4] = S2 # division by fwsig was already done in func.gaussian_fcn()
                     gcopy[5] = Th
-                    A, C1, C2, S1, S2, Th = gcopy
+                    _, C1, C2, S1, S2, Th = gcopy
                     shape = isl.shape
                     b = find_bbox(thresh*isl.rms, gcopy)
                     bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
@@ -545,7 +546,8 @@ class Op_gausfit(Op):
                     ffimg = func.gaussian_fcn(gcopy, x_ax, y_ax)
                     ffimg_tot[bbox] += ffimg
                 peak_val_prev = peak_val
-                peak_val = N.max(isl.image - isl.islmean - ffimg_tot)
+                resid = isl.image - isl.islmean - ffimg_tot
+                peak_val = N.max(resid[~isl.mask_active])
                 if func.approx_equal(peak_val, peak_val_prev):
                     break
             else:
@@ -592,6 +594,7 @@ class Op_gausfit(Op):
                 # shrinks (its length is stored in nmulsrc1), so there is no point in
                 # looking for more of them.
                 break
+
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
             if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
                 domore = True
@@ -646,11 +649,11 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = -1e9
         mask = isl.mask_active
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
+        _, iniposn, _ = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         npeak = len(iniposn)
         gaul = []
 
-        av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+        _, _, maxv, _, _, _ = func.arrstatmask(im, mask)
         if npeak <= 1:
             mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
             g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig,
@@ -706,7 +709,8 @@ class Op_gausfit(Op):
                 size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
-                p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
+                x, y = N.indices(im.shape)
+                p, _ = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
                 resid = resid + func.gaus_2d(p, x, y)
                 gaul.append(p)
             resid = im - resid
