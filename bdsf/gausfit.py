@@ -379,7 +379,7 @@ class Op_gausfit(Op):
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                               beam, thr0, peak, shape, isl.mask_active,
-                                              isl.image, fitok)
+                                              fit_image, fitok)
             if verbose:
                 print('Leaving flag_gaussians')
             ng1 = len(gaul)
@@ -399,11 +399,13 @@ class Op_gausfit(Op):
                 fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                   beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, fitok)
+                                                  fit_image, fitok)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
-        
+
+        island_modified = None
+        island_modified_npix = None
         if (not fitok or len(gaul) == 0):
             sm_isl = nd.binary_dilation(isl.mask_active)
             if N.sum(~sm_isl) >= img.minpix_isl:
@@ -412,6 +414,8 @@ class Op_gausfit(Op):
                 # If fitting still fails, shrink the island a little and try again
                 fcn = MGFunction(fit_image, sm_isl, 1)
                 dof = N.sum(~sm_isl)
+                island_modified = 'shrunk'
+                island_modified_npix = dof
                 gaul = []
                 iter = 0
                 ng1 = 0
@@ -421,7 +425,7 @@ class Op_gausfit(Op):
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr0, peak, shape, sm_isl,
-                                                      isl.image, fitok)
+                                                      fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
@@ -434,6 +438,8 @@ class Op_gausfit(Op):
                 # If fitting still fails, expand the island a little and try again
                 fcn = MGFunction(fit_image, lg_isl, 1)
                 dof = N.sum(~lg_isl)
+                island_modified = 'expanded'
+                island_modified_npix = dof
                 gaul = []
                 iter = 0
                 ng1 = 0
@@ -443,11 +449,16 @@ class Op_gausfit(Op):
                     fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr0, peak, shape, lg_isl,
-                                                      isl.image, fitok)
+                                                      fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
 
+        if verbose and island_modified is not None and fitok and len(gaul) > 0:
+            print('WARNING: island %s was fit successfully only after the island was %s '
+                  'by a binary operation (active pixels: %i -> %i); the fit may be '
+                  'less reliable' % (isl.island_id, island_modified,
+                                     isl.size_active, island_modified_npix))
         if not fitok or len(gaul) == 0:
             # If all else fails, try to use moment analysis
             if verbose:
@@ -466,7 +477,7 @@ class Op_gausfit(Op):
                     par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr0, peak, shape, isl.mask_active,
-                                                      isl.image, fitok)
+                                                      fit_image, fitok)
             except ValueError:
                 pass
 
@@ -577,6 +588,13 @@ class Op_gausfit(Op):
         domore = True
         while domore:
             domore = False
+            if nmulsrc1 > 25:
+                # fit_island() discards the whole result when more than 25 maxima are
+                # found (it falls back to the 'simple' method), and iniposn never
+                # shrinks (its length is stored in nmulsrc1), so there is no point in
+                # looking for more of them.
+                break
+
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
             if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
                 domore = True
