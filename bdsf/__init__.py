@@ -130,6 +130,8 @@ def _run_op_list(img, chain):
         if val != v._default and v.group() != 'hidden':
             par_msg += '    %-20s = %s\n' % (k, repr(val))
     mylog.info(par_msg[:-1]) # -1 is to trim final newline
+    # Clear RAM at the end
+    gc.collect()
 
     # Run all op's
     dc = '\033[34;1m'
