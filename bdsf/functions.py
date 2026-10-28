@@ -579,8 +579,11 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
                 e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
 
                 # The following error is calculated using Eq. 30 of Condon+ (1998)
-                e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
-                e_pa = e_pa * 180.0/pi
+                # The position angle is undefined for a circular Gaussian.
+                if abs(d2) < 1e-12:
+                    e_pa = N.nan
+                else:
+                    e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25)) * 180.0 / pi
 
                 # The following error is calculated using Eq. 36 of Condon+ (1998)
                 e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
@@ -1516,7 +1519,7 @@ def isl_tosplit(isl, opts):
         if max_sub3 < frac_bigisl3 : open3 = True       # if biggest sub island isnt too big
     if n_subisl5 > 0 and isl_pixs5 is not None:                                 # open 5 breaks up island
         max_sub5 = N.max(isl_pixs5)                     # if biggest subisl isnt too big OR smallest extra islands add upto 10 %
-        if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:len(isl_pixs5)-n_subisl3]) > size_extra5):
+        if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:max(len(isl_pixs5)-n_subisl3, 0)]) > size_extra5):
             open5 = True
                                 # index=0 => dont split
     if open5: index = 5; n_subisl = n_subisl5; labels = labels5
