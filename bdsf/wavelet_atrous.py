@@ -335,7 +335,7 @@ class Op_wavelet_atrous(Op):
 
         # Fast path: no NaNs or infinities in the original image
         if not has_nonfinite:
-            im_new = scipy.signal.fftconvolve(unmasked, kern, mode='same')
+            im_new = scipy.signal.fftconvolve(image, kern, mode='same')
             if im_new.shape != image.shape:
                 im_new = im_new[0:image.shape[0], 0:image.shape[1]]
             return im_new
