@@ -578,7 +578,7 @@ class Op_gausfit(Op):
         mask = isl.mask_active
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im, mask)
             inipeak = [maxv]
             iniposn = [maxp]
         nmulsrc1 = len(iniposn)
@@ -586,7 +586,13 @@ class Op_gausfit(Op):
         domore = True
         while domore:
             domore = False
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im1, mask)
+            if nmulsrc1 > 25:
+                # fit_island() discards the whole result when more than 25 maxima are
+                # found (it falls back to the 'simple' method), and iniposn never
+                # shrinks (its length is stored in nmulsrc1), so there is no point in
+                # looking for more of them.
+                break
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
             if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
                 domore = True
                 x1, y1 = N.array(iniposn).transpose()
@@ -697,10 +703,14 @@ class Op_gausfit(Op):
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
             x, y = N.indices(im.shape)
             for i in range(nshed):
+                npix = int(N.sum(invmask[i]))
                 size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
-                p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
+                if npix >= 6:  # 6 parameters of Gauss requires at least 6 pixels to fit
+                    p, success = func.fit_gaus2d(im, p_ini, x, y, mask=~invmask[i])
+                else:
+                    p = p_ini  # not enough pixels for fit, keep initial approximation
                 resid = resid + func.gaus_2d(p, x, y)
                 gaul.append(p)
             resid = im - resid
