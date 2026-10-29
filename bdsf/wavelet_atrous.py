@@ -82,7 +82,7 @@ class Op_wavelet_atrous(Op):
                     default=0,
                 )
 
-                if max_isl_dim > 0 and max_isl_dim < min(resid.shape) / 3.0:
+                if 0 < max_isl_dim < min(resid.shape) / 3.0:
                     min_size = max_isl_dim * 4.0
                 else:
                     min_size = min(resid.shape)
