@@ -735,8 +735,14 @@ def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     iniposn = []
     inipeak = []
     for c in ind:
-        goodlist = [im_pos[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
-                     if i>=0 and i<n and j>=0 and j<m and (i,j) != c]
+        goodlist = [
+            im_pos[i, j]
+            for i in range(c[0] - 1, c[0] + 2)
+            for j in range(c[1] - 1, c[1] + 2)
+            if 0 <= i < n and 0 <= j < m
+            and (i, j) != c
+            and not mask[i, j]
+        ]
         peak = N.sum(im_pos[c] > goodlist) == len(goodlist)
         if peak:
             iniposn.append(c)
