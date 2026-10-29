@@ -35,6 +35,7 @@ from ._version import __version__
 from .functions import set_up_output_paths
 import gc
 
+
 default_chain = [Op_readimage(),
                  Op_collapse(),
                  Op_preprocess(),
@@ -102,7 +103,9 @@ def _run_op_list(img, chain):
     from .interface import raw_input_no_history
     from .gausfit import Op_gausfit
     from . import mylogger
-    import gc
+
+    # Free RAM from previously processed images before loading another
+    gc.collect()
 
     ops = []
     stopat = img.opts.stop_at
@@ -127,6 +130,8 @@ def _run_op_list(img, chain):
         if val != v._default and v.group() != 'hidden':
             par_msg += '    %-20s = %s\n' % (k, repr(val))
     mylog.info(par_msg[:-1]) # -1 is to trim final newline
+    # Clear RAM at the end
+    gc.collect()
 
     # Run all op's
     dc = '\033[34;1m'
@@ -152,7 +157,6 @@ def _run_op_list(img, chain):
         op.__start_time = time()
         op(img)
         op.__stop_time = time()
-        gc.collect()
 
     if img.opts.interactive and not img._pi:
         print(dc + 'Fitting complete. Displaying results...' + nc)
