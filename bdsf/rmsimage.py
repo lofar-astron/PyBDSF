@@ -542,10 +542,11 @@ class Op_rmsimage(Op):
         opts = img.opts
         kappa = map_opts[0]
         spline_rank = opts.spline_rank
+        cache = {}
         while not rms_ok:
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
-                        logname=logname, ncores=ncores)
+                        logname=logname, ncores=ncores, cache=cache)
             if img.masked:
                 test = np.any(rms[~img.mask_arr] < 0.0)
             else:
@@ -623,7 +624,7 @@ class Op_rmsimage(Op):
 
     def map_2d(self, arr, out_mean, out_rms, mask=False,
                kappa=3, box=None, interp=1, do_adapt=False,
-               bright_pt_coords=None, rms_box2=None, logname='', ncores=None):
+               bright_pt_coords=None, rms_box2=None, logname='', ncores=None, cache=None):
         """Calculate mean&rms maps and store them into provided arrays
 
         Parameters:
@@ -632,19 +633,27 @@ class Op_rmsimage(Op):
         mask: mask
         kappa: clipping value for rms/mean calculations
         box: tuple of (box_size, box_step) for calculating map
-        rms_box2 = large-scale box size
         interp: order of interpolating spline used to interpolate
                 calculated map
         do_adapt: use adaptive binning
+        bright_pt_coords: coordinates of bright sources, used with do_adapt
+                to weight the maps towards the small-scale values
+        rms_box2: tuple of (box_size, box_step) for calculating the
+                large-scale map, used with do_adapt
+        logname: prefix of the logger name
+        ncores: number of cores to use
+        cache: optional dict passed to rms_mean_map() to reuse maps computed
+                for the same (box, kappa); must only be shared between calls
+                with the same arr and mask
         """
-        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask, kappa, box, ncores)
+        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask, kappa, box, ncores, cache=cache)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)][-1::-1]
         if do_adapt:
             out_rms2 = np.zeros(rms_map1.shape, dtype=np.float32)
             out_mean2 = np.zeros(rms_map1.shape, dtype=np.float32)
             # Generate rms/mean maps on large scale
             box2 = rms_box2
-            axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores)
+            axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores, cache=cache)
 
             # Interpolate to get maps on small scale grid
             axes2mod = axes2[:]
@@ -704,14 +713,20 @@ class Op_rmsimage(Op):
             out_mean[pix_masked] = np.nan
             out_rms[pix_masked] = np.nan
 
-    def rms_mean_map(self, arr, mask=False, kappa=3, box=None, ncores=None):
+    def rms_mean_map(self, arr, mask=False, kappa=3, box=None, ncores=None,
+                 cache=None):
         """Calculate map of the mean/rms values
 
         Parameters:
         arr:  2D array with data
         mask: mask
         kappa: clipping for calculating rms/mean within each box
-        box: box parameters (box_size, box_step)
+        box: box parameters (box_size, box_step); if None, (50, 25) is used
+        ncores: number of cores to use
+        cache: optional dict used to store and reuse results, keyed by
+               (box, kappa). A given cache must only be shared between calls
+               that use the same arr and mask. The returned arrays are
+               shared with the cache and must not be modified in place.
 
         Returns:
         axes: list of 2 arrays with coordinates of boxes alongside each axis
@@ -747,9 +762,19 @@ class Op_rmsimage(Op):
         rms_map[0,0] is extrapolated as .5*(rms_map[0,1] + rms_map[1,0])
         rms_map[0,1] is extrapolated as rms_map[1,1]
         """
-        mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
         if box is None:
             box = (50, 25)
+        if cache is None:
+            return self._calculate_rms_mean_map(arr, mask, kappa, box, ncores)
+        key = (tuple(box), kappa)
+        if key not in cache:
+            cache[key] = self._calculate_rms_mean_map(arr, mask, kappa, box, ncores)
+        return cache[key]
+
+
+    def _calculate_rms_mean_map(self, arr, mask, kappa, box, ncores):
+        """Compute the mean/rms maps; see rms_mean_map() for details."""
+        mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
         if box[0] < box[1]:
             raise RuntimeError('Box size is less than step size.')
 
