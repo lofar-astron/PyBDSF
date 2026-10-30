@@ -1,8 +1,0 @@
-      SUBROUTINE DALLOC(N)
-C
-      CALL I0TK01
-      CALL ISTKRL(N)
-C
-      RETURN
-C
-      END
