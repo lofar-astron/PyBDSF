@@ -118,11 +118,6 @@ class Op_psf_vary(Op):
                     tr = [n for n in tr_gauls if n[1]/n[8]>snrcut]
                 g_gauls = self.trans_gaul(tr)
 
-                # computes statistics of fitted sizes. Same as psfvary_fullstat.f in fBDSM.
-                #bmaj_a, bmaj_r, bmaj_ca, bmaj_cr, ni = func.bstat(bmaj, None, nsig)
-                #bmin_a, bmin_r, bmin_ca, bmin_cr, ni = func.bstat(bmin, None, nsig)
-                #bpa_a, bpa_r, bpa_ca, bpa_cr, ni = func.bstat(bpa, None, nsig)
-
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
                 flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
                 if N.sum(flag_unresolved) == 0:
