@@ -56,4 +56,4 @@ jobs:
 
     - name: Test PyBDSF
       run: |
-        cd test && python tbdsf_process_image.py
+        cd test && python tmulti_proc.py && python tbdsf_process_image.py
