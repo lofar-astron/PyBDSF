@@ -7,9 +7,9 @@ parameters for PyBDSF.
 import numpy as N
 from .image import *
 from math import pi, sqrt, log
-from . import const
 from . import functions as func
 from . import mylogger
+from astropy.wcs import InvalidCoordinateError
 
 
 class Op_preprocess(Op):
@@ -159,26 +159,60 @@ class Op_preprocess(Op):
         img.completed_Ops.append('preprocess')
         return img
 
-    def outside_univ(self,img):
+
+    def outside_univ(self, img):
         """ Checks if a pixel is outside the universe and is not blanked,
         and blanks it. (fits files written by CASA dont do this).  """
 
         noutside = 0
-        n, m = img.ch0_arr.shape
-        for i in range(n):
-            for j in range(m):
+        ch0 = img.ch0_arr
+        nx, ny = ch0.shape
+
+        for i in range(nx):
+            for j in range(ny):
+                pix_xy = N.array([i, j], dtype=N.float64)
                 out = False
-                err = ''
-                pix1 = (i,j)
+
                 try:
-                    skyc = img.pix2sky(pix1)
-                    pix2 = img.sky2pix(skyc)
-                    if abs(pix1[0]-pix2[0]) > 0.5 or abs(pix1[1]-pix2[1]) > 0.5: out=True
-                except RuntimeError as err:
-                    pass
-                if out or ("8" in str(err)):
+                    skyc = N.asarray(
+                        img.pix2sky(pix_xy), dtype=N.float64
+                    ).reshape(-1)
+
+                    if skyc.size != 2:
+                        raise ValueError(
+                            "pix2sky must return exactly two coordinates."
+                        )
+
+                    # WCS transformations may return NaN or Inf instead of
+                    # raising an exception for coordinates outside the domain
+                    if not N.all(N.isfinite(skyc)):
+                        out = True
+                    else:
+                        pix2 = N.asarray(
+                            img.sky2pix(skyc), dtype=N.float64
+                        ).reshape(-1)
+
+                        if pix2.size != 2:
+                            raise ValueError(
+                                "sky2pix must return exactly two coordinates."
+                            )
+
+                        if not N.all(N.isfinite(pix2)):
+                            out = True
+                        else:
+                            # Check whether the round-trip transformation
+                            # recovers the original coordinates within 0.5 pixel
+                            out = bool(N.any(N.abs(pix_xy - pix2) > 0.5))
+
+                except InvalidCoordinateError:
+                    # Astropy explicitly reports an invalid WCS coordinate
+                    out = True
+
+                if out:
                     noutside += 1
-                    ch0 = img.ch0_arr
-                    ch0[pix1] = float("NaN")
-                    img.ch0_arr = ch0
+                    ch0[i, j] = N.nan
+
+        # Store the modified image array
+        img.ch0_arr = ch0
+
         return noutside

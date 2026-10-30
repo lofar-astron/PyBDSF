@@ -348,13 +348,16 @@ class Op_gaul2srl(Op):
         x_ax, y_ax = N.indices(data.shape)
 
         if N.sum(~rmask) >=6:
-            para, ierr = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
+            para, _ = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
             if (0.0<para[1]<s_imsize[0]) and (0.0<para[2]<s_imsize[1]) and \
               para[3]<s_imsize[0] and para[4]<s_imsize[1]:
                 maxpeak = para[0]
+                posn = para[1:3] + blc + delc
             else:
+                # Fit rejected: take both the peak and its position from the
+                # maximum of the model
                 maxpeak = maxv
-            posn = para[1:3] + blc + delc
+                posn = N.array([maxx, maxy]) + N.array(delc)
         else:
             maxpeak = maxv
             posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
@@ -456,10 +459,14 @@ class Op_gaul2srl(Op):
         # Estimate uncertainties in source size and position due to
         # errors in the constituent Gaussians using a Monte Carlo technique.
         # Sum with Condon (1997) errors in quadrature.
-        plist = mompara.tolist()+[tot]
+        plist = mompara.tolist() + [tot]
         plist[0] = s_peak
         plist[3] /= fwsig
         plist[4] /= fwsig
+        # mompara[5] is a position angle (from +y), but get_errors expects the
+        # fit-parameter convention (angle from the x axis) and converts it
+        # with corrected_size(), which subtracts 90 deg. Convert back here.
+        plist[5] += 90.0
         errors = func.get_errors(img, plist, isl.rms)
 
         if img.opts.do_mc_errors:

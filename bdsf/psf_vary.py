@@ -131,6 +131,10 @@ class Op_psf_vary(Op):
 
                 # see how much the SNR-weighted sizes of unresolved sources differ from the synthesized beam.
                 wtsize_beam_snr = self.av_psf(g_gauls, img.beam, flag_unresolved)
+                mylogger.userinfo(mylog, 'Weighted size difference from beam (maj, min, pa)', 
+                  '(%.2f, %.2f, %.2f) sigma' % (wtsize_beam_snr[0], 
+                                                wtsize_beam_snr[1], 
+                                                wtsize_beam_snr[2]))
 
                 # filter out resolved sources
                 tr_gaul = self.trans_gaul(g_gauls)
