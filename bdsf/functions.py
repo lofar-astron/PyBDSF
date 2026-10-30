@@ -1801,8 +1801,9 @@ def bstat(indata, mask, kappa_npixbeam):
         else:
             npixbeam = abs(kappa_npixbeam)
             kappa = numpy.sqrt(2.0)*erfcinv(1.0 / (2.0*npix/npixbeam))
-            if kappa < 3.0:
-                kappa = 3.0
+            # https://github.com/lofar-astron/PyBDSF/pull/523
+            # Floor at 3.0, replacing NaN; argument order to max() matters!
+            kappa = max(3.0, kappa)
         lastct = ct
         medval = skpix[npix//2]
         if iter == 0:
