@@ -10,9 +10,7 @@ if has_pl:
     from matplotlib import collections
 from . import functions as func
 from .const import fwsig
-import warnings
 import numpy as N
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,
