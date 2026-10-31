@@ -341,8 +341,11 @@ class Op_gausfit(Op):
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
 
-        thr1 = isl.mean + opts.thresh_isl*isl.rms
-        thr0 = thr1
+        # fit_image has isl.islmean subtracted, so fitting thresholds must
+        # be expressed in residual-image units as well.
+        thr_fit = opts.thresh_isl * isl.rms
+        # flag_minsnr is defined relative to thresh_pix and the island RMS.
+        thr_flag = opts.flag_minsnr * img.thresh_pix * isl.rms
         g3_only = opts.fix_to_beam
         peak = fcn.find_peak()[0]
         dof = isl.size_active
@@ -358,14 +361,14 @@ class Op_gausfit(Op):
         if ini_gausfit == 'simple' and ngmax is None:
             ngmax = 25
         if ini_gausfit == 'default' or opts.fix_to_beam:
-            gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr0, beam, img)
+            gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr_fit, beam, img)
             if len(gaul) > 25:
                 ini_gausfit = 'simple'
                 gaul = []
                 ng1 = 0
                 ngmax = 25
         if ini_gausfit == 'nobeam' and not opts.fix_to_beam:
-            gaul = self.inigaus_nobeam(isl, thr0, beam, img)
+            gaul = self.inigaus_nobeam(isl, thr_fit, beam, img)
             ng1 = len(gaul)
             ngmax = ng1+2
         if verbose:
@@ -374,11 +377,11 @@ class Op_gausfit(Op):
             iter += 1
             if verbose:
                 print('In Gaussian flag loop, iter =', iter)
-            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, ini_gausfit, ngmax, verbose, g3_only)
+            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, ini_gausfit, ngmax, verbose, g3_only)
             if verbose:
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                              beam, thr0, peak, shape, isl.mask_active,
+                                              beam, thr_flag, peak, shape, isl.mask_active,
                                               fit_image, fitok)
             if verbose:
                 print('Leaving flag_gaussians')
@@ -396,9 +399,9 @@ class Op_gausfit(Op):
             ngmax = 25
             while iter < 15:
                 iter += 1
-                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                  beam, thr0, peak, shape, isl.mask_active,
+                                                  beam, thr_flag, peak, shape, isl.mask_active,
                                                   fit_image, fitok)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
@@ -422,9 +425,9 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                      beam, thr0, peak, shape, sm_isl,
+                                                      beam, thr_flag, peak, shape, sm_isl,
                                                       fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
@@ -446,9 +449,9 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                      beam, thr0, peak, shape, lg_isl,
+                                                      beam, thr_flag, peak, shape, lg_isl,
                                                       fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
@@ -476,7 +479,7 @@ class Op_gausfit(Op):
                     par[3] /= fwsig
                     par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians([par], opts,
-                                                      beam, thr0, peak, shape, isl.mask_active,
+                                                      beam, thr_flag, peak, shape, isl.mask_active,
                                                       fit_image, fitok)
             except ValueError:
                 pass
@@ -509,7 +512,8 @@ class Op_gausfit(Op):
             opts = img.opts
         thresh_isl = opts.thresh_isl
         thresh = opts.fittedimage_clip
-        thr = isl.mean + thresh_isl * isl.rms
+        # Residual peak_val is measured after subtracting isl.islmean.
+        thr = thresh_isl * isl.rms
 
         if opts.verbose_fitting:
             print('Iteratively fitting island ', isl.island_id)
@@ -593,7 +597,7 @@ class Op_gausfit(Op):
                 # looking for more of them.
                 break
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
-            if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
+            if stdnew > isl.rms and maxv >= thr and maxv >= 2.0*isl.rms:
                 domore = True
                 x1, y1 = N.array(iniposn).transpose()
                 dumr = N.sqrt((maxp[0]-x1)*(maxp[0]-x1)+(maxp[1]-y1)*(maxp[1]-y1))
@@ -826,7 +830,7 @@ class Op_gausfit(Op):
         gaul: input list of gaussians
         opts: Opts object to extract flagging parameters from
         beam: beam shape
-        thr: threshold for pixels with signal
+        thr: absolute peak-amplitude cutoff for flag_minsnr
         peak: peak data value in the current island
         shape: shape of the current island
         isl_mask: island mask
@@ -885,7 +889,7 @@ class Op_gausfit(Op):
         x1ok = True
         x2ok = True
         flagmax = False
-        if A < opts.flag_minsnr*thr:
+        if A < thr:
             flag += 1
         if A > opts.flag_maxsnr*peak:
             flag += 2
