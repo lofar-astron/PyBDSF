@@ -21,6 +21,8 @@ import tempfile
 import time
 import os
 from types import MethodType
+from astropy.wcs import WCS, FITSFixedWarning
+import warnings
 
 
 class Op_readimage(Op):
@@ -144,26 +146,13 @@ class Op_readimage(Op):
     def init_wcs(self, img):
         """Initialize wcs pixel <=> sky conversion routines.
         """
-        from math import pi
-        import warnings
 
         hdr = img.header
-
-        try:
-            from astropy.wcs import WCS
-            from astropy.wcs import FITSFixedWarning
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore",category=DeprecationWarning)
-                warnings.filterwarnings("ignore",category=FITSFixedWarning)
-                t = WCS(hdr)
-                t.wcs.fix()
-        except ImportError as err:
-            import warnings
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore",category=DeprecationWarning)
-                from pywcs import WCS
-                t = WCS(hdr)
-                t.wcs.fix()
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings("ignore", category=FITSFixedWarning)
+            t = WCS(hdr)
+            t.wcs.fix()
 
         acdelt = [abs(hdr['cdelt1']), abs(hdr['cdelt2'])]
 
@@ -247,7 +236,6 @@ class Op_readimage(Op):
                 if s1 == 0.0 and s2 == 0.0:
                     return (0.0, 0.0, 0.0)
 
-                th_rad = th / 180.0 * N.pi
                 bmaj = self.pixdist2angdist(img, s1, th, location=location)
                 bmin = self.pixdist2angdist(img, s2, th + 90.0, location=location)
                 bpa = th
@@ -362,10 +350,10 @@ class Op_readimage(Op):
                         hstr = h
                     if N.all(['BMAJ' in hstr, 'BMIN' in hstr, 'BPA' in hstr, 'CLEAN' in hstr]):
                         try:
-                            dum, dum, dum, bmaj, dum, bmin, dum, bpa = hstr.split()
+                            _, _, _, bmaj, _, bmin, _, bpa = hstr.split()
                         except ValueError:
                             try:
-                                dum, dum, bmaj, dum, bmin, dum, bpa, dum, dum = hstr.split()
+                                _, _, bmaj, _, bmin, _, bpa, _, _ = hstr.split()
                             except ValueError:
                                 break
                         beam = (float(bmaj), float(bmin), float(bpa))
@@ -434,19 +422,13 @@ class Op_readimage(Op):
                     spec_list = [0] * self.naxis
                     spec_list[spec_indx] = spec_pix
                     spec_pix_arr = N.array([spec_list])
-                    if hasattr(self, 'wcs_pix2world'):
-                        freq = self.wcs_pix2world(spec_pix_arr, 0)
-                    else:
-                        freq = self.wcs_pix2sky(spec_pix_arr, 0)
+                    freq = self.all_pix2world(spec_pix_arr, 0)
                     return freq.tolist()[0][spec_indx]
                 def f2p(self, freq):
                     freq_list = [0] * self.naxis
                     freq_list[spec_indx] = freq
                     freq_arr = N.array([freq_list])
-                    if hasattr(self, 'wcs_world2pix'):
-                        pix = self.wcs_world2pix(freq_arr, 0)
-                    else:
-                        pix = self.wcs_sky2pix(freq_arr, 0)
+                    pix = self.all_world2pix(freq_arr, 0)
                     return pix.tolist()[0][spec_indx]
 
                 img.wcs_obj.p2f = MethodType(p2f, img.wcs_obj)
