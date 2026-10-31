@@ -576,7 +576,8 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = thr
         mask = isl.mask_active
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
+        beam_clean = (beam[0], beam[1], beam[2] - 90.0)   # mclean() adds 90°
+        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam_clean, im_pos=im_pos)
         if len(inipeak) == 0:
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im, mask)
             inipeak = [maxv]
@@ -603,7 +604,7 @@ class Op_gausfit(Op):
                 if domore:
                     iniposn.append(N.array(maxp))
                     inipeak.append(maxv)
-                    im1 = func.mclean(im1, maxp, beam)
+                    im1 = func.mclean(im1, maxp, beam_clean)
 
         inipeak = N.array(inipeak)
         iniposn = N.array(iniposn)
