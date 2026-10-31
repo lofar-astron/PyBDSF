@@ -24,6 +24,32 @@ import itertools
 import sys
 
 
+def _update_subisland_fit_stats(island, active_pixels, mean_map, rms_map):
+    """Refresh fit statistics after assigning a split island mask."""
+    active_pixels = N.asarray(active_pixels, dtype=bool)
+    mean_map = N.asarray(mean_map)
+    rms_map = N.asarray(rms_map)
+
+    if active_pixels.shape != island.image.shape:
+        raise ValueError("Subisland mask shape does not match island image")
+    if mean_map.shape != island.image.shape or rms_map.shape != island.image.shape:
+        raise ValueError("Background map shape does not match island image")
+    if not N.any(active_pixels):
+        raise ValueError("A split sub-island must contain active pixels")
+
+    valid = active_pixels & N.isfinite(mean_map) & N.isfinite(rms_map)
+    if not N.any(valid):
+        raise ValueError("Sub-island has no finite mean/RMS map values")
+
+    island.mask_active = ~active_pixels
+    island.mask_noisy = island.mask_active.copy()
+    island.size_active = int(N.count_nonzero(active_pixels))
+    island.max_value = float(N.nanmax(island.image[active_pixels]))
+    island.mean = float(N.mean(mean_map[valid]))
+    island.rms = float(N.mean(rms_map[valid]))
+    island.islmean = island.mean
+
+
 class Op_gausfit(Op):
     """Fit a number of 2D gaussians to each island.
 
@@ -132,6 +158,10 @@ class Op_gausfit(Op):
         img_simple.clipped_mean = img.clipped_mean
         img_simple.beam2pix = img.beam2pix
         img_simple.beam = img.beam
+        # Workers use fork, so these map references are shared read only while
+        # allowing split islands to calculate their own local fit statistics.
+        img_simple.mean_arr = img.mean_arr
+        img_simple.rms_arr = img.rms_arr
 
         # Use a cheap heuristic weight so heavy islands are spread more evenly
         # across workers without needing a precise runtime model.
@@ -276,9 +306,11 @@ class Op_gausfit(Op):
                     print('SPLITTING ISLAND INTO ', n_subisl, ' PARTS FOR ISLAND ', isl.island_id)
                 for i_sub in range(n_subisl):
                     islcp = isl.copy(img.pixel_beamarea())
-                    islcp.mask_active = (sub_labels != i_sub+1)
-                    islcp.mask_noisy = (sub_labels != i_sub+1)
-                    size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea()*2.0
+                    active_pixels = sub_labels == i_sub+1
+                    mean_map = img.mean_arr[tuple(islcp.bbox)]
+                    rms_map = img.rms_arr[tuple(islcp.bbox)]
+                    _update_subisland_fit_stats(islcp, active_pixels, mean_map, rms_map)
+                    size_subisl = islcp.size_active/img.pixel_beamarea()*2.0
                     if opts.peak_fit and size_subisl > peak_size:
                         sgaul, sfgaul = self.fit_island_iteratively(img, islcp, iter_ngmax=iter_ngmax, opts=opts)
                     else:
