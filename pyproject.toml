@@ -79,6 +79,7 @@ build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.91.0" \
     BOOST_BUILD_DIR="/tmp/boost-build" \
+    BOOST_DOWNLOAD_CACHE="${HOME}/.cache/pybdsf/downloads" \
     BOOST_INSTALL_DIR="${HOME}/boost" \
     BOOST_ROOT="${BOOST_INSTALL_DIR}" \
     CC=gcc \
@@ -97,6 +98,10 @@ repair-wheel-command = """\
 
 [tool.cibuildwheel.linux]
 skip = ["*-musllinux_*", "*_i686"]
+inherit.environment = "append"
+environment = """ \
+    BOOST_DOWNLOAD_CACHE="/host${HOME}/.cache/pybdsf/downloads" \
+"""
 
 
 ###########################

@@ -8,7 +8,6 @@ probability is first calculated, and if the number of false source
 pixels is more than fdr_ratio times the estimated number of true source
 pixels, then FDR is chosen, else the hard threshold option is chosen.
 """
-from __future__ import absolute_import
 
 import numpy as N
 from .image import Op
@@ -128,7 +127,6 @@ class Op_threshold(Op):
         s1 = scflux[index]; s2 = scflux[-1]
         alpha = 1.0-log(n1/n2)/log(s1/s2)
         A = (alpha-1.0)*n1/(s1**(1.0-alpha))
-        source_p = x*A*((cutoff*img.clipped_rms)**(1.0-alpha)) \
-                     /((1.0-alpha)*(1.0-alpha))
+        source_p = x*A*(smin_L**(1.0-alpha)) / ((1.0-alpha)*(1.0-alpha))
 
         return source_p

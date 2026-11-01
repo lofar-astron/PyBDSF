@@ -433,12 +433,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     if os.path.exists(filename) and not clobber:
         return None
     mylog.info('Writing ' + filename)
-    try:
-        tbhdu.writeto(filename, overwrite=True)
-    except TypeError:
-        # The "overwrite" argument was added in astropy v1.3, so fall back to "clobber"
-        # if it doesn't work
-        tbhdu.writeto(filename, clobber=True)
+    tbhdu.writeto(filename, overwrite=True)
     return filename
 
 
@@ -477,7 +472,6 @@ def write_kvis_ann(img, filename=None, sort_by='indx',
 
 def write_star(img, filename=None, sort_by='indx',
                clobber=False):
-    from .output import ra2hhmmss, dec2ddmmss
     from . import mylogger
     import os
 
@@ -517,8 +511,6 @@ def write_star(img, filename=None, sort_by='indx',
 def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
                  incl_empty=False, correct_proj=True):
     """Makes a list of string entries for a BBS sky model."""
-    from .output import ra2hhmmss
-    from .output import dec2ddmmss
     import numpy as N
 
     outstr_list = []
@@ -607,8 +599,6 @@ def make_bbs_str(img, glist, gnames, patchnames, objtype='gaul',
 
 def make_lsm_str(img, glist, gnames, incl_empty=False):
     """Makes a list of string entries for a SAGECAL sky model."""
-    from .output import ra2hhmmss
-    from .output import dec2ddmmss
     import numpy as N
     from ._version import __version__
 

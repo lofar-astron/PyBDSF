@@ -3,14 +3,15 @@
 # This script should be called by `cibuildwheel` in the `before-all` stage.
 #
 # This script will download and untar the Boost C++ source files.
-# `${BOOST_VERSION}` should be set as `x.y.z`; the untarred sources can be
-# found in the directory `${BOOST_BUILD_DIR}/boost`.
-# Both environment variables must have been set.
+# `${BOOST_VERSION}` should be set as `x.y.z`. Downloaded tar-balls are cached
+# in the directory `${BOOST_DOWNLOAD_CACHE}`. The untarred sources can be found
+# in the directory `${BOOST_BUILD_DIR}/boost`. All three environment variables
+# must have been set.
 
-# Download and untar the Boost C++ source files
-# Rename the source directory to `boost`
-function download_and_untar_boost
-{
+# Download and untar the Boost C++ source files. Download is skipped if the
+# archive already exists in `${BOOST_DOWNLOAD_CACHE}`. The untarred sources
+# can be found in the directory `${BOOST_BUILD_DIR}/boost`.
+function download_and_untar_boost {
   major=$(echo "${BOOST_VERSION}" | cut -d. -f1)
   minor=$(echo "${BOOST_VERSION}" | cut -d. -f2)
   patch=$(echo "${BOOST_VERSION}" | cut -d. -f3)
@@ -23,10 +24,19 @@ function download_and_untar_boost
 
   url="${site}/${directory}/${file}"
 
+  mkdir -p "${BOOST_DOWNLOAD_CACHE}"
+  archive="${BOOST_DOWNLOAD_CACHE}/${file}"
+
+  if [[ ! -f "${archive}" ]]; then
+    curl --fail --location --retry 3 \
+      --output "${archive}.part" "${url}"
+    mv "${archive}.part" "${archive}"
+  fi
+
   rm -rf "${BOOST_BUILD_DIR}"
   mkdir -p "${BOOST_BUILD_DIR}"
   cd "${BOOST_BUILD_DIR}"
-  curl -L -o - "${url}" | tar -xjf -
+  tar -xjf "${archive}"
   mv "${long_name}" "${name}"
 }
 
