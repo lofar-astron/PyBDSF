@@ -53,7 +53,7 @@ def fit_shapeletbasis(image, mask, cf0, Bset):
         # Not enough degrees of freedom
         cf = cf0
     else:
-        (cf, flag)=leastsq(res, cf0.flatten(), args=(image, Bset, cfshape, ma))
+        (cf, _)=leastsq(res, cf0.flatten(), args=(image, Bset, cfshape, ma))
         cf = cf.reshape(cfshape)
 
     return cf
@@ -64,7 +64,7 @@ def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
     rimage = N.zeros(size, dtype=N.float32)
     hc = shapelet_coeff(nmax, basis)
 
-    index = [(i,j) for i in range(nmax) for j in range(nmax-i)]
+    index = [(i, j) for i in range(nmax + 1) for j in range(nmax + 1 - i)]
     for coord in index:
         B = shapelet_image(basis, beta, centre, hc, coord[0], coord[1], size)
         rimage += B*cf[coord]
