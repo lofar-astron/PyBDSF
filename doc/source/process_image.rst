@@ -672,6 +672,7 @@ The options for flagging of Gaussians are:
                                    smaller than flag_minsize_bm times beam area
       :term:`flag_minsnr` .......... 0.9 : Flag Gaussian if peak is less than flag_minsnr
                                    times thresh_pix times local rms
+      :term:`flag_nofit` .......... True : Flag Gaussian if normal fitting failed
       :term:`flag_smallsrc` ...... False : Flag sources smaller than flag_minsize_bm times
                                    beam area
 
@@ -701,13 +702,19 @@ The options for flagging of Gaussians are:
         by 2.
 
     flag_minsize_bm
-        This parameter is a float (default is 0.7). If ``flag_smallsrc`` is True, then any fitted Gaussian whose size is less
+        This parameter is a float (default is 0.7). If ``flag_smallsrc`` is ``True``\, then any fitted Gaussian whose size is less
         than ``flag_maxsize_bm`` times the synthesized beam is flagged. The Gaussian
         flag is increased by 128.
 
     flag_minsnr
         This parameter is a float (default is 0.7). Any fitted Gaussian whose peak is less than ``flag_minsnr`` times ``thresh_pix``
         times the local rms is flagged. The flag value is increased by 1.
+
+    flag_nofit
+        This parameter is a Boolean (default is ``True``). If ``True``\, then Gaussians for which
+        normal fitting failed are flagged. This flag can be used to exclude Gaussians determined
+        by means other than normal fitting (i.e., through moment analysis; see
+        :ref:`gaussian_fitting` for details). The flag value is increased by 512.
 
     flag_smallsrc
         This parameter is a Boolean (default is ``False``). If ``True``\, then fitted Gaussians whose size is less than ``flag_minsize_bm``

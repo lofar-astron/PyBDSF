@@ -288,15 +288,7 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
                     return [0, 0], [0, 0]
 
         res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
-        try:
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
-        except TypeError:
-            # This error means no warning argument is available, so redirect stdout to a null device
-            # to suppress printing of (unnecessary) warning messages
-            original_stdout = sys.stdout  # keep a reference to STDOUT
-            sys.stdout = NullDevice()  # redirect the real STDOUT
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
-            sys.stdout = original_stdout  # turn STDOUT back on
+        (p, cov, info, _, _) = leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
 
         if do_err:
             if cov is not None:
@@ -457,16 +449,7 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
         errorfunction = lambda p: N.ravel(gaus_2d(p, x, y) - data)[g_ind]
     else:
         errorfunction = lambda p: N.ravel((gaus_2d(p, x, y) - data)/err)[g_ind]
-    try:
-        p, success = leastsq(errorfunction, p_ini, warning=False)
-    except TypeError:
-        # This error means no warning argument is available, so redirect stdout to a null device
-        # to suppress printing of warning messages
-        original_stdout = sys.stdout  # keep a reference to STDOUT
-        sys.stdout = NullDevice()  # redirect the real STDOUT
-        p, success = leastsq(errorfunction, p_ini)
-        sys.stdout = original_stdout  # turn STDOUT back on
-
+    p, success = leastsq(errorfunction, p_ini)
 
     return p, success
 
@@ -527,10 +510,7 @@ def deconv2(gaus_bm, gaus_c):
         # sign of the rounding noise.
         bmaj = sqrt(0.5*(s+t))
         bmin = sqrt(0.5*(s-t))
-        if abs(gamma) + abs(alpha-beta) == 0.0:
-            bpa = 0.0
-        else:
-            bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
+        bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         ifail = 0
     return (bmaj, bmin, bpa), ifail
 
@@ -599,8 +579,11 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
                 e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
 
                 # The following error is calculated using Eq. 30 of Condon+ (1998)
-                e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
-                e_pa = e_pa * 180.0/pi
+                # The position angle is undefined for a circular Gaussian.
+                if abs(d2) < 1e-12:
+                    e_pa = N.nan
+                else:
+                    e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25)) * 180.0 / pi
 
                 # The following error is calculated using Eq. 36 of Condon+ (1998)
                 e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
@@ -727,12 +710,12 @@ def arrstatmask(im, mask):
 
     ind = N.where(~mask)
     im1 = im[ind]
-    av = N.mean(im1)
-    std = N.std(im1)
-    maxv = N.max(im1)
+    av = N.nanmean(im1)
+    std = N.nanstd(im1)
+    maxv = N.nanmax(im1)
     x, y = N.where(im == maxv)
     xmax = x[0]; ymax = y[0]
-    minv = N.min(im1)
+    minv = N.nanmin(im1)
     x, y = N.where(im == minv)
     xmin = x[0]; ymin = y[0]
 
@@ -752,8 +735,14 @@ def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     iniposn = []
     inipeak = []
     for c in ind:
-        goodlist = [im_pos[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
-                     if i>=0 and i<n and j>=0 and j<m and (i,j) != c]
+        goodlist = [
+            im_pos[i, j]
+            for i in range(c[0] - 1, c[0] + 2)
+            for j in range(c[1] - 1, c[1] + 2)
+            if 0 <= i < n and 0 <= j < m
+            and (i, j) != c
+            and not mask[i, j]
+        ]
         peak = N.sum(im_pos[c] > goodlist) == len(goodlist)
         if peak:
             iniposn.append(c)
@@ -1536,7 +1525,7 @@ def isl_tosplit(isl, opts):
         if max_sub3 < frac_bigisl3 : open3 = True       # if biggest sub island isnt too big
     if n_subisl5 > 0 and isl_pixs5 is not None:                                 # open 5 breaks up island
         max_sub5 = N.max(isl_pixs5)                     # if biggest subisl isnt too big OR smallest extra islands add upto 10 %
-        if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:len(isl_pixs5)-n_subisl3]) > size_extra5):
+        if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:max(len(isl_pixs5)-n_subisl3, 0)]) > size_extra5):
             open5 = True
                                 # index=0 => dont split
     if open5: index = 5; n_subisl = n_subisl5; labels = labels5
@@ -1615,7 +1604,7 @@ def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
     """Makes a mask (1 = inside aperture) for a circular aperture"""
     import numpy
 
-    x, y = numpy.mgrid[0.5:xsize, 0.5:ysize]
+    x, y = numpy.mgrid[0:xsize, 0:ysize]
     mask = ((x - xcenter)**2 + (y - ycenter)**2 <= radius**2) * 1
     return mask
 

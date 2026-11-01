@@ -83,7 +83,7 @@ multichan_opts                          False
 ncores                                  2
 opdir_overwrite                         'overwrite'
 outdir                                  None
-    Value used                          '/home/rafferty/Code/Radio/LOFAR/PyBDSF/test'
+    Value used                          '/home/akurek/PyBDSF/test'
 outfile                                 None
 output_all                              True
 output_opts                             False
@@ -121,6 +121,7 @@ psf_tess_sc                             's'
 psf_use_shap                            False
 psf_vary_do                             True
 quiet                                   False
+residual_stats_do                       False
 rm_do                                   False
 rms_box                                 None
     Value used                          (41, 13)
@@ -164,4 +165,5 @@ thresh                                  None
 thresh_isl                              3.0
 thresh_pix                              5.0
 trim_box                                None
+use_scipy_fft                           True
 verbose_fitting                         False

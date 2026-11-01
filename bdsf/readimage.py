@@ -16,11 +16,11 @@ import numpy as N
 from .image import *
 from . import functions as func
 from . import mylogger
-import sys
 import shutil
 import tempfile
 import time
 import os
+from types import MethodType
 
 
 class Op_readimage(Op):
@@ -281,22 +281,8 @@ class Op_readimage(Op):
                 s2 = abs(y * cdelt2)
             return (s1, s2)
 
-        if hasattr(t, 'wcs_pix2world'):
-            instancemethod = type(t.wcs_pix2world)
-        else:
-            instancemethod = type(t.wcs_pix2sky)
-        if sys.version_info[0] > 2:
-            t.p2s = instancemethod(p2s, t)
-        else:
-            t.p2s = instancemethod(p2s, t, WCS)
-        if hasattr(t, 'wcs_world2pix'):
-            instancemethod = type(t.wcs_world2pix)
-        else:
-            instancemethod = type(t.wcs_sky2pix)
-        if sys.version_info[0] > 2:
-            t.s2p = instancemethod(s2p, t)
-        else:
-            t.s2p = instancemethod(s2p, t, WCS)
+        t.p2s = MethodType(p2s, t)
+        t.s2p = MethodType(s2p, t)
 
         img.wcs_obj = t
         img.wcs_obj.acdelt = acdelt
@@ -412,13 +398,6 @@ class Op_readimage(Op):
         If the input frequency info (in the WCS) is not in Hz, it is
         converted.
         """
-        try:
-            from astropy.wcs import WCS
-        except ImportError as err:
-            import warnings
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                from pywcs import WCS
 
         mylog = mylogger.logging.getLogger("PyBDSF.InitFreq")
         if img.opts.frequency_sp is not None and img.image_arr.shape[1] > 1:
@@ -469,22 +448,9 @@ class Op_readimage(Op):
                     else:
                         pix = self.wcs_sky2pix(freq_arr, 0)
                     return pix.tolist()[0][spec_indx]
-                if hasattr(img.wcs_obj, 'wcs_pix2world'):
-                    instancemethod = type(img.wcs_obj.wcs_pix2world)
-                else:
-                    instancemethod = type(img.wcs_obj.wcs_pix2sky)
-                if sys.version_info[0] > 2:
-                    img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj)
-                else:
-                    img.wcs_obj.p2f = instancemethod(p2f, img.wcs_obj, WCS)
-                if hasattr(img.wcs_obj, 'wcs_world2pix'):
-                    instancemethod = type(img.wcs_obj.wcs_world2pix)
-                else:
-                    instancemethod = type(img.wcs_obj.wcs_sky2pix)
-                if sys.version_info[0] > 2:
-                    img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj)
-                else:
-                    img.wcs_obj.f2p = instancemethod(f2p, img.wcs_obj, WCS)
+
+                img.wcs_obj.p2f = MethodType(p2f, img.wcs_obj)
+                img.wcs_obj.f2p = MethodType(f2p, img.wcs_obj)
 
                 if img.opts.frequency is not None:
                     img.frequency = img.opts.frequency
