@@ -149,7 +149,6 @@ class Op_readimage(Op):
 
         hdr = img.header
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
             warnings.filterwarnings("ignore", category=FITSFixedWarning)
             t = WCS(hdr)
             t.wcs.fix()
