@@ -238,6 +238,8 @@ class Op_wavelet_atrous(Op):
                                                 gcp.gaus_num = gaus_id
                                                 gcp.wisland_id = g.island_id
                                                 gcp.jlevel = j
+                                                gcp.wave_rms = g.rms
+                                                gcp.wave_mean = g.mean
                                                 g.valid = True
                                                 isl.gaul.append(gcp)
                                                 isl.ngaus += 1
@@ -515,10 +517,11 @@ def copy_gaussians(img, isl1, isl2):
         gcp.gaus_num = gaus_id
         gcp.jlevel = g.jlevel
         if g.jlevel > 0:
-            # Preserve the wavelet rms and mean values if the isl2 Gaussian was fit to
-            # a wavelet image
-            gcp.wave_rms = g.rms
-            gcp.wave_mean = g.mean
+            # Preserve the original wavelet rms and mean values.
+            # A Gaussian may have already been copied to the original image,
+            # where g.rms and g.mean refer to the original image statistics.
+            gcp.wave_rms = getattr(g, 'wave_rms', g.rms)
+            gcp.wave_mean = getattr(g, 'wave_mean', g.mean)
         else:
             gcp.wave_rms = 0.0
             gcp.wave_mean = 0.0
