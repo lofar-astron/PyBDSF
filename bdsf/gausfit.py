@@ -586,11 +586,10 @@ class Op_gausfit(Op):
         domore = True
         while domore:
             domore = False
-            if nmulsrc1 > 25:
-                # fit_island() discards the whole result when more than 25 maxima are
-                # found (it falls back to the 'simple' method), and iniposn never
-                # shrinks (its length is stored in nmulsrc1), so there is no point in
-                # looking for more of them.
+            # fit_island() discards the whole result when more than 25 maxima are found (it falls back to the 'simple' method),
+            # and iniposn never shrinks, so there is no point in looking for more of them.
+            # So limit the total number of initial Gaussians, including those added during the CLEAN-like iterations.
+            if len(inipeak) >= 25:
                 break
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
             if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
