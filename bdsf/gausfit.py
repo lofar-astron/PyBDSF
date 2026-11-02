@@ -26,20 +26,8 @@ import sys
 
 def _update_subisland_fit_stats(island, active_pixels, mean_map, rms_map):
     """Refresh fit statistics after assigning a split island mask."""
-    active_pixels = N.asarray(active_pixels, dtype=bool)
-    mean_map = N.asarray(mean_map)
-    rms_map = N.asarray(rms_map)
-
-    if active_pixels.shape != island.image.shape:
-        raise ValueError("Subisland mask shape does not match island image")
-    if mean_map.shape != island.image.shape or rms_map.shape != island.image.shape:
-        raise ValueError("Background map shape does not match island image")
-    if not N.any(active_pixels):
-        raise ValueError("A split sub-island must contain active pixels")
 
     valid = active_pixels & N.isfinite(mean_map) & N.isfinite(rms_map)
-    if not N.any(valid):
-        raise ValueError("Sub-island has no finite mean/RMS map values")
 
     island.mask_active = ~active_pixels
     island.mask_noisy = island.mask_active.copy()
