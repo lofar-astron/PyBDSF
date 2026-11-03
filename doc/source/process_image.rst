@@ -1040,19 +1040,6 @@ FITS images to the `wavelet` output directory:
   subtraction of both the standard Gaussian model and the
   wavelet Gaussian model.
 
-The complete model and residual images satisfy:
-
-.. math::
-
-   I = M_{\\mathrm{total}} + R_{\\mathrm{wavelets}}
-
-where I is the original image, M_total is the complete model
-and R_wavelets is the final residual image.
-
-The wavelet-only model component can be obtained as the
-difference between the complete model and the standard
-Gaussian model.
-
 
 .. _psf_vary_do:
 
