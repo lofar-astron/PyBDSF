@@ -801,7 +801,8 @@ class Op_gausfit(Op):
                     break
             fitok &= self.add_gaussian(fcn, g, dof, g3_only)
 
-            fitok &= fit(fcn, final=0, verbose=verbose)
+            if fitok:
+                fitok = fit(fcn, final=0, verbose=verbose)
 
         # And one last fit with higher precision
         # make sure we return False when fitok==False due to lack
