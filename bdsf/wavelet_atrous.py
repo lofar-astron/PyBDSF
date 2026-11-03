@@ -74,9 +74,7 @@ class Op_wavelet_atrous(Op):
 
             filter_vec = N.asarray(filter[lpf]['vec'], dtype=float)
             filter_x = N.arange(len(filter_vec)) - (len(filter_vec) - 1) / 2.0
-            filter_var = float(
-                N.sum(filter_vec * filter_x**2) / N.sum(filter_vec)
-            )
+            filter_var = float( N.sum(filter_vec * filter_x**2) / N.sum(filter_vec) )
 
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
