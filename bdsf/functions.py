@@ -1749,27 +1749,18 @@ def make_curvature_map(subim):
     """
     import scipy.signal as sg
     import numpy as N
-    import sys
 
     # Make average curavature map:
     curv_kernal = N.array([[1, 1, 1],[1, -8, 1],[1, 1, 1]])
-    # The next step prints meaningless warnings, so suppress them
-    original_stdout = sys.stdout  # keep a reference to STDOUT
-    sys.stdout = NullDevice()  # redirect the real STDOUT
-    curv_map = sg.convolve2d(subim, curv_kernal)
-    sys.stdout = original_stdout  # turn STDOUT back on
+    curv_map = sg.convolve2d(subim, curv_kernal, mode='same')
 
     return curv_map
 
 
 def bstat(indata, mask, kappa_npixbeam):
-    """Numpy version of the c++ bstat routine
-
-    Uses the PySE method for calculating the clipped mean and rms of an array.
+    """Uses the PySE method for calculating the clipped mean and rms of an array.
     This method is superior to the c++ bstat routine (see section 2.7.3 of
-    http://dare.uva.nl/document/174052 for details) and, since the Numpy
-    functions used here are written in c, there should be no big computational
-    penalty in using Python code.
+    http://dare.uva.nl/document/174052 for details).
     """
     import numpy
     from scipy.special import erf, erfcinv
