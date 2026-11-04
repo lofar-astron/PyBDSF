@@ -959,16 +959,15 @@ class Op_rmsimage(Op):
 
     def for_masked_mp(self, mask, arr, ind, kappa):
 
-        bstat = func.bstat #_cbdsm.bstat
         a, b, c, d = ind
         if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
+            m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
         else:
             mask_win = mask[a:b, c:d]
             npix_unmasked = mask_win.size - np.count_nonzero(mask_win)
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask_win, kappa)
+                m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask_win, kappa)
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5:
