@@ -70,19 +70,21 @@ class Op_wavelet_atrous(Op):
             if lpf not in ['b3', 'tr']:
                 lpf = 'b3'
             jmax = img.opts.atrous_jmax
-            l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
-            if jmax < 1 or jmax > 15:                   # determine jmax
-                # Check if largest island size is
-                # smaller than 1/3 of image size. If so, use it to determine jmax.
-                min_size = min(resid.shape)
-                max_isl_shape = (0, 0)
-                for isl in img.islands:
-                    if isl.image.shape[0] * isl.image.shape[1] > max_isl_shape[0] * max_isl_shape[1]:
-                        max_isl_shape = isl.image.shape
-                if max_isl_shape != (0, 0) and min(max_isl_shape) < min(resid.shape) / 3.0:
-                    min_size = min(max_isl_shape) * 4.0
+            l = len(filter[lpf]['vec'])      # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
+            if jmax < 1 or jmax > 15:        # determine jmax
+                # If the longest island dimension is smaller than 1/3
+                # of the image size, use it to determine jmax.
+                # Otherwise, use the image size.
+                max_isl_dim = max(
+                    (max(isl.image.shape) for isl in img.islands),
+                    default=0,
+                )
+
+                if 0 < max_isl_dim < min(resid.shape) / 3.0:
+                    min_size = max_isl_dim * 4.0
                 else:
                     min_size = min(resid.shape)
+
                 jmax = floor(log(((min_size // 3) * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0) + 1
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
