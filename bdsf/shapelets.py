@@ -23,10 +23,10 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     Bset=N.zeros((ordermax, ordermax, image.shape[0], image.shape[1]), dtype=N.float32)
     cf = N.zeros((ordermax,ordermax)) # coefficient matrix, will fill up only lower triangular part.
     index = [(i,j) for i in range(ordermax) for j in range(ordermax-i)]  # i=0->nmax, j=0-nmax-i
+    m = N.logical_not(mask)
     for coord in index:
         B = shapelet_image(basis, beta, centre, hc, coord[0], coord[1], image.shape)
         if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
-        m = N.logical_not(mask)
         cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
