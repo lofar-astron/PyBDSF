@@ -160,7 +160,7 @@ class Op_polarisation(Op):
 
                 n_new = len(new_isl)
                 mylogger.userinfo(mylog, "New sources found in PI image", '%i (%i total)' %
-                                  (n_new, img.nsrc+n_new))
+                    (n_new_src, img.nsrc + n_new_src))
 
             if n_new > 0:
                 img.islands += new_isl
