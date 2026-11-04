@@ -115,9 +115,9 @@ class Op_polarisation(Op):
                     src_id = 0
                     gaus_id = 0
                 else:
-                    isl_id = img.islands[-1].island_id
-                    src_id = img.sources[-1].source_id
-                    gaus_id = img.gaussians[-1].gaus_num
+                    isl_id  = max((i.island_id for i in img.islands),   default=-1)
+                    src_id  = max((s.source_id for s in img.sources),   default=-1)
+                    gaus_id = max((g.gaus_num  for g in img.gaussians), default=-1)
                 for pi_isl in pimg.islands:
                     new_sources = []
                     for pi_src in pi_isl.sources:
