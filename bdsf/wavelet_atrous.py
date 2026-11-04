@@ -215,10 +215,7 @@ class Op_wavelet_atrous(Op):
                                 gaul = wimg.gaussians
                                 tot_flux = 0.0
 
-                                if img.ngaus == 0:
-                                    gaus_id = -1
-                                else:
-                                    gaus_id = img.gaussians[-1].gaus_num
+                                gaus_id = max((g.gaus_num for g in img.gaussians), default=-1)
                                 for g in gaul:
                                     if not hasattr(g, 'valid'):
                                         g.valid = False
@@ -505,10 +502,7 @@ def copy_gaussians(img, isl1, isl2):
 
     img.gaussians is also updated
     """
-    if img.ngaus == 0:
-        gaus_id = -1
-    else:
-        gaus_id = img.gaussians[-1].gaus_num
+    gaus_id = max((g.gaus_num for g in img.gaussians), default=-1)
     for g in isl2.gaul:
         gaus_id += 1
         gcp = Gaussian(img, g.parameters[:], isl1.island_id, gaus_id)
