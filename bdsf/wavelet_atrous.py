@@ -155,7 +155,9 @@ class Op_wavelet_atrous(Op):
                     # Get the original beam in pixel coordinates. pixel_beam() returns Gaussian sigma values
                     b1, b2, bpa = img.pixel_beam()
 
-                    # Cumulative variance of the low-pass filters applied up to scale j
+                    # Total variance of the a-trous filters up to scale j: the k-th filter is the base
+                    # kernel dilated by 2**(k-1), so its variance is filter_var * 4**(k-1). Variances of
+                    # successive convolutions add up: sum_{k=1..j} 4**(k-1) = (4**j - 1) / 3.
                     filter_var_total = filter_var * (4.0**j - 1.0) / 3.0
 
                     # Effective Gaussian beam: original beam convolved with the cumulative a-trous smoothing kernel
