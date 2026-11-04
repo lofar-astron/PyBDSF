@@ -621,8 +621,8 @@ def _opts_completer(self, event):
         if len(found) > 0:
             for fnd in found:
                 files.append(fnd)
-        if cmd1 == 'tput' or cmd1 == 'tget' and not ('"' in cmd2 or
-                                                     "'" in cmd2):
+        if (cmd1 == 'tput' or cmd1 == 'tget') and not (
+                '"' in cmd2 or "'" in cmd2):
             # User has not (yet) started to enter a string, so don't
             # return filenames
             return []

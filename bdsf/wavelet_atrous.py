@@ -229,10 +229,7 @@ class Op_wavelet_atrous(Op):
                                 gaul = wimg.gaussians
                                 tot_flux = 0.0
 
-                                if img.ngaus == 0:
-                                    gaus_id = -1
-                                else:
-                                    gaus_id = img.gaussians[-1].gaus_num
+                                gaus_id = max((g.gaus_num for g in img.gaussians), default=-1)
                                 for g in gaul:
                                     if not hasattr(g, 'valid'):
                                         g.valid = False
@@ -252,6 +249,8 @@ class Op_wavelet_atrous(Op):
                                                 gcp.gaus_num = gaus_id
                                                 gcp.wisland_id = g.island_id
                                                 gcp.jlevel = j
+                                                gcp.wave_rms = g.rms
+                                                gcp.wave_mean = g.mean
                                                 g.valid = True
                                                 isl.gaul.append(gcp)
                                                 isl.ngaus += 1
@@ -519,20 +518,18 @@ def copy_gaussians(img, isl1, isl2):
 
     img.gaussians is also updated
     """
-    if img.ngaus == 0:
-        gaus_id = -1
-    else:
-        gaus_id = img.gaussians[-1].gaus_num
+    gaus_id = max((g.gaus_num for g in img.gaussians), default=-1)
     for g in isl2.gaul:
         gaus_id += 1
         gcp = Gaussian(img, g.parameters[:], isl1.island_id, gaus_id)
         gcp.gaus_num = gaus_id
         gcp.jlevel = g.jlevel
         if g.jlevel > 0:
-            # Preserve the wavelet rms and mean values if the isl2 Gaussian was fit to
-            # a wavelet image
-            gcp.wave_rms = g.rms
-            gcp.wave_mean = g.mean
+            # Preserve the original wavelet rms and mean values.
+            # A Gaussian may have already been copied to the original image,
+            # where g.rms and g.mean refer to the original image statistics.
+            gcp.wave_rms = getattr(g, 'wave_rms', g.rms)
+            gcp.wave_mean = getattr(g, 'wave_mean', g.mean)
         else:
             gcp.wave_rms = 0.0
             gcp.wave_mean = 0.0
