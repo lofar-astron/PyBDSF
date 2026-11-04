@@ -53,34 +53,34 @@ class Op_outlist(Op):
     def write_lsm(self, img, dir):
         """ Writes the gaussian list as an SAGECAL file"""
         fname = dir + img.imagename + '.lsm'
-        write_lsm_gaul(img, filename=fname, sort_by='indx',
+        write_lsm_gaul(img, filename=fname, sort_by='index',
                        clobber=True,
                        incl_empty=img.opts.incl_empty)
 
     def write_gaul(self, img, dir):
         """ Writes the gaussian list as an ASCII file"""
         fname = dir + img.imagename + '.gaul'
-        write_ascii_list(img, filename=fname, sort_by='indx',
+        write_ascii_list(img, filename=fname, sort_by='index',
                          clobber=True, objtype='gaul',
                          incl_empty=img.opts.incl_empty)
 
     def write_srl(self, img, dir):
         """ Writes the source list as an ASCII file"""
         fname = dir + img.imagename + '.srl'
-        write_ascii_list(img, filename=fname, sort_by='indx',
+        write_ascii_list(img, filename=fname, sort_by='index',
                          clobber=True, objtype='srl',
                          incl_empty=img.opts.incl_empty)
 
     def write_aips(self, img, dir):
         """ Writes the gaussian list an AIPS STAR file"""
         fname = dir + img.imagename + '.star'
-        write_star(img, filename=fname, sort_by='indx',
+        write_star(img, filename=fname, sort_by='index',
                    clobber=True)
 
     def write_kvis(self, img, dir):
         """ Writes the gaussian list as a kvis file"""
         fname = dir + img.imagename + '.kvis.ann'
-        write_kvis_ann(img, filename=fname, sort_by='indx',
+        write_kvis_ann(img, filename=fname, sort_by='index',
                        clobber=True)
 
     def write_ds9(self, img, dir, objtype='gaul'):
@@ -93,21 +93,21 @@ class Op_outlist(Op):
     def write_gaul_FITS(self, img, dir):
         """ Writes the gaussian list as FITS binary table"""
         fname = dir + img.imagename+'.gaul.FITS'
-        write_fits_list(img, filename=fname, sort_by='indx',
+        write_fits_list(img, filename=fname, sort_by='index',
                         clobber=True, objtype='gaul',
                         incl_empty=img.opts.incl_empty,)
 
     def write_srl_FITS(self, img, dir):
         """ Writes the source list as FITS binary table"""
         fname = dir + img.imagename+'.srl.FITS'
-        write_fits_list(img, filename=fname, sort_by='indx',
+        write_fits_list(img, filename=fname, sort_by='index',
                         clobber=True, objtype='srl',
                         incl_empty=img.opts.incl_empty, incl_chan=img.opts.incl_chan)
 
     def write_shap_FITS(self, img, dir):
         """ Writes the shapelet list as a FITS file"""
         fname = dir + img.imagename + '.shap.FITS'
-        write_fits_list(img, filename=fname, sort_by='indx',
+        write_fits_list(img, filename=fname, sort_by='index',
                         clobber=True, objtype='shap')
 
     def write_opts(self, img, dir):
@@ -303,7 +303,7 @@ def write_ds9_list(img, filename=None, srcroot=None, deconvolve=False,
     return filename
 
 
-def write_ascii_list(img, filename=None, sort_by='indx', format='ascii',
+def write_ascii_list(img, filename=None, sort_by='index', format='ascii',
                      incl_chan=False, incl_empty=False, clobber=False, objtype='gaul'):
     """Writes Gaussian list to an ASCII file"""
     from . import mylogger
@@ -437,7 +437,7 @@ def write_fits_list(img, filename=None, sort_by='index', objtype='gaul',
     return filename
 
 
-def write_kvis_ann(img, filename=None, sort_by='indx',
+def write_kvis_ann(img, filename=None, sort_by='index',
                    clobber=False):
     from . import mylogger
     import os
@@ -470,7 +470,7 @@ def write_kvis_ann(img, filename=None, sort_by='indx',
     return filename
 
 
-def write_star(img, filename=None, sort_by='indx',
+def write_star(img, filename=None, sort_by='index',
                clobber=False):
     from . import mylogger
     import os
@@ -483,7 +483,7 @@ def write_star(img, filename=None, sort_by='indx',
     f = open(filename, 'w')
     mylog.info('Writing '+filename)
 
-    outl, outn, patl = list_and_sort_gaussians(img, patch=None, sort_by=sort_by)
+    outl, _, _ = list_and_sort_gaussians(img, patch=None, sort_by=sort_by)
 
     for g in outl[0]:
         A = g.peak_flux
