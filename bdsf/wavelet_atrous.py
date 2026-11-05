@@ -10,7 +10,6 @@ from math import log, floor, sqrt
 from .const import fwsig
 from copy import deepcopy as cp
 from . import functions as func
-import gc
 import scipy.signal
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
@@ -172,7 +171,6 @@ class Op_wavelet_atrous(Op):
                     self.init_image_simple(wimg, img, w, '.atrous.' + suffix)
                     for op in wchain:
                         op(wimg)
-                        gc.collect()
                         if isinstance(op, Op_islands) and img.opts.atrous_orig_isl:
                             if wimg.nisl > 0:
 
