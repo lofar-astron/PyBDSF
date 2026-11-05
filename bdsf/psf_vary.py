@@ -993,7 +993,7 @@ class Op_psf_vary(Op):
         mask=N.zeros(psfshape, dtype=bool)   # right now doesnt matter
         index = [(i,j) for i in range(0,len(xgrid),skip+1) for j in range(0,len(ygrid),skip+1)]
         blah=[]
-        for _, coord in enumerate(index):
+        for coord in index:
             maxpsfshape = [0, 0]
             for k in psf_coeff_interp:
                 if k[0]+1 > maxpsfshape[0]:
