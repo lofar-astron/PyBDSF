@@ -76,6 +76,11 @@ class Op_wavelet_atrous(Op):
             filter_x = N.arange(len(filter_vec)) - (len(filter_vec) - 1) / 2.0
             filter_var = float( N.sum(filter_vec * filter_x**2) / N.sum(filter_vec) )
 
+            if jmax < 0 or jmax > 15:
+                mylog.warning(
+                    'Invalid atrous_jmax=%s. Expected 0 (automatic) or a value between 1 and 15. Determining the number of scales automatically.', jmax
+                )
+
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
