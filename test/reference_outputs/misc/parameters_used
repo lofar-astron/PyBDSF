@@ -47,6 +47,7 @@ flag_maxsize_isl                        1.0
 flag_maxsnr                             1.5
 flag_minsize_bm                         0.7
 flag_minsnr                             0.6
+flag_nofit                              True
 flag_smallsrc                           False
 flagchan_list                           []
 flagchan_rms                            True
