@@ -800,7 +800,8 @@ class Op_gausfit(Op):
                     break
             fitok &= self.add_gaussian(fcn, g, dof, g3_only)
 
-            fitok &= fit(fcn, final=0, verbose=verbose)
+            if fitok:
+                fitok = fit(fcn, final=0, verbose=verbose)
 
         # Last fit with higher precision, if the previous fits succeeded and there are parameters to fit.
         if fitok and len(fcn.parameters) > 0:
