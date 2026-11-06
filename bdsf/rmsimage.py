@@ -656,10 +656,10 @@ class Op_rmsimage(Op):
             axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores, cache=cache)
 
             # Interpolate to get maps on small scale grid
-            axes2mod = axes2[:]
-            axes2mod[0] = axes2[0]/arr.shape[0]*mean_map1.shape[0]
-            axes2mod[1] = axes2[1]/arr.shape[1]*mean_map1.shape[1]
-            ax2 = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(out_rms2.shape, axes2mod)][-1::-1]
+            ax2 = [
+                np.interp(a1, a2, np.arange(len(a2)))
+                for a1, a2 in zip(axes, axes2)
+            ][::-1]
             mapcoord_threaded(rms_map2,  ax2, order=interp, output=out_rms2, ncores=ncores)
             mapcoord_threaded(mean_map2, ax2, order=interp, output=out_mean2, ncores=ncores)
             rms_map = out_rms2
@@ -667,12 +667,9 @@ class Op_rmsimage(Op):
 
             # For each bright source, find nearest points and weight them towards
             # the small scale maps.
-            xscale = float(arr.shape[0])/float(out_rms2.shape[0])
-            yscale = float(arr.shape[1])/float(out_rms2.shape[1])
-            scale = [xscale, yscale]
             size = 15
             for bright_pt in bright_pt_coords:
-                bbox, src_center = self.make_bright_src_bbox(bright_pt, scale, size, out_rms2.shape)
+                bbox, src_center = self.make_bright_src_bbox(bright_pt, axes, size, out_rms2.shape)
                 bbox_xsize = bbox[0].stop-bbox[0].start
                 bbox_ysize = bbox[1].stop-bbox[1].start
                 src_center[0] -= bbox[0].start
@@ -877,9 +874,9 @@ class Op_rmsimage(Op):
                     axes[i][-2] = imgshape[i] - BS/2. - .5
                 axes[i][-1] = imgshape[i] - 1
             else:
-                axes[i][0:boxcount[i]] = np.arange(boxcount[i])*SS - .5
+                axes[i][0:boxcount[i]] = np.arange(boxcount[i])*SS + (BS-1)/2.0 - pad_border_size
                 if bounds[i]:
-                    axes[i][-1] = imgshape[i] - .5
+                    axes[i][-1] = imgshape[i] + pad_border_size - BS/2. - .5
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
         # np.inf)
@@ -1032,10 +1029,16 @@ class Op_rmsimage(Op):
 
         return res
 
-    def make_bright_src_bbox(self, coord, scale, size, shape):
-        """Returns bbox given coordinates of center and scale"""
-        xindx = int(coord[0]/scale[0])
-        yindx = int(coord[1]/scale[1])
+
+    def make_bright_src_bbox(self, coord, axes, size, shape):
+        """Returns bbox given coordinates of center and axes"""
+        xindx = int(np.rint(np.interp(
+            coord[0], axes[0], np.arange(len(axes[0]))
+        )))
+        yindx = int(np.rint(np.interp(
+            coord[1], axes[1], np.arange(len(axes[1]))
+        )))
+
         xlow = xindx - int(size/2.0)
         if xlow < 0:
             xlow = 0
@@ -1051,6 +1054,7 @@ class Op_rmsimage(Op):
 
         src_center = [xindx, yindx]
         return [slice(xlow, xhigh, None), slice(ylow, yhigh, None)], src_center
+
 
     def output_rmsbox_size(self, img):
         """Prints rms/mean box size"""
