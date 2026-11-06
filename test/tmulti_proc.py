@@ -7,7 +7,9 @@ import multiprocessing
 import os
 import signal
 import sys
+import threading
 import time
+from unittest.mock import patch
 
 import numpy as np
 
@@ -75,6 +77,37 @@ def test_closure_inherits_data():
     data = np.arange(10_000_000, dtype=np.float64)
     result = mp.parallel_map(lambda k: data[k::4].sum(), range(4), numcores=4)
     assert result == [data[k::4].sum() for k in range(4)]
+
+
+def test_overlapping_calls():
+    # Hold both callers before their first submission so their pools start
+    # after both calls have prepared their functions and input sequences.
+    ready = threading.Barrier(2, timeout=10)
+
+    class SynchronizedExecutor(concurrent.futures.ProcessPoolExecutor):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            ready.wait()
+
+    def run(offset):
+        return mp.parallel_map(lambda x: x + offset,
+                               range(offset, offset + 8), numcores=2)
+
+    with patch.object(concurrent.futures, 'ProcessPoolExecutor',
+                      SynchronizedExecutor):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            calls = [executor.submit(run, offset) for offset in (100, 200)]
+            results = [call.result() for call in calls]
+    assert results == [list(range(200, 208)), list(range(400, 408))]
+
+
+def test_nested_calls():
+    def outer(x):
+        return sum(mp.parallel_map(lambda y: y + x, [1, 2], numcores=1))
+
+    # A single outer worker must retain its state across items and batches.
+    assert mp.parallel_map(outer, range(8), numcores=1) == \
+        [3 + 2 * x for x in range(8)]
 
 
 def test_exception_propagates():

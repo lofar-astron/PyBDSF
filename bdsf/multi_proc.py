@@ -5,9 +5,9 @@ schedule the most expensive tasks first.
 
 The tasks are distributed dynamically over a pool of worker processes, so
 that a worker that finishes early picks up the next task. The worker
-processes are forked after the function and sequence have been stored in
-this module, so they inherit them: only item indices are sent to the workers
-and only the results are sent back.
+processes inherit the function and sequence through fork, and a per-pool
+initializer stores them in each worker: only item indices are sent to the
+workers and only the results are sent back.
 """
 
 import concurrent.futures
@@ -41,10 +41,16 @@ fork_context = multiprocessing.get_context("fork")
 
 __all__ = ('parallel_map',)
 
-# Function and sequence of the current parallel_map() call, inherited by the
-# forked worker processes
+# Task state is assigned only in workers, never in the calling process.
+# This keeps concurrent pools and calls nested inside a worker independent.
 _task_function = None
 _task_sequence = None
+
+
+def _init_worker(function, sequence):
+    """Set this pool's task state using arguments inherited through fork."""
+    global _task_function, _task_sequence
+    _task_function, _task_sequence = function, sequence
 
 
 def _run_batch(indices):
@@ -88,8 +94,6 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         loaded when the costs vary a lot
 
     """
-    global _task_function, _task_sequence
-
     if not callable(function):
         raise TypeError("input function '%s' is not callable" %
                         repr(function))
@@ -131,9 +135,10 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
                for start in range(0, size, batch_size)]
 
     results = [None] * size
-    _task_function, _task_sequence = function, sequence
     executor = concurrent.futures.ProcessPoolExecutor(max_workers=numcores,
-                                                      mp_context=fork_context)
+                                                      mp_context=fork_context,
+                                                      initializer=_init_worker,
+                                                      initargs=(function, sequence))
     try:
         futures = [executor.submit(_run_batch, batch) for batch in batches]
         for future in concurrent.futures.as_completed(futures):
@@ -147,8 +152,6 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
         # the remaining workers running until their tasks finish
         _terminate_workers(executor)
         raise
-    finally:
-        _task_function = _task_sequence = None
     executor.shutdown()
 
     if bar is not None and bar.started:

@@ -24,9 +24,11 @@ results back through a `multiprocessing.Manager` queue.
   - With `weights` (gausfit), the most expensive items go first, one at a
     time.
   - Without weights, items go in batches, about 4 per worker.
-- **Data:** the function and sequence are stored in module-level variables
-  before the workers are forked, so the workers inherit them and nothing
-  large is pickled, as before. Workers receive only item indices and send
+- **Data:** the function and sequence are passed as per-pool initializer
+  arguments, inherited through fork and stored in each worker's module-level
+  variables. The caller's state is unchanged, so overlapping and nested calls
+  remain independent. Nothing large is pickled, as before.
+  Workers receive only item indices and send
   results back through the pool's pipes. The Manager queue and the
   object-array conversion are gone.
 - **Status bar:** updated in the parent process as results arrive, instead of
@@ -44,15 +46,16 @@ results back through a `multiprocessing.Manager` queue.
 
 ## Testing
 
-- **New test:** `test/tmulti_proc.py`. Its 10 checks all pass:
+- **New test:** `test/tmulti_proc.py`. Its 12 checks all pass:
   - result order is kept, also for generator input and with weights
   - empty, single-item and two-item inputs
   - a closure over a large array works (inherited through fork, not pickled)
+  - overlapping calls from threads and nested calls keep their task state separate
   - exceptions in a worker reach the caller
   - a killed worker raises `BrokenProcessPool` instead of hanging
   - an interrupted call (`KeyboardInterrupt`) leaves no workers running
   - the status bar is incremented once per item and stopped
-  - the module-level state is cleared afterwards
+  - the parent's module-level state remains unset afterwards
 
   The test was added to `.github/workflows/ci.yml` and to the cibuildwheel
   `test-command` in `pyproject.toml`.
