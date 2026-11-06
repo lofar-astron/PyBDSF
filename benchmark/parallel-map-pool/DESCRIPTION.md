@@ -27,10 +27,9 @@ results back through a `multiprocessing.Manager` queue.
 - **Data:** the function and sequence are passed as per-pool initializer
   arguments, inherited through fork and stored in each worker's module-level
   variables. The caller's state is unchanged, so overlapping and nested calls
-  remain independent. Nothing large is pickled, as before.
-  Workers receive only item indices and send
-  results back through the pool's pipes. The Manager queue and the
-  object-array conversion are gone.
+  remain independent. Nothing large is pickled, as before. Workers receive
+  only item indices and send results back through the pool's pipes. The
+  Manager queue and the object-array conversion are gone.
 - **Status bar:** updated in the parent process as results arrive, instead of
   from the workers through a Manager dict.
 - **Errors and interrupts:** if a worker raises an exception, a worker dies,
