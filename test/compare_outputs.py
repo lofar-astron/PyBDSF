@@ -375,21 +375,27 @@ def init_logger(verbosity):
     :param int verbosity: Verbosity level, higher means more verbose logging
     """
     global logger
-    logger = logging.getLogger()
 
-    ch = logging.StreamHandler()
-    if verbosity == -1:
-        ch.setLevel(logging.ERROR)
+    if logger is None:
+        logger = logging.getLogger(__name__)
+        logger.propagate = False
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter("%(levelname)s - %(message)s")
+        )
+        logger.addHandler(handler)
+
+    if verbosity <= -1:
+        level = logging.ERROR
     elif verbosity == 0:
-        ch.setLevel(logging.WARNING)
+        level = logging.WARNING
     elif verbosity == 1:
-        ch.setLevel(logging.INFO)
-    elif verbosity >= 2:
-        ch.setLevel(logging.DEBUG)
+        level = logging.INFO
+    else:
+        level = logging.DEBUG
 
-    fmt = "%(levelname)s [%(name)s]: %(message)s"
-    ch.setFormatter(logging.Formatter(fmt))
-    logger.addHandler(ch)
+    logger.setLevel(level)
 
 
 def main(args):
