@@ -1,6 +1,6 @@
 # Rewrite of `multi_proc.parallel_map` with a process pool
 
-Branch: `parallel-map-pool`, on top of `master`.
+Branch: `parallel-map-pool`, on top of `master` (5dab65e).
 
 ## Why `ProcessPoolExecutor` and not `Pool.imap`
 
@@ -37,7 +37,8 @@ results back through a `multiprocessing.Manager` queue.
   re-raised, as in the old implementation. `ProcessPoolExecutor.shutdown()`
   alone does not stop running tasks before Python 3.14, so this uses the
   executor's list of worker processes.
-- **Callers:** gausfit, shapefit, psf_vary and rmsimage are unchanged.
+- **Callers:** gausfit, shapefit and psf_vary are unchanged. In rmsimage,
+  only a comment in `process_mean_rms_boxes()` changed (see below).
 
 `bdsf/multi_proc.py` is about 170 lines shorter.
 
@@ -57,22 +58,38 @@ results back through a `multiprocessing.Manager` queue.
   `test-command` in `pyproject.toml`.
 - **End-to-end:** `test/tbdsf_process_image.py` passes. Its outputs match
   those of `master` at rtol 1e-3, catalogs included.
-- **Benchmark:** `benchmark/run_pybdsf.py` (NGC6048, 20 cores) took 2:17 on
-  `master` and 2:13 with this branch, within noise (the machine had a load
-  average of 5-7 from other users during the runs). Both runs give the same
-  rms map range (9.06e-05, 2.73e-03), 931 islands and a total flux of
-  12.953 Jy.
+- **Benchmark:** `benchmark/run_pybdsf.py` (NGC6048, 20 cores, numpy 2.4.6,
+  idle machine) took 1:04 on both `master` (5dab65e) and this branch. Both
+  runs give the same rms map range (9.06e-05, 2.73e-03), 931 islands and a
+  total flux of 12.908 Jy.
+- **Chunk count in `process_mean_rms_boxes()`:** `master` splits the rms
+  boxes into `100 * nproc` chunks, because the old `parallel_map` gave each
+  process a fixed share. With dynamic scheduling fewer chunks might do, so
+  `rms_mean_map` was timed on NGC6048 tiled 2x2
+  (`benchmark/rmsimage-optimization/bench_rms_mean_map.py --tiled`,
+  5 interleaved runs each):
+
+  | Chunks per process | min | median |
+  |---|---|---|
+  | `master` (100) | 12.4 s | 14.0 s |
+  | 100 | 12.8 s | 13.5 s |
+  | 16 | 13.1 s | 14.4 s |
+  | 4 | 13.7 s | 14.1 s |
+  | 1 | 14.2 s | 15.1 s |
+
+  Fewer chunks were not faster, so the count stays at 100; only the comment
+  that explained it was updated. All maps were bit-identical to `master`.
 
 On this machine, the multiprocessing overhead is small compared with the
-work done in the workers. The gain should show on the much larger images
-seen in the rapthor profile (`benchmark/filter_skymodel.prof`), but that has
-not been measured. The main benefits are simpler code, dynamic load
-balancing, and an error instead of a hang when a worker dies.
+work done in the workers, so the rewrite gives no measurable speedup. A gain
+on much larger images (such as in the rapthor profile,
+`benchmark/filter_skymodel.prof`) has not been measured. The main benefits
+are simpler code, dynamic load balancing, and an error instead of a hang
+when a worker dies.
 
 ## Notes
 
-- This branch is independent of `rmsimage-optimization`; the two can be
-  merged in either order. `rms_mean_map` on `master` still sends one item per
-  box, which the new `parallel_map` hands out in batches.
+- Rebased onto `master` after #504 (`rmsimage-optimization`) was merged.
 - To reproduce the checks: `benchmark/parallel-map-pool/run_comparison.sh`
-  (baseline: `master`).
+  (baseline: `master`). `setup_overlays.sh` now also copies `bdsf.libs`
+  (the libgfortran bundled with the wheel).

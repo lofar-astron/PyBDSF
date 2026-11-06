@@ -20,6 +20,8 @@ for v in orig new; do
     rm -rf "$OUT/pkg_$v"
     mkdir -p "$OUT/pkg_$v"
     cp -r "$INSTALLED" "$OUT/pkg_$v/"
+    # Shared libraries bundled with the wheel (e.g. libgfortran)
+    if [ -d "$INSTALLED.libs" ]; then cp -r "$INSTALLED.libs" "$OUT/pkg_$v/"; fi
 done
 rm -rf "$OUT/src_orig"
 mkdir -p "$OUT/src_orig"
