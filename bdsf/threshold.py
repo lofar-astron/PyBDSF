@@ -70,7 +70,7 @@ class Op_threshold(Op):
         # https://iopscience.iop.org/article/10.1086/338316
         if img.thresh=='fdr':
             alpha = opts.fdr_alpha
-            if not N.isfinite(alpha) or not 0.0 < alpha < 1.0:
+            if not 0.0 < alpha < 1.0:
                 raise ValueError(
                     f"fdr_alpha must be finite and between 0 and 1; got {alpha!r}"
                 )
