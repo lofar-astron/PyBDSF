@@ -903,8 +903,8 @@ class Op_rmsimage(Op):
         """
         nbox = len(ind_list)
         # parallel_map() hands the chunks out in batches to whichever process
-        # is free. Fewer chunks (1, 4 or 16 per process instead of 100) were
-        # not faster in benchmarks, so keep many small chunks
+        # is free. Fewer chunks (1, 4 or 16 per process instead of 100), or no
+        # chunks at all, were not faster in benchmarks
         nchunks = min(nbox, 100 * (ncores or mp.nproc()))
         edges = np.linspace(0, nbox, nchunks + 1).astype(int)
 

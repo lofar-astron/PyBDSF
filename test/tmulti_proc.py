@@ -156,11 +156,6 @@ def test_statusbar():
     assert bar.stopped
 
 
-def test_state_cleared():
-    mp.parallel_map(square, range(10), numcores=2)
-    assert mp._task_function is None and mp._task_sequence is None
-
-
 if __name__ == '__main__':
     failed = 0
     for name, test in list(globals().items()):

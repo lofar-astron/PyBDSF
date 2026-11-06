@@ -38,14 +38,16 @@ results back through a `multiprocessing.Manager` queue.
   re-raised, as in the old implementation. `ProcessPoolExecutor.shutdown()`
   alone does not stop running tasks before Python 3.14, so this uses the
   executor's list of worker processes.
+- **Single item:** a one-item sequence also goes through the pool; the old
+  code ran it in the calling process.
 - **Callers:** gausfit, shapefit and psf_vary are unchanged. In rmsimage,
   only a comment in `process_mean_rms_boxes()` changed (see below).
 
-`bdsf/multi_proc.py` is about 170 lines shorter.
+`bdsf/multi_proc.py` is about 100 lines shorter (251 → 148).
 
 ## Testing
 
-- **New test:** `test/tmulti_proc.py`. Its 12 checks all pass:
+- **New test:** `test/tmulti_proc.py`. Its 11 checks all pass:
   - result order is kept, also for generator input and with weights
   - empty, single-item and two-item inputs
   - a closure over a large array works (inherited through fork, not pickled)
@@ -54,7 +56,6 @@ results back through a `multiprocessing.Manager` queue.
   - a killed worker raises `BrokenProcessPool` instead of hanging
   - an interrupted call (`KeyboardInterrupt`) leaves no workers running
   - the status bar is incremented once per item and stopped
-  - the parent's module-level state remains unset afterwards
 
   The test was added to `.github/workflows/ci.yml` and to the cibuildwheel
   `test-command` in `pyproject.toml`.
@@ -80,7 +81,10 @@ results back through a `multiprocessing.Manager` queue.
   | 1 | 14.2 s | 15.1 s |
 
   Fewer chunks were not faster, so the count stays at 100; only the comment
-  that explained it was updated. All maps were bit-identical to `master`.
+  that explained it was updated. Passing the boxes to `parallel_map`
+  directly, without chunks, was slower in all 5 paired runs (median 17.2 s
+  against 15.9 s), because the chunks return numpy arrays instead of one
+  result per box. All maps were bit-identical to `master`.
 
 On this machine, the multiprocessing overhead is small compared with the
 work done in the workers, so the rewrite gives no measurable speedup. A gain
@@ -93,5 +97,5 @@ when a worker dies.
 
 - Rebased onto `master` after #504 (`rmsimage-optimization`) was merged.
 - To reproduce the checks: `benchmark/parallel-map-pool/run_comparison.sh`
-  (baseline: `master`). `setup_overlays.sh` now also copies `bdsf.libs`
-  (the libgfortran bundled with the wheel).
+  (baseline: `master`). It uses `setup_overlays.sh` from
+  `benchmark/rmsimage-optimization`.

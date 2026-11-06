@@ -6,7 +6,7 @@
 #
 # Steps:
 #   1. Build overlay packages: pkg_orig (baseline) and pkg_new (working tree),
-#      using setup_overlays.sh
+#      using ../rmsimage-optimization/setup_overlays.sh
 #   2. Run test/tmulti_proc.py with the new version
 #   3. Run test/tbdsf_process_image.py with both versions, and compare their
 #      outputs at rtol 1e-3 (catalogs included)
@@ -20,7 +20,7 @@ REPO=$(git -C "$HERE" rev-parse --show-toplevel)
 PY=$REPO/venv/bin/python
 FITS=$REPO/benchmark/NGC6048_9-MFS-image.fits
 
-"$HERE/setup_overlays.sh" "$WORK" "$REV"
+"$HERE/../rmsimage-optimization/setup_overlays.sh" "$WORK" "$REV"
 
 echo "=== test/tmulti_proc.py (new)"
 (cd "$REPO/test" && PYTHONPATH="$WORK/pkg_new" $PY -W error::DeprecationWarning tmulti_proc.py)

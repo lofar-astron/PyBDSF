@@ -105,20 +105,9 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     sequence = list(sequence)
     size = len(sequence)
 
-    if size <= 1:
-        results = list(map(function, sequence))
-        if bar is not None:
-            bar.stop()
-        return results
-
     if numcores is None:
         numcores = _ncpus - 1
-    if numcores > _ncpus - 1:
-        numcores = _ncpus - 1
-    if numcores < 1:
-        numcores = 1
-    if size < numcores:
-        numcores = size
+    numcores = max(1, min(numcores, _ncpus - 1, size))
 
     # Divide the items into batches, which are handed out to the workers as
     # they become free. With weights, process items one at a time, most
@@ -126,7 +115,7 @@ def parallel_map(function, sequence, numcores=None, bar=None, weights=None):
     # communication overhead.
     if weights is None:
         order = numpy.arange(size)
-        batch_size = math.ceil(size / (4 * numcores))
+        batch_size = max(1, math.ceil(size / (4 * numcores)))
     else:
         order = numpy.argsort(-numpy.asarray(weights, dtype=numpy.float64),
                               kind='stable')
