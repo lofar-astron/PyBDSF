@@ -13,9 +13,13 @@ Branch: `replace_cbdsm`, on top of `master` (4fc79a2).
   the C++ code), with an analytical Jacobian.
 - **Exact arithmetic:** the fits of some islands are ill-conditioned: a 1-ulp
   difference in the function or its Jacobian can lead to a different
-  result. A first, faster version (one matrix multiplication for all
-  Gaussians, float64 `exp`) changed 2 Gaussians of the test image by > 3%,
-  and the test failed. The Gaussians and their derivatives are therefore
+  result. A first version (one matrix multiplication for all Gaussians,
+  float64 `exp`) made single fits about 2× cheaper than the final version,
+  but changed 2 of the 50 Gaussians of the test image (total flux by +67%
+  and +10%), and the test failed: the PSF-variation maps differed from the
+  reference outputs by 3–32%. (That version didn't cache fit results yet,
+  and was about 5% slower than C++ end-to-end on the test image.) The
+  Gaussians and their derivatives are therefore
   computed with exactly the same floating point operations, in the same
   order, as in the C++ code: Python's `math.cos`/`math.sin` (same libm),
   true divisions, no fused multiply-adds, and the exponential in long double
