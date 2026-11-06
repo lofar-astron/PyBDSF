@@ -9,7 +9,6 @@ if has_pl:
     import matplotlib.pyplot as pl
 import scipy
 import scipy.signal as S
-from . import _cbdsm
 from . import functions as func
 from . import _tessellation as _pytess
 from . import shapelets as sh
@@ -119,11 +118,6 @@ class Op_psf_vary(Op):
                     tr = [n for n in tr_gauls if n[1]/n[8]>snrcut]
                 g_gauls = self.trans_gaul(tr)
 
-                # computes statistics of fitted sizes. Same as psfvary_fullstat.f in fBDSM.
-                bmaj_a, bmaj_r, bmaj_ca, bmaj_cr, ni = _cbdsm.bstat(bmaj, None, nsig)
-                bmin_a, bmin_r, bmin_ca, bmin_cr, ni = _cbdsm.bstat(bmin, None, nsig)
-                bpa_a, bpa_r, bpa_ca, bpa_cr, ni = _cbdsm.bstat(bpa, None, nsig)
-
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
                 flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
                 if N.sum(flag_unresolved) == 0:
@@ -132,6 +126,10 @@ class Op_psf_vary(Op):
 
                 # see how much the SNR-weighted sizes of unresolved sources differ from the synthesized beam.
                 wtsize_beam_snr = self.av_psf(g_gauls, img.beam, flag_unresolved)
+                mylogger.userinfo(mylog, 'Weighted size difference from beam (maj, min, pa)', 
+                  '(%.2f, %.2f, %.2f) sigma' % (wtsize_beam_snr[0], 
+                                                wtsize_beam_snr[1], 
+                                                wtsize_beam_snr[2]))
 
                 # filter out resolved sources
                 tr_gaul = self.trans_gaul(g_gauls)

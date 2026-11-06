@@ -21,7 +21,20 @@ if has_pl:
 import scipy.ndimage as nd
 from . import multi_proc as mp
 import itertools
-import sys
+
+
+def _update_subisland_fit_stats(island, active_pixels, mean_map, rms_map):
+    """Refresh fit statistics after assigning a split island mask."""
+
+    valid = active_pixels & N.isfinite(mean_map) & N.isfinite(rms_map)
+
+    island.mask_active = ~active_pixels
+    island.mask_noisy = island.mask_active.copy()
+    island.size_active = int(N.count_nonzero(active_pixels))
+    island.max_value = float(N.nanmax(island.image[active_pixels]))
+    island.mean = float(N.mean(mean_map[valid]))
+    island.rms = float(N.mean(rms_map[valid]))
+    island.islmean = island.mean
 
 
 class Op_gausfit(Op):
@@ -132,6 +145,10 @@ class Op_gausfit(Op):
         img_simple.clipped_mean = img.clipped_mean
         img_simple.beam2pix = img.beam2pix
         img_simple.beam = img.beam
+        # Workers use fork, so these map references are shared read only while
+        # allowing split islands to calculate their own local fit statistics.
+        img_simple.mean_arr = img.mean_arr
+        img_simple.rms_arr = img.rms_arr
 
         # Use a cheap heuristic weight so heavy islands are spread more evenly
         # across workers without needing a precise runtime model.
@@ -276,9 +293,11 @@ class Op_gausfit(Op):
                     print('SPLITTING ISLAND INTO ', n_subisl, ' PARTS FOR ISLAND ', isl.island_id)
                 for i_sub in range(n_subisl):
                     islcp = isl.copy(img.pixel_beamarea())
-                    islcp.mask_active = (sub_labels != i_sub+1)
-                    islcp.mask_noisy = (sub_labels != i_sub+1)
-                    size_subisl = (~islcp.mask_active).sum()/img.pixel_beamarea()*2.0
+                    active_pixels = sub_labels == i_sub+1
+                    mean_map = img.mean_arr[tuple(islcp.bbox)]
+                    rms_map = img.rms_arr[tuple(islcp.bbox)]
+                    _update_subisland_fit_stats(islcp, active_pixels, mean_map, rms_map)
+                    size_subisl = islcp.size_active/img.pixel_beamarea()*2.0
                     if opts.peak_fit and size_subisl > peak_size:
                         sgaul, sfgaul = self.fit_island_iteratively(img, islcp, iter_ngmax=iter_ngmax, opts=opts)
                     else:
@@ -341,8 +360,11 @@ class Op_gausfit(Op):
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
 
-        thr1 = isl.mean + opts.thresh_isl*isl.rms
-        thr0 = thr1
+        # fit_image has isl.islmean subtracted, so fitting thresholds must
+        # be expressed in residual-image units as well.
+        thr_fit = opts.thresh_isl * isl.rms
+        # flag_minsnr is defined relative to thresh_pix and the island RMS.
+        thr_flag = opts.flag_minsnr * img.thresh_pix * isl.rms
         g3_only = opts.fix_to_beam
         peak = fcn.find_peak()[0]
         dof = isl.size_active
@@ -358,14 +380,14 @@ class Op_gausfit(Op):
         if ini_gausfit == 'simple' and ngmax is None:
             ngmax = 25
         if ini_gausfit == 'default' or opts.fix_to_beam:
-            gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr0, beam, img)
+            gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr_fit, beam, img)
             if len(gaul) > 25:
                 ini_gausfit = 'simple'
                 gaul = []
                 ng1 = 0
                 ngmax = 25
         if ini_gausfit == 'nobeam' and not opts.fix_to_beam:
-            gaul = self.inigaus_nobeam(isl, thr0, beam, img)
+            gaul = self.inigaus_nobeam(isl, thr_fit, beam, img)
             ng1 = len(gaul)
             ngmax = ng1+2
         if verbose:
@@ -374,12 +396,12 @@ class Op_gausfit(Op):
             iter += 1
             if verbose:
                 print('In Gaussian flag loop, iter =', iter)
-            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, ini_gausfit, ngmax, verbose, g3_only)
+            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, ini_gausfit, ngmax, verbose, g3_only)
             if verbose:
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                              beam, thr0, peak, shape, isl.mask_active,
-                                              isl.image, fitok)
+                                              beam, thr_flag, peak, shape, isl.mask_active,
+                                              fit_image, fitok)
             if verbose:
                 print('Leaving flag_gaussians')
             ng1 = len(gaul)
@@ -396,10 +418,10 @@ class Op_gausfit(Op):
             ngmax = 25
             while iter < 15:
                 iter += 1
-                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                  beam, thr0, peak, shape, isl.mask_active,
-                                                  isl.image, fitok)
+                                                  beam, thr_flag, peak, shape, isl.mask_active,
+                                                  fit_image, fitok)
                 ng1 = len(gaul)
                 if fitok and len(fgaul) == 0:
                     break
@@ -422,10 +444,10 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                      beam, thr0, peak, shape, sm_isl,
-                                                      isl.image, fitok)
+                                                      beam, thr_flag, peak, shape, sm_isl,
+                                                      fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
@@ -446,10 +468,10 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr0, iter, 'simple', ngmax, verbose, g3_only)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
-                                                      beam, thr0, peak, shape, lg_isl,
-                                                      isl.image, fitok)
+                                                      beam, thr_flag, peak, shape, lg_isl,
+                                                      fit_image, fitok)
                     ng1 = len(gaul)
                     if fitok and len(fgaul) == 0:
                         break
@@ -476,8 +498,8 @@ class Op_gausfit(Op):
                     par[3] /= fwsig
                     par[4] /= fwsig
                     gaul, fgaul = self.flag_gaussians([par], opts,
-                                                      beam, thr0, peak, shape, isl.mask_active,
-                                                      isl.image, fitok)
+                                                      beam, thr_flag, peak, shape, isl.mask_active,
+                                                      fit_image, fitok)
             except ValueError:
                 pass
 
@@ -509,7 +531,8 @@ class Op_gausfit(Op):
             opts = img.opts
         thresh_isl = opts.thresh_isl
         thresh = opts.fittedimage_clip
-        thr = isl.mean + thresh_isl * isl.rms
+        # Residual peak_val is measured after subtracting isl.islmean.
+        thr = thresh_isl * isl.rms
 
         if opts.verbose_fitting:
             print('Iteratively fitting island ', isl.island_id)
@@ -578,7 +601,7 @@ class Op_gausfit(Op):
         mask = isl.mask_active
         inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         if len(inipeak) == 0:
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im, mask)
             inipeak = [maxv]
             iniposn = [maxp]
         nmulsrc1 = len(iniposn)
@@ -586,8 +609,13 @@ class Op_gausfit(Op):
         domore = True
         while domore:
             domore = False
-            av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im1, mask)
-            if stdnew > isl.rms and maxv >= thr and maxv >= isl.mean+2.0*isl.rms:
+            # fit_island() discards the whole result when more than 25 maxima are found (it falls back to the 'simple' method),
+            # and iniposn never shrinks, so there is no point in looking for more of them.
+            # So limit the total number of initial Gaussians, including those added during the CLEAN-like iterations.
+            if len(inipeak) >= 25:
+                break
+            _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
+            if stdnew > isl.rms and maxv >= thr and maxv >= 2.0*isl.rms:
                 domore = True
                 x1, y1 = N.array(iniposn).transpose()
                 dumr = N.sqrt((maxp[0]-x1)*(maxp[0]-x1)+(maxp[1]-y1)*(maxp[1]-y1))
@@ -640,11 +668,11 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = -1e9
         mask = isl.mask_active
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
+        _, iniposn, _ = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         npeak = len(iniposn)
         gaul = []
 
-        av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+        _, _, maxv, _, _, _ = func.arrstatmask(im, mask)
         if npeak <= 1:
             mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
             g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig,
@@ -697,10 +725,14 @@ class Op_gausfit(Op):
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
             x, y = N.indices(im.shape)
             for i in range(nshed):
+                npix = int(N.sum(invmask[i]))
                 size = sqrt(N.sum(invmask[i]))/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
-                p, success = func.fit_gaus2d(im*invmask[i], p_ini, x, y)
+                if npix >= 6:  # 6 parameters of Gauss requires at least 6 pixels to fit
+                    p, _ = func.fit_gaus2d(im, p_ini, x, y, mask=~invmask[i])
+                else:
+                    p = p_ini  # not enough pixels for fit, keep initial approximation
                 resid = resid + func.gaus_2d(p, x, y)
                 gaul.append(p)
             resid = im - resid
@@ -768,12 +800,14 @@ class Op_gausfit(Op):
                     break
             fitok &= self.add_gaussian(fcn, g, dof, g3_only)
 
-            fitok &= fit(fcn, final=0, verbose=verbose)
+            if fitok:
+                fitok = fit(fcn, final=0, verbose=verbose)
 
-        # And one last fit with higher precision
-        # make sure we return False when fitok==False due to lack
-        # of free parameters
-        fitok &= fit(fcn, final=1, verbose=verbose)
+        # Last fit with higher precision, if the previous fits succeeded and there are parameters to fit.
+        if fitok and len(fcn.parameters) > 0:
+            fitok = fit(fcn, final=1, verbose=verbose)
+        else:
+            fitok = False
 
         return fitok
 
@@ -816,7 +850,7 @@ class Op_gausfit(Op):
         gaul: input list of gaussians
         opts: Opts object to extract flagging parameters from
         beam: beam shape
-        thr: threshold for pixels with signal
+        thr: absolute peak-amplitude cutoff for flag_minsnr
         peak: peak data value in the current island
         shape: shape of the current island
         isl_mask: island mask
@@ -875,7 +909,7 @@ class Op_gausfit(Op):
         x1ok = True
         x2ok = True
         flagmax = False
-        if A < opts.flag_minsnr*thr:
+        if A < thr:
             flag += 1
         if A > opts.flag_maxsnr*peak:
             flag += 2
