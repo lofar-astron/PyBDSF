@@ -725,8 +725,9 @@ class Op_gausfit(Op):
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
             x, y = N.indices(im.shape)
             for i in range(nshed):
-                npix = int(N.sum(invmask[i]))
-                size = sqrt(N.sum(invmask[i]))/fwsig
+                sum_invmask = N.sum(invmask[i])
+                npix = int(sum_invmask)
+                size = sqrt(sum_invmask)/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
                 if npix >= 6:  # 6 parameters of Gauss requires at least 6 pixels to fit
