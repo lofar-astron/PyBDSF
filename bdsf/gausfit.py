@@ -7,9 +7,9 @@ in the image, and do post-fitting flagging of the extracted
 gaussians.
 
 The fitting itself is implemented by the means of MGFunction
-class and a number of fitter routines in _cbdsm module.
+class and the lmder_fit fitter routine in the mgfunction module.
 MGFunction class implements multi-gaussian function and
-provides all functionality required by the specific fitters.
+provides all functionality required by the fitter.
 """
 
 from .image import *
@@ -337,7 +337,7 @@ class Op_gausfit(Op):
                and one or more flagged Gaussians indicate
                that significant residuals remain (peak > thr).
         """
-        from ._cbdsm import MGFunction
+        from .mgfunction import MGFunction
         from . import functions as func
         from .const import fwsig
 
@@ -763,7 +763,7 @@ class Op_gausfit(Op):
         thr  : peak threshold for adding more gaussians
         verbose: whether to print fitting progress information
         """
-        from ._cbdsm import lmder_fit
+        from .mgfunction import lmder_fit
 
         if verbose:
             print('Greetings from fit_iter')
@@ -779,7 +779,7 @@ class Op_gausfit(Op):
 
         # Do a round of fitting if any initials were provided
         if verbose:
-            print('About to call C++ wrapper')
+            print('About to call the fitter')
         fitok = True
         if len(gaul) != 0:
             fitok = fit(fcn, final=0, verbose=verbose)
@@ -827,7 +827,7 @@ class Op_gausfit(Op):
         parameters: initial values for gaussian parameters
         dof: total possible number of fitted parameters
         """
-        from ._cbdsm import Gtype
+        from .mgfunction import Gtype
 
         if g3_only:
             gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
