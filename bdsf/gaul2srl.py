@@ -340,7 +340,7 @@ class Op_gaul2srl(Op):
         trc[0] = min(n - 1, maxx + (ssubimsize - 1) // 2); trc[1] = min(m - 1, maxy + (ssubimsize - 1) // 2)
         s_imsize = trc - blc + 1
 
-        p_ini = [maxv, (s_imsize[0]-1)/2.0*1.1, (s_imsize[1]-1)/2.0*1.1, bm_pix[0]/fwsig*1.3, \
+        p_ini = [maxv, (maxx-blc[0])*1.1, (maxy-blc[1])*1.1, bm_pix[0]/fwsig*1.3, \
                  bm_pix[1]/fwsig*1.1, bm_pix[2]*2]
         data = subim_src[blc[0]:blc[0]+s_imsize[0], blc[1]:blc[1]+s_imsize[1]]
         smask = mask[blc[0]:blc[0]+s_imsize[0], blc[1]:blc[1]+s_imsize[1]]
