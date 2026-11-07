@@ -71,6 +71,10 @@ class Op_wavelet_atrous(Op):
                 lpf = 'b3'
             jmax = img.opts.atrous_jmax
             l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
+            if jmax < 0 or jmax > 15:
+                mylog.warning(
+                    'Invalid atrous_jmax=%s. Expected 0 (automatic) or a value between 1 and 15. Determining the number of scales automatically.', jmax
+                )
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
