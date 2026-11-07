@@ -64,7 +64,7 @@ def reconstruct_shapelets(size, mask, basis, beta, centre, nmax, cf):
     rimage = N.zeros(size, dtype=N.float32)
     hc = shapelet_coeff(nmax, basis)
 
-    index = [(i,j) for i in range(nmax) for j in range(nmax-i)]
+    index = [(i, j) for i in range(nmax + 1) for j in range(nmax + 1 - i)]
     for coord in index:
         B = shapelet_image(basis, beta, centre, hc, coord[0], coord[1], size)
         rimage += B*cf[coord]
@@ -353,15 +353,17 @@ def shapelet_coeff(nmax=20,basis='cartesian'):
     hc=N.zeros([order,order])
     hnm1=N.zeros(order); hn=N.zeros(order)
 
-    hnm1[0]=1.0; hn[0]=0.0; hn[1]=2.0
+    hnm1[0]=1.0
     hc[0]=hnm1
-    hc[1]=hn
-    for ind in range(3,order+1):
-        n=ind-2
-        hnp1=-2.0*n*hnm1
-        hnp1[1:] += 2.0*hn[:order-1]
-        hc[ind-1]=hnp1
-        hnm1=hn
-        hn=hnp1
+    if order > 1:
+        hn[0]=0.0; hn[1]=2.0
+        hc[1]=hn
+        for ind in range(3,order+1):
+            n=ind-2
+            hnp1=-2.0*n*hnm1
+            hnp1[1:] += 2.0*hn[:order-1]
+            hc[ind-1]=hnp1
+            hnm1=hn
+            hn=hnp1
 
     return hc
