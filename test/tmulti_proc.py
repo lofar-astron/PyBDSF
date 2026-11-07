@@ -146,6 +146,15 @@ def test_interrupt_stops_workers():
         signal.alarm(0)
         signal.signal(signal.SIGALRM, old_handler)
     assert time.time() - start < 30
+    # The executor's manager thread may join a worker at the same time as
+    # parallel_map. Only one of them gets the exit status from the OS; if it's
+    # the manager thread, the worker has exited and been reaped, but
+    # multiprocessing still lists it until the manager thread has recorded
+    # its exit code, which takes a moment (seen on Python 3.10). So allow a
+    # short delay.
+    deadline = time.time() + 5
+    while multiprocessing.active_children() and time.time() < deadline:
+        time.sleep(0.01)
     assert not multiprocessing.active_children(), 'workers still running'
 
 
