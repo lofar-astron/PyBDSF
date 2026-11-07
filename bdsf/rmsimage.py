@@ -242,15 +242,31 @@ class Op_rmsimage(Op):
         slices = ndimage.find_objects(labels)
         isl_size = []
         isl_size_highthresh = []
+
+        # Bright-source peaks (found at the high threshold) as an (n, 2) array,
+        # so that distances to all of them can be computed in one Numpy call
+        if do_adapt and len(isl_maxposn) > 0:
+            bright_xy = np.array(isl_maxposn)
+
         for idx, s in enumerate(slices):
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
+            
+            peak_match_tol = 2.5
             if do_adapt and len(isl_maxposn) > 0:
+                # The peak of an island always lies inside its bounding box, so a
+                # bright-source peak farther than 2.5 px from the box can never match
+                # (min(dists) > 2.5). Skip such islands before locating their peak.
+                near = ((bright_xy[:, 0] >= s[0].start - peak_match_tol) & (bright_xy[:, 0] <= s[0].stop - 1 + peak_match_tol) &
+                        (bright_xy[:, 1] >= s[1].start - peak_match_tol) & (bright_xy[:, 1] <= s[1].stop - 1 + peak_match_tol))
+                if not near.any():
+                    continue
                 isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(np.where(labels[s] == idx+1, image[s], -np.inf)), image[s].shape))+
-                                          np.array((s[0].start, s[1].start)))
-                dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
+                                              np.array((s[0].start, s[1].start)))
+                dists = np.hypot(bright_xy[:, 0] - isl_maxposn_lowthresh[0],
+                                 bright_xy[:, 1] - isl_maxposn_lowthresh[1])
                 # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
                 # so we allow for a small arbitrary distance between the two positions
-                if min(dists) <= 2.5:
+                if dists.min() <= peak_match_tol:
                     isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     bright_indx = int(np.argmin(dists))
                     if isl_area_lowthresh < 25.0 or isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0:
