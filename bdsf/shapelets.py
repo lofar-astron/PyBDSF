@@ -47,13 +47,13 @@ def fit_shapeletbasis(image, mask, cf0, Bset):
     ma = N.where(~mask.flatten())
 
     cfshape = cf0.shape
-    res=lambda p, image, Bset, cfshape, mask_flat : (image.flatten()-func.shapeletfit(p, Bset, cfshape))[ma]
+    res = lambda p, image, Bset, cfshape, _ : (image.flatten()-func.shapeletfit(p, Bset, cfshape))[ma]
 
-    if len(ma) <= 5:
+    if len(ma[0]) <= cf0.size:
         # Not enough degrees of freedom
         cf = cf0
     else:
-        (cf, flag)=leastsq(res, cf0.flatten(), args=(image, Bset, cfshape, ma))
+        (cf, _) = leastsq(res, cf0.flatten(), args=(image, Bset, cfshape, ma))
         cf = cf.reshape(cfshape)
 
     return cf

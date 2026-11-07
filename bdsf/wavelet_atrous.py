@@ -6,9 +6,6 @@ import numpy as N
 from .image import *
 from . import mylogger
 import os
-from . import has_pl
-if has_pl:
-    import matplotlib.pyplot as pl
 from math import log, floor, sqrt
 from .const import fwsig
 from copy import deepcopy as cp
@@ -74,6 +71,10 @@ class Op_wavelet_atrous(Op):
                 lpf = 'b3'
             jmax = img.opts.atrous_jmax
             l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
+            if jmax < 0 or jmax > 15:
+                mylog.warning(
+                    'Invalid atrous_jmax=%s. Expected 0 (automatic) or a value between 1 and 15. Determining the number of scales automatically.', jmax
+                )
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
@@ -93,7 +94,6 @@ class Op_wavelet_atrous(Op):
             img.wavelet_jmax = jmax
             mylog.info("Using " + filter[lpf]['name'] + ' filter with J_max = ' + str(jmax))
 
-            img.atrous_islands = []
             img.atrous_gaussians = []
             img.atrous_sources = []
             img.atrous_opts = []
@@ -219,10 +219,7 @@ class Op_wavelet_atrous(Op):
                                 gaul = wimg.gaussians
                                 tot_flux = 0.0
 
-                                if img.ngaus == 0:
-                                    gaus_id = -1
-                                else:
-                                    gaus_id = img.gaussians[-1].gaus_num
+                                gaus_id = max((g.gaus_num for g in img.gaussians), default=-1)
                                 for g in gaul:
                                     if not hasattr(g, 'valid'):
                                         g.valid = False
@@ -242,6 +239,8 @@ class Op_wavelet_atrous(Op):
                                                 gcp.gaus_num = gaus_id
                                                 gcp.wisland_id = g.island_id
                                                 gcp.jlevel = j
+                                                gcp.wave_rms = g.rms
+                                                gcp.wave_mean = g.mean
                                                 g.valid = True
                                                 isl.gaul.append(gcp)
                                                 isl.ngaus += 1
@@ -431,89 +430,6 @@ class Op_wavelet_atrous(Op):
 
         return residim
 
-    def morphfilter_pyramid(self, img, bdir):
-        from math import ceil, floor
-
-        jmax = img.wavelet_jmax
-        ind = [i for i, isl in enumerate(img.atrous_islands) if len(isl) > 0]
-        ind.reverse()
-        lpyr = []
-        img.npyrsrc = -1
-        if len(ind) > 0:
-            for i in ind:
-                isls = img.atrous_islands[i]
-                for isl in isls:
-                    if i != ind[0]:
-                        dumr = []
-                        for pyrsrc in lpyr:
-                            belongs = pyrsrc.belongs(img, isl)
-                            if belongs:
-                                dumr.append(pyrsrc.pyr_id)
-                        if len(dumr) == 1:
-                            dumr = dumr[0]
-                            pyrsrc = lpyr[dumr]
-                            pyrsrc.add_level(img, i, isl)
-                        else:
-                            pyrsrc = Pyramid_source(img, isl, i)
-                            lpyr.append(pyrsrc)
-                    else:
-                        pyrsrc = Pyramid_source(img, isl, i)
-                        lpyr.append(pyrsrc)
-        img.pyrsrcs = lpyr
-
-        if img.opts.plot_pyramid and has_pl:
-            pl.figure()
-            a = ceil(sqrt(jmax))
-            b = floor(jmax / a)
-            if a * b < jmax:
-                b += 1
-            colours = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-            sh = img.ch0_arr.shape
-            for pyr in img.pyrsrcs:
-                for iisl, isl in enumerate(pyr.islands):
-                    jj = pyr.jlevels[iisl]
-                    col = colours[pyr.pyr_id % 7]
-                    pl.subplot(a, b, jj)
-                    ind = N.where(~isl.mask_active)
-                    pl.plot(ind[0] + isl.origin[0], ind[1] + isl.origin[1], '.', color=col)
-                    pl.axis([0.0, sh[0], 0.0, sh[1]])
-                    pl.title('J = ' + str(jj))
-            pl.savefig(bdir + img.imagename + '.pybdsf.atrous.pyramidsrc.png')
-
-
-class Pyramid_source(object):
-    """ Pyramid_source is a source constructed out of multiple wavelet transform images. """
-
-    def __init__(self, img, island, level0):
-        img.npyrsrc = img.npyrsrc + 1
-        self.pyr_id = img.npyrsrc
-        self.islands = [island]
-        self.jlevels = [level0]
-
-    def belongs(self, img, isl):
-        from . import functions as func
-
-        # Get centroid of island (as integer)
-        mom = func.momanalmask_gaus(isl.image, isl.mask_active, 0, 1.0, False)
-        cen = N.array(mom[1:3]) + isl.origin
-        belong = False
-
-        # Check if lies within any island of self
-        for i, pyrisl in enumerate(self.islands):
-            if N.sum([pyrisl.bbox[j].start <= cen[j] < pyrisl.bbox[j].stop for j in range(2)]) == 2:
-                pix = tuple([cen[j] - pyrisl.origin[j] for j in range(2)])
-                if not pyrisl.mask_active[pix]:
-                    belong = True
-
-        return belong
-
-    def add_level(self, img, level, isl):
-        self.islands.append(isl)
-        self.jlevels.append(level + 1)
-
-
-Image.pyrsrcs = List(tInstance(Pyramid_source), doc="List of Pyramidal sources")
-
 
 def rebase_bbox(box, minv):
     # return a new bounding box tuple where minv is subtracted from
@@ -592,20 +508,18 @@ def copy_gaussians(img, isl1, isl2):
 
     img.gaussians is also updated
     """
-    if img.ngaus == 0:
-        gaus_id = -1
-    else:
-        gaus_id = img.gaussians[-1].gaus_num
+    gaus_id = max((g.gaus_num for g in img.gaussians), default=-1)
     for g in isl2.gaul:
         gaus_id += 1
         gcp = Gaussian(img, g.parameters[:], isl1.island_id, gaus_id)
         gcp.gaus_num = gaus_id
         gcp.jlevel = g.jlevel
         if g.jlevel > 0:
-            # Preserve the wavelet rms and mean values if the isl2 Gaussian was fit to
-            # a wavelet image
-            gcp.wave_rms = g.rms
-            gcp.wave_mean = g.mean
+            # Preserve the original wavelet rms and mean values.
+            # A Gaussian may have already been copied to the original image,
+            # where g.rms and g.mean refer to the original image statistics.
+            gcp.wave_rms = getattr(g, 'wave_rms', g.rms)
+            gcp.wave_mean = getattr(g, 'wave_mean', g.mean)
         else:
             gcp.wave_rms = 0.0
             gcp.wave_mean = 0.0
