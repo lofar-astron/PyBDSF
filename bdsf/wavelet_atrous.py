@@ -71,10 +71,16 @@ class Op_wavelet_atrous(Op):
                 lpf = 'b3'
             jmax = img.opts.atrous_jmax
             l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
+
+            filter_vec = N.asarray(filter[lpf]['vec'], dtype=float)
+            filter_x = N.arange(len(filter_vec)) - (len(filter_vec) - 1) / 2.0
+            filter_var = float( N.sum(filter_vec * filter_x**2) / N.sum(filter_vec) )
+
             if jmax < 0 or jmax > 15:
                 mylog.warning(
                     'Invalid atrous_jmax=%s. Expected 0 (automatic) or a value between 1 and 15. Determining the number of scales automatically.', jmax
                 )
+
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
@@ -150,14 +156,25 @@ class Op_wavelet_atrous(Op):
                         wopts['ini_gausfit'] = 'default'
                     else:
                         wopts['ini_gausfit'] = 'nobeam'
-                    wid = (l + (l - 1) * (2 ** (j - 1) - 1))
-                    b1, b2 = img.pixel_beam()[0:2]
-                    b1 = b1 * fwsig
-                    b2 = b2 * fwsig
-                    cdelt = img.wcs_obj.acdelt[:2]
+
+                    # Get the original beam in pixel coordinates. pixel_beam() returns Gaussian sigma values
+                    b1, b2, bpa = img.pixel_beam()
+
+                    # Total variance of the a-trous filters up to scale j: the k-th filter is the base
+                    # kernel dilated by 2**(k-1), so its variance is filter_var * 4**(k-1). Variances of
+                    # successive convolutions add up: sum_{k=1..j} 4**(k-1) = (4**j - 1) / 3.
+                    filter_var_total = filter_var * (4.0**j - 1.0) / 3.0
+
+                    # Effective Gaussian beam: original beam convolved with the cumulative a-trous smoothing kernel
+                    beam_pix = (
+                        fwsig * sqrt(b1**2 + filter_var_total),
+                        fwsig * sqrt(b2**2 + filter_var_total),
+                        bpa
+                    )
 
                     wimg = Image(wopts)
-                    wimg.beam = (sqrt(wid * wid + b1 * b1) * cdelt[0] * 2.0, sqrt(wid * wid + b2 * b2) * cdelt[1] * 2.0, 0.0)
+                    wimg.beam = tuple(img.pix2beam(beam_pix))
+
                     wimg.orig_beam = img.beam
                     wimg.pixel_beam = img.pixel_beam
                     wimg.pixel_beamarea = img.pixel_beamarea
