@@ -200,8 +200,7 @@ class MGFunction:
 
     def get_fitted_parameters(self):
         """Return a copy of the fitted parameters as a flat array."""
-        # Always a copy: the fitter uses it as its work array
-        return self._params.ravel()[self._fit_idx].copy()
+        return self._params.flatten()[self._fit_idx]
 
     def set_fitted_parameters(self, x):
         """Set the fitted parameters from a flat array."""
@@ -305,7 +304,7 @@ class MGFunction:
             val = f1 * f1
             val += f2 * f2
             val *= -0.5
-            N.exp(val, out=val, dtype=N.longdouble, casting='unsafe')
+            N.exp(val, out=val, dtype=N.longdouble)
             resid -= a * val
             terms.append((g, f1, f2, val))
         self._terms = terms
