@@ -506,7 +506,6 @@ class Op_gausfit(Op):
         # Return whatever we got
         if verbose:
             print('Preparing to return')
-        isl.mg_fcn = fcn
         gaul = [self.fixup_gaussian(isl, g) for g in gaul]
         fgaul = [(flag, self.fixup_gaussian(isl, g)) for flag, g in fgaul]
 
