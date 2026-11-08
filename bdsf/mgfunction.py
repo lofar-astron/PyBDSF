@@ -204,7 +204,7 @@ class MGFunction:
 
     def set_fitted_parameters(self, x):
         """Set the fitted parameters from a flat array."""
-        self._params.ravel()[self._fit_idx] = x
+        self._pflat[self._fit_idx] = x
 
     def residual(self, x):
         """Set the fitted parameters to `x`, and return data - MGF for all
