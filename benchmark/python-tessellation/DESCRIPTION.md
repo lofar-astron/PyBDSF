@@ -5,7 +5,7 @@ extension with NumPy. All commands below run from the repository root.
 
 | File | Purpose |
 | --- | --- |
-| `benchmark_tessellation.py` | Check exact equality and time Python against the original Fortran |
+| `benchmarktessellate.py` | Check exact equality and time Python against the original Fortran |
 | `tessellation-benchmark.json` | Recorded 512 × 512 and 1024 × 1024 results |
 | `tessellation-benchmark-2048.json` | Recorded 2048 × 2048 results |
 
@@ -14,12 +14,12 @@ Run the default correctness suite with pytest (requires pytest, NumPy, a C
 compiler and gfortran, plus Meson/Ninja for the Meson backend):
 
 ```sh
-python -m pytest test/test_tessellation.py
+python -m pytest test/testtessellate.py
 ```
 
 The test module also retains a standalone CLI for larger runs and detailed
 progress reporting, without requiring pytest. See **Reproducible checks** below.
-The benchmark imports `test/tessellation_reference.py` relative to its own
+The benchmark imports `test/tessellate_reference.py` relative to its own
 location, so it does not require an installed PyBDSF package.
 
 ## Implementation work log
@@ -83,7 +83,7 @@ be recorded below as the work proceeds.
 
 ## Implementation and experiments
 
-- Added `bdsf/_tessellation.py`, using NumPy only. There are no new dependencies,
+- Added `bdsf/tessellate.py`, using NumPy only. There are no new dependencies,
   compiled modules, JIT compilation, approximate nearest-neighbor searches, or
   parallel worker pools.
 - The initial fixed-block implementation matched the reference but was slower
@@ -98,7 +98,7 @@ be recorded below as the work proceeds.
   used instead. Mean radii always accumulate in original column-first order.
 - Single-generator cases return the constant result directly. Very small maps
   use a bounded vectorized distance calculation instead of spatial pruning.
-- `psf_vary.py` now imports `_tessellation`. This distinct name prevents an old
+- `psf_vary.py` now imports `tessellate`. This distinct name prevents an old
   `_pytesselate` shared library from silently overriding the Python code.
 - Removed only the tessellation F2PY target and F2PY discovery from CMake.
   The original Fortran files remain unchanged for independent verification.
@@ -111,8 +111,8 @@ be recorded below as the work proceeds.
 From the repository root, using an environment with NumPy:
 
 ```sh
-python test/test_tessellation.py --random-cases 1000 --large-cases 8
-python benchmark/python-tessellation/benchmark_tessellation.py --repeat 7 --min-speedup 1 \
+python test/testtessellate.py --random-cases 1000 --large-cases 8
+python benchmark/python-tessellation/benchmarktessellate.py --repeat 7 --min-speedup 1 \
     --output benchmark/python-tessellation/tessellation-benchmark.json
 ```
 
@@ -158,7 +158,7 @@ repeats) also passed every equality and performance check: **1.33x to 30.03x**.
 Raw samples are in `tessellation-benchmark-2048.json`. Reproduce with:
 
 ```sh
-python benchmark/python-tessellation/benchmark_tessellation.py --sizes 2048 --generators 2 8 64 \
+python benchmark/python-tessellation/benchmarktessellate.py --sizes 2048 --generators 2 8 64 \
     --repeat 3 --min-speedup 1 --output benchmark/python-tessellation/tessellation-benchmark-2048.json
 ```
 
@@ -188,7 +188,7 @@ and natgrid extensions still build; the tessellation F2PY target is absent.
 Temporary build dependencies and products were kept outside the user's checkout.
 Installed the wheel in an isolated environment and verified that both
 `Op_psf_vary.tess_simple` and `Op_psf_vary.tess_roundness` run through the packaged
-Python module. Inspected the wheel contents: `_tessellation.py` is present and
+Python module. Inspected the wheel contents: `tessellate.py` is present and
 there is no `_pytesselate` shared library.
 The installed wheel also passed the repository's existing
 `test/tbdsf_process_image.py` end-to-end test, including the PSF-variation stage

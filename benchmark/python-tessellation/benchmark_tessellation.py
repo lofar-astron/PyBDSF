@@ -1,6 +1,6 @@
 """Compare tessellation runtimes after checking exact output equivalence.
 
-Run: python benchmark/python-tessellation/benchmark_tessellation.py --output tessellation-benchmark.json
+Run: python benchmark/python-tessellation/benchmarktessellate.py --output tessellation-benchmark.json
 Compilation, imports, data generation, equality checks and warmup are not timed.
 Both implementations use the same inputs; output allocation is included.
 """
@@ -19,7 +19,7 @@ import numpy as np
 
 # Share the independent Fortran oracle with the correctness tests.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "test"))
-from tessellation_reference import ROOT, implementations
+from tessellate_reference import ROOT, implementations
 
 
 def main():
@@ -82,7 +82,7 @@ def main():
     # metadata helps distinguish code changes from compiler/platform effects.
     report = dict(python=sys.version, numpy=np.__version__, platform=platform.platform(),
                   processor=platform.processor(), seed=options.seed,
-                  implementation_sha256=hashlib.sha256((ROOT / "bdsf" / "_tessellation.py").read_bytes()).hexdigest(),
+                  implementation_sha256=hashlib.sha256((ROOT / "bdsf" / "tessellate.py").read_bytes()).hexdigest(),
                   compiler=subprocess.check_output(["gfortran", "--version"], text=True).splitlines()[0],
                   fortran_flags="-O3 -fno-fast-math", results=rows)
     if options.output:

@@ -1,6 +1,6 @@
 """Require exact Python/Fortran equality for deterministic and random cases.
 
-Run: python test/test_tessellation.py --random-cases 200
+Run: python test/testtessellate.py --random-cases 200
 Requires NumPy, a C compiler and gfortran (plus Meson for NumPy 2).
 """
 
@@ -10,7 +10,7 @@ from time import perf_counter
 
 import numpy as np
 
-from tessellation_reference import implementations
+from tessellate_reference import implementations
 
 
 def cases(seed=20260921, random_cases=200, large_cases=4):
@@ -147,9 +147,9 @@ def test_roundness_reductions():
 
 def test_invalid_inputs():
     """Reject inputs for which the legacy implementation has no defined result."""
-    from tessellation_reference import ROOT, _load
+    from tessellate_reference import ROOT, _load
 
-    python = _load("tessellation_python", ROOT / "bdsf" / "_tessellation.py")
+    python = _load("tessellate_python", ROOT / "bdsf" / "tessellate.py")
     check_invalid_inputs(python)
 
 
@@ -166,7 +166,7 @@ def main():
     parser.add_argument("--large-cases", type=int, default=4)
     parser.add_argument("-v", "--verbose", action="store_true", help="Print every comparison")
     options = parser.parse_args()
-    print("Tessellation equivalence check (exact equality, no tolerance)", flush=True)
+    print("Tessellate equivalence check (exact equality, no tolerance)", flush=True)
     print(f"Seed: {options.seed}; random images: {options.random_cases}; large images: {options.large_cases}", flush=True)
     print("Loading Python implementation and building/loading the Fortran reference...", flush=True)
     started = perf_counter()

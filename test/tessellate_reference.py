@@ -1,6 +1,6 @@
 """Load the Python implementation and build a separate Fortran oracle.
 
-Only the tessellation sources are compiled; an installed PyBDSF is not needed.
+Only the tessellate sources are compiled; an installed PyBDSF is not needed.
 Builds live in a content-addressed temporary directory, never in the package.
 """
 
@@ -42,7 +42,7 @@ def implementations(checked=False):
     """
     import numpy as np
 
-    python = _load("tessellation_python", ROOT / "bdsf" / "_tessellation.py")
+    python = _load("tessellate_python", ROOT / "bdsf" / "tessellate.py")
     sources = [ROOT / "src" / "fortran" / name for name in
                ("pytess_simple.f", "pytess_roundness.f", "constants.h")]
     flags = "-O3 -fno-fast-math" + (" -fcheck=bounds" if checked else "")
@@ -52,9 +52,9 @@ def implementations(checked=False):
     key = hashlib.sha256(b"".join(p.read_bytes() for p in sources)
                          + compiler + flags.encode() + sys.version.encode()
                          + np.__version__.encode()).hexdigest()[:16]
-    directory = Path(tempfile.gettempdir()) / ("pybdsf-tessellation-" + key)
+    directory = Path(tempfile.gettempdir()) / ("pybdsf-tessellate-" + key)
     directory.mkdir(exist_ok=True)
-    name = "_tessellation_reference"
+    name = "_tessellate_reference"
     matches = list(directory.glob(name + "*.so")) + list(directory.glob(name + "*.pyd"))
     if not matches:
         command = [sys.executable, "-m", "numpy.f2py", "-c", "-m", name,
