@@ -1145,10 +1145,17 @@ class Gaussian(object):
         self.peak_flux = p[0]
         self.centre_pix = p[1:3]
         size = p[3:6]
-        if func.approx_equal(size[0], img.pixel_beam()[0]*1.1) and \
-                func.approx_equal(size[1], img.pixel_beam()[1]) and \
-                func.approx_equal(size[2], img.pixel_beam()[2]+90.0) or \
-                img.opts.fix_to_beam:
+        pixel_beam = img.pixel_beam()
+        expected_pa = (pixel_beam[2] + 90.0) % 180.0
+        pa_diff = (size[2] - expected_pa + 90.0) % 180.0 - 90.0
+
+        distorted_beam = (
+            func.approx_equal(size[0], pixel_beam[0]*1.1) and
+            func.approx_equal(size[1], pixel_beam[1]) and
+            func.approx_equal(pa_diff, 0.0)
+        )
+
+        if distorted_beam or img.opts.fix_to_beam:
             # Check whether fitted Gaussian is just the distorted pixel beam given as an
             # initial guess (always set to [bm_maj*1.1, bm_min, bm_pa+90]) or if size was
             # fixed to the beam. If so, reset the size to the undistorted beam. Note:
