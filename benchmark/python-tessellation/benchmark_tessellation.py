@@ -1,6 +1,6 @@
 """Compare tessellation runtimes after checking exact output equivalence.
 
-Run: python test/benchmark_tessellation.py --output tessellation-benchmark.json
+Run: python benchmark/python-tessellation/benchmark_tessellation.py --output tessellation-benchmark.json
 Compilation, imports, data generation, equality checks and warmup are not timed.
 Both implementations use the same inputs; output allocation is included.
 """
@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import platform
+from pathlib import Path
 from statistics import median
 import subprocess
 import sys
@@ -16,6 +17,8 @@ from time import perf_counter
 
 import numpy as np
 
+# Share the independent Fortran oracle with the correctness tests.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "test"))
 from tessellation_reference import ROOT, implementations
 
 

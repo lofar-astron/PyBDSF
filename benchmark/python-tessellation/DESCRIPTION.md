@@ -1,4 +1,28 @@
-# Tessellation modernization work log
+# Python tessellation
+
+Benchmarks and implementation notes for replacing the Fortran tessellation
+extension with NumPy. All commands below run from the repository root.
+
+| File | Purpose |
+| --- | --- |
+| `benchmark_tessellation.py` | Check exact equality and time Python against the original Fortran |
+| `tessellation-benchmark.json` | Recorded 512 × 512 and 1024 × 1024 results |
+| `tessellation-benchmark-2048.json` | Recorded 2048 × 2048 results |
+
+Correctness tests and the shared Fortran reference builder remain in `test/`.
+Run the default correctness suite with pytest (requires pytest, NumPy, a C
+compiler and gfortran, plus Meson/Ninja for the Meson backend):
+
+```sh
+python -m pytest test/test_tessellation.py
+```
+
+The test module also retains a standalone CLI for larger runs and detailed
+progress reporting, without requiring pytest. See **Reproducible checks** below.
+The benchmark imports `test/tessellation_reference.py` relative to its own
+location, so it does not require an installed PyBDSF package.
+
+## Implementation work log
 
 ## Python documentation update
 
@@ -87,9 +111,9 @@ be recorded below as the work proceeds.
 From the repository root, using an environment with NumPy:
 
 ```sh
-python test/check_tessellation.py --random-cases 1000 --large-cases 8
-python test/benchmark_tessellation.py --repeat 7 --min-speedup 1 \
-    --output doc/tessellation-benchmark.json
+python test/test_tessellation.py --random-cases 1000 --large-cases 8
+python benchmark/python-tessellation/benchmark_tessellation.py --repeat 7 --min-speedup 1 \
+    --output benchmark/python-tessellation/tessellation-benchmark.json
 ```
 
 The first run builds an independent Fortran reference with `gfortran -O3
@@ -134,8 +158,8 @@ repeats) also passed every equality and performance check: **1.33x to 30.03x**.
 Raw samples are in `tessellation-benchmark-2048.json`. Reproduce with:
 
 ```sh
-python test/benchmark_tessellation.py --sizes 2048 --generators 2 8 64 \
-    --repeat 3 --min-speedup 1 --output doc/tessellation-benchmark-2048.json
+python benchmark/python-tessellation/benchmark_tessellation.py --sizes 2048 --generators 2 8 64 \
+    --repeat 3 --min-speedup 1 --output benchmark/python-tessellation/tessellation-benchmark-2048.json
 ```
 
 Both final reports record the implementation's SHA-256 so that timings can be

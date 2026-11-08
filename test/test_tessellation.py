@@ -1,6 +1,6 @@
 """Require exact Python/Fortran equality for deterministic and random cases.
 
-Run: python test/check_tessellation.py --random-cases 200
+Run: python test/test_tessellation.py --random-cases 200
 Requires NumPy, a C compiler and gfortran (plus Meson for NumPy 2).
 """
 
@@ -130,6 +130,27 @@ def check_invalid_inputs(python):
             continue
         raise AssertionError("Expected invalid input to be rejected: " + repr(args))
     return len(invalid)
+
+
+def test_output_equivalence():
+    """Check the default deterministic, seeded random and large-image cases."""
+    python, fortran = implementations()
+    for name, routine, args in cases():
+        check_case(python, fortran, name, routine, args)
+
+
+def test_roundness_reductions():
+    """Preserve exact centroids and inverse mean radii, including empty tiles."""
+    python, fortran = implementations()
+    check_roundness_reductions(python, fortran)
+
+
+def test_invalid_inputs():
+    """Reject inputs for which the legacy implementation has no defined result."""
+    from tessellation_reference import ROOT, _load
+
+    python = _load("tessellation_python", ROOT / "bdsf" / "_tessellation.py")
+    check_invalid_inputs(python)
 
 
 def main():
