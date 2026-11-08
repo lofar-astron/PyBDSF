@@ -10,7 +10,7 @@ if has_pl:
 import scipy
 import scipy.signal as S
 from . import functions as func
-from . import _pytesselate as _pytess
+from . import tessellate as _pytess
 from . import shapelets as sh
 from scipy.optimize import leastsq
 from . import nat
