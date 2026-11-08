@@ -54,7 +54,7 @@ test and benchmark reference.
 
 ## Inspection (2026-09-21)
 
-- `bdsf/psf_vary.py` calls only `pytess_simple` and `pytess_roundness`.
+- `bdsf/psf_vary.py` calls only `tessellate.simple` and `tessellate.roundness`.
 - Coordinates and output labels are one-based; output arrays are float64.
 - Exact ties go to the first generator. Simple distances are evaluated as
   `sqrt(dx*dx + dy*dy) / weight`, not squared distances.
@@ -223,7 +223,7 @@ matrices were rerun successfully. Ruff and `git diff --check` also passed.
   still requires several full-image arrays for exact reductions.
 - The original private F2PY helper entry points are not a supported application
   API. The two public-to-the-caller routine signatures (including optional
-  `ngens`) are preserved. The Fortran helper routines remain in the test oracle.
+  `ngens`) are preserved under the names `simple` and `roundness`. The Fortran helper routines remain in the test oracle.
 
 ## Comparison with the alternative Python port
 

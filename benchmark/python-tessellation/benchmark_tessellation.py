@@ -52,12 +52,12 @@ def main():
             # Reuse coordinates across modes and inputs across implementations.
             # Roundness derives its own weights; unity uses explicit ones.
             for mode in ("unity", "weighted", "fuzzy", "roundness"):
-                routine = "pytess_roundness" if mode == "roundness" else "pytess_simple"
+                routine = "roundness" if mode == "roundness" else "simple"
                 args = (size, size, x, y, snr)
                 if mode != "roundness":
                     args += (np.ones(count) if mode == "unity" else weights,)
                 args += (0.05, "c" if mode == "fuzzy" else "s")
-                functions = [getattr(fortran, routine), getattr(python, routine)]
+                functions = [getattr(fortran, "pytess_" + routine), getattr(python, routine)]
                 # Validation and warmup happen outside the timed region.
                 np.testing.assert_array_equal(functions[0](*args), functions[1](*args), strict=True)
                 for fn in functions:

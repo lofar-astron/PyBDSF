@@ -200,7 +200,7 @@ def _assign_small(n, m, x, y, weights, eps, fuzzy, centroids):
     return result
 
 
-def pytess_simple(n, m, xgens, ygens, snrgens, wts, eps, code, ngens=None):
+def simple(n, m, xgens, ygens, snrgens, wts, eps, code, ngens=None):
     """Compute weighted Voronoi labels or the legacy fuzzy overlap encoding.
 
     Parameters
@@ -238,11 +238,11 @@ def pytess_simple(n, m, xgens, ygens, snrgens, wts, eps, code, ngens=None):
     return _assign(n, m, x, y, weights, eps, code == "c")
 
 
-def pytess_roundness(n, m, xgens, ygens, snrgens, eps, code, ngens=None):
+def roundness(n, m, xgens, ygens, snrgens, eps, code, ngens=None):
     """The legacy two-pass roundness tessellation (hard labels only).
 
     Dimensions, coordinates, SNR and optional generator count follow
-    ``pytess_simple``. ``eps`` is retained for signature compatibility but does
+    ``simple``. ``eps`` is retained for signature compatibility but does
     not affect hard assignment; ``code`` must be 's'.
 
     First assign pixels with unit weights. For each resulting tile compute its

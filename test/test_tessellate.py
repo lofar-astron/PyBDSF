@@ -54,19 +54,19 @@ def cases(seed=20260921, random_cases=200, large_cases=4):
         for kind, weights in [("unity", np.ones(x.size)),
                               ("weighted", rng.uniform(0.2, 3., x.size))]:
             for code, eps in [("s", 0.05), ("c", 0.), ("c", 0.05), ("c", 1.), ("c", -0.1)]:
-                yield name + "/" + kind + "/" + code + "/" + str(eps), "pytess_simple", (
+                yield name + "/" + kind + "/" + code + "/" + str(eps), "simple", (
                     n, m, x, y, snr, weights, eps, code)
-        yield name + "/roundness", "pytess_roundness", (n, m, x, y, snr, 0.05, "s")
+        yield name + "/roundness", "roundness", (n, m, x, y, snr, 0.05, "s")
     for weights in ([1., 1.], [1.e-12, 1.e12], [1.e12, 1.e-12]):
-        yield "weight-range-" + str(weights), "pytess_simple", (
+        yield "weight-range-" + str(weights), "simple", (
             71, 69, [1., 71.], [1., 69.], [1., 1.], weights, 0.05, "s")
-    yield "single-pixel", "pytess_simple", (1, 1, [1.], [1.], [1.], [1.], 0.05, "s")
+    yield "single-pixel", "simple", (1, 1, [1.], [1.], [1.], [1.], 0.05, "s")
     for weight in (np.nextafter(1., 0.), np.nextafter(1., 2.)):
         # Adjacent representable weights/tolerances probe rounding-sensitive
         # decisions without introducing an approximate comparison tolerance.
         for eps in (np.nextafter(0., 1.), np.nextafter(0.05, 0.), np.nextafter(0.05, 1.)):
             for code in ("s", "c"):
-                yield "near-equal-distances", "pytess_simple", (
+                yield "near-equal-distances", "simple", (
                     71, 69, [18., 54.], [35., 35.], [1., 1.], [1., weight], eps, code)
 
 
@@ -76,7 +76,7 @@ def check_case(python, fortran, name, routine, args):
     Both modules receive the same arguments. Assertion errors carry the case
     name, allowing a failing layout to be located in ``cases``.
     """
-    expected = getattr(fortran, routine)(*args)
+    expected = getattr(fortran, "pytess_" + routine)(*args)
     actual = getattr(python, routine)(*args)
     np.testing.assert_array_equal(actual, expected, err_msg=name, strict=True)
     assert actual.flags.f_contiguous, name
@@ -120,9 +120,9 @@ def check_invalid_inputs(python):
                          (5, [-1.]), (5, [np.inf]), (6, np.nan), (7, "z")]:
         args = list(simple)
         args[index] = value
-        invalid.append((python.pytess_simple, args))
-    invalid.append((python.pytess_roundness, (4, 5, [1.], [1.], [1.], 0.05, "c")))
-    invalid.append((python.pytess_roundness, (1, 1, [1.], [1.], [1.], 0.05, "s")))
+        invalid.append((python.simple, args))
+    invalid.append((python.roundness, (4, 5, [1.], [1.], [1.], 0.05, "c")))
+    invalid.append((python.roundness, (1, 1, [1.], [1.], [1.], 0.05, "s")))
     for fn, args in invalid:
         try:
             fn(*args)
@@ -196,7 +196,7 @@ def main():
             raise
         count += 1
         phase_count += 1
-        mode = "Roundness" if routine == "pytess_roundness" else "Simple hard" if args[-1] == "s" else "Simple fuzzy"
+        mode = "Roundness" if routine == "roundness" else "Simple hard" if args[-1] == "s" else "Simple fuzzy"
         totals[mode] += 1
         if options.verbose:
             print("    PASS", flush=True)

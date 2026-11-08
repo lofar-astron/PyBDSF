@@ -665,7 +665,7 @@ class Op_psf_vary(Op):
         """ Simple tesselation """
 
         xgen, ygen, snrgen = vorogenP
-        volrank = tessellate.pytess_simple(shape[0], shape[1], xgen, ygen, snrgen, \
+        volrank = tessellate.simple(shape[0], shape[1], xgen, ygen, snrgen, \
                   wts, tess_fuzzy, tess_sc)
 
         return volrank
@@ -675,7 +675,7 @@ class Op_psf_vary(Op):
         """ Tesselation, modified to make the tiles more round. """
 
         xgen, ygen, snrgen = vorogenP
-        volrank = tessellate.pytess_roundness(shape[0], shape[1], xgen, ygen, snrgen, \
+        volrank = tessellate.roundness(shape[0], shape[1], xgen, ygen, snrgen, \
                   tess_fuzzy, tess_sc)
 
         return volrank
@@ -685,7 +685,7 @@ class Op_psf_vary(Op):
         """  This has routines to find out which tile a given pixel belongs to. """
 
         if tess_method == 'roundness':
-            #tilenum = pytess_roundness(tilecoord, pixel, wts, tess_sc, tess_fuzzy)
+            #tilenum = roundness(tilecoord, pixel, wts, tess_sc, tess_fuzzy)
             print(" Not yet implemented !!!! ")
             return 0
         else:
