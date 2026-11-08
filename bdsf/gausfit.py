@@ -358,7 +358,7 @@ class Op_gausfit(Op):
         beam = (beam[0]/fwsig, beam[1]/fwsig, beam[2]+90.0)  # change angle from +y-axis to +x-axis and FWHM to sigma
 
         # Avoid distorting the beam for fixed-shape fits, as this biases
-        # the fitted amplitude 
+        # the fitted amplitude ( https://github.com/lofar-astron/PyBDSF/pull/570 )
         if abs(beam[0]/beam[1]) < 1.1 and not opts.fix_to_beam:
             beam = (1.1*beam[0], beam[1], beam[2])
 
