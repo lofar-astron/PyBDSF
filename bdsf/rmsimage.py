@@ -671,33 +671,43 @@ class Op_rmsimage(Op):
             yscale = float(arr.shape[1])/float(out_rms2.shape[1])
             scale = [xscale, yscale]
             size = 15
+            # rms_map/mean_map are aliases of out_rms2/out_mean2 and are
+            # overwritten below, so keep the unmodified large-scale maps.
+            large_rms = out_rms2.copy()
+            large_mean = out_mean2.copy()
+
+            # Weight of the small-scale maps. Overlapping sources are combined
+            # with the maximum, so the result does not depend on source order.
+            weights_map = np.zeros(out_rms2.shape, dtype=np.float32)
+
+            # For each bright source, find nearest points and weight them towards
+            # the small scale maps.
             for bright_pt in bright_pt_coords:
                 bbox, src_center = self.make_bright_src_bbox(bright_pt, scale, size, out_rms2.shape)
                 bbox_xsize = bbox[0].stop-bbox[0].start
                 bbox_ysize = bbox[1].stop-bbox[1].start
                 src_center[0] -= bbox[0].start
                 src_center[1] -= bbox[1].start
+                xx, yy = np.indices((bbox_xsize, bbox_ysize))
+                dist = np.hypot(xx - src_center[0], yy - src_center[1])
                 weights = np.ones((bbox_xsize, bbox_ysize))
 
-                # Taper weights to zero where small-scale value is within a factor of
-                # 2 of large-scale value. Use distance to center of the box
-                # to determine taper value. This tapering prevents the use of the
-                # small-scale box beyond the range of artifacts.
-                low_vals_ind = np.where(rms_map1[tuple(bbox)]/out_rms2[tuple(bbox)] < 2.0)
-                if len(low_vals_ind[0]) > 0:
-                    dist_to_cen = []
-                    for (x,y) in zip(low_vals_ind[0],low_vals_ind[1]):
-                        dist_to_cen.append(np.sqrt( (x-src_center[0])**2 +
-                                           (y-src_center[1])**2 ))
-                    med_dist_to_cen = np.min(dist_to_cen)
-                    for x in range(bbox_xsize):
-                        for y in range(bbox_ysize):
-                            dist_to_cen = np.sqrt( (x-src_center[0])**2 +
-                                               (y-src_center[1])**2 )
-                            if dist_to_cen >= med_dist_to_cen:
-                                weights[x,y] = max(0.0, 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0)
-                rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
-                mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
+                # Taper weights to 0 where small-scale value is within a factor of
+                # 2 of the original large scale value. Use distance to the center of
+                # the box to determine taper value. This tapering prevents the use of
+                # the small scale box beyond the range of artifacts.
+                low = rms_map1[tuple(bbox)] / large_rms[tuple(bbox)] < 2.0
+                if low.any():
+                    d_min = dist[low].min()
+                    taper = np.maximum(0.0, 1.0 - dist / np.hypot(bbox_xsize, bbox_ysize) * 2.0)
+                    weights = np.where(dist >= d_min, taper, 1.0)
+
+                weights_map[tuple(bbox)] = np.maximum(weights_map[tuple(bbox)], weights)
+
+            # Blend once, using the unmodified large-scale maps
+            rms_map[:] = rms_map1 * weights_map + large_rms * (1.0 - weights_map)
+            mean_map[:] = mean_map1 * weights_map + large_mean * (1.0 - weights_map)
+
         else:
             rms_map = rms_map1
             mean_map = mean_map1
