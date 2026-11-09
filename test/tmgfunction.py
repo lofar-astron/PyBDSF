@@ -21,6 +21,7 @@ def gaussian(shape, a, x1, x2, s1, s2, pa):
 
 GAUSSIANS = [(5.0, 12.0, 10.0, 2.5, 1.7, 30.0), (3.0, 18.0, 15.0, 1.8, 1.6, 100.0)]
 SHAPE = (30, 25)
+START = [(4.0, 11.5, 10.3, 2.0, 2.2, 20.0), (2.5, 18.2, 14.8, 1.7, 1.6, 90.0)]
 
 
 def make_image(noise=0.0):
@@ -39,18 +40,16 @@ def make_function(gtypes, params, image=None, mask=None):
 
 
 def test_residual():
-    params = [(4.0, 11.5, 10.3, 2.0, 2.2, 20.0), (2.5, 18.2, 14.8, 1.7, 1.6, 90.0)]
-    fcn, image, mask = make_function([Gtype.g6, Gtype.g3], params)
-    expected = (image - sum(gaussian(SHAPE, *p) for p in params))[~mask]
+    fcn, image, mask = make_function([Gtype.g6, Gtype.g3], START)
+    expected = (image - sum(gaussian(SHAPE, *p) for p in START))[~mask]
     residual = fcn.residual(fcn.get_fitted_parameters())
     assert np.allclose(residual, expected, rtol=0, atol=1e-12)
     assert np.isclose(fcn.chi2(), np.sum(expected**2), rtol=1e-12)
 
 
 def test_jacobian():
-    params = [(4.0, 11.5, 10.3, 2.0, 2.2, 20.0), (2.5, 18.2, 14.8, 1.7, 1.6, 90.0),
-              (1.0, 5.0, 5.0, 1.5, 1.5, 0.0)]
-    fcn, _, _ = make_function([Gtype.g6, Gtype.g3, Gtype.g1], params)
+    fcn, _, _ = make_function([Gtype.g6, Gtype.g3, Gtype.g1],
+                              START + [(1.0, 5.0, 5.0, 1.5, 1.5, 0.0)])
     x = fcn.get_fitted_parameters()
     assert len(x) == fcn.fitted_parameters() == 10
     jac = fcn.jacobian(x).copy()
@@ -75,32 +74,29 @@ def test_fit_recovers_gaussians():
 
 
 def test_fixed_parameters():
-    start = [(4.0, 11.5, 10.3, 2.0, 2.2, 20.0), (2.5, 18.2, 14.8, 1.7, 1.6, 90.0)]
-    fcn, _, _ = make_function([Gtype.g3, Gtype.g1], start)
+    fcn, _, _ = make_function([Gtype.g3, Gtype.g1], START)
     assert lmder_fit(fcn, verbose=0)
     result = fcn.parameters
-    assert result[0][3:] == start[0][3:]
-    assert result[1][1:] == start[1][1:]
-    assert result[0][:3] != start[0][:3]
-    assert result[1][0] != start[1][0]
+    assert result[0][3:] == START[0][3:]
+    assert result[1][1:] == START[1][1:]
+    assert result[0][:3] != START[0][:3]
+    assert result[1][0] != START[1][0]
 
 
 def test_repeated_fits():
-    start = [(4.0, 11.5, 10.3, 2.0, 2.2, 20.0), (2.5, 18.2, 14.8, 1.7, 1.6, 90.0)]
     gtypes = [Gtype.g6, Gtype.g6]
-    fcn, _, _ = make_function(gtypes, start)
-    results = []
-    for final in (False, True, False, True):
+    fcn, _, _ = make_function(gtypes, START)
+
+    def fit(fcn, final):
         fcn.reset()
-        for t, p in zip(gtypes, start):
+        for t, p in zip(gtypes, START):
             fcn.add_gaussian(t, p)
-        results.append((lmder_fit(fcn, final=final, verbose=0), fcn.parameters))
-    # A new MGFunction does not have cached fit results
+        return lmder_fit(fcn, final=final, verbose=0), fcn.parameters
+
     for final in (False, True):
-        fresh, _, _ = make_function(gtypes, start)
-        results.append((lmder_fit(fresh, final=final, verbose=0), fresh.parameters))
-    assert results[0] == results[2] == results[4]
-    assert results[1] == results[3] == results[5]
+        # A new MGFunction does not have cached fit results
+        fresh, _, _ = make_function(gtypes, START)
+        assert fit(fcn, final) == fit(fcn, final) == fit(fresh, final)
     assert len(fcn._fit_results) == 2  # one for each value of `final`
 
 

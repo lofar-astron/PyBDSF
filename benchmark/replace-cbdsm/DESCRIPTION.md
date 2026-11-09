@@ -125,16 +125,17 @@ level, which changes one Gaussian of scale 2.
 
 | File | Purpose |
 | --- | --- |
-| `record_fits.py <out.pkl> <fits> [kwargs]` | Records all `lmder_fit` calls of a run with `_cbdsm` |
-| `replay_fits.py <records.pkl> <mgfunction.py> [repeats]` | Compares results and speed of single fits |
+| `record_fits.py <out.pkl> <fits> [kwargs]` | Records all `lmder_fit` calls of a run, with `_cbdsm` or `mgfunction` |
+| `replay_fits.py <records.pkl> <impl A> <impl B> [repeats]` | Compares results, speed and memory of single fits of two implementations (a `.py` file or a module name such as `bdsf._cbdsm`) |
 | `run_comparison.sh <work dir> [rev] [repeats]` | Unit tests, end-to-end timing, and exact comparison of all FITS outputs |
 
-The scripts need `venv` with an installed PyBDSF that still has `_cbdsm`,
-as `../rmsimage-optimization/setup_overlays.sh` does. Example:
+`run_comparison.sh` and comparisons with C++ need `venv` with an installed
+PyBDSF that still has `_cbdsm`, as `../rmsimage-optimization/setup_overlays.sh`
+does. Example:
 
 ```bash
 venv/bin/python -I benchmark/replace-cbdsm/record_fits.py /tmp/test.pkl test/tbdsf_process_image.in_fits \
     "{'beam': (0.015, 0.015, 0.0), 'thresh_isl': 3.0, 'thresh_pix': 5.0, 'atrous_do': True}"
-venv/bin/python -I benchmark/replace-cbdsm/replay_fits.py /tmp/test.pkl bdsf/mgfunction.py
+venv/bin/python -I benchmark/replace-cbdsm/replay_fits.py /tmp/test.pkl bdsf._cbdsm bdsf/mgfunction.py
 benchmark/replace-cbdsm/run_comparison.sh /tmp/cbdsm-bench master
 ```

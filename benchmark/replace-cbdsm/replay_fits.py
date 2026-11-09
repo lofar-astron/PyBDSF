@@ -1,31 +1,40 @@
 #!/usr/bin/env python
-"""Replay recorded lmder_fit calls with the C++ `_cbdsm` and with
-`bdsf/mgfunction.py`, and compare their results and run times.
+"""Replay recorded lmder_fit calls with two implementations of MGFunction and
+lmder_fit, and compare their results, run times and memory use.
 
 Every recorded call is replayed with a new MGFunction, so the cache of fit
-results of the Python version is not used; this compares the speed of single
-fits.
+results of the Python version is not used; this compares single fits.
 
-Usage: replay_fits.py <records.pkl> <path to mgfunction.py> [repeats]
+Usage: replay_fits.py <records.pkl> <impl A> <impl B> [repeats]
 
-Run with a Python environment that has a PyBDSF version with `_cbdsm`.
+Each implementation is the path of a Python file (e.g. bdsf/mgfunction.py, or
+an older version from `git show`), or the name of a module (e.g. bdsf._cbdsm,
+which needs a PyBDSF version that still has it).
 """
 import gc
+import importlib
 import importlib.util
 import pickle
 import sys
 import time
+import tracemalloc
 
 import numpy as np
 
-import bdsf._cbdsm as C
 
-spec = importlib.util.spec_from_file_location("mgfunction", sys.argv[2])
-P = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(P)
+def load(impl, name):
+    if not impl.endswith('.py'):
+        return importlib.import_module(impl)
+    spec = importlib.util.spec_from_file_location(name, impl)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 with open(sys.argv[1], 'rb') as f:
     records = pickle.load(f)
-repeats = int(sys.argv[3]) if len(sys.argv) > 3 else 3
+A, B = load(sys.argv[2], 'impl_a'), load(sys.argv[3], 'impl_b')
+repeats = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 
 
 def run(M, r):
@@ -47,30 +56,39 @@ def best_times(M):
     return best
 
 
-gc.disable()
-identical = 0
-status_differs = 0
+identical = status_differs = 0
 max_rel_diff = []
 for r in records:
-    ok_c, par_c, peak_c = run(C, r)
-    ok_p, par_p, peak_p = run(P, r)
-    identical += (ok_c == ok_p and par_c == par_p and peak_c == peak_p)
-    status_differs += (ok_c != ok_p)
-    par_c, par_p = np.array(par_c), np.array(par_p)
-    max_rel_diff.append(np.max(np.abs(par_c - par_p) / np.maximum(np.abs(par_c), 1e-12))
-                        if par_c.size else 0.0)
-max_rel_diff = np.array(max_rel_diff)
+    ok_a, par_a, peak_a = run(A, r)
+    ok_b, par_b, peak_b = run(B, r)
+    identical += (ok_a, par_a, peak_a) == (ok_b, par_b, peak_b)
+    status_differs += ok_a != ok_b
+    par_a, par_b = np.array(par_a), np.array(par_b)
+    max_rel_diff.append(np.max(np.abs(par_a - par_b) / np.maximum(np.abs(par_a), 1e-12))
+                        if par_a.size else 0.0)
 print(f"{len(records)} fits; bit-identical results: {identical}; "
       f"different convergence status: {status_differs}; "
-      f"max rel param diff > 1e-10: {(max_rel_diff > 1e-10).sum()}")
+      f"max rel param diff > 1e-10: {(np.array(max_rel_diff) > 1e-10).sum()}")
 
-t_c = best_times(C)
-t_p = best_times(P)
-print(f"total time  C++: {t_c.sum():.3f} s   Python: {t_p.sum():.3f} s   "
-      f"ratio Python/C++: {t_p.sum() / t_c.sum():.2f}")
+gc.disable()
+t_a, t_b = best_times(A), best_times(B)
+gc.enable()
+print(f"total time  A: {t_a.sum():.3f} s   B: {t_b.sum():.3f} s   "
+      f"ratio B/A: {t_b.sum() / t_a.sum():.3f}")
 npix = np.array([(~r['mask']).sum() for r in records])
 for lo, hi in ((0, 50), (50, 200), (200, 1000), (1000, np.inf)):
     sel = (npix >= lo) & (npix < hi)
     if sel.any():
-        print(f"  pixels [{lo}, {hi}): {sel.sum():6d} fits  C++ {t_c[sel].sum():7.3f} s  "
-              f"Python {t_p[sel].sum():7.3f} s  ratio {t_p[sel].sum() / t_c[sel].sum():.2f}")
+        print(f"  pixels [{lo}, {hi}): {sel.sum():6d} fits  A {t_a[sel].sum():7.3f} s  "
+              f"B {t_b[sel].sum():7.3f} s  ratio {t_b[sel].sum() / t_a[sel].sum():.3f}")
+
+# Peak memory (traced by Python, so not that of C++) of the largest fits
+largest = np.argsort(-npix * [len(r['gtypes']) for r in records])[:5]
+for M, name in ((A, 'A'), (B, 'B')):
+    peaks = []
+    for i in largest:
+        tracemalloc.start()
+        run(M, records[i])
+        peaks.append(tracemalloc.get_traced_memory()[1] // 1024)
+        tracemalloc.stop()
+    print(f"peak traced memory of the 5 largest fits, {name}: {peaks} KiB")

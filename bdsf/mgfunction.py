@@ -38,9 +38,10 @@ from scipy.optimize import leastsq
 _DEG = pi / 180.0  # a Python float, like all per-Gaussian numbers
 
 
-def _gaussian_scalars(a, x1, x2, s1, s2, pa):
-    """Return the numbers that are needed to evaluate a Gaussian and its
-    derivatives: (a, x1, x2, s1, s2, cos(pa), sin(pa), s1 / s2 - s2 / s1).
+def _gaussian_scalars(s1, s2, pa):
+    """Return the numbers, besides the parameters, that are needed to
+    evaluate a Gaussian and its derivatives: (cos(pa), sin(pa),
+    s1 / s2 - s2 / s1).
 
     For speed, these are computed with Python floats, which gives the same
     results as the former C++ code, except that Python raises an exception
@@ -58,7 +59,7 @@ def _gaussian_scalars(a, x1, x2, s1, s2, pa):
     except ZeroDivisionError:
         with N.errstate(all='ignore'):
             ratio = float(N.float64(s1) / s2 - s2 / N.float64(s1))
-    return (a, x1, x2, s1, s2, cs, sn, ratio)
+    return cs, sn, ratio
 
 
 class Gtype(IntEnum):
@@ -140,7 +141,7 @@ class MGFunction:
         (value, (x1, x2))
         """
         with N.errstate(all='ignore'):
-            resid = self._residual()
+            resid = self._update()
         pidx = int(N.argmax(resid))
         if resid[pidx] != resid[pidx] and resid[0] == resid[0]:
             # Like the former C++ code, ignore NaNs unless the first value
@@ -151,7 +152,7 @@ class MGFunction:
     def chi2(self):
         """Chi^2 of the residual image (uniform weights)."""
         with N.errstate(all='ignore'):
-            resid = self._residual() / self._weight
+            resid = self._update() / self._weight
             return float(N.dot(resid, resid))
 
     # ------------------------------------------------------------------
@@ -172,7 +173,7 @@ class MGFunction:
         pixels: an array of shape (data_size,), which must not be modified.
         """
         self.set_fitted_parameters(x)
-        return self._residual()
+        return self._update()
 
     def jacobian(self, x):
         """Return the derivatives of data - MGF with respect to the fitted
@@ -204,12 +205,14 @@ class MGFunction:
 
     def _update(self):
         """Evaluate the Gaussians for the current parameters, unless the
-        cached results are for the same parameters already.
+        cached results are for the same parameters already, and return
+        data - MGF for all data points.
 
         This sets the following attributes:
-        - _terms: for each Gaussian, a tuple (scalars, f1, f2, val) with the
-                  numbers returned by _gaussian_scalars, and the values of f1,
-                  f2 and the (unscaled) Gaussian for all data points
+        - _terms: for each Gaussian, a tuple (a, s1, s2, cs, sn, ratio, f1,
+                  f2, val) with its parameters and the numbers returned by
+                  _gaussian_scalars, and the values of f1, f2 and the
+                  (unscaled) Gaussian for all data points
         - _resid: data - MGF for all data points
         - _jac:   None (the Jacobian is computed when needed)
 
@@ -219,12 +222,12 @@ class MGFunction:
         """
         key = self._params.tobytes()
         if key == self._cache_key:
-            return
+            return self._resid
         resid = self._data.copy()
         terms = []
         for p in self._params.tolist():
-            g = _gaussian_scalars(*p)
-            a, c1, c2, s1, s2, cs, sn, _ = g
+            a, c1, c2, s1, s2, pa = p
+            cs, sn, ratio = _gaussian_scalars(s1, s2, pa)
             dx1 = self._x1 - c1
             dx2 = self._x2 - c2
             f1 = (dx1 * cs + dx2 * sn) / s1
@@ -233,16 +236,12 @@ class MGFunction:
             val = (f1 * f1 + f2 * f2) * -0.5
             N.exp(val, out=val, dtype=N.longdouble)
             resid -= a * val
-            terms.append((g, f1, f2, val))
+            terms.append((a, s1, s2, cs, sn, ratio, f1, f2, val))
         self._terms = terms
         self._resid = resid
         self._jac = None
         self._cache_key = key
-
-    def _residual(self):
-        """Return data - MGF for the current parameters."""
-        self._update()
-        return self._resid
+        return resid
 
     def _compute_jacobian(self):
         """Return the derivatives of (data - MGF) with respect to the fitted
@@ -253,7 +252,7 @@ class MGFunction:
         """
         jac = N.empty((self._fit_idx.size, self._data.size))
         row = 0
-        for gtype, ((a, _, _, s1, s2, cs, sn, ratio), f1, f2, val) in zip(
+        for gtype, (a, s1, s2, cs, sn, ratio, f1, f2, val) in zip(
                 self._gtypes, self._terms):
             N.negative(val, out=jac[row])
             if gtype != Gtype.g1:
@@ -298,13 +297,10 @@ def lmder_fit(fcn, final=False, verbose=1):
     # gausfit fits an island, it usually repeats the same fit several times,
     # so the results are cached.
     key = (tuple(fcn._gtypes), fcn._params.tobytes(), final)
-    cached = fcn._fit_results.get(key)
-    if cached is None:
-        info, nfev, njev = _lmder_fit(fcn, final)
-        fcn._fit_results[key] = (fcn._params.copy(), info, nfev, njev)
-    else:
-        params, info, nfev, njev = cached
-        fcn._params[...] = params
+    if key not in fcn._fit_results:
+        fcn._fit_results[key] = _lmder_fit(fcn, final)
+    params, info, nfev, njev = fcn._fit_results[key]
+    fcn._params[...] = params
     converged = 0 < info < 4
 
     if verbose:
@@ -316,11 +312,11 @@ def lmder_fit(fcn, final=False, verbose=1):
 
 
 def _lmder_fit(fcn, final):
-    """Fit `fcn` with LMDER, and return (info, nfev, njev)."""
+    """Fit `fcn` with LMDER, and return (parameters, info, nfev, njev)."""
     npar = fcn.fitted_parameters()
     if npar == 0 or npar > fcn.data_size():
         # Improper input for LMDER
-        return 0, 0, 0
+        return fcn._params.copy(), 0, 0, 0
     tol = 1e-6 if final else 1e-4
     x0 = fcn.get_fitted_parameters()
     # Like the former C++ code, ignore floating point errors (which may occur
@@ -331,4 +327,4 @@ def _lmder_fit(fcn, final):
             col_deriv=True, ftol=tol, xtol=tol, gtol=0.0, maxfev=200,
             factor=10.0)
     fcn.set_fitted_parameters(x)
-    return info, infodict['nfev'], infodict['njev']
+    return fcn._params.copy(), info, infodict['nfev'], infodict['njev']
