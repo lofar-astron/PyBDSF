@@ -2,8 +2,6 @@
 
 This module is used to display fits results.
 """
-from __future__ import print_function
-from __future__ import absolute_import
 from . import has_pl
 if has_pl:
     import matplotlib.pyplot as pl
@@ -12,9 +10,7 @@ if has_pl:
     from matplotlib import collections
 from . import functions as func
 from .const import fwsig
-import warnings
 import numpy as N
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def plotresults(img, ch0_image=True, rms_image=True, mean_image=True,

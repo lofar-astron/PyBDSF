@@ -31,7 +31,6 @@ class Op_new_op(Op):
 ## type-checking works properly.
 Opts.my_new_opt = Float(33, doc="docstring")
 """
-from __future__ import absolute_import
 
 from .tc import Int, Float, Bool, String, Tuple, Enum, \
     Option, NArray, Instance, tInstance, List, Any, TCInit, tcError
@@ -88,7 +87,8 @@ class Opts(object):
                                  "If flag_maxsize_isl: flag + 16 (x) or 32 (y)\n"\
                                  "If flag_maxsize_bm: flag + 64\n"\
                                  "If flag_minsize_bm: flag + 128\n"\
-                                 "If flag_maxsize_fwhm: flag + 256")
+                                 "If flag_maxsize_fwhm: flag + 256\n"\
+                                 "If flag_nofit: flag + 512")
     frequency = Option(None, Float(),
                              doc = "Frequency in Hz of input image. "\
                                  "E.g., frequency = 74e6. None => get from header.\n"\
@@ -777,6 +777,12 @@ class Opts(object):
                                  "is less than flag_maxsize_bm times the "\
                                  "synthesized beam is flagged. The Gaussian "\
                                  "flag is increased by 128.",
+                             group = "flagging_opts")
+    flag_nofit = Bool(True,
+                             doc = "Flag Gaussian if normal fitting failed\n"\
+                                 "This flag can be used to exclude Gaussians determined "\
+                                 "by means other than normal fitting, such as moment analysis. "\
+                                 "The Gaussian flag is increased by 512.",
                              group = "flagging_opts")
 
 

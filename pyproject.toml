@@ -79,6 +79,7 @@ build-verbosity = 1
 environment = """ \
     BOOST_VERSION="1.91.0" \
     BOOST_BUILD_DIR="/tmp/boost-build" \
+    BOOST_DOWNLOAD_CACHE="${HOME}/.cache/pybdsf/downloads" \
     BOOST_INSTALL_DIR="${HOME}/boost" \
     BOOST_ROOT="${BOOST_INSTALL_DIR}" \
     CC=gcc \
@@ -87,7 +88,7 @@ environment = """ \
     FC=gfortran \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
-test-command = "cd {package}/test && python tbdsf_process_image.py"
+test-command = "cd {package}/test && python tmulti_proc.py && python tbdsf_process_image.py --rtol 0.03"
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = """\
@@ -97,6 +98,10 @@ repair-wheel-command = """\
 
 [tool.cibuildwheel.linux]
 skip = ["*-musllinux_*", "*_i686"]
+inherit.environment = "append"
+environment = """ \
+    BOOST_DOWNLOAD_CACHE="/host${HOME}/.cache/pybdsf/downloads" \
+"""
 
 
 ###########################

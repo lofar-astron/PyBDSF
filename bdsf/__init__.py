@@ -7,8 +7,6 @@ execute chain of operations properly. Also define the
 options as arguments rather than as a dictionary (as
 required by 'execute').
 """
-from __future__ import print_function
-from __future__ import absolute_import
 
 try:
     import matplotlib.pyplot as pl

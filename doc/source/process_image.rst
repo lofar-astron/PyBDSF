@@ -672,6 +672,7 @@ The options for flagging of Gaussians are:
                                    smaller than flag_minsize_bm times beam area
       :term:`flag_minsnr` .......... 0.9 : Flag Gaussian if peak is less than flag_minsnr
                                    times thresh_pix times local rms
+      :term:`flag_nofit` .......... True : Flag Gaussian if normal fitting failed
       :term:`flag_smallsrc` ...... False : Flag sources smaller than flag_minsize_bm times
                                    beam area
 
@@ -701,13 +702,19 @@ The options for flagging of Gaussians are:
         by 2.
 
     flag_minsize_bm
-        This parameter is a float (default is 0.7). If ``flag_smallsrc`` is True, then any fitted Gaussian whose size is less
+        This parameter is a float (default is 0.7). If ``flag_smallsrc`` is ``True``\, then any fitted Gaussian whose size is less
         than ``flag_maxsize_bm`` times the synthesized beam is flagged. The Gaussian
         flag is increased by 128.
 
     flag_minsnr
         This parameter is a float (default is 0.7). Any fitted Gaussian whose peak is less than ``flag_minsnr`` times ``thresh_pix``
         times the local rms is flagged. The flag value is increased by 1.
+
+    flag_nofit
+        This parameter is a Boolean (default is ``True``). If ``True``\, then Gaussians for which
+        normal fitting failed are flagged. This flag can be used to exclude Gaussians determined
+        by means other than normal fitting (i.e., through moment analysis; see
+        :ref:`gaussian_fitting` for details). The flag value is increased by 512.
 
     flag_smallsrc
         This parameter is a Boolean (default is ``False``). If ``True``\, then fitted Gaussians whose size is less than ``flag_minsize_bm``
@@ -943,9 +950,20 @@ The wavelet module performs the following steps:
 
 * For each scale (*j*), the appropriate *à trous* wavelet transformation is made (see Holschneider et al. 1989 for details). Additionally, the "remainder" image (called the *c_J* image) is also made. This image includes all emission not included in the other wavelet images.
 
-* Depending on the value of the ``atrous_sum`` option, fitting is done to either an image that is a sum over all scales equal to or larger than the scale under consideration (``atrous_sum = True``) or to an image of a single scale (``atrous_sum = False``). Fitting to the sum over all larger scales will generally result in increased signal to noise.
+* Depending on the value of the `atrous_sum` option, fitting is
+  done either to the remaining-scale image (`atrous_sum = True`)
+  or to an individual wavelet scale (`atrous_sum = False`).
+  Fitting to the remaining-scale image generally results in
+  increased signal to noise.
 
-* If ``atrous_bdsm = True``, an rms map and a mean map are made for each wavelet image and Gaussians are fit in the normal way. Gaussians can be optionally restricted to lie within islands found from the initial image. If a wavelet island overlaps spatially with an existing island, the two islands are merged together to form a single island. The wavelet Gaussians can then be included in source catalogs (see :ref:`write_catalog`).
+  When `atrous_sum = True`, the remaining-scale image includes
+  emission from the current and larger wavelet scales, with
+  contributions from previously fitted wavelet Gaussians removed.
+  When `atrous_sum = False`, fitting is performed on the individual
+  wavelet component, calculated as the difference between two
+  consecutive low-pass images.
+
+* If ``atrous_bdsm_do = True``, an rms map and a mean map are made for each wavelet image and Gaussians are fit in the normal way. Gaussians can be optionally restricted to lie within islands found from the initial image. If a wavelet island overlaps spatially with an existing island, the two islands are merged together to form a single island. The wavelet Gaussians can then be included in source catalogs (see :ref:`write_catalog`).
 
 The options for this module are as follows:
 
@@ -994,6 +1012,34 @@ The options for this module are as follows:
     atrous_sum
         This parameter is a Boolean (default is ``True``). If ``True``, fitting is done on an image that is the sum of the remaining wavelet scales. Using the sum will generally result in improved signal.
         If ``False``, fitting is done on only the wavelet scale under consideration.
+
+
+Wavelet output images
+---------------------
+
+If `output_all = True`, the wavelet module writes the following
+FITS images to the `wavelet` output directory:
+
+* `*.atrous.wJ.fits`: Individual wavelet component at scale J,
+  when `atrous_sum = False`.
+
+* `*.atrous.remainingJ.fits`: Remaining-scale image used for
+  Gaussian fitting at scale J, when `atrous_sum = True`.
+
+* `*.atrous.cJ.fits`: Final low-pass (remainder) image after
+  the wavelet decomposition.
+
+* `model/*.model_wavelets.fits`: Complete source model,
+  including both the standard Gaussian model and the additional
+  wavelet Gaussian model.
+
+* `model/*.model_wavelets_component.fits`: Additional model
+  contributed by wavelet Gaussian fitting only.
+
+* `residual/*.resid_wavelets.fits`: Final residual image after
+  subtraction of both the standard Gaussian model and the
+  wavelet Gaussian model.
+
 
 .. _psf_vary_do:
 

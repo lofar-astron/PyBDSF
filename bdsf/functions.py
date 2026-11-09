@@ -1,12 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
 from shutil import get_terminal_size
 
-try:
-    # For Python 2
-    basestring = basestring
-except NameError:
-    basestring = str
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
@@ -295,15 +288,7 @@ def fit_mask_1d(x, y, sig, mask, funct, do_err, order=0, p0 = None):
                     return [0, 0], [0, 0]
 
         res=lambda p, xfit, yfit, sigfit: (yfit-funct(p, xfit))/sigfit
-        try:
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True, warning=False)
-        except TypeError:
-            # This error means no warning argument is available, so redirect stdout to a null device
-            # to suppress printing of (unnecessary) warning messages
-            original_stdout = sys.stdout  # keep a reference to STDOUT
-            sys.stdout = NullDevice()  # redirect the real STDOUT
-            (p, cov, info, mesg, flag)=leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
-            sys.stdout = original_stdout  # turn STDOUT back on
+        (p, cov, info, _, _) = leastsq(res, p0, args=(xfit, yfit, sigfit), full_output=True)
 
         if do_err:
             if cov is not None:
@@ -463,16 +448,7 @@ def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
         errorfunction = lambda p: N.ravel(gaus_2d(p, x, y) - data)[g_ind]
     else:
         errorfunction = lambda p: N.ravel((gaus_2d(p, x, y) - data)/err)[g_ind]
-    try:
-        p, success = leastsq(errorfunction, p_ini, warning=False)
-    except TypeError:
-        # This error means no warning argument is available, so redirect stdout to a null device
-        # to suppress printing of warning messages
-        original_stdout = sys.stdout  # keep a reference to STDOUT
-        sys.stdout = NullDevice()  # redirect the real STDOUT
-        p, success = leastsq(errorfunction, p_ini)
-        sys.stdout = original_stdout  # turn STDOUT back on
-
+    p, success = leastsq(errorfunction, p_ini)
 
     return p, success
 
@@ -521,17 +497,19 @@ def deconv2(gaus_bm, gaus_c):
             bmaj = sqrt(0.5*(s+t))
             bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         bmin = 0.0
-        if 0.5*(s-t) < limit and alpha > -limit and beta > -limit:
+        # https://github.com/lofar-astron/PyBDSF/pull/450
+        if 0.5 * (s - t) > -limit and alpha > -limit and beta > -limit:
             ifail = 1
         else:
             ifail = 2
     else:
+        # TODO / NOTE: A symmetric tolerance check is needed here.
+        # When a source is identical or nearly identical to the beam, round-off noise
+        # causes s - t to fluctuate randomly around 0. So ifail = 0 vs 1 depends on the
+        # sign of the rounding noise.
         bmaj = sqrt(0.5*(s+t))
         bmin = sqrt(0.5*(s-t))
-        if abs(gamma) + abs(alpha-beta) == 0.0:
-            bpa = 0.0
-        else:
-            bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
+        bpa = rad * 0.5 * atan2(-gamma, alpha-beta)
         ifail = 0
     return (bmaj, bmin, bpa), ifail
 
@@ -600,8 +578,11 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
                 e_y0 = sqrt( (e_maj * N.cos(pa_rad))**2 + (e_min * N.sin(pa_rad))**2 ) / d1
 
                 # The following error is calculated using Eq. 30 of Condon+ (1998)
-                e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25))
-                e_pa = e_pa * 180.0/pi
+                # The position angle is undefined for a circular Gaussian.
+                if abs(d2) < 1e-12:
+                    e_pa = N.nan
+                else:
+                    e_pa = 2.0 / (d2 * dumrr3 * pow(dumrr1, 0.25) * pow(dumrr2, 1.25)) * 180.0 / pi
 
                 # The following error is calculated using Eq. 36 of Condon+ (1998)
                 e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
@@ -634,7 +615,6 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
     """ fitcode : 0=fit all; 1=fit amp; 2=fit amp, posn; 3=fit amp, size """
     from scipy.optimize import leastsq
     import numpy as N
-    import sys
 
     if mask is not None and mask.shape != image.shape:
         print('Data and mask array dont have the same shape, ignoring mask')
@@ -666,15 +646,7 @@ def fit_mulgaus2d(image, gaus, x, y, mask = None, fitfix = None, err = None, adj
 
         errorfunction = lambda p, x, y, p_tofix, ind, image, err, g_ind: \
                        N.ravel((gaus_2d_itscomplicated(p, x, y, p_tofix, ind)-image)/err)[g_ind]
-        try:
-            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-        except TypeError:
-            # This error means no warning argument is available, so redirect stdout to a null device
-            # to suppress printing of warning messages
-            original_stdout = sys.stdout  # keep a reference to STDOUT
-            sys.stdout = NullDevice()  # redirect the real STDOUT
-            p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
-            sys.stdout = original_stdout  # turn STDOUT back on
+        p, success = leastsq(errorfunction, p_tofit, args=(x, y, p_tofix, ind, image, err, g_ind))
     else:
         p, success = None, 1
 
@@ -737,12 +709,12 @@ def arrstatmask(im, mask):
 
     ind = N.where(~mask)
     im1 = im[ind]
-    av = N.mean(im1)
-    std = N.std(im1)
-    maxv = N.max(im1)
+    av = N.nanmean(im1)
+    std = N.nanstd(im1)
+    maxv = N.nanmax(im1)
     x, y = N.where(im == maxv)
     xmax = x[0]; ymax = y[0]
-    minv = N.min(im1)
+    minv = N.nanmin(im1)
     x, y = N.where(im == minv)
     xmin = x[0]; ymin = y[0]
 
@@ -762,8 +734,14 @@ def get_maxima(im, mask, thr, shape, beam, im_pos=None):
     iniposn = []
     inipeak = []
     for c in ind:
-        goodlist = [im_pos[i,j] for i in range(c[0]-1,c[0]+2) for j in range(c[1]-1,c[1]+2) \
-                     if i>=0 and i<n and j>=0 and j<m and (i,j) != c]
+        goodlist = [
+            im_pos[i, j]
+            for i in range(c[0] - 1, c[0] + 2)
+            for j in range(c[1] - 1, c[1] + 2)
+            if 0 <= i < n and 0 <= j < m
+            and (i, j) != c
+            and not mask[i, j]
+        ]
         peak = N.sum(im_pos[c] > goodlist) == len(goodlist)
         if peak:
             iniposn.append(c)
@@ -1272,120 +1250,6 @@ def get_name(img, map_name):
     os.makedirs(dir, exist_ok=True)
     return dir + map_name + '.bin'
 
-def connect(mask):
-    """ Find if a mask is singly or multiply connected """
-    import scipy.ndimage as nd
-
-    connectivity = nd.generate_binary_structure(2,2)
-    labels, count = nd.label(mask, connectivity)
-    if count > 1 :
-        connected = 'multiple'
-    else:
-        connected = 'single'
-
-    return connected, count
-
-def area_polygon(points):
-    """ Given an ANGLE ORDERED array points of [[x], [y]], find the total area by summing each successsive
-    triangle with the centre """
-    import numpy as N
-
-    # Unpack the input coordinates into separate arrays for x and y
-    x, y = points
-    # Calculate the number of triangles. The vertices are angle-ordered, so
-    # we connect consecutive pairs (i and i+1) with the center, forming len(x) - 1 triangles.
-    n_tri = len(x)-1
-    # Find the centroid of the polygon
-    cenx, ceny = N.mean(x), N.mean(y)
-
-    area = 0.0
-    # Loop through each pair of consecutive vertices to calculate individual triangle areas
-    for i in range(n_tri):
-        # Define the three vertices of the current triangle:
-        # p1 is the center point, p2 is the current vertex, and p3 is the next consecutive vertex.
-        p1, p2, p3 = N.array([cenx, ceny]), N.array([x[i], y[i]]), N.array([x[i+1], y[i+1]])
-        # Create two vectors originating from the center point (p1) to the outer vertices (p2 and p3)
-        v1 = p2 - p1
-        v2 = p3 - p1
-        # Calculate the area of the triangle using the 2D cross-product.
-        # The absolute value of (v1_x * v2_y - v1_y * v2_x) represents the area spanned by v1 and v2.
-        # Dividing this value by 2.0 gives the triangle area.
-        t_area = abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.0
-        # Add the area of the current triangle into the total polygon area
-        area += t_area
-
-    return area
-
-def convexhull_deficiency(isl):
-    """ Finds the convex hull for the island and returns the deficiency.
-    Code taken from http://code.google.com/p/milo-lab/source/browse/trunk/src/toolbox/convexhull.py?spec=svn140&r=140
-    """
-
-    import random
-    import time
-    import numpy as N
-    import scipy.ndimage as nd
-
-    def _angle_to_point(point, centre):
-        """calculate angle in 2-D between points and x axis"""
-        delta = point - centre
-        if delta[0] == 0.0:
-            res = N.pi/2.0
-        else:
-            res = N.arctan(delta[1] / delta[0])
-        if delta[0] < 0:
-            res += N.pi
-        return res
-
-    def area_of_triangle(p1, p2, p3):
-        """calculate area of any triangle given co-ordinates of the corners"""
-        v1 = p2 - p1
-        v2 = p3 - p1
-        return abs(v1[0] * v2[1] - v1[1] * v2[0]) / 2.
-
-    def convex_hull(points):
-        """Calculate subset of points that make a convex hull around points
-        Recursively eliminates points that lie inside two neighbouring points until only convex hull is remaining.
-        points : ndarray (2 x m) array of points for which to find hull
-        Returns: hull_points : ndarray (2 x n), convex hull surrounding points """
-
-        n_pts = points.shape[1]
-        #assert(n_pts > 5)
-        centre = points.mean(1)
-        angles = N.apply_along_axis(_angle_to_point, 0, points, centre)
-        pts_ord = points[:,angles.argsort()]
-        pts = [x[0] for x in zip(pts_ord.transpose())]
-        prev_pts = len(pts) + 1
-        k = 0
-        while prev_pts > n_pts:
-            prev_pts = n_pts
-            n_pts = len(pts)
-            i = -2
-            while i < (n_pts - 2):
-                Aij = area_of_triangle(centre, pts[i], pts[(i + 1) % n_pts])
-                Ajk = area_of_triangle(centre, pts[(i + 1) % n_pts], \
-                                       pts[(i + 2) % n_pts])
-                Aik = area_of_triangle(centre, pts[i], pts[(i + 2) % n_pts])
-                if Aij + Ajk < Aik:
-                    del pts[i+1]
-                i += 1
-                n_pts = len(pts)
-            k += 1
-        return N.asarray(pts)
-
-    mask = ~isl.mask_active
-    points = N.asarray(N.where(mask ^ nd.binary_erosion(mask)))
-    hull_pts = list(convex_hull(points))   # these are already in angle-sorted order
-
-    hull_pts.append(hull_pts[0])
-    hull_pts = N.transpose(hull_pts)
-
-    isl_area = isl.size_active
-    hull_area = area_polygon(hull_pts)
-    ratio1 = hull_area/(isl_area - 0.5*len(hull_pts[0]))
-
-    return ratio1
-
 
 def open_isl(mask, index):
     """ Do an opening on a mask, divide left over pixels among opened sub islands. Mask = True => masked pixel """
@@ -1546,7 +1410,7 @@ def isl_tosplit(isl, opts):
         if max_sub3 < frac_bigisl3 : open3 = True       # if biggest sub island isnt too big
     if n_subisl5 > 0 and isl_pixs5 is not None:                                 # open 5 breaks up island
         max_sub5 = N.max(isl_pixs5)                     # if biggest subisl isnt too big OR smallest extra islands add upto 10 %
-        if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:len(isl_pixs5)-n_subisl3]) > size_extra5):
+        if (max_sub5 < 0.75*max_sub3) or (N.sum(N.sort(isl_pixs5)[:max(len(isl_pixs5)-n_subisl3, 0)]) > size_extra5):
             open5 = True
                                 # index=0 => dont split
     if open5: index = 5; n_subisl = n_subisl5; labels = labels5
@@ -1625,7 +1489,7 @@ def generate_aperture(xsize, ysize, xcenter, ycenter, radius):
     """Makes a mask (1 = inside aperture) for a circular aperture"""
     import numpy
 
-    x, y = numpy.mgrid[0.5:xsize, 0.5:ysize]
+    x, y = numpy.mgrid[0:xsize, 0:ysize]
     mask = ((x - xcenter)**2 + (y - ycenter)**2 <= radius**2) * 1
     return mask
 
@@ -1770,27 +1634,18 @@ def make_curvature_map(subim):
     """
     import scipy.signal as sg
     import numpy as N
-    import sys
 
     # Make average curavature map:
     curv_kernal = N.array([[1, 1, 1],[1, -8, 1],[1, 1, 1]])
-    # The next step prints meaningless warnings, so suppress them
-    original_stdout = sys.stdout  # keep a reference to STDOUT
-    sys.stdout = NullDevice()  # redirect the real STDOUT
-    curv_map = sg.convolve2d(subim, curv_kernal)
-    sys.stdout = original_stdout  # turn STDOUT back on
+    curv_map = sg.convolve2d(subim, curv_kernal, mode='same')
 
     return curv_map
 
 
 def bstat(indata, mask, kappa_npixbeam):
-    """Numpy version of the c++ bstat routine
-
-    Uses the PySE method for calculating the clipped mean and rms of an array.
+    """Uses the PySE method for calculating the clipped mean and rms of an array.
     This method is superior to the c++ bstat routine (see section 2.7.3 of
-    http://dare.uva.nl/document/174052 for details) and, since the Numpy
-    functions used here are written in c, there should be no big computational
-    penalty in using Python code.
+    http://dare.uva.nl/document/174052 for details).
     """
     import numpy
     from scipy.special import erf, erfcinv
@@ -1862,22 +1717,6 @@ def bstat(indata, mask, kappa_npixbeam):
     r = numpy.sqrt(sigma**2 * (r1 / (r1 - 2.0*kappa*numpy.exp(-kappa**2/2.0))))
 
     return m_raw, r_raw, m, r, iter
-
-
-def centered(arr, newshape):
-    """Return the center newshape portion of the array
-
-    This function is a copy of the private _centered() function in
-    scipy.signal.signaltools
-    """
-    import numpy as np
-
-    newshape = np.asarray(newshape)
-    currshape = np.array(arr.shape)
-    startind = (currshape - newshape) // 2
-    endind = startind + newshape
-    myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
-    return arr[tuple(myslice)]
 
 
 def set_up_output_paths(opts):
