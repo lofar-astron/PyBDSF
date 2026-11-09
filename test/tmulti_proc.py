@@ -6,6 +6,7 @@ import concurrent.futures
 import multiprocessing
 import os
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -101,6 +102,43 @@ def test_overlapping_calls():
     assert results == [list(range(200, 208)), list(range(400, 408))]
 
 
+# Run in a separate process, because it hangs if the bug is present
+FORK_WHILE_LOCKED = """
+import concurrent.futures
+from bdsf import multi_proc as mp
+other = concurrent.futures.ProcessPoolExecutor(1, mp_context=mp.fork_context)
+other.submit(int).result()  # starts its manager thread
+wakeup = other._executor_manager_thread_wakeup
+if not hasattr(wakeup, '_lock'):  # Python versions without the lock
+    print('skipped')
+else:
+    # As if another thread is waking up `other` while parallel_map forks
+    with wakeup._lock:
+        result = mp.parallel_map(abs, range(-4, 4), numcores=2)
+    assert result == [4, 3, 2, 1, 0, 1, 2, 3], result
+    print('ok')
+other.shutdown()
+"""
+
+
+def test_fork_while_other_pool_is_busy():
+    # Forked workers inherit the wakeup objects of all process pools of the
+    # parent, and wake them up when they exit. If another thread held the
+    # lock of such an object during the fork (which test_overlapping_calls
+    # can trigger), the workers hung when exiting, and so did parallel_map.
+    proc = subprocess.Popen([sys.executable, '-c', FORK_WHILE_LOCKED],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, start_new_session=True)
+    try:
+        output, _ = proc.communicate(timeout=60)
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)  # including the hung workers
+        proc.communicate()
+        raise AssertionError('parallel_map hung')
+    assert proc.returncode == 0, output
+    assert output.splitlines()[-1] in ('ok', 'skipped'), output
+
+
 def test_nested_calls():
     def outer(x):
         return sum(mp.parallel_map(lambda y: y + x, [1, 2], numcores=1))
@@ -146,6 +184,15 @@ def test_interrupt_stops_workers():
         signal.alarm(0)
         signal.signal(signal.SIGALRM, old_handler)
     assert time.time() - start < 30
+    # The executor's manager thread may join a worker at the same time as
+    # parallel_map. Only one of them gets the exit status from the OS; if it's
+    # the manager thread, the worker has exited and been reaped, but
+    # multiprocessing still lists it until the manager thread has recorded
+    # its exit code, which takes a moment (seen on Python 3.10). So allow a
+    # short delay.
+    deadline = time.time() + 5
+    while multiprocessing.active_children() and time.time() < deadline:
+        time.sleep(0.01)
     assert not multiprocessing.active_children(), 'workers still running'
 
 
