@@ -45,28 +45,13 @@ def shapeletfit(cf, Bset, cfshape):
     return y
 
 
-def atanproper(dumr, dx, dy):
-    from math import pi
-
-    ysign = (dy >= 0.0)
-    xsign = (dx >= 0.0)
-    if ysign and (not xsign): dumr = pi - dumr
-    if (not ysign) and (not xsign): dumr = pi + dumr
-    if (not ysign) and xsign: dumr = 2.0*pi - dumr
-
-    return dumr
-
 def gdist_pa(pix1, pix2, gsize):
     """ Computes FWHM in degrees in the direction towards second source, of an elliptical gaussian. """
-    from math import atan, pi, sqrt, cos, sin, tan
+    from math import atan, atan2, pi, sqrt, cos, sin, tan
 
     dx = pix2[0] - pix1[0]
     dy = pix2[1] - pix1[1]
-    if dx == 0.0:
-        val = pi/2.0
-    else:
-        dumr = atan(abs(dy/dx))
-        val = atanproper(dumr, dx, dy)
+    val = atan2(dy, dx)
 
     psi = val - (gsize[2]+90.0)/180.0*pi
 
