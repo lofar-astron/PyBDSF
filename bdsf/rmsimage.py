@@ -902,8 +902,9 @@ class Op_rmsimage(Op):
         cm, cr: arrays with the clipped mean and rms of each region
         """
         nbox = len(ind_list)
-        # Use many chunks, as parallel_map() gives each process an equal number
-        # of chunks; this keeps the load imbalance between processes small
+        # parallel_map() hands the chunks out in batches to whichever process
+        # is free. Fewer chunks (1, 4 or 16 per process instead of 100), or no
+        # chunks at all, were not faster in benchmarks
         nchunks = min(nbox, 100 * (ncores or mp.nproc()))
         edges = np.linspace(0, nbox, nchunks + 1).astype(int)
 
@@ -959,16 +960,15 @@ class Op_rmsimage(Op):
 
     def for_masked_mp(self, mask, arr, ind, kappa):
 
-        bstat = func.bstat #_cbdsm.bstat
         a, b, c, d = ind
         if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
+            m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
         else:
             mask_win = mask[a:b, c:d]
             npix_unmasked = mask_win.size - np.count_nonzero(mask_win)
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask_win, kappa)
+                m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask_win, kappa)
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5:
