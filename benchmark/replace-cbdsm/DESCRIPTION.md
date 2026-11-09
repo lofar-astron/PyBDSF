@@ -5,8 +5,10 @@ Branch: `replace_cbdsm`, on top of `master` (4fc79a2).
 ## What changed
 
 - **New module `bdsf/mgfunction.py`** with `MGFunction`, `Gtype` and
-  `lmder_fit`, which have the same interface as those of `_cbdsm` (the
-  unused `dn2g_fit` and `dnsg_fit` were dropped). `gausfit.py` imports them
+  `lmder_fit`, which have the interface of those of `_cbdsm` that
+  `gausfit.py` uses (the unused `dn2g_fit` and `dnsg_fit`, and the unused
+  `MGFunction` methods for removing, getting and setting single Gaussians,
+  were dropped). `gausfit.py` imports them
   from there; nothing else in `gausfit.py` changed.
 - **Fitting:** `lmder_fit` uses MINPACK's LMDER through
   `scipy.optimize.leastsq` (the same algorithm, with the same settings, as

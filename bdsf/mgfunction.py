@@ -69,10 +69,7 @@ class Gtype(IntEnum):
 
 
 class MGFunction:
-    """Multi-Gaussian function.
-
-    This class manages a multi-Gaussian function and implements all math
-    required to use it for fitting with `lmder_fit`.
+    """Multi-Gaussian function, to be fitted with `lmder_fit`.
 
     Parameters
     ----------
@@ -103,70 +100,37 @@ class MGFunction:
         self._x1, self._x2 = N.array(N.nonzero(unmasked), dtype=N.float64)
         self._data = data[unmasked].astype(N.float64)
         self._weight = float(weight)
-        # Results of fits (see lmder_fit)
-        self._fit_results = {}
+        self._fit_results = {}  # see lmder_fit
         self.reset()
 
-    # ------------------------------------------------------------------
-    # Python interface (same as the former C++ MGFunction class)
-    # ------------------------------------------------------------------
-
     def reset(self):
-        """Reset MGFunction by forgetting all Gaussians."""
+        """Forget all Gaussians."""
         self._gtypes = []
         self._params = N.empty((0, 6))
         self._layout_changed()
 
-    def __len__(self):
-        """Total number of Gaussians."""
-        return len(self._gtypes)
-
-    def fitted_parameters(self):
-        """Total number of fitted parameters."""
-        return self._npar
-
-    def add_gaussian(self, type, parameters):
-        """Add a Gaussian of type `type` (a `Gtype`) to the set."""
-        gtype = Gtype(type)
-        p = self._check_gaussian(parameters)
+    def add_gaussian(self, gtype, parameters):
+        """Add a Gaussian of type `gtype` (a `Gtype`) with the given six
+        parameters."""
+        gtype = Gtype(gtype)
+        if len(parameters) != 6:
+            raise ValueError("Wrong number of parameters for gaussian")
         self._gtypes.append(gtype)
-        self._params = N.vstack((self._params, p))
+        self._params = N.vstack((self._params, [float(p) for p in parameters]))
         self._layout_changed()
-
-    def remove_gaussian(self, idx):
-        """Remove the Gaussian with index `idx`."""
-        idx = self._check_index(idx)
-        del self._gtypes[idx]
-        self._params = N.delete(self._params, idx, axis=0)
-        self._layout_changed()
-
-    __delitem__ = remove_gaussian
-
-    def __getitem__(self, idx):
-        """Get parameters of the Gaussian with index `idx`."""
-        return tuple(self._params[self._check_index(idx)].tolist())
-
-    def __setitem__(self, idx, parameters):
-        """Set parameters of the Gaussian with index `idx`."""
-        idx = self._check_index(idx)
-        self._params[idx] = self._check_gaussian(parameters)
 
     @property
     def parameters(self):
         """Parameters of all Gaussians, as a list of 6-tuples."""
         return [tuple(p) for p in self._params.tolist()]
 
-    @parameters.setter
-    def parameters(self, parameters):
-        if len(parameters) != len(self._gtypes):
-            raise ValueError("Wrong number of gaussians")
-        for idx, p in enumerate(parameters):
-            self[idx] = p
+    def fitted_parameters(self):
+        """Total number of fitted parameters."""
+        return self._fit_idx.size
 
-    @property
-    def errors(self):
-        """Error bounds (not implemented, always zero)."""
-        return [(0.0,) * 6 for _ in self._gtypes]
+    def data_size(self):
+        """Number of unmasked data points."""
+        return self._data.size
 
     def find_peak(self):
         """Find the highest peak in the residual (data - function) image.
@@ -184,45 +148,38 @@ class MGFunction:
             pidx = int(N.nanargmax(resid))
         return float(resid[pidx]), (int(self._x1[pidx]), int(self._x2[pidx]))
 
-    # ------------------------------------------------------------------
-    # Interface for the fitter
-    # ------------------------------------------------------------------
-
-    def data_size(self):
-        """Number of unmasked data points."""
-        return self._data.size
-
     def chi2(self):
         """Chi^2 of the residual image (uniform weights)."""
         with N.errstate(all='ignore'):
             resid = self._residual() / self._weight
             return float(N.dot(resid, resid))
 
+    # ------------------------------------------------------------------
+    # Interface for leastsq (see _lmder_fit). The fitted parameters are a
+    # flat array, which excludes the fixed parameters of each Gaussian.
+    # ------------------------------------------------------------------
+
     def get_fitted_parameters(self):
-        """Return a copy of the fitted parameters as a flat array."""
-        return self._params.flatten()[self._fit_idx]
+        """Return a copy of the fitted parameters."""
+        return self._pflat[self._fit_idx]
 
     def set_fitted_parameters(self, x):
-        """Set the fitted parameters from a flat array."""
+        """Set the fitted parameters."""
         self._pflat[self._fit_idx] = x
 
     def residual(self, x):
-        """Set the fitted parameters to `x`, and return data - MGF for all
-        unmasked pixels, an array of shape (data_size,).
-
-        The returned array must not be modified.
+        """Return data - MGF for the fitted parameters `x`, for all unmasked
+        pixels: an array of shape (data_size,), which must not be modified.
         """
-        self._pflat[self._fit_idx] = x
+        self.set_fitted_parameters(x)
         return self._residual()
 
     def jacobian(self, x):
-        """Set the fitted parameters to `x`, and return the derivatives of
-        data - MGF with respect to them, an array of shape
-        (fitted_parameters, data_size).
-
-        The returned array must not be modified.
+        """Return the derivatives of data - MGF with respect to the fitted
+        parameters `x`: an array of shape (fitted_parameters, data_size),
+        which must not be modified.
         """
-        self._pflat[self._fit_idx] = x
+        self.set_fitted_parameters(x)
         self._update()
         if self._jac is None:
             self._jac = self._compute_jacobian()
@@ -232,35 +189,17 @@ class MGFunction:
     # Internals
     # ------------------------------------------------------------------
 
-    def _check_index(self, idx):
-        idx = int(idx)
-        n = len(self._gtypes)
-        if idx < 0:
-            idx += n
-        if not 0 <= idx < n:
-            raise IndexError("Incorrect index")
-        return idx
-
-    @staticmethod
-    def _check_gaussian(parameters):
-        if len(parameters) != 6:
-            raise ValueError("Wrong number of parameters for gaussian")
-        return N.array([float(p) for p in parameters])
-
     def _layout_changed(self):
-        """Update the bookkeeping after adding or removing Gaussians.
+        """Update the bookkeeping after adding Gaussians or resetting.
 
-        `_fit_idx` holds the indices of the fitted parameters into the
-        flattened (ngaus, 6) parameter array. If all parameters are fitted,
-        it's a slice, which is faster.
+        `_fit_idx` holds the indices of the fitted parameters (the first
+        `gtype` parameters of each Gaussian) into `_pflat`, a flat view of
+        the (ngaus, 6) parameter array.
         """
-        idx = [6 * i + j for i, t in enumerate(self._gtypes) for j in range(t)]
-        self._npar = len(idx)
-        if self._npar == 6 * len(self._gtypes):
-            self._fit_idx = slice(None)
-        else:
-            self._fit_idx = N.array(idx, dtype=N.intp)
-        self._pflat = self._params.reshape(-1)  # a view
+        self._fit_idx = N.array(
+            [6 * i + j for i, t in enumerate(self._gtypes) for j in range(t)],
+            dtype=N.intp)
+        self._pflat = self._params.reshape(-1)
         self._cache_key = None
 
     def _update(self):
@@ -278,32 +217,20 @@ class MGFunction:
         Gaussians are evaluated one by one, which is faster than evaluating
         them all at once for the small number of Gaussians in most islands.
         """
-        params = self._params
-        key = params.tobytes()
+        key = self._params.tobytes()
         if key == self._cache_key:
             return
-        x1 = self._x1
-        x2 = self._x2
         resid = self._data.copy()
         terms = []
-        for p in params.tolist():
+        for p in self._params.tolist():
             g = _gaussian_scalars(*p)
             a, c1, c2, s1, s2, cs, sn, _ = g
-            dx1 = x1 - c1
-            dx2 = x2 - c2
-            # f1 = ((x1 - c1) * cs + (x2 - c2) * sn) / s1
-            f1 = dx1 * cs
-            f1 += dx2 * sn
-            f1 /= s1
-            # f2 = (-(x1 - c1) * sn + (x2 - c2) * cs) / s2
-            f2 = dx2 * cs
-            f2 -= dx1 * sn
-            f2 /= s2
-            # val = exp((f1 * f1 + f2 * f2) / -2), with the exponential
-            # evaluated in long double precision
-            val = f1 * f1
-            val += f2 * f2
-            val *= -0.5
+            dx1 = self._x1 - c1
+            dx2 = self._x2 - c2
+            f1 = (dx1 * cs + dx2 * sn) / s1
+            f2 = (dx2 * cs - dx1 * sn) / s2
+            # exp(-(f1**2 + f2**2) / 2), evaluated in long double precision
+            val = (f1 * f1 + f2 * f2) * -0.5
             N.exp(val, out=val, dtype=N.longdouble)
             resid -= a * val
             terms.append((g, f1, f2, val))
@@ -321,43 +248,25 @@ class MGFunction:
         """Return the derivatives of (data - MGF) with respect to the fitted
         parameters, as an array of shape (fitted_parameters, data_size).
 
-        All values are computed exactly as in the former C++ code.
+        All values are computed exactly as in the former C++ code. The
+        derivatives have a minus sign, because we differentiate data - MGF.
         """
-        jac = N.empty((self._npar, self._data.size))
+        jac = N.empty((self._fit_idx.size, self._data.size))
         row = 0
         for gtype, ((a, _, _, s1, s2, cs, sn, ratio), f1, f2, val) in zip(
                 self._gtypes, self._terms):
-            # Minus signs, because we differentiate (data - MGF)
             N.negative(val, out=jac[row])
             if gtype != Gtype.g1:
                 v = val * -a
-                # Position: v * (f1 * cs / s1 - f2 * sn / s2)
-                #           v * (f1 * sn / s1 + f2 * cs / s2)
-                t = f1 * cs
-                t /= s1
-                u = f2 * sn
-                u /= s2
-                N.subtract(t, u, out=jac[row + 1])
-                jac[row + 1] *= v
-                N.multiply(f1, sn, out=t)
-                t /= s1
-                N.multiply(f2, cs, out=u)
-                u /= s2
-                N.add(t, u, out=jac[row + 2])
-                jac[row + 2] *= v
+                # Position
+                N.multiply(f1 * cs / s1 - f2 * sn / s2, v, out=jac[row + 1])
+                N.multiply(f1 * sn / s1 + f2 * cs / s2, v, out=jac[row + 2])
                 if gtype == Gtype.g6:
-                    # Widths: v * f1 * f1 / s1 and v * f2 * f2 / s2
-                    N.multiply(v, f1, out=jac[row + 3])
-                    jac[row + 3] *= f1
-                    jac[row + 3] /= s1
-                    N.multiply(v, f2, out=jac[row + 4])
-                    jac[row + 4] *= f2
-                    jac[row + 4] /= s2
-                    # Position angle: v * deg * f1 * f2 * (s1 / s2 - s2 / s1)
-                    N.multiply(v, _DEG, out=jac[row + 5])
-                    jac[row + 5] *= f1
-                    jac[row + 5] *= f2
-                    jac[row + 5] *= ratio
+                    # Widths
+                    N.divide(v * f1 * f1, s1, out=jac[row + 3])
+                    N.divide(v * f2 * f2, s2, out=jac[row + 4])
+                    # Position angle
+                    N.multiply(v * _DEG * f1 * f2, ratio, out=jac[row + 5])
             row += gtype
         return jac
 
@@ -366,8 +275,8 @@ def lmder_fit(fcn, final=False, verbose=1):
     """Fit `fcn` to its data using the Levenberg-Marquardt algorithm.
 
     This uses LMDER from MINPACK (through scipy.optimize.leastsq), with an
-    analytical Jacobian, like the former C++ code. On return, the parameters of `fcn` hold the result
-    of the fit.
+    analytical Jacobian, like the former C++ code. On return, the parameters
+    of `fcn` hold the result of the fit.
 
     Parameters
     ----------

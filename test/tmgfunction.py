@@ -120,22 +120,14 @@ def test_find_peak():
 
 def test_python_interface():
     fcn = MGFunction(make_image(), np.zeros(SHAPE, bool))
-    assert len(fcn) == 0 and fcn.fitted_parameters() == 0
+    assert fcn.parameters == [] and fcn.fitted_parameters() == 0
     fcn.add_gaussian(Gtype.g6, GAUSSIANS[0])
     fcn.add_gaussian(Gtype.g3, [np.float32(1), 2, 3, 4, 5, 6])
     fcn.add_gaussian(Gtype.g1, GAUSSIANS[1])
-    assert len(fcn) == 3 and fcn.fitted_parameters() == 10
-    assert fcn[0] == GAUSSIANS[0] and fcn[-1] == GAUSSIANS[1]
-    assert fcn[1] == (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
-    fcn[1] = (6, 5, 4, 3, 2, 1)
-    assert fcn.parameters[1] == (6.0, 5.0, 4.0, 3.0, 2.0, 1.0)
-    del fcn[1]
-    assert fcn.parameters == GAUSSIANS and fcn.fitted_parameters() == 7
-    fcn.remove_gaussian(-1)
-    fcn.parameters = [GAUSSIANS[1]]
-    assert fcn.parameters == [GAUSSIANS[1]] and fcn.errors == [(0.0,) * 6]
+    assert fcn.fitted_parameters() == 10
+    assert fcn.parameters == [GAUSSIANS[0], (1.0, 2.0, 3.0, 4.0, 5.0, 6.0), GAUSSIANS[1]]
     fcn.reset()
-    assert len(fcn) == 0 and fcn.parameters == []
+    assert fcn.parameters == [] and fcn.fitted_parameters() == 0
 
 
 def test_invalid_input():
@@ -147,9 +139,7 @@ def test_invalid_input():
                         (lambda: MGFunction(image, mask.astype(int)), TypeError),
                         (lambda: MGFunction(image.astype(int), mask), TypeError),
                         (lambda: fcn.add_gaussian(Gtype.g6, (1, 2, 3)), ValueError),
-                        (lambda: fcn.add_gaussian(2, GAUSSIANS[0]), ValueError),
-                        (lambda: fcn[0], IndexError),
-                        (lambda: fcn.remove_gaussian(0), IndexError)):
+                        (lambda: fcn.add_gaussian(2, GAUSSIANS[0]), ValueError)):
         try:
             call()
         except error:
