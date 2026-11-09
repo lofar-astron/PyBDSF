@@ -4,10 +4,10 @@ Branch: `replace-pytesselate`, on top of `master` (4fc79a2).
 
 ## What changed
 
-- **New module `bdsf/tessellate.py`** with `pytess_simple` and
-  `pytess_roundness`, which have the same interface as those of
-  `_pytesselate`. `psf_vary.py` imports it instead; nothing else in
-  `psf_vary.py` changed.
+- **New module `bdsf/tessellate.py`** with `tessellate_simple` and
+  `tessellate_roundness`, which have the same interface as `pytess_simple`
+  and `pytess_roundness` of `_pytesselate`. `psf_vary.py` imports it
+  instead and calls these functions; nothing else in `psf_vary.py` changed.
 - **Build:** `src/fortran/pytess_simple.f`, `pytess_roundness.f` and
   `constants.h` were removed, as were the f2py module in `CMakeLists.txt`
   (and `find_package(F2PY)`), the sources in `MANIFEST.in`, and `meson` from
@@ -64,7 +64,7 @@ tessellation). Here:
 
 ### Deviations (undefined behaviour in Fortran)
 
-- **`pytess_roundness` with fuzzy tessellation (`code != 's'`)**: the Fortran
+- **`tessellate_roundness` with fuzzy tessellation (`code != 's'`)**: the Fortran
   code computes the tile properties from the fuzzy tessellation, whose values
   are sums of tile numbers, and uses them as array indices. This writes out of
   bounds: it crashed (`munmap_chunk(): invalid pointer`, `double free or

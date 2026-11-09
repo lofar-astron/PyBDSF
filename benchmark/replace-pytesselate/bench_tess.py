@@ -4,7 +4,8 @@ Usage: bench_tess.py <tessellate.py> [records.pkl ...] [--repeat N] [--synthetic
 
 For each recorded call (see `record_tess.py`), the generators are tessellated
 with all methods that PyBDSF can use (`pytess_simple` with the weights
-'unity', 'log10' and 'sqrtlog10', and `pytess_roundness`), each with code 's'
+'unity', 'log10' and 'sqrtlog10', and `pytess_roundness`; in Python
+`tessellate_simple` and `tessellate_roundness`), each with code 's'
 (normal) and 'c' (fuzzy). With --synthetic, cases with random generators
 (more than PyBDSF typically uses) are added.
 
@@ -12,7 +13,7 @@ Each case is run in a separate process for each implementation, which
 reports the best time of at least N calls (default 3; more for fast cases, so
 that they take at least 1 s in total), and the increase of the peak resident
 set size (VmHWM) during the first call. The results of both implementations must
-be identical. Fuzzy `pytess_roundness` is not compared, because its result is
+be identical. Fuzzy `tessellate_roundness` is not compared, because its result is
 undefined in the Fortran code (see `tessellate.py`).
 """
 import importlib.util
@@ -52,9 +53,10 @@ def worker(impl, pyfile, case_json, out, repeat):
     import bdsf
     if impl == 'fortran':
         from bdsf import _pytesselate as module
+        func = getattr(module, case['func'])
     else:
         module = load_python(pyfile)
-    func = getattr(module, case['func'])
+        func = getattr(module, case['func'].replace('pytess_', 'tessellate_'))
     args = case['args']
     # Touch everything that the call needs, except its own allocations
     N.zeros(10)

@@ -33,8 +33,12 @@ def recorder(name):
     return wrapper
 
 
-bdsf.psf_vary._pytess = type('pytess', (), {
-    name: staticmethod(recorder(name)) for name in ('pytess_simple', 'pytess_roundness')})
+# Both the Fortran names (`_pytess.pytess_*`) and those of bdsf.tessellate
+# (`tessellate.tessellate_*`), so that this works with either version of
+# psf_vary.py
+bdsf.psf_vary._pytess = bdsf.psf_vary.tessellate = type('pytess', (), {
+    prefix + kind: staticmethod(recorder('pytess_' + kind))
+    for prefix in ('pytess_', 'tessellate_') for kind in ('simple', 'roundness')})
 bdsf.process_image(image, quiet=True, psf_vary_do=True, **kwargs)
 with open(out, 'wb') as f:
     pickle.dump(records, f)

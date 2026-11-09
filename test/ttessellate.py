@@ -159,7 +159,7 @@ def test_simple_random():
             for wts in (np.ones(ngens), np.log10(snr), np.sqrt(np.log10(snr))):
                 for eps, code in ((0.05, 's'), (0.05, 'c'), (0.3, 'c'), (0.0, 'c')):
                     expected = reference_simple(n, m, xg, yg, wts, eps, code)
-                    result = tessellate.pytess_simple(n, m, xg, yg, snr, wts, eps, code)
+                    result = tessellate.tessellate_simple(n, m, xg, yg, snr, wts, eps, code)
                     check(result, expected, f'block {block}, {n}x{m}, {ngens} gens, {code}')
     for_block_sizes(run)
 
@@ -173,10 +173,10 @@ def test_simple_ties():
         for wts in (np.ones(6), np.array([1.0, 1.0, 1.0, 1.0, 2.0, 2.0])):
             for code in 'sc':
                 expected = reference_simple(n, m, xg, yg, wts, 0.05, code)
-                result = tessellate.pytess_simple(n, m, xg, yg, wts, wts, 0.05, code)
+                result = tessellate.tessellate_simple(n, m, xg, yg, wts, wts, 0.05, code)
                 check(result, expected, f'block {block}, {code}')
     for_block_sizes(run)
-    result = tessellate.pytess_simple(41, 41, [11.0, 31.0], [21.0, 21.0], [1, 1], [1, 1], 0.05, 's')
+    result = tessellate.tessellate_simple(41, 41, [11.0, 31.0], [21.0, 21.0], [1, 1], [1, 1], 0.05, 's')
     assert np.all(result[:21] == 1) and np.all(result[21:] == 2)
 
 
@@ -214,13 +214,13 @@ def test_invalid_generators():
             defined = reference_nearest(dist) > 0
             for code in 'sc':
                 expected = reference_simple(n, m, x, y, w, eps, code)
-                result = tessellate.pytess_simple(n, m, x, y, w, w, eps, code)
+                result = tessellate.tessellate_simple(n, m, x, y, w, w, eps, code)
                 check(np.where(defined, result, 0.0), np.where(defined, expected, 0.0),
                       f'block {block}, w {w}, x {x}, eps {eps}, {code}')
         for bad in (np.nan, np.inf):
             x = xg.copy()
             x[4] = bad
-            check(tessellate.pytess_roundness(n, m, x, yg, x, 0.05, 's'),
+            check(tessellate.tessellate_roundness(n, m, x, yg, x, 0.05, 's'),
                   reference_roundness(n, m, x, yg, 0.05, 's'), f'block {block}, x {x}')
     for_block_sizes(run)
 
@@ -233,7 +233,7 @@ def test_roundness_random():
             xg, yg = random_generators(rng, n, m, ngens)
             for eps, code in ((0.05, 's'), (0.05, 'c'), (0.2, 'c')):
                 expected = reference_roundness(n, m, xg, yg, eps, code)
-                result = tessellate.pytess_roundness(n, m, xg, yg, xg, eps, code)
+                result = tessellate.tessellate_roundness(n, m, xg, yg, xg, eps, code)
                 check(result, expected, f'block {block}, {n}x{m}, {ngens} gens, {code}')
     for_block_sizes(run, sizes=((4, 2, 0), (64, 8, 1 << 30), 'default'))
 
@@ -254,7 +254,7 @@ def test_roundness_degenerate_tiles():
         for xg, yg in cases:
             for code in 'sc':
                 expected = reference_roundness(n, m, xg, yg, 0.05, code)
-                result = tessellate.pytess_roundness(n, m, xg, yg, xg, 0.05, code)
+                result = tessellate.tessellate_roundness(n, m, xg, yg, xg, 0.05, code)
                 check(result, expected, f'block {block}, {xg}, {code}')
     for_block_sizes(run, sizes=((4, 2, 1 << 30), 'default'))
     x, y, roundpix = tessellate._tile_properties(
@@ -282,25 +282,25 @@ def test_small_images():
             xg, yg = random_generators(rng, n, m, 4)
             wts = rng.uniform(0.5, 2, 4)
             for code in 'sc':
-                check(tessellate.pytess_simple(n, m, xg, yg, wts, wts, 0.05, code),
+                check(tessellate.tessellate_simple(n, m, xg, yg, wts, wts, 0.05, code),
                       reference_simple(n, m, xg, yg, wts, 0.05, code), f'{block}, {n}x{m}')
-                check(tessellate.pytess_roundness(n, m, xg, yg, wts, 0.05, code),
+                check(tessellate.tessellate_roundness(n, m, xg, yg, wts, 0.05, code),
                       reference_roundness(n, m, xg, yg, 0.05, code), f'{block}, {n}x{m}')
     for_block_sizes(run)
 
 
 def test_elongated_and_empty():
     """Very elongated images, and no generators (undefined in Fortran: 0 here)."""
-    result = tessellate.pytess_simple(1, 200000, [0.5], [7.0], [1.0], [1.0], 0.05, 's')
+    result = tessellate.tessellate_simple(1, 200000, [0.5], [7.0], [1.0], [1.0], 0.05, 's')
     assert result.shape == (1, 200000) and np.all(result == 1.0)
     xg, yg = [0.5, 1.5, 0.7], [10.0, 150000.0, 199990.0]
-    check(tessellate.pytess_simple(2, 200000, xg, yg, xg, [1.0, 2.0, 1.0], 0.05, 'c'),
+    check(tessellate.tessellate_simple(2, 200000, xg, yg, xg, [1.0, 2.0, 1.0], 0.05, 'c'),
           reference_simple(2, 200000, xg, yg, [1.0, 2.0, 1.0], 0.05, 'c'))
-    check(tessellate.pytess_roundness(2, 200000, xg, yg, xg, 0.05, 's'),
+    check(tessellate.tessellate_roundness(2, 200000, xg, yg, xg, 0.05, 's'),
           reference_roundness(2, 200000, xg, yg, 0.05, 's'))
     for code in 'sc':
-        assert np.all(tessellate.pytess_simple(5, 4, [], [], [], [], 0.05, code) == 0)
-        assert np.all(tessellate.pytess_roundness(5, 4, [], [], [], 0.05, code) == 0)
+        assert np.all(tessellate.tessellate_simple(5, 4, [], [], [], [], 0.05, code) == 0)
+        assert np.all(tessellate.tessellate_roundness(5, 4, [], [], [], 0.05, code) == 0)
 
 
 def test_large_image():
@@ -310,9 +310,9 @@ def test_large_image():
     xg, yg = random_generators(rng, n, m, ngens)
     wts = np.log10(rng.uniform(5, 500, ngens))
     for code in 'sc':
-        check(tessellate.pytess_simple(n, m, xg, yg, wts, wts, 0.05, code),
+        check(tessellate.tessellate_simple(n, m, xg, yg, wts, wts, 0.05, code),
               reference_simple(n, m, xg, yg, wts, 0.05, code), code)
-    check(tessellate.pytess_roundness(n, m, xg, yg, wts, 0.05, 's'),
+    check(tessellate.tessellate_roundness(n, m, xg, yg, wts, 0.05, 's'),
           reference_roundness(n, m, xg, yg, 0.05, 's'))
 
 
@@ -320,15 +320,15 @@ def test_interface():
     """Python lists and scalars are accepted, and only code[0] matters."""
     xg, yg, snr = [3.2, 10.7, 6.1], [4.4, 2.5, 11.9], [20.0, 30.0, 40.0]
     wts = [1.0, 1.5, 2.0]
-    result = tessellate.pytess_simple(13, 15, xg, yg, snr, wts, 0.05, 's')
+    result = tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, 's')
     assert result.shape == (13, 15) and result.dtype == np.float64
-    check(tessellate.pytess_simple(13, 15, xg, yg, snr, wts, 0.05, 'simple'), result)
-    fuzzy = tessellate.pytess_simple(13, 15, xg, yg, snr, wts, 0.05, 'c')
-    check(tessellate.pytess_simple(13, 15, xg, yg, snr, wts, 0.05, 'x'), fuzzy)
+    check(tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, 'simple'), result)
+    fuzzy = tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, 'c')
+    check(tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, 'x'), fuzzy)
     assert set(np.unique(result)) == {1.0, 2.0, 3.0}
-    assert tessellate.pytess_roundness(13, 15, xg, yg, snr, 0.05, 's').shape == (13, 15)
+    assert tessellate.tessellate_roundness(13, 15, xg, yg, snr, 0.05, 's').shape == (13, 15)
     try:
-        tessellate.pytess_simple(13, 15, xg, yg[:2], snr, wts, 0.05, 's')
+        tessellate.tessellate_simple(13, 15, xg, yg[:2], snr, wts, 0.05, 's')
     except ValueError:
         pass
     else:
@@ -341,9 +341,9 @@ def test_no_warnings():
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('error')
-            tessellate.pytess_simple(20, 20, [1.0, 1.0, 50.0], [1.0, 1.0, 50.0],
+            tessellate.tessellate_simple(20, 20, [1.0, 1.0, 50.0], [1.0, 1.0, 50.0],
                                      [1, 1, 1], [1.0, 0.0, np.inf], 0.05, 'c')
-            tessellate.pytess_roundness(30, 30, [5.0, 20.0, 20.0, -100.0, 1.0, 1.6],
+            tessellate.tessellate_roundness(30, 30, [5.0, 20.0, 20.0, -100.0, 1.0, 1.6],
                                         [5.0, 20.0, 20.0, 15.0, 1.0, 1.6], [1] * 6, 0.05, 'c')
     finally:
         np.seterr(**old)

@@ -8,10 +8,10 @@ Each pixel (i, j) belongs to the generator k with the smallest weighted
 distance (in the Fortran code, pixel coordinates are 1-based, and ties go to
 the generator with the lowest index):
 
-    pytess_simple:     sqrt((i - x_k)**2 + (j - y_k)**2) / w_k
-    pytess_roundness:  sqrt((i - x_k)**2 + (j - y_k)**2) / (1 / (r_k * c_k))
+    tessellate_simple:     sqrt((i - x_k)**2 + (j - y_k)**2) / w_k
+    tessellate_roundness:  sqrt((i - x_k)**2 + (j - y_k)**2) / (1 / (r_k * c_k))
 
-where, for `pytess_roundness`, r_k is the distance from the pixel to the
+where, for `tessellate_roundness`, r_k is the distance from the pixel to the
 centroid of the tile of generator k in an unweighted tessellation, and c_k is
 the inverse of the mean of r_k over that tile. If `code` is 's', the value of
 a pixel is the (1-based) index of its tile. Otherwise ("fuzzy" tessellation),
@@ -60,7 +60,7 @@ _HUGE = 1e90
 _CHUNK = 1 << 14
 
 
-def pytess_simple(n, m, xgens, ygens, snrgens, wts, eps, code):
+def tessellate_simple(n, m, xgens, ygens, snrgens, wts, eps, code):
     """Weighted Voronoi tessellation of an n x m image.
 
     Parameters
@@ -89,14 +89,14 @@ def pytess_simple(n, m, xgens, ygens, snrgens, wts, eps, code):
     return _tessellate(n, m, model, _is_fuzzy(code), eps)
 
 
-def pytess_roundness(n, m, xgens, ygens, snrgens, eps, code):
+def tessellate_roundness(n, m, xgens, ygens, snrgens, eps, code):
     """Voronoi tessellation of an n x m image, modified to make the tiles rounder.
 
     First the image is tessellated without weights. Then it is tessellated
     again, with the distances to each generator scaled by the distance to the
     centroid of its tile, relative to the mean of that distance over the tile.
 
-    The parameters and return value are the same as for `pytess_simple`
+    The parameters and return value are the same as for `tessellate_simple`
     (without the weights).
 
     In the Fortran code, fuzzy tessellation (code != 's') gave undefined
@@ -145,7 +145,7 @@ def _pixel_dist(ii, jj, xg, yg):
 
 
 class _Simple:
-    """Distances for pytess_simple: sqrt((i - x)**2 + (j - y)**2) / w."""
+    """Distances for tessellate_simple: sqrt((i - x)**2 + (j - y)**2) / w."""
 
     def __init__(self, xg, yg, wts, eps):
         self.xg, self.yg, self.wts = xg, yg, wts
@@ -201,7 +201,7 @@ class _Simple:
 
 
 class _Roundness:
-    """Distances for the second pass of pytess_roundness.
+    """Distances for the second pass of tessellate_roundness.
 
     In the Fortran code: dist = sqrt((i - x)**2 + (j - y)**2) / wts, where
     wts = 1 / (sqrt((xc - i)**2 + (yc - j)**2) * roundpix).

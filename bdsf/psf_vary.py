@@ -10,7 +10,7 @@ if has_pl:
 import scipy
 import scipy.signal as S
 from . import functions as func
-from . import tessellate as _pytess
+from . import tessellate
 from . import shapelets as sh
 from scipy.optimize import leastsq
 from . import nat
@@ -665,7 +665,7 @@ class Op_psf_vary(Op):
         """ Simple tesselation """
 
         xgen, ygen, snrgen = vorogenP
-        volrank = _pytess.pytess_simple(shape[0], shape[1], xgen, ygen, snrgen, \
+        volrank = tessellate.tessellate_simple(shape[0], shape[1], xgen, ygen, snrgen, \
                   wts, tess_fuzzy, tess_sc)
 
         return volrank
@@ -675,7 +675,7 @@ class Op_psf_vary(Op):
         """ Tesselation, modified to make the tiles more round. """
 
         xgen, ygen, snrgen = vorogenP
-        volrank = _pytess.pytess_roundness(shape[0], shape[1], xgen, ygen, snrgen, \
+        volrank = tessellate.tessellate_roundness(shape[0], shape[1], xgen, ygen, snrgen, \
                   tess_fuzzy, tess_sc)
 
         return volrank
@@ -685,7 +685,7 @@ class Op_psf_vary(Op):
         """  This has routines to find out which tile a given pixel belongs to. """
 
         if tess_method == 'roundness':
-            #tilenum = pytess_roundness(tilecoord, pixel, wts, tess_sc, tess_fuzzy)
+            #tilenum = tessellate_roundness(tilecoord, pixel, wts, tess_sc, tess_fuzzy)
             print(" Not yet implemented !!!! ")
             return 0
         else:
