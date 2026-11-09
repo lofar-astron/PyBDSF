@@ -5,7 +5,8 @@ Usage: compare_fits.py <dir1> <dir2>
 All FITS files (images and catalogs) found in either directory, including
 subdirectories, are compared exactly: the data of every HDU must be equal
 (NaNs in the same places). Headers are not compared, since they contain dates
-and version numbers. Exit status 0 if all files are identical.
+and version numbers. Exit status 0 if all files are identical (and there is
+at least one).
 """
 import os
 import sys
@@ -39,6 +40,9 @@ def same_data(a, b):
 
 def main(dir1, dir2):
     files1, files2 = fits_files(dir1), fits_files(dir2)
+    if not files1 and not files2:
+        print(f'no FITS files found in {dir1} and {dir2}')
+        return 1
     ok = True
     for name in sorted(files1 ^ files2):
         print(f'only in one directory: {name}')

@@ -14,6 +14,9 @@
 #   4. Run run_psf_vary.py on NGC6048 with both versions, for the simple
 #      (psf_itess_method=0) and the roundness (1) tessellation, and check
 #      that all FITS outputs are identical
+#
+# Exit status 0 only if all tests and runs succeed and all outputs are
+# identical.
 set -e
 WORK=${1:?usage: $0 <work dir> [baseline git revision]}
 REV=${2:-master}
@@ -24,19 +27,27 @@ FITS=$REPO/benchmark/NGC6048_9-MFS-image.fits
 
 "$HERE/../rmsimage-optimization/setup_overlays.sh" "$WORK" "$REV"
 
+# Names of the steps that failed
+FAILED=()
+
 echo "=== test/ttessellate.py (new)"
-(cd "$REPO/test" && PYTHONPATH="$WORK/pkg_new" $PY ttessellate.py)
+(cd "$REPO/test" && PYTHONPATH="$WORK/pkg_new" $PY ttessellate.py) || FAILED+=("ttessellate.py")
 
 echo "=== test/tbdsf_process_image.py"
 for v in orig new; do
     rm -rf "$WORK/test_$v"
     mkdir "$WORK/test_$v"
     cp -r "$REPO"/test/{tbdsf_process_image.py,compare_outputs.py,tbdsf_process_image.in,tbdsf_process_image.in_fits,reference_outputs} "$WORK/test_$v/"
-    (cd "$WORK/test_$v" && PYTHONPATH="$WORK/pkg_$v" $PY tbdsf_process_image.py > run.log 2>&1 \
-        && echo "$v: test passed" || echo "$v: test FAILED (see $WORK/test_$v/run.log)")
+    if (cd "$WORK/test_$v" && PYTHONPATH="$WORK/pkg_$v" $PY tbdsf_process_image.py > run.log 2>&1); then
+        echo "$v: test passed"
+    else
+        echo "$v: test FAILED (see $WORK/test_$v/run.log)"
+        FAILED+=("tbdsf_process_image.py ($v)")
+    fi
 done
 PYTHONPATH="$WORK/pkg_new" $PY "$HERE/compare_fits.py" \
-    "$WORK/test_orig/tbdsf_process_image.in_fits_pybdsf" "$WORK/test_new/tbdsf_process_image.in_fits_pybdsf"
+    "$WORK/test_orig/tbdsf_process_image.in_fits_pybdsf" "$WORK/test_new/tbdsf_process_image.in_fits_pybdsf" \
+    || FAILED+=("test image outputs")
 
 echo "=== run_psf_vary.py (NGC6048)"
 for method in 0 1; do
@@ -45,8 +56,20 @@ for method in 0 1; do
         rm -rf "$D"
         mkdir "$D"
         ln -s "$FITS" "$D/"
-        (cd "$D" && PYTHONPATH="$WORK/pkg_$v" $PY "$HERE/run_psf_vary.py" "$(basename "$FITS")" $method > out.log 2>&1; \
-            echo "method $method, $v: $(grep 'running time' out.log)")
+        if (cd "$D" && PYTHONPATH="$WORK/pkg_$v" $PY "$HERE/run_psf_vary.py" "$(basename "$FITS")" $method > out.log 2>&1); then
+            echo "method $method, $v: $(grep 'running time' "$D/out.log")"
+        else
+            echo "method $method, $v: run FAILED (see $D/out.log)"
+            FAILED+=("run_psf_vary.py (method $method, $v)")
+        fi
     done
-    PYTHONPATH="$WORK/pkg_new" $PY "$HERE/compare_fits.py" "$WORK/run_orig_m$method" "$WORK/run_new_m$method"
+    PYTHONPATH="$WORK/pkg_new" $PY "$HERE/compare_fits.py" "$WORK/run_orig_m$method" "$WORK/run_new_m$method" \
+        || FAILED+=("NGC6048 outputs (method $method)")
 done
+
+if [ ${#FAILED[@]} -gt 0 ]; then
+    echo "=== FAILED:"
+    printf '    %s\n' "${FAILED[@]}"
+    exit 1
+fi
+echo "=== All tests passed, and all outputs are identical"
