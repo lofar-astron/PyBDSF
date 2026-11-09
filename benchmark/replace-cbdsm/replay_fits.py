@@ -61,11 +61,14 @@ max_rel_diff = []
 for r in records:
     ok_a, par_a, peak_a = run(A, r)
     ok_b, par_b, peak_b = run(B, r)
-    identical += (ok_a, par_a, peak_a) == (ok_b, par_b, peak_b)
+    # repr() is exact for floats, and also equal for NaNs
+    identical += repr((ok_a, par_a, peak_a)) == repr((ok_b, par_b, peak_b))
     status_differs += ok_a != ok_b
     par_a, par_b = np.array(par_a), np.array(par_b)
-    max_rel_diff.append(np.max(np.abs(par_a - par_b) / np.maximum(np.abs(par_a), 1e-12))
-                        if par_a.size else 0.0)
+    with np.errstate(invalid='ignore'):
+        diff = np.abs(par_a - par_b) / np.maximum(np.abs(par_a), 1e-12)
+    diff[(par_a == par_b) | (np.isnan(par_a) & np.isnan(par_b))] = 0.0
+    max_rel_diff.append(np.nan_to_num(diff, nan=np.inf).max() if diff.size else 0.0)
 print(f"{len(records)} fits; bit-identical results: {identical}; "
       f"different convergence status: {status_differs}; "
       f"max rel param diff > 1e-10: {(np.array(max_rel_diff) > 1e-10).sum()}")

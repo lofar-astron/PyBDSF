@@ -1,6 +1,6 @@
 # Replace the C++ extension `_cbdsm` with Python
 
-Branch: `replace_cbdsm`, on top of `master` (4fc79a2).
+Branch: `replace_cbdsm`, on top of `master` (7ddb350).
 
 ## What changed
 
@@ -39,7 +39,7 @@ Branch: `replace_cbdsm`, on top of `master` (4fc79a2).
   overhead per operation, and an evaluation needs ~40 operations).
   This is more than made up for by caching the **results** of fits:
   `fit_island` repeats `fit_iter` up to 15 times, and most fits are exact
-  repeats of an earlier one (75% of the fits for the test image, 84% for
+  repeats of an earlier one (74% of the fits for the test image, 84% for
   NGC6048), because their input did not change. `lmder_fit` caches the
   results per `MGFunction` (keyed on the Gaussian types, the initial
   parameters and `final`), which gives exactly the same results.
@@ -65,23 +65,25 @@ Machine: 20-core i7-12700, NumPy 2.4.6, SciPy 1.18.1. Baseline: the
 
 | Recorded fits | Bit-identical | C++ | Python | Ratio |
 | --- | --- | --- | --- | --- |
-| test image (831) | 831 | 0.48 s | 1.72 s | 3.6 |
-| NGC6048 (32983) | 32979 | 39.4 s | 45.9 s | 1.16 |
+| test image (904) | 904 | 0.55 s | 1.87 s | 3.4 |
+| NGC6048 (33097) | 33089 | 39.2 s | 47.0 s | 1.20 |
 
-For NGC6048, the ratio is 7.2 for islands with < 50 pixels, and 0.91 for
+For NGC6048, the ratio is 7.7 for islands with < 50 pixels, and 0.91 for
 islands with ≥ 1000 pixels.
 
 **End-to-end** (`run_comparison.sh`, 3 interleaved runs each):
 
 | | C++ | Python |
 | --- | --- | --- |
-| `test/tbdsf_process_image.py` (2 cores) | 5.70–5.78 s | 5.27–5.36 s |
-| `run_pybdsf.py` NGC6048 (20 cores), total | 64.0–64.1 s (one run: 74.1 s) | 54.9–55.3 s |
-| … of which `Op_gausfit` | 12.8–12.9 s (one run: 22.8 s) | 7.7–8.0 s |
-| … of which `Op_wavelet_atrous` | 40.2–40.4 s | 36.3–36.5 s |
+| `test/tbdsf_process_image.py` (2 cores) | 6.59–6.81 s | 6.30–6.36 s |
+| `run_pybdsf.py` NGC6048 (20 cores), total | 63.9–64.1 s | 54.4–54.9 s |
+| … of which `Op_gausfit` | 12.6–12.8 s | 7.6–8.0 s |
+| … of which `Op_wavelet_atrous` | 40.0–40.2 s | 35.8–36.0 s |
 
 **Memory** (peak total PSS of the process tree, which counts pages shared
-by forked workers once; interleaved runs):
+by forked workers once; interleaved runs; measured on top of `master`
+4fc79a2, before the simplifications of `mgfunction`, which don't change
+the peak memory of a fit):
 
 | | C++ | Python |
 | --- | --- | --- |
@@ -103,23 +105,24 @@ by forked workers once; interleaved runs):
   each island, while C++ keeps its caches for the largest island until the
   process ends.
 
-- Test image: all 50 FITS outputs (images and catalogs) are identical to
-  those of C++.
-- NGC6048: all 1077 Gaussians of the image are identical, as are the number
-  of islands and Gaussians on each wavelet scale. 2 of the 415 wavelet
-  Gaussians differ by > 1e-6 (by 47% and 33%); the others differ by < 1e-13
-  or not at all.
+- All FITS outputs (images and catalogs) are identical to those of C++:
+  51 for the test image, 40 for NGC6048.
 
 ## Remaining difference
 
-The 4 non-identical fits of NGC6048 (all ill-conditioned; 2 diverge in
-both versions) are due to SciPy: since version 1.15, it uses a C
-translation of MINPACK, which rounds differently than the original Fortran
-code in rare cases (the first difference is in the last bit of a trial
-step, i.e. in `lmpar`/`qrsolv`). With the Fortran LMDER, these fits are
-identical as well. On NGC6048 this changes one Gaussian of wavelet scale 1;
-the resulting residual image changes the wavelet decomposition at the 1e-14
-level, which changes one Gaussian of scale 2.
+The 8 non-identical fits of NGC6048 are 2 distinct fits (one is repeated 7
+times by `fit_island`), which diverge in both versions: C++ ends with NaN
+parameters, Python with huge ones. Neither converges, so `gausfit` rejects
+both, and the outputs are identical.
+
+On top of `master` 4fc79a2, there were 4 non-identical fits (2 of which
+diverged in both versions), which changed one Gaussian of wavelet scale 1,
+and through the residual image one of scale 2. These were due to SciPy:
+since version 1.15, it uses a C translation of MINPACK, which rounds
+differently than the original Fortran code in rare cases (the first
+difference is in the last bit of a trial step, i.e. in `lmpar`/`qrsolv`).
+With the Fortran LMDER, these fits were identical as well. (This wasn't
+checked again for the current 8 fits.)
 
 ## Files
 
