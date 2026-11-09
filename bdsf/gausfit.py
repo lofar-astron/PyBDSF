@@ -20,6 +20,7 @@ if has_pl:
     import matplotlib.pyplot as pl
 import scipy.ndimage as nd
 from . import multi_proc as mp
+from .mgfunction import Gtype, MGFunction, lmder_fit
 import itertools
 
 
@@ -337,7 +338,6 @@ class Op_gausfit(Op):
                and one or more flagged Gaussians indicate
                that significant residuals remain (peak > thr).
         """
-        from .mgfunction import MGFunction
         from . import functions as func
         from .const import fwsig
 
@@ -762,8 +762,6 @@ class Op_gausfit(Op):
         thr  : peak threshold for adding more gaussians
         verbose: whether to print fitting progress information
         """
-        from .mgfunction import lmder_fit
-
         if verbose:
             print('Greetings from fit_iter')
         fit = lmder_fit
@@ -826,8 +824,6 @@ class Op_gausfit(Op):
         parameters: initial values for gaussian parameters
         dof: total possible number of fitted parameters
         """
-        from .mgfunction import Gtype
-
         if g3_only:
             gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
         else:

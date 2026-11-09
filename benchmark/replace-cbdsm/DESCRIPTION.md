@@ -78,6 +78,29 @@ islands with ≥ 1000 pixels.
 | … of which `Op_gausfit` | 12.8–12.9 s (one run: 22.8 s) | 7.7–8.0 s |
 | … of which `Op_wavelet_atrous` | 40.2–40.4 s | 36.3–36.5 s |
 
+**Memory** (peak total PSS of the process tree, which counts pages shared
+by forked workers once; interleaved runs):
+
+| | C++ | Python |
+| --- | --- | --- |
+| `test/tbdsf_process_image.py` (5 runs) | 136–138 MiB | 136–137 MiB |
+| `run_pybdsf.py` NGC6048 (6 runs) | 3730–3774 MiB (mean 3759) | 3711–3809 MiB (mean 3759) |
+| … peak during `Op_gausfit` of the image | 1404 MiB | 1342 MiB |
+
+- `gausfit.py` imports `mgfunction` at module level, so the parent process
+  imports it before forking the workers. When each worker imported it, it
+  copied about 2.5 MiB of shared memory pages (C++: 1.5 MiB for `_cbdsm` and
+  its libraries), and the test image took 2–3 MiB more than with C++.
+- The peak of NGC6048 is in the wavelet stage, in the main process, and
+  doesn't depend on the fitting code; it varies by ±50 MiB between runs of
+  either version.
+- For the largest island of NGC6048 (2954 pixels, 10 Gaussians), a Python
+  fit temporarily needs more memory than a C++ fit (4.5 MB against 1.0 MB
+  on top of the memory in use before the fit, in a replay of the recorded
+  fits), because SciPy copies the Jacobian that `MGFunction` returns. Python frees this memory after
+  each island, while C++ keeps its caches for the largest island until the
+  process ends.
+
 - Test image: all 50 FITS outputs (images and catalogs) are identical to
   those of C++.
 - NGC6048: all 1077 Gaussians of the image are identical, as are the number
