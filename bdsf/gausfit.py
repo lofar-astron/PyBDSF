@@ -7,9 +7,9 @@ in the image, and do post-fitting flagging of the extracted
 gaussians.
 
 The fitting itself is implemented by the means of MGFunction
-class and a number of fitter routines in _cbdsm module.
+class and the lmder_fit fitter routine in the mgfunction module.
 MGFunction class implements multi-gaussian function and
-provides all functionality required by the specific fitters.
+provides all functionality required by the fitter.
 """
 
 from .image import *
@@ -20,6 +20,7 @@ if has_pl:
     import matplotlib.pyplot as pl
 import scipy.ndimage as nd
 from . import multi_proc as mp
+from .mgfunction import Gtype, MGFunction, lmder_fit
 import itertools
 
 
@@ -337,7 +338,6 @@ class Op_gausfit(Op):
                and one or more flagged Gaussians indicate
                that significant residuals remain (peak > thr).
         """
-        from ._cbdsm import MGFunction
         from . import functions as func
         from .const import fwsig
 
@@ -506,7 +506,6 @@ class Op_gausfit(Op):
         # Return whatever we got
         if verbose:
             print('Preparing to return')
-        isl.mg_fcn = fcn
         gaul = [self.fixup_gaussian(isl, g) for g in gaul]
         fgaul = [(flag, self.fixup_gaussian(isl, g)) for flag, g in fgaul]
 
@@ -763,8 +762,6 @@ class Op_gausfit(Op):
         thr  : peak threshold for adding more gaussians
         verbose: whether to print fitting progress information
         """
-        from ._cbdsm import lmder_fit
-
         if verbose:
             print('Greetings from fit_iter')
         fit = lmder_fit
@@ -779,7 +776,7 @@ class Op_gausfit(Op):
 
         # Do a round of fitting if any initials were provided
         if verbose:
-            print('About to call C++ wrapper')
+            print('About to call the fitter')
         fitok = True
         if len(gaul) != 0:
             fitok = fit(fcn, final=0, verbose=verbose)
@@ -827,8 +824,6 @@ class Op_gausfit(Op):
         parameters: initial values for gaussian parameters
         dof: total possible number of fitted parameters
         """
-        from ._cbdsm import Gtype
-
         if g3_only:
             gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
         else:
