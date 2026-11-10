@@ -218,7 +218,9 @@ class MGFunction:
 
         All values are computed exactly as in the former C++ code. The
         Gaussians are evaluated one by one, which is faster than evaluating
-        them all at once for the small number of Gaussians in most islands.
+        them all at once for the small number of Gaussians in most islands,
+        and in place where possible, because temporary arrays slow down the
+        fits of large islands.
         """
         key = self._params.tobytes()
         if key == self._cache_key:
@@ -230,10 +232,19 @@ class MGFunction:
             cs, sn, ratio = _gaussian_scalars(s1, s2, pa)
             dx1 = self._x1 - c1
             dx2 = self._x2 - c2
-            f1 = (dx1 * cs + dx2 * sn) / s1
-            f2 = (dx2 * cs - dx1 * sn) / s2
-            # exp(-(f1**2 + f2**2) / 2), evaluated in long double precision
-            val = (f1 * f1 + f2 * f2) * -0.5
+            # f1 = ((self._x1 - c1) * cs + (self._x2 - c2) * sn) / s1
+            f1 = dx1 * cs
+            f1 += dx2 * sn
+            f1 /= s1
+            # f2 = (-(self._x1 - c1) * sn + (self._x2 - c2) * cs) / s2
+            f2 = dx2 * cs
+            f2 -= dx1 * sn
+            f2 /= s2
+            # val = exp((f1 * f1 + f2 * f2) / -2), with the exponential
+            # evaluated in long double precision
+            val = f1 * f1
+            val += f2 * f2
+            val *= -0.5
             N.exp(val, out=val, dtype=N.longdouble)
             resid -= a * val
             terms.append((a, s1, s2, cs, sn, ratio, f1, f2, val))
@@ -247,25 +258,46 @@ class MGFunction:
         """Return the derivatives of (data - MGF) with respect to the fitted
         parameters, as an array of shape (fitted_parameters, data_size).
 
-        All values are computed exactly as in the former C++ code. The
-        derivatives have a minus sign, because we differentiate data - MGF.
+        All values are computed exactly as in the former C++ code, in place
+        (see _update). The derivatives have a minus sign, because we
+        differentiate data - MGF.
         """
         jac = N.empty((self._fit_idx.size, self._data.size))
         row = 0
         for gtype, (a, s1, s2, cs, sn, ratio, f1, f2, val) in zip(
                 self._gtypes, self._terms):
-            N.negative(val, out=jac[row])
+            # Rows for this Gaussian (indexing jac creates a new view each time)
+            d = list(jac[row:row + gtype])
+            N.negative(val, out=d[0])
             if gtype != Gtype.g1:
                 v = val * -a
-                # Position
-                N.multiply(f1 * cs / s1 - f2 * sn / s2, v, out=jac[row + 1])
-                N.multiply(f1 * sn / s1 + f2 * cs / s2, v, out=jac[row + 2])
+                # Position: v * (f1 * cs / s1 - f2 * sn / s2)
+                #           v * (f1 * sn / s1 + f2 * cs / s2)
+                t = f1 * cs
+                t /= s1
+                u = f2 * sn
+                u /= s2
+                N.subtract(t, u, out=d[1])
+                d[1] *= v
+                N.multiply(f1, sn, out=t)
+                t /= s1
+                N.multiply(f2, cs, out=u)
+                u /= s2
+                N.add(t, u, out=d[2])
+                d[2] *= v
                 if gtype == Gtype.g6:
-                    # Widths
-                    N.divide(v * f1 * f1, s1, out=jac[row + 3])
-                    N.divide(v * f2 * f2, s2, out=jac[row + 4])
-                    # Position angle
-                    N.multiply(v * _DEG * f1 * f2, ratio, out=jac[row + 5])
+                    # Widths: v * f1 * f1 / s1 and v * f2 * f2 / s2
+                    N.multiply(v, f1, out=d[3])
+                    d[3] *= f1
+                    d[3] /= s1
+                    N.multiply(v, f2, out=d[4])
+                    d[4] *= f2
+                    d[4] /= s2
+                    # Position angle: v * deg * f1 * f2 * (s1 / s2 - s2 / s1)
+                    N.multiply(v, _DEG, out=d[5])
+                    d[5] *= f1
+                    d[5] *= f2
+                    d[5] *= ratio
             row += gtype
         return jac
 

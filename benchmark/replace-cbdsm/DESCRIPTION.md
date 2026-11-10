@@ -31,7 +31,8 @@ Branch: `replace_cbdsm`, on top of `master` (7ddb350).
   that were checked.
 - **Speed:** the Gaussians are evaluated one by one with NumPy (over all
   pixels), which has the least overhead for the 1–3 Gaussians of most
-  islands. Values are cached per parameter set, so the Jacobian reuses the
+  islands, and in place where possible: written as expressions, with
+  temporary arrays, fits of islands with ≥ 1000 pixels were 1.7% slower. Values are cached per parameter set, so the Jacobian reuses the
   Gaussians of the preceding function evaluation (and the extra evaluations
   that `leastsq` does before calling LMDER cost almost nothing; calling
   SciPy's private LMDER wrapper directly was only 2% faster). Still, a single fit of a
@@ -65,20 +66,20 @@ Machine: 20-core i7-12700, NumPy 2.4.6, SciPy 1.18.1. Baseline: the
 
 | Recorded fits | Bit-identical | C++ | Python | Ratio |
 | --- | --- | --- | --- | --- |
-| test image (904) | 904 | 0.55 s | 1.87 s | 3.4 |
-| NGC6048 (33097) | 33089 | 39.2 s | 47.0 s | 1.20 |
+| test image (904) | 904 | 0.55 s | 1.89 s | 3.4 |
+| NGC6048 (33097) | 33089 | 39.3 s | 46.5 s | 1.18 |
 
-For NGC6048, the ratio is 7.7 for islands with < 50 pixels, and 0.91 for
+For NGC6048, the ratio is 7.7 for islands with < 50 pixels, and 0.90 for
 islands with ≥ 1000 pixels.
 
 **End-to-end** (`run_comparison.sh`, 3 interleaved runs each):
 
 | | C++ | Python |
 | --- | --- | --- |
-| `test/tbdsf_process_image.py` (2 cores) | 6.59–6.81 s | 6.30–6.36 s |
-| `run_pybdsf.py` NGC6048 (20 cores), total | 63.9–64.1 s | 54.4–54.9 s |
-| … of which `Op_gausfit` | 12.6–12.8 s | 7.6–8.0 s |
-| … of which `Op_wavelet_atrous` | 40.0–40.2 s | 35.8–36.0 s |
+| `test/tbdsf_process_image.py` (2 cores) | 6.62–6.67 s | 6.22–6.26 s |
+| `run_pybdsf.py` NGC6048 (20 cores), total | 63.8–64.1 s | 54.2–54.8 s |
+| … of which `Op_gausfit` | 12.6–12.9 s | 7.9–8.0 s |
+| … of which `Op_wavelet_atrous` | 40.1–40.2 s | 35.5–35.8 s |
 
 **Memory** (peak total PSS of the process tree, which counts pages shared
 by forked workers once; interleaved runs; measured on top of `master`
