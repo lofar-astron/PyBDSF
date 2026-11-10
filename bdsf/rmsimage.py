@@ -547,10 +547,17 @@ class Op_rmsimage(Op):
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
                         logname=logname, ncores=ncores, cache=cache)
-            if img.masked:
-                test = np.any(rms[~img.mask_arr] < 0.0)
-            else:
-                test = np.any(rms < 0.0)
+            # Only consider finite, unmasked pixels when checking the RMS map
+            valid_pixels = np.isfinite(rms)
+            if isinstance(mask, np.ndarray):
+                valid_pixels &= ~mask
+
+            n_valid = np.count_nonzero(valid_pixels)
+            if n_valid == 0:
+                raise RuntimeError("No finite unmasked pixels in RMS map")
+
+            negative_pixels = valid_pixels & (rms < 0.0)
+            test = np.any(negative_pixels)
             if test:
                 rms_ok = False
                 if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
