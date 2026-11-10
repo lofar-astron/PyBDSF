@@ -77,8 +77,7 @@ class Op_threshold(Op):
                 s0 +=  1.0/(i+1)
             slope = opts.fdr_alpha/s0
             # Compute and sort p-values only for unmasked data
-            # Boolean indexing flattens the array automatically
-            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2))
+            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2), axis=None)
             pcrit = None
             
             # Find the largest index k (from 'size' down to 1) 
@@ -94,6 +93,7 @@ class Op_threshold(Op):
             sigcrit = erfcinv(2.0 * pcrit) * sq2
             if pcrit == 0.0:
                 img.thresh = 'hard'
+                img.thresh_pix = opts.thresh_pix
             else:
                 img.thresh_pix = sigcrit
                 mylogger.userinfo(self.logger, "FDR threshold (replaces thresh_pix)", str(round(sigcrit, 4)))
@@ -127,7 +127,6 @@ class Op_threshold(Op):
         s1 = scflux[index]; s2 = scflux[-1]
         alpha = 1.0-log(n1/n2)/log(s1/s2)
         A = (alpha-1.0)*n1/(s1**(1.0-alpha))
-        source_p = x*A*((cutoff*img.clipped_rms)**(1.0-alpha)) \
-                     /((1.0-alpha)*(1.0-alpha))
+        source_p = x*A*(smin_L**(1.0-alpha)) / ((1.0-alpha)*(1.0-alpha))
 
         return source_p

@@ -109,7 +109,6 @@ set(CBDSM_SRC
     src/c++/MGFunction1.cc
     src/c++/MGFunction2.cc
     src/c++/cbdsm_main.cc
-    src/c++/stat.cc
     src/c++/num_util/num_util.cpp
 )
 add_library(_cbdsm MODULE ${CBDSM_SRC})
