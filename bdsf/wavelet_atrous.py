@@ -74,7 +74,7 @@ class Op_wavelet_atrous(Op):
 
             filter_vec = N.asarray(filter[lpf]['vec'], dtype=float)
             filter_x = N.arange(len(filter_vec)) - (len(filter_vec) - 1) / 2.0
-            filter_var = float( N.sum(filter_vec * filter_x**2) / N.sum(filter_vec) )
+            filter_var = float(N.sum(filter_vec * filter_x**2) / N.sum(filter_vec))
 
             if jmax < 0 or jmax > 15:
                 mylog.warning(
@@ -136,9 +136,50 @@ class Op_wavelet_atrous(Op):
                 if dobdsm:
                     wopts['filename'] = filename
                     wopts['basedir'] = bdir
+
+                    # Get the original beam in pixel coordinates.
+                    # pixel_beam() returns Gaussian sigma values.
+                    b1, b2, bpa = img.pixel_beam()
+
+                    # Total variance of the a-trous filters up to scale j.
+                    # Variances of successive convolutions add up:
+                    # sum_{k=1..j} 4**(k-1) = (4**j - 1) / 3.
+                    filter_var_total = filter_var * (4.0**j - 1.0) / 3.0
+                    filter_var_prev = filter_var * (4.0**(j - 1) - 1.0) / 3.0
+
+                    # Calculate the effective beam variance.
+                    if img.opts.atrous_sum:
+                        # Fitting the smoothed image c_j.
+                        var1 = b1**2 + filter_var_total
+                        var2 = b2**2 + filter_var_total
+                    else:
+                        # Fitting the band-pass image c_(j-1) - c_j.
+                        # Use the geometric mean of the adjacent cumulative variances
+                        # as an approximation for Gaussian fitting.
+                        var1_prev = b1**2 + filter_var_prev
+                        var2_prev = b2**2 + filter_var_prev
+
+                        var1_curr = b1**2 + filter_var_total
+                        var2_curr = b2**2 + filter_var_total
+
+                        var1 = sqrt(var1_prev * var1_curr)
+                        var2 = sqrt(var2_prev * var2_curr)
+
+                    # Effective Gaussian beam (FWHM) in pixel coordinates.
+                    beam_pix = (
+                        fwsig * sqrt(var1),
+                        fwsig * sqrt(var2),
+                        bpa
+                    )
+
+                    # Use the effective beam major axis (FWHM) to determine
+                    # the characteristic spatial scale for RMS estimation.
+                    y1 = max(1, int(N.ceil(max(abs(beam_pix[0]), abs(beam_pix[1])))))
+
+                    # Determine RMS box size.
                     box = img.rms_box[0]
-                    y1 = (l + (l - 1) * (2 ** (j - 1) - 1))
-                    bs = max(5 * y1, box)  # changed from 10 to 5
+                    bs = max(5 * y1, box)
+
                     if bs > min(n, m) / 2:
                         wopts['rms_map'] = False
                         wopts['mean_map'] = 'const'
@@ -152,25 +193,11 @@ class Op_wavelet_atrous(Op):
                                 wopts['rms_box_bright'] = (bs_bright, bs_bright//3)
                             else:
                                 wopts['adaptive_rms_box'] = False
+
                     if j <= 3:
                         wopts['ini_gausfit'] = 'default'
                     else:
                         wopts['ini_gausfit'] = 'nobeam'
-
-                    # Get the original beam in pixel coordinates. pixel_beam() returns Gaussian sigma values
-                    b1, b2, bpa = img.pixel_beam()
-
-                    # Total variance of the a-trous filters up to scale j: the k-th filter is the base
-                    # kernel dilated by 2**(k-1), so its variance is filter_var * 4**(k-1). Variances of
-                    # successive convolutions add up: sum_{k=1..j} 4**(k-1) = (4**j - 1) / 3.
-                    filter_var_total = filter_var * (4.0**j - 1.0) / 3.0
-
-                    # Effective Gaussian beam: original beam convolved with the cumulative a-trous smoothing kernel
-                    beam_pix = (
-                        fwsig * sqrt(b1**2 + filter_var_total),
-                        fwsig * sqrt(b2**2 + filter_var_total),
-                        bpa
-                    )
 
                     wimg = Image(wopts)
                     wimg.beam = tuple(img.pix2beam(beam_pix))
