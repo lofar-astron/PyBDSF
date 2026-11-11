@@ -249,7 +249,9 @@ class Op_rmsimage(Op):
                                           np.array((s[0].start, s[1].start)))
                 dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
                 # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
-                # so we allow for a small arbitrary distance between the two positions
+                # so we allow for a small arbitrary distance between the two positions.
+                # TODO: In the future this value could be replaced by a parameter representing a fraction of the beam
+                # size measured in pixels.
                 if min(dists) <= 2.5:
                     isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
                     bright_indx = int(np.argmin(dists))
