@@ -605,17 +605,17 @@ class Op_rmsimage(Op):
                     else:
                         # We could be catastrophically wrong, or have a local problem with the
                         # interpolation. If the latter, we can rescue it by interpolating again
-                        fraction = np.sum(rms<0)/np.size(rms)
+                        fraction = np.count_nonzero(negative_pixels) / n_valid
                         if fraction < 1e-3:
                             mylog.warning('Trying to interpolate for small fraction (%.2g) of negative rms values' % fraction)
                             ys,xs=rms.shape
                             xx, yy = np.meshgrid(np.arange(xs), np.arange(ys))
-                            mask = rms<0
-                            good_x = xx[~mask]
-                            good_y = yy[~mask]
-                            good_v = rms[~mask]
-                            missing_x = xx[mask]
-                            missing_y = yy[mask]
+                            good = valid_pixels & ~negative_pixels
+                            good_x = xx[good]
+                            good_y = yy[good]
+                            good_v = rms[good]
+                            missing_x = xx[negative_pixels]
+                            missing_y = yy[negative_pixels]
                             interp_values = interpolate.griddata((good_x, good_y), good_v, (missing_x, missing_y), method='nearest')
                             rms[missing_y, missing_x] = interp_values
                             rms_ok = True
