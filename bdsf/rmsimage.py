@@ -668,10 +668,6 @@ class Op_rmsimage(Op):
             # For each bright source, find nearest points and weight them towards
             # the small scale maps.
             size = 15
-            # rms_map/mean_map are aliases of out_rms2/out_mean2 and are
-            # overwritten below, so keep the unmodified large-scale maps.
-            large_rms = out_rms2.copy()
-            large_mean = out_mean2.copy()
 
             # Weight of the small-scale maps. Overlapping sources are combined
             # with the maximum, so the result does not depend on source order.
@@ -691,7 +687,7 @@ class Op_rmsimage(Op):
                 # 2 of the original large scale value. Use distance to the center of
                 # the box to determine taper value. This tapering prevents the use of
                 # the small scale box beyond the range of artifacts.
-                low = rms_map1[tuple(bbox)] / large_rms[tuple(bbox)] < 2.0
+                low = rms_map1[tuple(bbox)] / out_rms2[tuple(bbox)] < 2.0
                 if low.any():
                     d_min = dist[low].min()
                     taper = np.maximum(0.0, 1.0 - dist / np.hypot(bbox_xsize, bbox_ysize) * 2.0)
@@ -699,9 +695,9 @@ class Op_rmsimage(Op):
 
                 weights_map[tuple(bbox)] = np.maximum(weights_map[tuple(bbox)], weights)
 
-            # Blend once, using the unmodified large-scale maps
-            rms_map[:] = rms_map1 * weights_map + large_rms * (1.0 - weights_map)
-            mean_map[:] = mean_map1 * weights_map + large_mean * (1.0 - weights_map)
+            # Blend once; the right-hand side is evaluated before assignment
+            rms_map[:] = rms_map1 * weights_map + out_rms2 * (1.0 - weights_map)
+            mean_map[:] = mean_map1 * weights_map + out_mean2 * (1.0 - weights_map)
 
         else:
             rms_map = rms_map1
