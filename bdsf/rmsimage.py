@@ -902,8 +902,9 @@ class Op_rmsimage(Op):
         cm, cr: arrays with the clipped mean and rms of each region
         """
         nbox = len(ind_list)
-        # Use many chunks, as parallel_map() gives each process an equal number
-        # of chunks; this keeps the load imbalance between processes small
+        # parallel_map() hands the chunks out in batches to whichever process
+        # is free. Fewer chunks (1, 4 or 16 per process instead of 100), or no
+        # chunks at all, were not faster in benchmarks
         nchunks = min(nbox, 100 * (ncores or mp.nproc()))
         edges = np.linspace(0, nbox, nchunks + 1).astype(int)
 
