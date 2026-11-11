@@ -662,8 +662,6 @@ class Op_rmsimage(Op):
             ][::-1]
             mapcoord_threaded(rms_map2,  ax2, order=interp, output=out_rms2, ncores=ncores)
             mapcoord_threaded(mean_map2, ax2, order=interp, output=out_mean2, ncores=ncores)
-            rms_map = out_rms2
-            mean_map = out_mean2
 
             # For each bright source, find nearest points and weight them towards
             # the small scale maps.
@@ -695,9 +693,11 @@ class Op_rmsimage(Op):
 
                 weights_map[tuple(bbox)] = np.maximum(weights_map[tuple(bbox)], weights)
 
-            # Blend once; the right-hand side is evaluated before assignment
-            rms_map[:] = rms_map1 * weights_map + out_rms2 * (1.0 - weights_map)
-            mean_map[:] = mean_map1 * weights_map + out_mean2 * (1.0 - weights_map)
+            # Blend once. Pixels outside every bbox keep the large-scale value,
+            # so NaN/inf in the small-scale maps there cannot leak (0*NaN = NaN)
+            blend = weights_map > 0
+            rms_map = np.where(blend, rms_map1 * weights_map + out_rms2 * (1.0 - weights_map), out_rms2)
+            mean_map = np.where(blend, mean_map1 * weights_map + out_mean2 * (1.0 - weights_map), out_mean2)
 
         else:
             rms_map = rms_map1
