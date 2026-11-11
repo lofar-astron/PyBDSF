@@ -677,8 +677,6 @@ class Op_rmsimage(Op):
             # with the maximum, so the result does not depend on source order.
             weights_map = np.zeros(out_rms2.shape, dtype=np.float32)
 
-            # For each bright source, find nearest points and weight them towards
-            # the small scale maps.
             for bright_pt in bright_pt_coords:
                 bbox, src_center = self.make_bright_src_bbox(bright_pt, axes, size, out_rms2.shape)
                 bbox_xsize = bbox[0].stop-bbox[0].start
