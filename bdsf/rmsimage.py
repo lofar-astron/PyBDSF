@@ -314,10 +314,14 @@ class Op_rmsimage(Op):
         else:
             map_opts = (kappa, img.rms_box, opts.spline_rank)
 
-        external_maps_supplied = (
-            opts.rmsmean_map_filename is not None
-            and len(opts.rmsmean_map_filename) != 0
-        )
+            external_maps_supplied = (
+                opts.rmsmean_map_filename is not None
+                and len(opts.rmsmean_map_filename) != 0
+            )
+            need_rms_map = (opts.rms_map is not False)
+            need_mean_map = (opts.mean_map not in ['zero', 'const'])
+            need_maps = need_rms_map or need_mean_map
+            box_too_large = need_maps and (img.rms_box[0] > min(image.shape)/4.0)
         for ipol, pol in enumerate(pols):
             data = ch0_images[ipol]
             mean = np.zeros(data.shape, dtype=np.float32)
@@ -327,19 +331,7 @@ class Op_rmsimage(Op):
             else:
                 pol_txt = ''
 
-            ## calculate rms/mean maps if needed
-            if (not external_maps_supplied
-                    and ((opts.rms_map is not False) or
-                        (opts.mean_map not in ['zero', 'const']))
-                    and img.rms_box[0] > min(image.shape)/4.0):
-            # rms box is too large - just use constant rms and mean
-                self.output_rmsbox_size(img)
-                mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
-                mylogger.userinfo(mylog, 'Using constant background rms and mean')
-                img.use_rms_map = False
-                img.mean_map_type = 'const'
-            else:
-                if opts.rmsmean_map_filename is not None and len(opts.rmsmean_map_filename)!=0:
+                if external_maps_supplied:
                 # from astropy.io import fits as pyfits
                     def CheckShape(A):
                         if len(A.shape)!=4:
@@ -351,24 +343,30 @@ class Op_rmsimage(Op):
 
                     mean_fits_name,rms_fits_name=opts.rmsmean_map_filename
 
-                    mylogger.userinfo(mylog, "Skipping mean and rms image computation as external images supplied")
-                    mylogger.userinfo(mylog, "   Opening mean image: %s"%mean_fits_name)
-                    # mean = pyfits.open(mean_fits_name, mode="readonly")[0].data
-                    mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
-                    CheckShape(mean); mean = mean[0,0]
-                    mylogger.userinfo(mylog, "   Opening rms image: %s"%rms_fits_name)
-                    # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
-                    rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
-                    CheckShape(rms); rms = rms[0,0]
-                    # External maps are authoritative by default. Respect user options.
+                    load_mean = need_mean_map and bool(mean_fits_name)
+                    load_rms = need_rms_map and bool(rms_fits_name)
+
+                    if load_mean or load_rms:
+                        mylogger.userinfo(mylog, "Skipping mean and rms image computation as external images supplied")
+                    if load_mean:
+                        mylogger.userinfo(mylog, "   Opening mean image: %s" % mean_fits_name)
+                        mean, hdr = read_image_from_file(mean_fits_name, img, img.indir)
+                        CheckShape(mean); mean = mean[0,0]
+                    if load_rms:
+                        mylogger.userinfo(mylog, "   Opening rms image: %s" % rms_fits_name)
+                        rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
+                        CheckShape(rms); rms = rms[0,0]
                     if pol == 'I':
-                        if opts.rms_map is None:
+                        if load_rms and opts.rms_map is None:
                             img.use_rms_map = True
 
-                        if opts.mean_map == 'default':
-                            img.mean_map_type = 'map'
-
-                elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
+                elif box_too_large:
+                    self.output_rmsbox_size(img)
+                    mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
+                    mylogger.userinfo(mylog, 'Using constant background rms and mean')
+                    img.use_rms_map = False
+                    img.mean_map_type = 'const'
+                elif need_maps:
                     if len(data.shape) == 2:   ## 2d case
                         mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
                                         bright_pt_coords=isl_pos, rms_box2=img.rms_box,
