@@ -1153,7 +1153,7 @@ class Gaussian(object):
         distorted_beam = (
             func.approx_equal(size[0], pixel_beam[0]*1.1) and
             func.approx_equal(size[1], pixel_beam[1]) and
-            func.approx_equal(pa_diff, 0.0)
+            abs(pa_diff) < 1e-5
         )
 
         if distorted_beam or img.opts.fix_to_beam:
