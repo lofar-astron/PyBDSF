@@ -1036,7 +1036,6 @@ class Op_rmsimage(Op):
 
         return res
 
-
     def make_bright_src_bbox(self, coord, axes, size, shape):
         """Returns bbox given coordinates of center and axes"""
         xindx = int(np.rint(np.interp(
@@ -1061,7 +1060,6 @@ class Op_rmsimage(Op):
 
         src_center = [xindx, yindx]
         return [slice(xlow, xhigh, None), slice(ylow, yhigh, None)], src_center
-
 
     def output_rmsbox_size(self, img):
         """Prints rms/mean box size"""
