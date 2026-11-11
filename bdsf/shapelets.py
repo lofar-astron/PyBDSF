@@ -23,11 +23,10 @@ def decompose_shapelets(image, mask, basis, beta, centre, nmax, mode):
     Bset=N.zeros((ordermax, ordermax, image.shape[0], image.shape[1]), dtype=N.float32)
     cf = N.zeros((ordermax,ordermax)) # coefficient matrix, will fill up only lower triangular part.
     index = [(i,j) for i in range(ordermax) for j in range(ordermax-i)]  # i=0->nmax, j=0-nmax-i
+    m = N.logical_not(mask)
     for coord in index:
         B = shapelet_image(basis, beta, centre, hc, coord[0], coord[1], image.shape)
         if mode == 'fit': Bset[coord[0] , coord[1], ::] = B
-        m = N.copy(mask)
-        for i, v in N.ndenumerate(mask): m[i] = not v
         cf[coord] = N.sum(image*B*m)
 
     if mode == 'fit':
@@ -113,8 +112,7 @@ def shape_findcen(image, mask, basis, beta, nmax, beam_pix): # + check_cen_shape
 
     hc = shapelet_coeff(nmax, basis)
 
-    msk=N.zeros(mask.shape, dtype=bool)
-    for i, v in N.ndenumerate(mask): msk[i] = not v
+    msk=N.logical_not(mask)
 
     n,m = image.shape
     cf12 = N.zeros(image.shape, dtype=N.float32)
