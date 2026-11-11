@@ -961,15 +961,15 @@ class Op_rmsimage(Op):
     def for_masked_mp(self, mask, arr, ind, kappa):
 
         a, b, c, d = ind
+        cnt = None
         if mask is None:
-            m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
-            if cnt > 198: cm = m; cr = r
+            _, _, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
         else:
             mask_win = mask[a:b, c:d]
             npix_unmasked = mask_win.size - np.count_nonzero(mask_win)
+
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask_win, kappa)
-                if cnt > 198: cm = m; cr = r
+                _, _, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask_win, kappa)
             else:
                 if npix_unmasked > 5:
                     # First take the same windows for which the mask was calculated
@@ -979,15 +979,23 @@ class Op_rmsimage(Op):
                     # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
                     # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
                     cr = np.nanmedian(np.abs(valid_pixels - cm)) * 1.4826
-                    
+
                     # Protection against zero noise (e.g. all pixels have the same value)
                     if cr == 0.0:
                         cr = np.nanstd(valid_pixels) # fallback
                         if cr == 0.0:
-                            cr = np.inf           # finall fallback
+                            cr = np.inf           # final fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
+
+        # Warn when sigma-clipping requires an unusually large number of iterations.
+        # This does not necessarily indicate non-convergence.
+        if cnt is not None and cnt > 198:
+            mylogger.logging.getLogger("PyBDSF.RmsMean").warning(
+                f'Sigma clipping required {cnt} iterations in RMS window [{a}, {b}, {c}, {d}]. '
+                'Keeping the clipped mean and rms.'
+            )
 
         return cm, cr
 
