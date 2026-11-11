@@ -120,7 +120,7 @@ class Op_wavelet_atrous(Op):
                 else:
                     w = im_old - im_new
                 im_old = im_new
-                suffix = 'w' + repr(j)
+                suffix = ('remaining' if img.opts.atrous_sum else 'w') + repr(j)
                 filename = img.imagename + '.atrous.' + suffix + '.fits'
                 if img.opts.output_all:
                     func.write_image_to_file('fits', filename, w, img, bdir)
@@ -307,16 +307,27 @@ class Op_wavelet_atrous(Op):
 
             img.total_flux_gaus += total_flux
             mylogger.userinfo(mylog, "Total flux density in model on all scales", '%.3f Jy' % img.total_flux_gaus)
+
             if img.opts.output_all:
+                # Save the final low-pass (cJ) image.
                 func.write_image_to_file('fits', img.imagename + '.atrous.cJ.fits',
-                                         im_new, img, bdir)
+                                        im_new, img, bdir)
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.atrous.cJ.fits'))
+
+                # Save the final residual after both standard and wavelet Gaussian fitting.
                 func.write_image_to_file('fits', img.imagename + '.resid_wavelets.fits',
-                                         (img.ch0_arr - img.resid_gaus_arr + img.resid_wavelets_arr), img, bdir + '/residual/')
+                                        img.resid_wavelets_arr, img, bdir + '/residual/')
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.resid_wavelets.fits'))
+
+                # Save the complete model: standard Gaussian model + wavelet Gaussian model.
                 func.write_image_to_file('fits', img.imagename + '.model_wavelets.fits',
-                                         (img.resid_gaus_arr - img.resid_wavelets_arr), img, bdir + '/model/')
+                                        (img.ch0_arr - img.resid_wavelets_arr), img, bdir + '/model/')
                 mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets.fits'))
+
+                # Save the additional model contributed by wavelet Gaussian fitting only.
+                func.write_image_to_file('fits', img.imagename + '.model_wavelets_component.fits',
+                                        (img.resid_gaus_arr - img.resid_wavelets_arr), img, bdir + '/model/')
+                mylog.info('%s %s' % ('Wrote ', img.imagename + '.model_wavelets_component.fits'))
             img.completed_Ops.append('wavelet_atrous')
 
     def atrous(self, image, filtvec, lpf, j, numcores=1):
