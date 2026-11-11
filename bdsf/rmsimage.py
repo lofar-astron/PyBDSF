@@ -885,11 +885,14 @@ class Op_rmsimage(Op):
                 if bounds[i]:
                     axes[i][-1] = imgshape[i] + pad_border_size - BS/2. - .5
 
-        # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
-        # np.inf)
-        if np.count_nonzero(mean_map != np.inf) < mapshape[0]*mapshape[1]:
-            mean_map = self.fill_masked_regions(mean_map)
-            rms_map = self.fill_masked_regions(rms_map)
+        # Step 5: fill in boxes with too few unmasked pixels (set to inf).
+        # Check the two maps independently: one can be invalid even when the
+        # other is complete.
+        if np.any(~np.isfinite(mean_map)):
+            mean_map = self.fill_masked_regions(mean_map, map_name='mean')
+
+        if np.any(~np.isfinite(rms_map)):
+            rms_map = self.fill_masked_regions(rms_map, map_name='RMS')
 
         return axes, mean_map, rms_map
 
@@ -924,11 +927,26 @@ class Op_rmsimage(Op):
         return cm_cr[:, 0], cm_cr[:, 1]
 
 
-    def fill_masked_regions(self, themap):
-        """Fill masked regions in themap using local median, with global median fallback."""
-        # Compute global median as a fallback for finite values
+    def fill_masked_regions(self, themap, map_name='map'):
+        """Fill masked regions using local median, with global median fallback."""
+        # Compute global median as a fallback for finite values.
+        # If the entire map is invalid, retain the existing 1.0 fallback
+        # but report the affected region in map-grid coordinates.
         valid_mask = np.isfinite(themap)
-        global_fallback = np.nanmedian(themap[valid_mask]) if np.any(valid_mask) else 1.0
+
+        if np.any(valid_mask):
+            global_fallback = np.nanmedian(themap[valid_mask])
+        else:
+            n0, n1 = themap.shape
+            mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
+            mylog.warning(
+                "No finite estimates in %s map; affected map-grid region: "
+                "axis0=[0, %d), axis1=[0, %d) (map shape: %d x %d). "
+                "Falling back to 1.0 for this entire map.",
+                map_name, n0, n1, n0, n1
+            )
+            global_fallback = 1.0
+            return np.full_like(themap, global_fallback)
 
         # Find coordinates of missing or invalid data
         masked_boxes = np.where(~np.isfinite(themap))
