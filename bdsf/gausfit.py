@@ -21,7 +21,6 @@ if has_pl:
 import scipy.ndimage as nd
 from . import multi_proc as mp
 import itertools
-import sys
 
 
 def _update_subisland_fit_stats(island, active_pixels, mean_map, rms_map):
@@ -600,7 +599,8 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = thr
         mask = isl.mask_active
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
+        beam_clean = (beam[0], beam[1], beam[2] - 90.0)   # mclean() adds 90°
+        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam_clean, im_pos=im_pos)
         if len(inipeak) == 0:
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im, mask)
             inipeak = [maxv]
@@ -626,7 +626,7 @@ class Op_gausfit(Op):
                 if domore:
                     iniposn.append(N.array(maxp))
                     inipeak.append(maxv)
-                    im1 = func.mclean(im1, maxp, beam)
+                    im1 = func.mclean(im1, maxp, beam_clean)
 
         inipeak = N.array(inipeak)
         iniposn = N.array(iniposn)
@@ -669,11 +669,11 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = -1e9
         mask = isl.mask_active
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
+        _, iniposn, _ = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
         npeak = len(iniposn)
         gaul = []
 
-        av, stdnew, maxv, maxp, minv, minp = func.arrstatmask(im, mask)
+        _, _, maxv, _, _, _ = func.arrstatmask(im, mask)
         if npeak <= 1:
             mom = func.momanalmask_gaus(isl.image-isl.islmean, isl.mask_active, 0, 1.0, True)
             g = (float(maxv), int(round(mom[1])), int(round(mom[2])), mom[3]/fwsig,
@@ -726,12 +726,13 @@ class Op_gausfit(Op):
             resid = N.zeros(im.shape, dtype=N.float32)  # approx fit all compact ones
             x, y = N.indices(im.shape)
             for i in range(nshed):
-                npix = int(N.sum(invmask[i]))
-                size = sqrt(N.sum(invmask[i]))/fwsig
+                sum_invmask = N.sum(invmask[i])
+                npix = int(sum_invmask)
+                size = sqrt(sum_invmask)/fwsig
                 xf, yf = coords[i][0], coords[i][1]
                 p_ini = [im[xf, yf], xf, yf, size, size, 0.0]
                 if npix >= 6:  # 6 parameters of Gauss requires at least 6 pixels to fit
-                    p, success = func.fit_gaus2d(im, p_ini, x, y, mask=~invmask[i])
+                    p, _ = func.fit_gaus2d(im, p_ini, x, y, mask=~invmask[i])
                 else:
                     p = p_ini  # not enough pixels for fit, keep initial approximation
                 resid = resid + func.gaus_2d(p, x, y)
@@ -801,12 +802,14 @@ class Op_gausfit(Op):
                     break
             fitok &= self.add_gaussian(fcn, g, dof, g3_only)
 
-            fitok &= fit(fcn, final=0, verbose=verbose)
+            if fitok:
+                fitok = fit(fcn, final=0, verbose=verbose)
 
-        # And one last fit with higher precision
-        # make sure we return False when fitok==False due to lack
-        # of free parameters
-        fitok &= fit(fcn, final=1, verbose=verbose)
+        # Last fit with higher precision, if the previous fits succeeded and there are parameters to fit.
+        if fitok and len(fcn.parameters) > 0:
+            fitok = fit(fcn, final=1, verbose=verbose)
+        else:
+            fitok = False
 
         return fitok
 

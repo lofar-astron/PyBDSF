@@ -163,9 +163,12 @@ def image_files_are_similar(file1, file2, rtol, verbosity):
 def compare_results(dcmp, rtol, verbosity, check_images=True, check_catalogs=False, check_other=False):
     """
     Compare the results between the files produced by each PyBDSF run.
+    All subdirectories are compared recursively, and all files must be
+    present in both runs.
     :param dircmp dcmp: the directory contents of the two workflows
     :param float rtol: relative tolerance threshold
     :param int verbosity: verbosity level, higher means more verbose
+    :return bool: True if the results agree, else False
     """
     # Initialize logger and set log level depending on verbosity level
     init_logger(verbosity)
@@ -174,38 +177,51 @@ def compare_results(dcmp, rtol, verbosity, check_images=True, check_catalogs=Fal
     logger.info(f"Checking images: {check_images}")
     logger.info(f"Checking catalogs: {check_catalogs}")
     logger.info(f"Checking other: {check_other}")
-    agree = True
+    return compare_directories(
+        dcmp, False, rtol, verbosity, check_images, check_catalogs, check_other
+    )
+
+
+def compare_directories(dcmp, in_catalogues, rtol, verbosity, check_images,
+                        check_catalogs, check_other):
+    """
+    Compare the files in the directories of `dcmp`, and (recursively) those
+    in their subdirectories. See `compare_results` for the arguments;
+    `in_catalogues` tells whether the directories are (inside) a
+    "catalogues" directory.
+    :return bool: True if the files agree, else False
+    """
+    logger.debug("Comparing directories '%s' and '%s'", dcmp.left, dcmp.right)
+    agree = check_all_files_present(dcmp)
+    for fname in dcmp.common_files:
+        left = os.path.join(dcmp.left, fname)
+        right = os.path.join(dcmp.right, fname)
+        root, ext = os.path.splitext(fname)
+        logger.debug("fname: %s, root: %s, ext: %s", fname, root, ext)
+        if check_images:
+            if "fits" in ext.lower() and not in_catalogues:
+                if not image_files_are_similar(
+                    left, right, rtol=rtol, verbosity=verbosity
+                ):
+                    agree = False
+        if check_catalogs:
+            if "fits" in ext.lower() and in_catalogues:
+                if not fits_files_are_similar(
+                    left, right, rtol=rtol, verbosity=verbosity
+                ):
+                    agree = False
+        if check_other:
+            if "fits" not in ext.lower():
+                if not text_files_are_similar(
+                    left, right, verbosity=verbosity
+                ):
+                    agree = False
     for dname, sub_dcmp in dcmp.subdirs.items():
-        logger.debug(
-            "dname: %s, sub_dcmp.left: %s, sub_dcmp.right: %s",
-            dname,
-            sub_dcmp.left,
-            sub_dcmp.right,
-        )
-        check_all_files_present(sub_dcmp)
-        for fname in sub_dcmp.common_files:
-            left = os.path.join(sub_dcmp.left, fname)
-            right = os.path.join(sub_dcmp.right, fname)
-            root, ext = os.path.splitext(fname)
-            logger.debug("fname: %s, root: %s, ext: %s", fname, root, ext)
-            if check_images:
-                if "fits" in ext.lower() and "catalogues" not in dname:
-                    if not image_files_are_similar(
-                        left, right, rtol=rtol, verbosity=verbosity
-                    ):
-                        agree = False
-            if check_catalogs:
-                if "fits" in ext.lower() and "catalogues" in dname:
-                    if not fits_files_are_similar(
-                        left, right, rtol=rtol, verbosity=verbosity
-                    ):
-                        agree = False
-            if check_other:
-                if "fits" not in ext.lower():
-                    if not text_files_are_similar(
-                        left, right, verbosity=verbosity
-                    ):
-                        agree = False
+        if not compare_directories(
+            sub_dcmp, in_catalogues or dname == "catalogues", rtol, verbosity,
+            check_images, check_catalogs, check_other
+        ):
+            agree = False
     return agree
 
 
@@ -375,21 +391,27 @@ def init_logger(verbosity):
     :param int verbosity: Verbosity level, higher means more verbose logging
     """
     global logger
-    logger = logging.getLogger()
 
-    ch = logging.StreamHandler()
-    if verbosity == -1:
-        ch.setLevel(logging.ERROR)
+    if logger is None:
+        logger = logging.getLogger(__name__)
+        logger.propagate = False
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter("%(levelname)s - %(message)s")
+        )
+        logger.addHandler(handler)
+
+    if verbosity <= -1:
+        level = logging.ERROR
     elif verbosity == 0:
-        ch.setLevel(logging.WARNING)
+        level = logging.WARNING
     elif verbosity == 1:
-        ch.setLevel(logging.INFO)
-    elif verbosity >= 2:
-        ch.setLevel(logging.DEBUG)
+        level = logging.INFO
+    else:
+        level = logging.DEBUG
 
-    fmt = "%(levelname)s [%(name)s]: %(message)s"
-    ch.setFormatter(logging.Formatter(fmt))
-    logger.addHandler(ch)
+    logger.setLevel(level)
 
 
 def main(args):

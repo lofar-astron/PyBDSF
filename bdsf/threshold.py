@@ -93,6 +93,7 @@ class Op_threshold(Op):
             sigcrit = erfcinv(2.0 * pcrit) * sq2
             if pcrit == 0.0:
                 img.thresh = 'hard'
+                img.thresh_pix = opts.thresh_pix
             else:
                 img.thresh_pix = sigcrit
                 mylogger.userinfo(self.logger, "FDR threshold (replaces thresh_pix)", str(round(sigcrit, 4)))
