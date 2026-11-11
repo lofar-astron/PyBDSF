@@ -796,6 +796,13 @@ class Op_rmsimage(Op):
         else:
             boxcount = 1 + imgshape // SS
             bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
+            if int(BS) % 2 == 1:
+                # Odd BS: regular box centres are at i*SS and the extra border box
+                # is centred at N-1. Keep only regular boxes centred before N-1,
+                # so that the axis stays increasing and inside the image
+                # (otherwise remap_axis fails or divides by 0)
+                boxcount = (imgshape + SS - 2) // SS
+                bounds   = np.ones_like(boxcount)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
             arr_pad = np.pad(arr, pad_width=pad_border_size, mode='symmetric')
