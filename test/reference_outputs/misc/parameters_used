@@ -47,6 +47,7 @@ flag_maxsize_isl                        1.0
 flag_maxsnr                             1.5
 flag_minsize_bm                         0.7
 flag_minsnr                             0.6
+flag_nofit                              True
 flag_smallsrc                           False
 flagchan_list                           []
 flagchan_rms                            True
@@ -83,7 +84,7 @@ multichan_opts                          False
 ncores                                  2
 opdir_overwrite                         'overwrite'
 outdir                                  None
-    Value used                          '/home/akurek/PyBDSF/test'
+    Value used                          '/home/marcel/code/PyBDSF.update-reference-outputs/test'
 outfile                                 None
 output_all                              True
 output_opts                             False
