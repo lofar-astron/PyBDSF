@@ -946,6 +946,7 @@ class Op_rmsimage(Op):
                 map_name, n0, n1, n0, n1
             )
             global_fallback = 1.0
+            return np.full_like(themap, global_fallback)
 
         # Find coordinates of missing or invalid data
         masked_boxes = np.where(~np.isfinite(themap))
