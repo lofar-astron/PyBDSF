@@ -547,10 +547,17 @@ class Op_rmsimage(Op):
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
                         logname=logname, ncores=ncores, cache=cache)
-            if img.masked:
-                test = np.any(rms[~img.mask_arr] < 0.0)
-            else:
-                test = np.any(rms < 0.0)
+            # Only consider finite, unmasked pixels when checking the RMS map
+            valid_pixels = np.isfinite(rms)
+            if isinstance(mask, np.ndarray):
+                valid_pixels &= ~mask
+
+            n_valid = np.count_nonzero(valid_pixels)
+            if n_valid == 0:
+                raise RuntimeError("No finite unmasked pixels in RMS map")
+
+            negative_pixels = valid_pixels & (rms < 0.0)
+            test = np.any(negative_pixels)
             if test:
                 rms_ok = False
                 if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
@@ -598,17 +605,17 @@ class Op_rmsimage(Op):
                     else:
                         # We could be catastrophically wrong, or have a local problem with the
                         # interpolation. If the latter, we can rescue it by interpolating again
-                        fraction = np.sum(rms<0)/np.size(rms)
+                        fraction = np.count_nonzero(negative_pixels) / n_valid
                         if fraction < 1e-3:
                             mylog.warning('Trying to interpolate for small fraction (%.2g) of negative rms values' % fraction)
                             ys,xs=rms.shape
                             xx, yy = np.meshgrid(np.arange(xs), np.arange(ys))
-                            mask = rms<0
-                            good_x = xx[~mask]
-                            good_y = yy[~mask]
-                            good_v = rms[~mask]
-                            missing_x = xx[mask]
-                            missing_y = yy[mask]
+                            good = valid_pixels & ~negative_pixels
+                            good_x = xx[good]
+                            good_y = yy[good]
+                            good_v = rms[good]
+                            missing_x = xx[negative_pixels]
+                            missing_y = yy[negative_pixels]
                             interp_values = interpolate.griddata((good_x, good_y), good_v, (missing_x, missing_y), method='nearest')
                             rms[missing_y, missing_x] = interp_values
                             rms_ok = True
