@@ -48,5 +48,5 @@ jobs:
           # Set ONE of these as a repository secret:
           #   ANTHROPIC_API_KEY        - an API key from console.anthropic.com
           #   CLAUDE_CODE_OAUTH_TOKEN  - from `claude setup-token` (Pro/Max plan)
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
