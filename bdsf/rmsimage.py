@@ -314,6 +314,10 @@ class Op_rmsimage(Op):
         else:
             map_opts = (kappa, img.rms_box, opts.spline_rank)
 
+        external_maps_supplied = (
+            opts.rmsmean_map_filename is not None
+            and len(opts.rmsmean_map_filename) != 0
+        )
         for ipol, pol in enumerate(pols):
             data = ch0_images[ipol]
             mean = np.zeros(data.shape, dtype=np.float32)
@@ -324,7 +328,10 @@ class Op_rmsimage(Op):
                 pol_txt = ''
 
             ## calculate rms/mean maps if needed
-            if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(image.shape)/4.0:
+            if (not external_maps_supplied
+                    and ((opts.rms_map is not False) or
+                        (opts.mean_map not in ['zero', 'const']))
+                    and img.rms_box[0] > min(image.shape)/4.0):
             # rms box is too large - just use constant rms and mean
                 self.output_rmsbox_size(img)
                 mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
@@ -353,6 +360,13 @@ class Op_rmsimage(Op):
                     # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
                     rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
                     CheckShape(rms); rms = rms[0,0]
+                    # External maps are authoritative by default. Respect user options.
+                    if pol == 'I':
+                        if opts.rms_map is None:
+                            img.use_rms_map = True
+
+                        if opts.mean_map == 'default':
+                            img.mean_map_type = 'map'
 
                 elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
                     if len(data.shape) == 2:   ## 2d case
