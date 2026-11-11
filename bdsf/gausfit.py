@@ -1178,11 +1178,24 @@ class Gaussian(object):
             self.size_sky_uncorr = img.pix2gaus(size, self.centre_pix, use_wcs=False)  # FWHM in degrees and P.A. east from +y axis
             self.size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
             self.size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
-            gaus_dc, err = func.deconv2(bm_pix, size)
-            self.deconv_size_sky = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=use_wcs)
-            self.deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=False)
-            self.deconv_size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
-            self.deconv_size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
+
+            gaus_dc, deconv_status = func.deconv2(bm_pix, size)
+            if deconv_status == 2:
+                # Illegal deconvolution result
+                self.deconv_size_sky = [N.nan] * 3
+                self.deconv_size_sky_uncorr = [N.nan] * 3
+            else:
+                # Status 0: resolved; status 1: close to point source
+                self.deconv_size_sky = img.pix2gaus(
+                    gaus_dc, self.centre_pix, use_wcs=use_wcs
+                )
+                self.deconv_size_sky_uncorr = img.pix2gaus(
+                    gaus_dc, self.centre_pix, use_wcs=False
+                )
+            # Do not use observed-size errors as deconvolved-size errors.
+            self.deconv_size_skyE = [N.nan] * 3
+            self.deconv_size_skyE_uncorr = [N.nan] * 3
+
         else:
             # These are flagged Gaussians, so set errors and uncalculated values to NaN
             errors = [N.nan] * 7
