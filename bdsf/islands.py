@@ -226,12 +226,14 @@ class Op_islands(Op):
 
         Returns a list of island objects.
         """
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Islands")
         coords = opts.src_ra_dec  # list of RA and Dec tuples
         isl_radius_pix = opts.src_radius_pix
         if isl_radius_pix is None:
             isl_radius_pix = img.beam2pix(img.beam)[0]  # twice beam major axis radius at half max (= FWHM)
 
         res = []
+        skipped = 0
         for idx, coord in enumerate(coords):
             idx += 1  # nd.labels indices are counted from 1
             isl_posn_pix = img.sky2pix(coord)
@@ -252,6 +254,12 @@ class Op_islands(Op):
                      min(image.shape[1], isl_posn_pix[1] + isl_radius_pix + 1))]
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
+            else:
+                skipped += 1
+        if skipped:
+            mylog.warning(
+                f'While constructing islands from user-supplied source positions, {skipped} position(s) were skipped because the aperture pixel count was '
+                f'outside the allowed range ({img.minpix_isl} to {img.maxpix_isl}). This can happen when an aperture extends beyond the image or contains masked pixels.')
         return res
 
     def setpara_bdsm(self, img, det_file):
