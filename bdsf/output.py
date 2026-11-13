@@ -820,8 +820,11 @@ def write_islands(img):
 
     if img.j == 0:
         f = open(filename, 'w')
-        f.write('Wavelet# Island_id  bbox origin shape mask_active mask_noisy size_active mean rms max_value ngaul gresid_mean ' +
-                'gresid_rms resid_rms resid_mean nsource \n')
+        f.write(
+            'Wavelet# Island_id bbox_x0 bbox_x1 bbox_y0 bbox_y1 '
+            'origin_x origin_y shape_x shape_y mask_active mask_noisy '
+            'size_active mean rms max_value ngaul gresid_mean gresid_rms nsource\n'
+        )
     else:
         f = open(filename, 'a')
 
