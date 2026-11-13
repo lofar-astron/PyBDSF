@@ -497,18 +497,15 @@ class Op_gaul2srl(Op):
                     mompara3_MC[i] = N.nan
                     mompara4_MC[i] = N.nan
                     mompara5_MC[i] = N.nan
+
             mompara1E = N.nanstd(mompara1_MC)
-            if mompara1E > 2.0*mompara[1]:
-                mompara1E = 2.0*mompara[1] # Don't let errors get too large
             mompara2E = N.nanstd(mompara2_MC)
-            if mompara2E > 2.0*mompara[2]:
-                mompara2E = 2.0*mompara[2] # Don't let errors get too large
+
             mompara3E = N.nanstd(mompara3_MC)
-            if mompara3E > 2.0*mompara[3]:
-                mompara3E = 2.0*mompara[3] # Don't let errors get too large
+            mompara3E = min(mompara3E, 2.0*mompara[3]) # Don't let errors get too large
+
             mompara4E = N.nanstd(mompara4_MC)
-            if mompara4E > 2.0*mompara[4]:
-                mompara4E = 2.0*mompara[4] # Don't let errors get too large
+            mompara4E = min(mompara4E, 2.0*mompara[4]) # Don't let errors get too large
 
             # Use circular statistics for Position Angle error.
             valid_mompara5_MC = mompara5_MC[~N.isnan(mompara5_MC)]
@@ -516,8 +513,7 @@ class Op_gaul2srl(Op):
                 mompara5E = circstd(valid_mompara5_MC, high=180.0, low=0.0)
             else:
                 mompara5E = N.nan
-            if mompara5E > 2.0*mompara[5]:
-                mompara5E = 2.0*mompara[5] # Don't let errors get too large
+
         else:
             mompara1E = 0.0
             mompara2E = 0.0
