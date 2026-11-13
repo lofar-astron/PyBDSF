@@ -236,9 +236,13 @@ class Op_gaul2srl(Op):
             pix1 = pix1.astype(float) #N.array(map(float, pix1))
             pix2 = pix2.astype(float) #N.array(map(float, pix2))
 
-            maxline = int(round(N.max(N.abs(pix1-pix2)+1)))
-            flux1 = g1.peak_flux
-            flux2 = g2.peak_flux
+            maxline = round(N.max(N.abs(pix1-pix2)+1))
+            if img.opts.group_method == 'curvature':
+                flux1 = subim[int(pix1[0]), int(pix1[1])]
+                flux2 = subim[int(pix2[0]), int(pix2[1])]
+            else:
+                flux1 = g1.peak_flux
+                flux2 = g2.peak_flux
                                                 # get pix values of the line
             pixdif = pix2 - pix1
             same_island_min = False
