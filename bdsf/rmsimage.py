@@ -271,6 +271,14 @@ class Op_rmsimage(Op):
             isl_pos = img._adapt_rms_isl_pos # set isl_pos to existing value (for wavelet analysis)
         if len(isl_pos) == 0:
             # No bright sources found
+            if do_adapt and not img.waveletimage:
+                if len(isl_maxposn) == 0:
+                    reason = 'no peaks above %g sigma were found' % adapt_thresh
+                else:
+                    reason = ('%d peak(s) above %g sigma were found, but none qualified '
+                              'as an isolated bright source' % (len(isl_maxposn), adapt_thresh))
+                mylog.warning('adaptive_rms_box=True, but %s. Adaptive scaling of rms_box '
+                              'is disabled; a single-scale rms_box is used.' % reason)
             do_adapt = False
         else:
             img._adapt_rms_isl_pos = isl_pos
@@ -286,8 +294,8 @@ class Op_rmsimage(Op):
             if bsize2 < min_size_allowed:
                 bsize2 = min_size_allowed
             if bsize2 % 10 == 0: bsize2 += 1
-            bstep = int(round(min(bsize/3., min(shape)/10.)))
-            bstep2 = int(round(min(bsize2/3., min(shape)/10.)))
+            bstep = round(min(bsize/3., min(shape)/10.))
+            bstep2 = round(min(bsize2/3., min(shape)/10.))
             if opts.rms_box_bright is None:
                 img.rms_box_bright = (bsize, bstep)
             else:
