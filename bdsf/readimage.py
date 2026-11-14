@@ -492,11 +492,17 @@ class Op_readimage(Op):
             # shift towards south instead
             delta_dec *= -1.0
         x2, y2 = img.sky2pix([ra, dec + delta_dec])
-        try:
-            rot_ang_rad = N.arctan2(y2-y1, x2-x1) - N.pi / 2.0
-            if delta_dec < 0.0:
-                rot_ang_rad -= N.pi
-        except:
+        rot_ang_rad = N.arctan2(y2 - y1, x2 - x1) - N.pi / 2.0
+        if delta_dec < 0.0:
+            rot_ang_rad -= N.pi
+        if not N.isfinite(rot_ang_rad):
+            if not getattr(img, '_get_rot_warned', False):
+                mylog = mylogger.logging.getLogger("PyBDSF.GetRot")
+                mylog.warning(f'Could not compute image rotation at pixel ({x1:.1f}, {y1:.1f}) '
+                              '(position outside the projection). Assuming no rotation.'
+                              'This warning is printed only for first such pixel; there can be more.'
+                              )
+                img._get_rot_warned = True
             rot_ang_rad = 0.0
         return rot_ang_rad * 180.0 / N.pi
 
