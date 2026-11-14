@@ -112,8 +112,7 @@ class Op_wavelet_atrous(Op):
             pix_masked = N.where(N.isnan(resid))
             n_masked = len(pix_masked[0])
             if n_masked > 0:
-                mylog.warning("%.1f%% of pixels are blanked (NaN). They are treated as zero in the wavelet "
-                              "convolution, so wavelet images may be biased near blanked regions.",
+                mylog.warning("%.1f%% of pixels are blanked (NaN). Wavelet images may be biased near blanked regions.",
                               100.0 * n_masked / resid.size)
             jmin = 1
             if img.opts.ncores is None:
