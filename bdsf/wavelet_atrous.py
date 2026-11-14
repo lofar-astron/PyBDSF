@@ -53,6 +53,9 @@ class Op_wavelet_atrous(Op):
                 os.makedirs(bdir + '/residual/', exist_ok=True)
                 os.makedirs(bdir + '/model/', exist_ok=True)
             dobdsm = img.opts.atrous_bdsm_do
+            if not dobdsm and not img.opts.output_all:
+                mylog.warning("atrous_bdsm_do=False and output_all=False: wavelet decomposition "
+                              "neither fits sources nor saves any image, so it has no effect on the results.")
             filter = {'tr': {'size': 3, 'vec': [1. / 4, 1. / 2, 1. / 4], 'name': 'Triangle'},
                       'b3': {'size': 5, 'vec': [1. / 16, 1. / 4, 3. / 8, 1. / 4, 1. / 16], 'name': 'B3 spline'}}
 
@@ -90,6 +93,10 @@ class Op_wavelet_atrous(Op):
                 jmax = floor(log(((min_size // 3) * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0) + 1
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
+                    if min_size < min(resid.shape):
+                        mylog.info("Automatic J_max=%d is limited by the largest island (%d x %d pixels), "
+                                "not by the image size. Larger scales are not decomposed.",
+                                jmax, max_isl_shape[0], max_isl_shape[1])
             img.wavelet_lpf = lpf
             img.wavelet_jmax = jmax
             mylog.info("Using " + filter[lpf]['name'] + ' filter with J_max = ' + str(jmax))
@@ -103,6 +110,11 @@ class Op_wavelet_atrous(Op):
             total_flux = 0.0
             stop_wav = False
             pix_masked = N.where(N.isnan(resid))
+            n_masked = len(pix_masked[0])
+            if n_masked > 0:
+                mylog.warning("%.1f%% of pixels are blanked (NaN). They are treated as zero in the wavelet "
+                              "convolution, so wavelet images may be biased near blanked regions.",
+                              100.0 * n_masked / resid.size)
             jmin = 1
             if img.opts.ncores is None:
                 numcores = 1
@@ -134,6 +146,8 @@ class Op_wavelet_atrous(Op):
                     y1 = (l + (l - 1) * (2 ** (j - 1) - 1))
                     bs = max(5 * y1, box)  # changed from 10 to 5
                     if bs > min(n, m) / 2:
+                        mylog.warning("Wavelet scale #%d: rms box (%d px) exceeds half of the image; "
+                                      "using constant rms and mean over the whole image.", j, bs)
                         wopts['rms_map'] = False
                         wopts['mean_map'] = 'const'
                         wopts['rms_box'] = None
@@ -146,6 +160,8 @@ class Op_wavelet_atrous(Op):
                                 wopts['rms_box_bright'] = (bs_bright, bs_bright//3)
                             else:
                                 wopts['adaptive_rms_box'] = False
+                                mylog.info("Wavelet scale #%d: adaptive_rms_box disabled "
+                                           "(bright-source box %d px is not < rms box %d px / 1.5).", j, bs_bright, bs)
                     if j <= 3:
                         wopts['ini_gausfit'] = 'default'
                     else:
@@ -204,6 +220,11 @@ class Op_wavelet_atrous(Op):
                                 del valid_ids
 
                                 wimg.islands = good_isl
+                                n_rej_isl = len(wimg.islands) - len(good_isl)
+                                if n_rej_isl > 0:
+                                    mylog.info("Scale #%d: %d of %d wavelet islands do not overlap any original "
+                                               "island and are rejected (atrous_orig_isl=True).",
+                                               j, n_rej_isl, len(wimg.islands))
                                 wimg.nisl = len(good_isl)
                                 mylogger.userinfo(mylog, "Number of islands found", '%i' % wimg.nisl)
 
