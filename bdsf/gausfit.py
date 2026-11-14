@@ -15,12 +15,11 @@ provides all functionality required by the specific fitters.
 from .image import *
 from . import mylogger
 from . import statusbar
-from . import has_pl
-if has_pl:
-    import matplotlib.pyplot as pl
 import scipy.ndimage as nd
 from . import multi_proc as mp
 import itertools
+from . import functions as func
+from .const import fwsig
 
 
 def _update_subisland_fit_stats(island, active_pixels, mean_map, rms_map):
@@ -98,7 +97,6 @@ class Op_gausfit(Op):
         return int(max(1.0, round(weight)))
 
     def __call__(self, img):
-        from . import functions as func
 
         mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Gausfit")
         if len(img.islands) == 0:
@@ -263,7 +261,6 @@ class Op_gausfit(Op):
 
         Returns a list of the best-fit Gaussians and flagged Gaussians.
         """
-        from . import functions as func
 
         if opts is None:
             opts = img.opts
@@ -338,8 +335,6 @@ class Op_gausfit(Op):
                that significant residuals remain (peak > thr).
         """
         from ._cbdsm import MGFunction
-        from . import functions as func
-        from .const import fwsig
 
         verbose = opts.verbose_fitting
         if verbose:
@@ -540,11 +535,7 @@ class Op_gausfit(Op):
         it is much faster to fit a small number of Gaussians simultaneously
         and iterate. However, this does usually result in larger residuals.
         """
-        from . import functions as func
-        sgaul = []
-        sfgaul = []
-        gaul = []
-        fgaul = []
+
         if opts is None:
             opts = img.opts
         thresh_isl = opts.thresh_isl
@@ -577,7 +568,7 @@ class Op_gausfit(Op):
                     gcopy[3] = S1 # division by fwsig was already done in func.gaussian_fcn()
                     gcopy[4] = S2 # division by fwsig was already done in func.gaussian_fcn()
                     gcopy[5] = Th
-                    A, C1, C2, S1, S2, Th = gcopy
+                    _, C1, C2, S1, S2, Th = gcopy
                     shape = isl.shape
                     b = find_bbox(thresh*isl.rms, gcopy)
                     bbox = N.s_[max(0, int(C1-b)):min(shape[0], int(C1+b+1)),
@@ -606,8 +597,6 @@ class Op_gausfit(Op):
     def inigaus_fbdsm(self, isl, thr, beam, img):
         """ initial guess for gaussians like in fbdsm """
         from math import sqrt
-        from .const import fwsig
-        from . import functions as func
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
@@ -617,7 +606,8 @@ class Op_gausfit(Op):
             im_pos = im
             thr_pos = thr
         mask = isl.mask_active
-        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam, im_pos=im_pos)
+        beam_clean = (beam[0], beam[1], beam[2] - 90.0)   # mclean() adds 90°
+        inipeak, iniposn, im1 = func.get_maxima(im, mask, thr_pos, isl.shape, beam_clean, im_pos=im_pos)
         if len(inipeak) == 0:
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im, mask)
             inipeak = [maxv]
@@ -643,7 +633,7 @@ class Op_gausfit(Op):
                 if domore:
                     iniposn.append(N.array(maxp))
                     inipeak.append(maxv)
-                    im1 = func.mclean(im1, maxp, beam)
+                    im1 = func.mclean(im1, maxp, beam_clean)
 
         inipeak = N.array(inipeak)
         iniposn = N.array(iniposn)
@@ -674,9 +664,6 @@ class Op_gausfit(Op):
         and use geometric mean of all minima of a peak as the size of that peak.
         """
         from math import sqrt
-        from .const import fwsig
-        import scipy.ndimage as nd
-        from . import functions as func
 
         im = isl.image-isl.islmean
         if img.opts.ini_method == 'curvature':
@@ -891,8 +878,6 @@ class Op_gausfit(Op):
         """The actual flagging routine. See above for description.
         """
         from math import sqrt, sin, cos, pi
-        from . import functions as func
-        import scipy.ndimage as nd
 
         A, x1, x2, s1, s2, th = g
         s1, s2 = map(abs, [s1, s2])
@@ -1143,7 +1128,6 @@ class Gaussian(object):
         g_idx: gaussian serial number
         flg: flagging (if any)
         """
-        from . import functions as func
         import numpy as N
 
         cls = type(self)
@@ -1195,7 +1179,7 @@ class Gaussian(object):
             self.size_sky_uncorr = img.pix2gaus(size, self.centre_pix, use_wcs=False)  # FWHM in degrees and P.A. east from +y axis
             self.size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
             self.size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
-            gaus_dc, err = func.deconv2(bm_pix, size)
+            gaus_dc, _ = func.deconv2(bm_pix, size)
             self.deconv_size_sky = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=use_wcs)
             self.deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=False)
             self.deconv_size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
@@ -1219,7 +1203,6 @@ class Gaussian(object):
         self.total_flux = tot
         self.total_fluxE = errors[6]
         self.peak_fluxE = errors[0]
-        self.total_fluxE = errors[6]
         self.centre_pixE = errors[1:3]
         self.size_pixE = errors[3:6]
         self.rms = isl.rms

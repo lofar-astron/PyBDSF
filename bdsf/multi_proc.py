@@ -11,6 +11,7 @@ workers and only the results are sent back.
 """
 
 import concurrent.futures
+import concurrent.futures.process
 import math
 import multiprocessing
 import os
@@ -51,6 +52,29 @@ def _init_worker(function, sequence):
     """Set this pool's task state using arguments inherited through fork."""
     global _task_function, _task_sequence
     _task_function, _task_sequence = function, sequence
+    _forget_inherited_executors()
+
+
+def _forget_inherited_executors():
+    """
+    Forget the process pools that this (forked) worker inherited from its
+    parent.
+
+    `concurrent.futures.process` keeps a registry of the "wakeup" objects of
+    all running process pools, and a forked worker inherits it. When the
+    worker exits, it wakes all of them up, which takes the lock of each
+    wakeup object. If another thread of the parent held one of those locks
+    when the worker was forked (e.g., when parallel_map is called from two
+    threads at once), the worker inherits a lock that is never released, and
+    hangs when it exits; so does parallel_map, while waiting for it. This
+    affects recent Python versions, in which these objects have a lock (e.g.,
+    3.12.15, 3.13 and 3.14, but not 3.12.3).
+    The registry of the parent's pools is of no use in a worker, so clear it,
+    like CPython does for thread pools in forked processes.
+    """
+    wakeups = getattr(concurrent.futures.process, '_threads_wakeups', None)
+    if wakeups is not None:
+        wakeups.clear()
 
 
 def _run_batch(indices):
