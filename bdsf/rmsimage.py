@@ -208,7 +208,6 @@ class Op_rmsimage(Op):
         rank = len(shape)
         connectivity = ndimage.generate_binary_structure(rank, rank)
         if do_adapt:
-            mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
@@ -274,6 +273,8 @@ class Op_rmsimage(Op):
             do_adapt = False
         else:
             img._adapt_rms_isl_pos = isl_pos
+            if do_adapt:
+                mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
         min_size_allowed = int(img.pixel_beam()[0]*9.0)
 
         if opts.rms_box is None or (opts.rms_box_bright is None and do_adapt):
