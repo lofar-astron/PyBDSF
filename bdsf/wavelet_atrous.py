@@ -112,6 +112,7 @@ class Op_wavelet_atrous(Op):
             total_flux = 0.0
             stop_wav = False
             n_gaus_per_scale = {}
+            flux_per_scale = {}
             pix_masked = N.where(N.isnan(resid))
             n_masked = len(pix_masked[0])
             if n_masked > 0:
@@ -309,6 +310,7 @@ class Op_wavelet_atrous(Op):
                                 renumber_islands(img)
 
                     total_flux += tot_flux
+                     flux_per_scale[j] = tot_flux
                     if img.opts.interactive and has_pl:
                         dc = '\033[34;1m'
                         nc = '\033[0m'
@@ -357,7 +359,8 @@ class Op_wavelet_atrous(Op):
                                   "has no effect on the result. Either no significant structures were found in "
                                   "the wavelet images, or all wavelet Gaussians were rejected.", n_done)
                 else:
-                    scales = ', '.join('#%d: %d' % (jj, n_gaus_per_scale[jj]) for jj in sorted(n_gaus_per_scale))
+                    scales = ', '.join('#%d: %d (%.3g Jy)' % (jj, n_gaus_per_scale[jj], flux_per_scale.get(jj, 0.0))
+                                       for jj in sorted(n_gaus_per_scale))
                     mylogger.userinfo(mylog, "Gaussians added by wavelet fitting",
                                       '%d (%.3g Jy); per scale -> %s' % (n_wav, total_flux, scales))
 
