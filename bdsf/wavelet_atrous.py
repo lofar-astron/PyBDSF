@@ -227,9 +227,13 @@ class Op_wavelet_atrous(Op):
                                 wimg.islands = good_isl
                                 n_rej_isl = n_total_isl - len(good_isl)
                                 if n_rej_isl > 0:
-                                    mylog.info("Scale #%d: %d of %d wavelet islands do not overlap any original "
-                                               "island and are rejected (atrous_orig_isl=True).",
-                                               j, n_rej_isl, n_total_isl)
+                                    mylogger.userinfo(
+                                        mylog,
+                                        "Wavelet islands rejected",
+                                        "%d of %d wavelet islands do not overlap any original island. "
+                                        "These islands are excluded before Gaussian fitting because atrous_orig_isl=True, so their emission is not modelled."
+                                        % (n_rej_isl, n_total_isl)
+                                    )
                                 wimg.nisl = len(good_isl)
                                 mylogger.userinfo(mylog, "Number of islands found", '%i' % wimg.nisl)
 
