@@ -94,7 +94,7 @@ class Op_wavelet_atrous(Op):
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
                     if min_size < min(resid.shape):
-                        mylog.info("Automatic J_max=%d is limited by the largest island (%d x %d pixels), "
+                        mylog.warning("Automatic J_max=%d is limited by the largest island (%d x %d pixels), "
                                 "not by the image size. Larger scales are not decomposed.",
                                 jmax, max_isl_shape[0], max_isl_shape[1])
             img.wavelet_lpf = lpf
