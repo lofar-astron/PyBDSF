@@ -72,6 +72,7 @@ class Op_wavelet_atrous(Op):
             lpf = img.opts.atrous_lpf
             if lpf not in ['b3', 'tr']:
                 lpf = 'b3'
+                mylog.warning("Invalid atrous_lpf=%s. Expected 'b3' or 'tr'. Using 'b3' instead.", lpf)
             jmax = img.opts.atrous_jmax
             l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
             if jmax < 0 or jmax > 15:
