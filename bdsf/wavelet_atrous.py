@@ -275,6 +275,23 @@ class Op_wavelet_atrous(Op):
                                         else:
                                             g.valid = False
                                             g.jlevel = 0
+
+                                # Report wavelet Gaussians rejected by the centre filter
+                                n_rej_gaus = 0
+                                rej_flux = 0.0
+                                for g in gaul:
+                                    if not g.valid:
+                                        n_rej_gaus += 1
+                                        rej_flux += g.total_flux
+                                if n_rej_gaus > 0:
+                                    rej_msg = ("Scale #%d: %d wavelet Gaussian(s) with total flux %.3g Jy rejected "
+                                               "because their centres lie outside the original islands "
+                                               "(atrous_orig_isl=True). This emission is not modelled.")
+                                    if abs(rej_flux) > 0.1 * abs(tot_flux):
+                                        mylog.warning(rej_msg, j, n_rej_gaus, rej_flux)
+                                    else:
+                                        mylog.info(rej_msg, j, n_rej_gaus, rej_flux)
+
                                 vg = []
                                 for g in wimg.gaussians:
                                     if g.valid:
