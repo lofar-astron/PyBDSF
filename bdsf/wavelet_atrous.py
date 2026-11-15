@@ -109,6 +109,7 @@ class Op_wavelet_atrous(Op):
             im_old = img.resid_wavelets_arr
             total_flux = 0.0
             stop_wav = False
+            n_gaus_per_scale = {}
             pix_masked = N.where(N.isnan(resid))
             n_masked = len(pix_masked[0])
             if n_masked > 0:
@@ -326,6 +327,7 @@ class Op_wavelet_atrous(Op):
                                 break
                             answ = raw_input_no_history(prompt)
                     if len(wimg.gaussians) > 0:
+                        n_gaus_per_scale[j] = len(wimg.gaussians)
                         img.resid_wavelets_arr = self.subtract_wvgaus(img.opts, img.resid_wavelets_arr, wimg.gaussians, wimg.islands)
                         if img.opts.atrous_sum:
                             im_old = self.subtract_wvgaus(img.opts, im_old, wimg.gaussians, wimg.islands)
@@ -345,6 +347,17 @@ class Op_wavelet_atrous(Op):
 
             img.total_flux_gaus += total_flux
             mylogger.userinfo(mylog, "Total flux density in model on all scales", '%.3f Jy' % img.total_flux_gaus)
+            if dobdsm:
+                n_wav = sum(n_gaus_per_scale.values())
+                n_done = img.wavelet_jmax  # scales actually processed (smaller if stopped interactively)
+                if n_wav == 0:
+                    mylog.warning("Wavelet decomposition (%d scale(s)) added no Gaussians to the model, so atrous_do "
+                                  "has no effect on the result. Either no significant structures were found in "
+                                  "the wavelet images, or all wavelet Gaussians were rejected.", n_done)
+                else:
+                    scales = ', '.join('#%d: %d' % (jj, n_gaus_per_scale[jj]) for jj in sorted(n_gaus_per_scale))
+                    mylogger.userinfo(mylog, "Gaussians added by wavelet fitting",
+                                      '%d (%.3g Jy); per scale -> %s' % (n_wav, total_flux, scales))
 
             if img.opts.output_all:
                 # Save the final low-pass (cJ) image.
