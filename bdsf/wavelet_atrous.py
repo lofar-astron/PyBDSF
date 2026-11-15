@@ -83,9 +83,11 @@ class Op_wavelet_atrous(Op):
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
                 min_size = min(resid.shape)
                 max_isl_shape = (0, 0)
+                max_isl_npix = 0
                 for isl in img.islands:
                     if isl.image.shape[0] * isl.image.shape[1] > max_isl_shape[0] * max_isl_shape[1]:
                         max_isl_shape = isl.image.shape
+                        max_isl_npix = int((~isl.mask_active).sum())  # pixels actually in the island
                 if max_isl_shape != (0, 0) and min(max_isl_shape) < min(resid.shape) / 3.0:
                     min_size = min(max_isl_shape) * 4.0
                 else:
@@ -94,9 +96,9 @@ class Op_wavelet_atrous(Op):
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
                     if min_size < min(resid.shape):
-                        mylog.warning("Automatic j_max = %d is limited by the largest island (%d x %d pixels), "
-                                "not by the image size. Larger scales are not decomposed.",
-                                jmax, max_isl_shape[0], max_isl_shape[1])
+                        mylog.warning("Automatic J_max=%d is limited by the largest island (bounding box %d x %d pixels, "
+                                "%d pixels in the island), not by the image size. Larger scales are not decomposed.",
+                                jmax, max_isl_shape[0], max_isl_shape[1], max_isl_npix)
             img.wavelet_lpf = lpf
             img.wavelet_jmax = jmax
             mylog.info("Using " + filter[lpf]['name'] + ' filter with J_max = ' + str(jmax))
