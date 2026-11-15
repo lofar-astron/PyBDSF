@@ -218,12 +218,13 @@ class Op_wavelet_atrous(Op):
                                         wvisl.valid = False
                                 del valid_ids
 
+                                n_total_isl = len(wimg.islands)
                                 wimg.islands = good_isl
-                                n_rej_isl = len(wimg.islands) - len(good_isl)
+                                n_rej_isl = n_total_isl - len(good_isl)
                                 if n_rej_isl > 0:
                                     mylog.info("Scale #%d: %d of %d wavelet islands do not overlap any original "
                                                "island and are rejected (atrous_orig_isl=True).",
-                                               j, n_rej_isl, len(wimg.islands))
+                                               j, n_rej_isl, n_total_isl)
                                 wimg.nisl = len(good_isl)
                                 mylogger.userinfo(mylog, "Number of islands found", '%i' % wimg.nisl)
 
