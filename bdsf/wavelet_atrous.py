@@ -310,7 +310,7 @@ class Op_wavelet_atrous(Op):
                                 renumber_islands(img)
 
                     total_flux += tot_flux
-                     flux_per_scale[j] = tot_flux
+                    flux_per_scale[j] = tot_flux
                     if img.opts.interactive and has_pl:
                         dc = '\033[34;1m'
                         nc = '\033[0m'
