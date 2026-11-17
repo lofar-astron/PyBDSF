@@ -581,7 +581,7 @@ def report_wavelet_rejections(rejections_per_scale, mylog):
         )
     )
 
-    mylogger.userinfo(mylog, 'Wavelet rejection summary', '\n'.join(lines))
+    mylogger.userinfo(mylog, 'Wavelet rejection summary', '\n' + '\n'.join(lines))
 
 def rebase_bbox(box, minv):
     # return a new bounding box tuple where minv is subtracted from
