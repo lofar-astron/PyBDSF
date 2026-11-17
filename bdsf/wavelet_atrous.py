@@ -536,6 +536,7 @@ def report_wavelet_rejections(rejections_per_scale, mylog):
 
         # Gaussians rejected by fitting flags
         flag_counts = r['flags']
+        n_fit = sum(flag_counts.values())
         invalid_count = flag_counts.get(-1, 0)
         normal_flags = ', '.join(
             '%d:%d' % (flag, count)
