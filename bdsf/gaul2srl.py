@@ -36,7 +36,7 @@ class Op_gaul2srl(Op):
         mylogger.userinfo(mylog, 'Grouping Gaussians into sources')
         img.aperture = img.opts.aperture
         if img.aperture is not None and img.aperture <= 0.0:
-            mylog.warn('Specified aperture is <= 0. Skipping aperture fluxes.')
+            mylog.warning('Specified aperture is <= 0. Skipping aperture fluxes.')
             img.aperture = None
 
         src_index = -1
