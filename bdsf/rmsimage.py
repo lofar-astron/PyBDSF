@@ -934,23 +934,19 @@ class Op_rmsimage(Op):
     def fill_masked_regions(self, themap, map_name='map'):
         """Fill masked regions using local median, with global median fallback."""
         # Compute global median as a fallback for finite values.
-        # If the entire map is invalid, retain the existing 1.0 fallback
-        # but report the affected region in map-grid coordinates.
+        # If the entire map is invalid, fall back to 1.0 everywhere.
         valid_mask = np.isfinite(themap)
 
         if np.any(valid_mask):
             global_fallback = np.nanmedian(themap[valid_mask])
         else:
-            n0, n1 = themap.shape
             mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
             mylog.warning(
-                "No finite estimates in %s map; affected map-grid region: "
-                "axis0=[0, %d), axis1=[0, %d) (map shape: %d x %d). "
-                "Falling back to 1.0 for this entire map.",
-                map_name, n0, n1, n0, n1
+                "No finite estimates in %s map (shape %d x %d); "
+                "using 1.0 everywhere.",
+                map_name, *themap.shape
             )
-            global_fallback = 1.0
-            return np.full_like(themap, global_fallback)
+            return np.full_like(themap, 1.0)
 
         # Find coordinates of missing or invalid data
         masked_boxes = np.where(~np.isfinite(themap))
