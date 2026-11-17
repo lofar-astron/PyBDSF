@@ -424,6 +424,7 @@ class Op_gaul2srl(Op):
 
         # Don't let s_peak fall too far below the normalized peak (this can
         # happen when, e.g., the centroid falls outside of the source)
+        # Gaussian peak from pixel sum and FWHMs: sum / (2*pi*sigma_x*sigma_y), sigma = FWHM/fwsig
         norm_peak = mompara[0] * bmar_p * fwsig**2 / (2.0 * N.pi * mompara[3] * mompara[4])
         if s_peak < norm_peak/2.0:
             s_peak = norm_peak/2.0
