@@ -1014,6 +1014,39 @@ The options for this module are as follows:
         If ``False``, fitting is done on only the wavelet scale under consideration.
 
 
+Wavelet rejection summary
+-------------------------
+
+When ``atrous_bdsm_do = True``, PyBDSF reports the number of rejected
+wavelet components for each scale, followed by a total across all
+processed scales. The summary distinguishes three types of rejection:
+
+* ``fit flags``: Number of wavelet Gaussians rejected by the Gaussian
+  flagging criteria. Values in square brackets show
+  ``flag_value:count`` pairs. A flag value may represent multiple
+  flagging conditions, in which case their values are summed.
+  See :ref:`flagging_opts` for the individual flag definitions.
+
+* ``orig_isl``: Number of fitted wavelet Gaussians rejected because
+  their centres do not fall on an unmasked pixel belonging to an
+  island in the original image. This filter is applied when
+  ``atrous_orig_isl = True``.
+
+* ``rejected islands``: Number of wavelet islands that do not overlap
+  any island in the original image. These islands are rejected before
+  Gaussian fitting when ``atrous_orig_isl = True``.
+
+The total gives the sum of rejected components across all processed
+scales; it does not represent a count of unique astronomical sources.
+
+The summary reports counts only, not flux densities. It is a diagnostic
+of these specific rejection stages and does not account for all
+emission that may remain unmodelled in the residual image.
+
+A special value of ``-1`` indicates invalid Gaussian parameters and
+does not represent a combination of flagging conditions.
+
+
 Wavelet output images
 ---------------------
 

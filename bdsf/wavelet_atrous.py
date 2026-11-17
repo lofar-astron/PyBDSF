@@ -114,6 +114,7 @@ class Op_wavelet_atrous(Op):
             stop_wav = False
             n_gaus_per_scale = {}
             flux_per_scale = {}
+            rejections_per_scale = {}
             pix_masked = N.where(N.isnan(resid))
             n_masked = len(pix_masked[0])
             if n_masked > 0:
@@ -125,6 +126,11 @@ class Op_wavelet_atrous(Op):
             else:
                 numcores = img.opts.ncores
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
+                scale_rej = {
+                    'flags': {},
+                    'centre_n': 0,
+                    'island_n': 0,
+                }
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
                 # Clear the largest not needed variables, since FFT needs a lot of RAM
                 w = None          # wavelet image from previous scale
@@ -221,6 +227,7 @@ class Op_wavelet_atrous(Op):
                                         good_isl.append(wvisl)
                                     else:
                                         wvisl.valid = False
+                                        scale_rej['island_n'] += 1
                                 del valid_ids
 
                                 n_total_isl = len(wimg.islands)
@@ -245,6 +252,14 @@ class Op_wavelet_atrous(Op):
                             # If opts.atrous_orig_isl then exclude Gaussians outside of
                             # the original ch0 islands
                             nwvgaus = 0
+                            # Collect Gaussians rejected by fitting flags.
+                            # Each Gaussian is counted only once, by its exact flag value.
+                            for isl in wimg.islands:
+                                for g in getattr(isl, 'fgaul', []):
+                                    flag = int(g.flag)
+                                    scale_rej['flags'][flag] = (
+                                        scale_rej['flags'].get(flag, 0) + 1
+                                    )
                             if img.opts.atrous_orig_isl:
                                 gaul = wimg.gaussians
                                 tot_flux = 0.0
@@ -292,6 +307,7 @@ class Op_wavelet_atrous(Op):
                                     if not g.valid:
                                         n_rej_gaus += 1
                                         rej_flux += g.total_flux
+                                scale_rej['centre_n'] = n_rej_gaus
                                 if n_rej_gaus > 0:
                                     rej_msg = ("Scale #%d: %d wavelet Gaussian(s) with total flux %.3g Jy rejected "
                                                "because their centres lie outside the original islands "
@@ -314,6 +330,7 @@ class Op_wavelet_atrous(Op):
                                 # Now renumber the islands and adjust the rank image before going to next wavelet image
                                 renumber_islands(img)
 
+                    rejections_per_scale[j] = scale_rej
                     total_flux += tot_flux
                     flux_per_scale[j] = tot_flux
                     if img.opts.interactive and has_pl:
@@ -343,6 +360,8 @@ class Op_wavelet_atrous(Op):
                     if stop_wav:
                         break
 
+            if dobdsm:
+                report_wavelet_rejections(rejections_per_scale, mylog)
             pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
@@ -502,6 +521,66 @@ class Op_wavelet_atrous(Op):
 
         return residim
 
+
+def report_wavelet_rejections(rejections_per_scale, mylog):
+    """Report wavelet Gaussians and islands rejected at each scale."""
+
+    lines = []
+    totals = {
+        'fit_n': 0,
+        'centre_n': 0,
+        'island_n': 0,
+    }
+    for j, r in sorted(rejections_per_scale.items()):
+        parts = []
+
+        # Gaussians rejected by fitting flags
+        flag_counts = r['flags']
+        invalid_count = flag_counts.get(-1, 0)
+        normal_flags = ', '.join(
+            '%d:%d' % (flag, count)
+            for flag, count in sorted(flag_counts.items())
+            if flag != -1
+        )
+
+        flag_parts = []
+        if invalid_count:
+            flag_parts.append('invalid: %d' % invalid_count)
+
+        if normal_flags:
+            flag_parts.append('flags: %s' % normal_flags)
+
+        parts.append('fit flags: %d G [%s]' % (n_fit, '; '.join(flag_parts)))
+
+        # Gaussians rejected by atrous_orig_isl centre filter
+        if r['centre_n']:
+            parts.append('orig_isl: %d G' % r['centre_n'])
+
+        # Islands rejected before Gaussian fitting
+        if r['island_n']:
+            parts.append('rejected islands: %d' % r['island_n'])
+
+        if parts:
+            lines.append('  Scale #%d: %s' % (j, '; '.join(parts)))
+
+        totals['fit_n'] += n_fit
+        totals['centre_n'] += r['centre_n']
+        totals['island_n'] += r['island_n']
+
+    # Do not print an empty summary
+    if not lines:
+        return
+
+    lines.append(
+        '  Total: fit flags: %d G; orig_isl: %d G; rejected islands: %d'
+        % (
+            totals['fit_n'],
+            totals['centre_n'],
+            totals['island_n']
+        )
+    )
+
+    mylogger.userinfo(mylog, 'Wavelet rejection summary', '\n'.join(lines))
 
 def rebase_bbox(box, minv):
     # return a new bounding box tuple where minv is subtracted from
