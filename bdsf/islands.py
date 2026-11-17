@@ -246,7 +246,7 @@ class Op_islands(Op):
                 aper_mask = labels.astype(bool) & ~mask
             else:
                 aper_mask = labels.astype(bool)
-            if aper_mask.sum() >= img.minpix_isl and aper_mask.sum() <= img.maxpix_isl:
+            if img.minpix_isl <= aper_mask.sum() <= img.maxpix_isl:
                 labels[aper_mask] = idx
                 s = [slice(max(0, isl_posn_pix[0] - isl_radius_pix - 1),
                      min(image.shape[0], isl_posn_pix[0] + isl_radius_pix + 1)),
