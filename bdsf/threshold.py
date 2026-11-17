@@ -69,13 +69,18 @@ class Op_threshold(Op):
 
         # https://iopscience.iop.org/article/10.1086/338316
         if img.thresh=='fdr':
+            alpha = opts.fdr_alpha
+            if not 0.0 < alpha < 1.0:
+                raise ValueError(
+                    f"fdr_alpha must be finite and between 0 and 1; got {alpha!r}"
+                )
             cdelt = img.wcs_obj.acdelt[:2]
             bm = (img.beam[0], img.beam[1])
             area_pix = round(pi/(4.0*log(2.0)) * (N.prod(bm) / abs(N.prod(cdelt))))
             s0 = 0
             for i in range(area_pix):
                 s0 +=  1.0/(i+1)
-            slope = opts.fdr_alpha/s0
+            slope = alpha/s0
             # Compute and sort p-values only for unmasked data
             v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2), axis=None)
             pcrit = None
