@@ -36,7 +36,7 @@ class Op_gaul2srl(Op):
         mylogger.userinfo(mylog, 'Grouping Gaussians into sources')
         img.aperture = img.opts.aperture
         if img.aperture is not None and img.aperture <= 0.0:
-            mylog.warn('Specified aperture is <= 0. Skipping aperture fluxes.')
+            mylog.warning('Specified aperture is <= 0. Skipping aperture fluxes.')
             img.aperture = None
 
         src_index = -1
@@ -234,9 +234,13 @@ class Op_gaul2srl(Op):
             pix1 = pix1.astype(float) # N.array(map(float, pix1))
             pix2 = pix2.astype(float) # N.array(map(float, pix2))
 
-            maxline = int(round(N.max(N.abs(pix1-pix2)+1)))
-            flux1 = g1.peak_flux
-            flux2 = g2.peak_flux
+            maxline = round(N.max(N.abs(pix1-pix2)+1))
+            if img.opts.group_method == 'curvature':
+                flux1 = subim[int(pix1[0]), int(pix1[1])]
+                flux2 = subim[int(pix2[0]), int(pix2[1])]
+            else:
+                flux1 = g1.peak_flux
+                flux2 = g2.peak_flux
                                                 # get pix values of the line
             pixdif = pix2 - pix1
             same_island_min = False
@@ -424,7 +428,8 @@ class Op_gaul2srl(Op):
 
         # Don't let s_peak fall too far below the normalized peak (this can
         # happen when, e.g., the centroid falls outside of the source)
-        norm_peak = mompara[0]*bmar_p/(mompara[3]*mompara[4])
+        # Gaussian peak from pixel sum and FWHMs: sum / (2*pi*sigma_x*sigma_y), sigma = FWHM/fwsig
+        norm_peak = mompara[0] * bmar_p * fwsig**2 / (2.0 * N.pi * mompara[3] * mompara[4])
         if s_peak < norm_peak/2.0:
             s_peak = norm_peak/2.0
 
