@@ -36,6 +36,31 @@ except ImportError:
 class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""
 
+    @staticmethod
+    def residual_rms_in_sigma(resid, mean, rms):
+        """Calculate residual RMS in units of local noise."""
+
+        resid = N.asarray(resid)
+        rms = N.asarray(rms)
+
+        if mean is None:
+            mean = 0.0
+        else:
+            mean = N.asarray(mean)
+
+        valid = (N.isfinite(resid) & N.isfinite(rms) & (rms > 0.0))
+
+        if N.ndim(mean) > 0:
+            valid &= N.isfinite(mean)
+            z = (resid[valid] - mean[valid]) / rms[valid]
+        else:
+            z = (resid[valid] - mean) / rms[valid]
+
+        if z.size == 0:
+            return N.nan
+
+        return float(N.sqrt(N.mean(z ** 2)))
+
     def __call__(self, img):
 
         mylog = mylogger.logging.getLogger("PyBDSF." + img.log + "Wavelet")
@@ -64,6 +89,7 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
+            rms_before = self.residual_rms_in_sigma(resid, img.mean_arr, img.rms_arr)
             img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
@@ -293,6 +319,13 @@ class Op_wavelet_atrous(Op):
                             im_old = self.subtract_wvgaus(img.opts, im_old, wimg.gaussians, wimg.islands)
                     if stop_wav:
                         break
+
+            rms_after = self.residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr )
+            mylog.userinfo("Residual RMS before wavelet fitting: %.3f sigma", rms_before)
+            mylog.userinfo("Residual RMS after wavelet fitting: %.3f sigma", rms_after)
+            if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
+                change = 100.0 * (rms_after / rms_before - 1.0)
+                mylog.userinfo("Residual RMS change after wavelet fitting: %+.2f%%", change )
 
             pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
