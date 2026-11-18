@@ -175,9 +175,13 @@ class Op_gaul2srl(Op):
         delc = [boxx.start, boxy.start]
         subim = self.make_subim(subn, subm, g_list, delc)
 
+        subim_group = subim
+        if not img.opts.group_by_isl and img.opts.group_method == 'curvature':
+            subim_group = -1.0 * func.make_curvature_map(subim)
+
         index = [(i,j) for i in range(ngau) for j in range(ngau) if j > i]
         for pair in index:
-            same_island = self.in_same_island(pair, img, g_list, isl, subim, subn, subm, delc)
+            same_island = self.in_same_island(pair, img, g_list, isl, subim_group, subn, subm, delc)
             if same_island:
                 nsrc -= 1
                 mmax, mmin = max(src_id[pair[0]],src_id[pair[1]]), min(src_id[pair[0]],src_id[pair[1]])
@@ -305,8 +309,6 @@ class Op_gaul2srl(Op):
             same_isl1_cont = True
             same_isl2 = True
         else:
-            if img.opts.group_method == 'curvature':
-                subim = -1.0 * func.make_curvature_map(subim)
             tol = img.opts.group_tol
             same_isl1_min, same_isl1_cont = same_island_min(pair, g_list, subim, delc, tol)
             same_isl2 = same_island_dist(pair, g_list, tol/2.0)
