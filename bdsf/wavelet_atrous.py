@@ -320,12 +320,12 @@ class Op_wavelet_atrous(Op):
                     if stop_wav:
                         break
 
-            rms_after = self.residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr )
-            mylog.userinfo("Residual RMS before wavelet fitting: %.3f sigma", rms_before)
-            mylog.userinfo("Residual RMS after wavelet fitting: %.3f sigma", rms_after)
+            rms_after = self.residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr)
+            mylogger.userinfo(mylog, "Residual RMS before wavelet fitting", "%.3f sigma" % rms_before)
+            mylogger.userinfo(mylog, "Residual RMS after wavelet fitting", "%.3f sigma" % rms_after)
             if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
                 change = 100.0 * (rms_after / rms_before - 1.0)
-                mylog.userinfo("Residual RMS change after wavelet fitting: %+.2f%%", change )
+                mylogger.userinfo(mylog, "Residual RMS change after wavelet fitting", "%+.2f%%" % change)
 
             pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
