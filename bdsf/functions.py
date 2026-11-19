@@ -377,6 +377,7 @@ def trans_gaul(q):
             y.append(elem)
     return y
 
+
 def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     """ Compute 2d gaussian parameters from moment analysis, for an island with
         multiple gaussians. Compute only for gaussian with index (mask value) isrc.
@@ -384,10 +385,9 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
         Gaussian to the remaining emission, which rarely gets flagged.
         Returns normalised peak, centroid, FWHM and P.A. assuming North is top.
     """
-    from math import sqrt, atan, pi
+    from math import sqrt, pi
     from .const import fwsig
     import numpy as N
-    N.seterr(all='ignore')
 
     m1 = N.zeros(2); m2 = N.zeros(2); m11 = 0.0; tot = 0.0
     mompara = N.zeros(6)
@@ -396,20 +396,24 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     for coord in index:
         tot += subim[coord]
         m1 += N.array(coord)*subim[coord]
-    mompara[0] = tot/bmar_p
-    mompara[1:3] = m1/tot
+    with N.errstate(divide='ignore'):
+        mompara[0] = tot/bmar_p
+        mompara[1:3] = m1/tot
 
-    if allpara:
-        for coord in index:
-            co = N.array(coord)
-            m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
-            m11 += N.prod(co - mompara[1:3])*subim[coord]
+        if allpara:
+            for coord in index:
+                co = N.array(coord)
+                m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
+                m11 += N.prod(co - mompara[1:3])*subim[coord]
 
-        mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-        mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-        dumr = N.arctan2(2.0*m11, m2[0]-m2[1]) % (2.0*pi)
-        mompara[5] = 0.5*dumr*180.0/pi - 90.0
-        if mompara[5] < 0.0: mompara[5] += 180.0
+            mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+            mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+
+            dumr = N.arctan2(2.0*m11, m2[0]-m2[1]) % (2.0*pi)
+            mompara[5] = 0.5*dumr*180.0/pi - 90.0
+
+            if mompara[5] < 0.0:
+                mompara[5] += 180.0
     return mompara
 
 def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
