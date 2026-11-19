@@ -63,7 +63,7 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
-            rms_before = residual_rms_in_sigma(resid, img.mean_arr, img.rms_arr)
+            rms_before = func.residual_rms_in_sigma(resid, img.mean_arr, img.rms_arr)
             img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
@@ -294,7 +294,7 @@ class Op_wavelet_atrous(Op):
                     if stop_wav:
                         break
 
-            rms_after = residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr)
+            rms_after = func.residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr)
             mylogger.userinfo(mylog, "Residual RMS before wavelet fitting", "%.3f sigma" % rms_before)
             mylogger.userinfo(mylog, "Residual RMS after wavelet fitting", "%.3f sigma" % rms_after)
             if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
