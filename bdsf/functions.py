@@ -1,6 +1,5 @@
-def residual_rms_in_sigma(resid, mean, rms):
-    """Calculate residual RMS in units of noise."""
-    import numpy as N
+def residual_sumsq_in_sigma(resid, mean, rms):
+    """Return (sum of z**2, number of valid pixels), z = (resid - mean) / rms."""
 
     if mean is None:
         mean = 0.0
@@ -13,9 +12,16 @@ def residual_rms_in_sigma(resid, mean, rms):
     else:
         z = (resid[valid] - mean) / rms[valid]
 
-    if z.size == 0:
+    return N.sum(z * z, dtype=N.float64), z.size
+
+
+def residual_rms_in_sigma(resid, mean, rms):
+    """Calculate residual RMS in units of noise."""
+
+    ss, n = residual_sumsq_in_sigma(resid, mean, rms)
+    if n == 0:
         return N.nan
-    return N.sqrt(N.mean(z ** 2))
+    return N.sqrt(ss / n)
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
