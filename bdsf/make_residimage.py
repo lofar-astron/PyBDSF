@@ -62,6 +62,16 @@ class Op_make_residimage(Op):
         img.model_gaus_arr = model_gaus
         img.resid_gaus_arr = resid_gaus
 
+        if not img.waveletimage and not img._pi and \
+                not (img.opts.atrous_do and 'wavelet_atrous' in img.completed_Ops):
+            rms_before = func.residual_rms_in_sigma(img.ch0_arr, img.mean_arr, img.rms_arr)
+            rms_after = func.residual_rms_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
+            mylogger.userinfo(mylog, "Residual RMS before Gaussian fitting", f"{rms_before:.3f} sigma")
+            mylogger.userinfo(mylog, "Residual RMS after Gaussian fitting", f"{rms_after:.3f} sigma")
+            if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
+                change = 100.0 * (rms_after / rms_before - 1.0)
+                mylogger.userinfo(mylog, "Residual RMS change after Gaussian fitting", f"{change:+.2f}%")
+
         if img.opts.output_all or img.opts.savefits_residim:
             if img.waveletimage:
                 resdir = img.basedir + '/wavelet/residual/'

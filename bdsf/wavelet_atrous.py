@@ -36,27 +36,7 @@ except ImportError:
 class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""
 
-    @staticmethod
-    def residual_rms_in_sigma(resid, mean, rms):
-        """Calculate residual RMS in units of noise."""
-
-        if mean is None:
-            mean = 0.0
-
-        valid = N.isfinite(resid) & N.isfinite(rms) & (rms > 0.0)
-
-        if N.ndim(mean) > 0:
-            valid &= N.isfinite(mean)
-            z = (resid[valid] - mean[valid]) / rms[valid]
-        else:
-            z = (resid[valid] - mean) / rms[valid]
-
-        if z.size == 0:
-            return N.nan
-        return N.sqrt(N.mean(z ** 2))
-
     def __call__(self, img):
-
         mylog = mylogger.logging.getLogger("PyBDSF." + img.log + "Wavelet")
 
         if img.opts.atrous_do:
