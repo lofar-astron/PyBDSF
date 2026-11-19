@@ -1232,6 +1232,9 @@ class Opts(object):
     debug = Bool(False,
                              doc = "Print debug info to the logfile",
                              group = "hidden")
+    debug_fit_pixel = Option(None, Tuple(Int(), Int()),
+                             doc = "With debug enabled, log Gaussian fits for islands whose bounding box contains this image pixel (x, y).",
+                             group = "hidden")
     outfile = Option(None, String(),
                              doc = "Output file name. None => file is named "\
                                  "automatically; 'SAMP' => send to SAMP hub "\

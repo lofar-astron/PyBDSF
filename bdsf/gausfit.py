@@ -136,6 +136,7 @@ class Op_gausfit(Op):
         # object that contains the minimal data needed.
         opts_dict = opts.to_dict()
         img_simple = Image(opts_dict)
+        img_simple.log = img.log
         img_simple.pixel_beamarea = img.pixel_beamarea
         img_simple.pixel_beam = img.pixel_beam
         img_simple.thresh_pix = img.thresh_pix
@@ -345,7 +346,29 @@ class Op_gausfit(Op):
         else:
             fit_image = isl.image-isl.islmean-ffimg
 
-        fcn = MGFunction(fit_image, isl.mask_active, 1)
+        debug_log = None
+        pixel = opts.debug_fit_pixel if opts.debug else None
+        if pixel is not None and all(
+            0 <= coord - origin < size
+            for coord, origin, size in zip(pixel, isl.origin, fit_image.shape)
+        ):
+            debug_log = mylogger.logging.getLogger(
+                f"PyBDSF.{img.log}Gausfit.Island{isl.island_id}"
+            )
+            debug_log.debug(
+                "Gaussian fit input target_pixel=%s origin=%s shape=%s "
+                "dtype=%s island_mean=%.17g island_rms=%.17g",
+                pixel, tuple(isl.origin), fit_image.shape, fit_image.dtype, isl.islmean, isl.rms,
+            )
+            debug_log.debug("Gaussian island pixels=%s", isl.image.tolist())
+            debug_log.debug("Gaussian fitter pixels=%s", fit_image.tolist())
+
+        def make_fit_function(mask, stage):
+            if debug_log is not None:
+                debug_log.debug("Gaussian fitter mask stage=%s masked_pixels=%s", stage, mask.tolist())
+            return MGFunction(fit_image, mask, 1)
+
+        fcn = make_fit_function(isl.mask_active, 'original')
         # For fitting, use img.beam instead of img.pixel_beam, as we want
         # to pick up the wavelet beam (img.pixel_beam is not changed for
         # wavelet images, but img.beam is)
@@ -391,7 +414,8 @@ class Op_gausfit(Op):
             iter += 1
             if verbose:
                 print('In Gaussian flag loop, iter =', iter)
-            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, ini_gausfit, ngmax, verbose, g3_only)
+            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, ini_gausfit, ngmax, verbose, g3_only,
+                                  debug_log=debug_log)
             if verbose:
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
@@ -413,7 +437,8 @@ class Op_gausfit(Op):
             ngmax = 25
             while iter < 15:
                 iter += 1
-                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
+                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only,
+                                      debug_log=debug_log)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                   beam, thr_flag, peak, shape, isl.mask_active,
                                                   fit_image, fitok)
@@ -429,7 +454,7 @@ class Op_gausfit(Op):
                 if verbose:
                     print('Fit still not OK, shrinking')
                 # If fitting still fails, shrink the island a little and try again
-                fcn = MGFunction(fit_image, sm_isl, 1)
+                fcn = make_fit_function(sm_isl, 'shrunk')
                 dof = N.sum(~sm_isl)
                 island_modified = 'shrunk'
                 island_modified_npix = dof
@@ -439,7 +464,8 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only,
+                                          debug_log=debug_log)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr_flag, peak, shape, sm_isl,
                                                       fit_image, fitok)
@@ -453,7 +479,7 @@ class Op_gausfit(Op):
                 if verbose:
                     print('Fit still not OK, expanding')
                 # If fitting still fails, expand the island a little and try again
-                fcn = MGFunction(fit_image, lg_isl, 1)
+                fcn = make_fit_function(lg_isl, 'expanded')
                 dof = N.sum(~lg_isl)
                 island_modified = 'expanded'
                 island_modified_npix = dof
@@ -463,7 +489,8 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only,
+                                          debug_log=debug_log)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr_flag, peak, shape, lg_isl,
                                                       fit_image, fitok)
@@ -504,6 +531,9 @@ class Op_gausfit(Op):
         isl.mg_fcn = fcn
         gaul = [self.fixup_gaussian(isl, g) for g in gaul]
         fgaul = [(flag, self.fixup_gaussian(isl, g)) for flag, g in fgaul]
+
+        if debug_log is not None:
+            debug_log.debug("Gaussian island result accepted=%s flagged=%s", gaul, fgaul)
 
         if verbose:
             print('Number of good Gaussians: %i' % (len(gaul),))
@@ -737,7 +767,8 @@ class Op_gausfit(Op):
 
         return gaul
 
-    def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax, verbose=1, g3_only=False):
+    def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax,
+                 verbose=1, g3_only=False, *, debug_log=None):
         """One round of fitting
 
         Parameters:
@@ -753,7 +784,23 @@ class Op_gausfit(Op):
 
         if verbose:
             print('Greetings from fit_iter')
-        fit = lmder_fit
+
+        def fit(fcn, final, verbose):
+            if debug_log is not None:
+                debug_log.debug(
+                    "lmder_fit input method=%s iteration=%s final=%s fitted_parameters=%s "
+                    "guesses_peak_xy_sigma_xy_angle=%s",
+                    inifit, iter, final, fcn.fitted_parameters(), fcn.parameters,
+                )
+            ok = lmder_fit(fcn, final=final, verbose=verbose)
+            if debug_log is not None:
+                debug_log.debug(
+                    "lmder_fit result method=%s iteration=%s final=%s success=%s "
+                    "parameters_peak_xy_sigma_xy_angle=%s",
+                    inifit, iter, final, ok, fcn.parameters,
+                )
+            return ok
+
         beam = list(beam)
 
         # First drop-in initial gaussians
