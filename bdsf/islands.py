@@ -214,8 +214,8 @@ class Op_islands(Op):
                     (image[s] - mean[s]) > thresh_pix * rms[s]
                 )
                 if N.any(significant_pixels):
-                isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
-                res.append(isl)
+                    isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
+                    res.append(isl)
         return res
 
     def coords_to_isl(self, img, opts):
