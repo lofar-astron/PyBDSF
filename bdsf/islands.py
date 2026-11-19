@@ -353,8 +353,7 @@ class Island(object):
         self.size_active = isl_size
         self.max_value = N.max(self.image[~self.mask_active])
 
-        # Use the same valid island pixels for background statistics and flux
-        # uncertainty calculations.
+        # Use the same valid island pixels for all island statistics
         valid_pixels = (
             ~self.mask_active
             & ~N.isnan(self.image)
@@ -362,16 +361,21 @@ class Island(object):
             & ~N.isnan(bbox_rms_im)
         )
 
-        # Calculate mean and RMS values only on valid island pixels
-        self.rms = bbox_rms_im[valid_pixels].mean()
-        self.mean = bbox_mean_im[valid_pixels].mean()
+        n_valid = N.count_nonzero(valid_pixels)
+        if n_valid == 0:
+            raise ValueError("Island %s contains no valid pixels" % idx)
+
+        # Calculate maximum, mean and RMS using valid island pixels
+        self.max_value = N.max(self.image[valid_pixels])
+        self.rms = N.mean(bbox_rms_im[valid_pixels])
+        self.mean = N.mean(bbox_mean_im[valid_pixels])
         self.islmean = self.mean
 
         # Calculate background-subtracted total flux
-        self.total_flux = N.nansum((self.image - bbox_mean_im)[valid_pixels]) / beamarea
+        self.total_flux = N.sum((self.image - bbox_mean_im)[valid_pixels]) / beamarea
 
-        pixels_in_isl = N.sum(valid_pixels)
-        self.total_fluxE = N.nanmean(bbox_rms_im[valid_pixels]) * N.sqrt(pixels_in_isl/beamarea)  # Jy
+        # Calculate flux uncertainty
+        self.total_fluxE = self.rms * N.sqrt(n_valid / beamarea)
 
         self.border = self.get_border()
         self.gaul = []
