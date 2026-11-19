@@ -1,4 +1,4 @@
-Wavelet# Island_id  bbox origin shape mask_active mask_noisy size_active mean rms max_value ngaul gresid_mean gresid_rms resid_rms resid_mean nsource 
+Wavelet# Island_id bbox_x0 bbox_x1 bbox_y0 bbox_y1 origin_x origin_y shape_x shape_y mask_active mask_noisy size_active mean rms max_value ngaul gresid_mean gresid_rms nsource
     0     0     0     5     0    12     0     0     5    12         37         60         37 -2.300e-04 5.738e-04 4.119e-02     0 0.000e+00 0.000e+00     0 
     0     1     0     6    16    28     0    16     6    12         34         71         34 -2.300e-04 5.738e-04 5.503e-03     0 0.000e+00 0.000e+00     0 
     0     2     4     9    23    31     4    23     5     8         11         37         11 -2.300e-04 5.738e-04 2.886e-03     0 0.000e+00 0.000e+00     0 
