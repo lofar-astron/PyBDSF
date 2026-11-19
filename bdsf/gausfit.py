@@ -44,11 +44,21 @@ def _can_fit_gaussian_shape(mask):
 
     # The logarithm of an elliptical Gaussian is a quadratic. Its six
     # coefficients must be independently observable on the active pixels.
-    # Rescale coordinates so the rank test is insensitive to island size.
+    # Rescale coordinates so the rank test is insensitive to island size,
+    # and test the 6x6 normal matrix instead of the (npix x 6) design matrix.
     x = (x - x.min()) / N.ptp(x)
     y = (y - y.min()) / N.ptp(y)
     terms = N.column_stack((N.ones_like(x), x, y, x*x, x*y, y*y))
-    return N.linalg.matrix_rank(terms) == 6
+    gram = terms.T @ terms
+    eig = N.linalg.eigvalsh(gram)
+    return eig[0] > 1e-10 * eig[-1]
+
+
+def _fixed_shape_for_mask(mask, beam, g3_only):
+    """Return the beam shape to hold fixed, or None if the shape can be fitted."""
+    if g3_only or _can_fit_gaussian_shape(mask):
+        return None
+    return tuple(beam)
 
 
 class Op_gausfit(Op):
@@ -365,8 +375,10 @@ class Op_gausfit(Op):
         # to pick up the wavelet beam (img.pixel_beam is not changed for
         # wavelet images, but img.beam is)
         beam = N.array(img.beam2pix(img.beam))
-        beam_shape = (beam[0]/fwsig, beam[1]/fwsig, beam[2]+90.0)  # change angle from +y-axis to +x-axis and FWHM to sigma
-        beam = beam_shape
+        beam = (beam[0]/fwsig, beam[1]/fwsig, beam[2]+90.0)  # change angle from +y-axis to +x-axis and FWHM to sigma
+        # Keep the true beam for shapes held fixed below: the widening that
+        # follows only gives free fits a non-circular starting point.
+        true_beam = beam
 
         if abs(beam[0]/beam[1]) < 1.1:
             beam = (1.1*beam[0], beam[1], beam[2])
@@ -377,9 +389,13 @@ class Op_gausfit(Op):
         # flag_minsnr is defined relative to thresh_pix and the island RMS.
         thr_flag = opts.flag_minsnr * img.thresh_pix * isl.rms
         g3_only = opts.fix_to_beam
-        fixed_shape = None
-        if not g3_only and not _can_fit_gaussian_shape(isl.mask_active):
-            fixed_shape = beam_shape
+        # Hold the shape fixed to the beam when the active pixels cannot
+        # constrain all six Gaussian parameters.
+        isl_fixed_shape = _fixed_shape_for_mask(isl.mask_active, true_beam, g3_only)
+        fixed_shape = isl_fixed_shape
+        if verbose and fixed_shape is not None:
+            print('Island %s cannot constrain a Gaussian shape; fixing shape to the beam'
+                  % (isl.island_id,))
         peak = fcn.find_peak()[0]
         dof = isl.size_active
         shape = isl.shape
@@ -452,7 +468,7 @@ class Op_gausfit(Op):
                 # If fitting still fails, shrink the island a little and try again
                 fcn = MGFunction(fit_image, sm_isl, 1)
                 dof = N.sum(~sm_isl)
-                fixed_shape = None if g3_only or _can_fit_gaussian_shape(sm_isl) else beam_shape
+                fixed_shape = _fixed_shape_for_mask(sm_isl, true_beam, g3_only)
                 island_modified = 'shrunk'
                 island_modified_npix = dof
                 gaul = []
@@ -478,7 +494,7 @@ class Op_gausfit(Op):
                 # If fitting still fails, expand the island a little and try again
                 fcn = MGFunction(fit_image, lg_isl, 1)
                 dof = N.sum(~lg_isl)
-                fixed_shape = None if g3_only or _can_fit_gaussian_shape(lg_isl) else beam_shape
+                fixed_shape = _fixed_shape_for_mask(lg_isl, true_beam, g3_only)
                 island_modified = 'expanded'
                 island_modified_npix = dof
                 gaul = []
@@ -517,6 +533,10 @@ class Op_gausfit(Op):
                     par = mompara.tolist()
                     par[3] /= fwsig
                     par[4] /= fwsig
+                    if isl_fixed_shape is not None:
+                        # Moments of a rank-deficient mask give a degenerate
+                        # shape; use the beam, as in the fits above.
+                        par[3:6] = isl_fixed_shape
                     gaul, fgaul = self.flag_gaussians([par], opts,
                                                       beam, thr_flag, peak, shape, isl.mask_active,
                                                       fit_image, fitok)
