@@ -64,13 +64,39 @@ class Op_make_residimage(Op):
 
         if not img.waveletimage and not img._pi and \
                 not (img.opts.atrous_do and 'wavelet_atrous' in img.completed_Ops):
-            rms_before = func.residual_rms_in_sigma(img.ch0_arr, img.mean_arr, img.rms_arr)
-            rms_after = func.residual_rms_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
-            mylogger.userinfo(mylog, "Residual RMS before Gaussian fitting", f"{rms_before:.3f} sigma")
-            mylogger.userinfo(mylog, "Residual RMS after Gaussian fitting", f"{rms_after:.3f} sigma")
+            ss_b_all, n_all = func.residual_sumsq_in_sigma(img.ch0_arr, img.mean_arr, img.rms_arr)
+            ss_a_all, n_all_a = func.residual_sumsq_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
+            rms_before = N.sqrt(ss_b_all / n_all) if n_all > 0 else N.nan
+            rms_after = N.sqrt(ss_a_all / n_all_a) if n_all_a > 0 else N.nan
+            mylogger.userinfo(mylog, "Residual RMS before Gaussian fitting", "%.3f sigma" % rms_before)
+            mylogger.userinfo(mylog, "Residual RMS after Gaussian fitting", "%.3f sigma" % rms_after)
             if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
                 change = 100.0 * (rms_after / rms_before - 1.0)
-                mylogger.userinfo(mylog, "Residual RMS change after Gaussian fitting", f"{change:+.2f}%")
+                mylogger.userinfo(mylog, "Residual RMS change after Gaussian fitting", "%+.2f%%" % change)
+
+            # The same statistic separately inside and outside islands
+            ss_b_in = ss_a_in = 0.0
+            n_in = 0
+            for isl in img.islands:
+                bb = tuple(isl.bbox)
+                # Active island pixels only; NaN elsewhere is skipped by the helper.
+                # 'before' uses the same pixel set as 'after' (also excludes masked pixels).
+                r_a = N.where(~isl.mask_active, resid_gaus[bb], N.nan)
+                r_b = N.where(N.isfinite(r_a), img.ch0_arr[bb], N.nan)
+                m = img.mean_arr[bb]
+                s = img.rms_arr[bb]
+                sb, _ = func.residual_sumsq_in_sigma(r_b, m, s)
+                sa, na = func.residual_sumsq_in_sigma(r_a, m, s)
+                ss_b_in += sb
+                ss_a_in += sa
+                n_in += na
+            n_out = n_all_a - n_in
+            if n_in > 0 and n_out > 0:
+                mylogger.userinfo(mylog, "Residual RMS inside islands (before / after)",
+                                  "%.3f / %.3f sigma" % (N.sqrt(ss_b_in / n_in), N.sqrt(ss_a_in / n_in)))
+                mylogger.userinfo(mylog, "Residual RMS outside islands (before / after)",
+                                  "%.3f / %.3f sigma" % (N.sqrt((ss_b_all - ss_b_in) / n_out),
+                                                         N.sqrt((ss_a_all - ss_a_in) / n_out)))
 
         if img.opts.output_all or img.opts.savefits_residim:
             if img.waveletimage:
