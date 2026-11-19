@@ -499,7 +499,7 @@ class Op_readimage(Op):
             if not getattr(img, '_get_rot_warned', False):
                 mylog = mylogger.logging.getLogger("PyBDSF.GetRot")
                 mylog.warning(f'Could not compute image rotation at pixel ({x1:.1f}, {y1:.1f}) '
-                              '(position outside the projection). Assuming no rotation.'
+                              '(position outside the projection). Assuming no rotation. '
                               'This warning is printed only for first such pixel; there can be more.'
                               )
                 img._get_rot_warned = True
