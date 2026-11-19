@@ -161,7 +161,7 @@ above).
 
 | File | Purpose |
 | --- | --- |
-| `record_tess.py <out.pkl> <image> [kwargs]` | Records all `_pytesselate` calls of a PyBDSF run |
+| `record_tess.py <out.pkl> <image> [kwargs]` | Records all `_pytesselate` calls of a PyBDSF run (needs a package with `_pytesselate`) |
 | `bench_tess.py <tessellate.py> [records.pkl ...] [--synthetic] [--repeat N]` | Compares results, speed and peak memory of single calls |
 | `run_psf_vary.py <image> [psf_itess_method]` | Runs NGC6048 with PSF variation, and reports the time of the tessellation |
 | `compare_fits.py <dir1> <dir2>` | Checks that all FITS outputs of two runs are identical |
