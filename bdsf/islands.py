@@ -207,8 +207,8 @@ class Op_islands(Op):
         res = []
         for idx, s in enumerate(slices):
             idx += 1  # nd.labels indices are counted from 1
-            isl_size = (labels[s] == idx).sum()  # number of pixels inside bounding box which are in island
             island_pixels = labels[s] == idx
+            isl_size = island_pixels.sum()  # number of pixels inside bounding box which are in island
             significant_pixels = island_pixels & (
                 (image[s] - mean[s]) > thresh_pix * rms[s]
             )
