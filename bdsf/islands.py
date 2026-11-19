@@ -203,19 +203,30 @@ class Op_islands(Op):
         slices = nd.find_objects(labels)
         img.island_labels = labels
 
-        # Apply cuts on island size and peak value
+        # Calculate island sizes for all islands at once.
+        index = N.arange(1, count + 1)
+        isl_sizes = nd.sum(act_pixels, labels, index)
+
+        # Check peak significance for all pixels at once.
+        sig = (image - mean) > thresh_pix * rms
+        sig_counts = nd.sum(sig, labels, index)
+
+        # Apply island size and peak significance cuts.
+        valid_islands = (
+            (isl_sizes >= img.minpix_isl) &
+            (isl_sizes <= img.maxpix_isl) &
+            (sig_counts > 0)
+        )
+
         res = []
-        for idx, s in enumerate(slices):
-            idx += 1  # nd.labels indices are counted from 1
-            island_pixels = labels[s] == idx
-            isl_size = island_pixels.sum()  # number of pixels inside bounding box which are in island
-            if (img.minpix_isl <= isl_size <= img.maxpix_isl):
-                significant_pixels = island_pixels & (
-                    (image[s] - mean[s]) > thresh_pix * rms[s]
-                )
-                if N.any(significant_pixels):
-                    isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
-                    res.append(isl)
+        for i, s in enumerate(slices):
+            if s is None or not valid_islands[i]:
+                continue
+
+            idx = i + 1  # ndimage labels start from 1
+            isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
+            res.append(isl)
+
         return res
 
     def coords_to_isl(self, img, opts):
