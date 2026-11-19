@@ -542,10 +542,11 @@ class Op_rmsimage(Op):
         opts = img.opts
         kappa = map_opts[0]
         spline_rank = opts.spline_rank
+        cache = {}
         while not rms_ok:
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
-                        logname=logname, ncores=ncores)
+                        logname=logname, ncores=ncores, cache=cache)
             if img.masked:
                 test = np.any(rms[~img.mask_arr] < 0.0)
             else:
@@ -623,7 +624,7 @@ class Op_rmsimage(Op):
 
     def map_2d(self, arr, out_mean, out_rms, mask=False,
                kappa=3, box=None, interp=1, do_adapt=False,
-               bright_pt_coords=None, rms_box2=None, logname='', ncores=None):
+               bright_pt_coords=None, rms_box2=None, logname='', ncores=None, cache=None):
         """Calculate mean&rms maps and store them into provided arrays
 
         Parameters:
@@ -632,63 +633,72 @@ class Op_rmsimage(Op):
         mask: mask
         kappa: clipping value for rms/mean calculations
         box: tuple of (box_size, box_step) for calculating map
-        rms_box2 = large-scale box size
         interp: order of interpolating spline used to interpolate
                 calculated map
         do_adapt: use adaptive binning
+        bright_pt_coords: coordinates of bright sources, used with do_adapt
+                to weight the maps towards the small-scale values
+        rms_box2: tuple of (box_size, box_step) for calculating the
+                large-scale map, used with do_adapt
+        logname: prefix of the logger name
+        ncores: number of cores to use
+        cache: optional dict passed to rms_mean_map() to reuse maps computed
+                for the same (box, kappa); must only be shared between calls
+                with the same arr and mask
         """
-        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask, kappa, box, ncores)
+        axes, mean_map1, rms_map1 = self.rms_mean_map(arr, mask, kappa, box, ncores, cache=cache)
         ax = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(arr.shape, axes)][-1::-1]
         if do_adapt:
             out_rms2 = np.zeros(rms_map1.shape, dtype=np.float32)
             out_mean2 = np.zeros(rms_map1.shape, dtype=np.float32)
             # Generate rms/mean maps on large scale
             box2 = rms_box2
-            axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores)
+            axes2, mean_map2, rms_map2 = self.rms_mean_map(arr, mask, kappa, box2, ncores, cache=cache)
 
             # Interpolate to get maps on small scale grid
-            axes2mod = axes2[:]
-            axes2mod[0] = axes2[0]/arr.shape[0]*mean_map1.shape[0]
-            axes2mod[1] = axes2[1]/arr.shape[1]*mean_map1.shape[1]
-            ax2 = [self.remap_axis(ashp, axv) for (ashp, axv) in zip(out_rms2.shape, axes2mod)][-1::-1]
+            ax2 = [
+                np.interp(a1, a2, np.arange(len(a2)))
+                for a1, a2 in zip(axes, axes2)
+            ][::-1]
             mapcoord_threaded(rms_map2,  ax2, order=interp, output=out_rms2, ncores=ncores)
             mapcoord_threaded(mean_map2, ax2, order=interp, output=out_mean2, ncores=ncores)
-            rms_map = out_rms2
-            mean_map = out_mean2
 
             # For each bright source, find nearest points and weight them towards
             # the small scale maps.
-            xscale = float(arr.shape[0])/float(out_rms2.shape[0])
-            yscale = float(arr.shape[1])/float(out_rms2.shape[1])
-            scale = [xscale, yscale]
             size = 15
+
+            # Weight of the small-scale maps. Overlapping sources are combined
+            # with the maximum, so the result does not depend on source order.
+            weights_map = np.zeros(out_rms2.shape, dtype=np.float32)
+
             for bright_pt in bright_pt_coords:
-                bbox, src_center = self.make_bright_src_bbox(bright_pt, scale, size, out_rms2.shape)
+                bbox, src_center = self.make_bright_src_bbox(bright_pt, axes, size, out_rms2.shape)
                 bbox_xsize = bbox[0].stop-bbox[0].start
                 bbox_ysize = bbox[1].stop-bbox[1].start
                 src_center[0] -= bbox[0].start
                 src_center[1] -= bbox[1].start
+                xx, yy = np.indices((bbox_xsize, bbox_ysize))
+                dist = np.hypot(xx - src_center[0], yy - src_center[1])
                 weights = np.ones((bbox_xsize, bbox_ysize))
 
-                # Taper weights to zero where small-scale value is within a factor of
-                # 2 of large-scale value. Use distance to center of the box
-                # to determine taper value. This tapering prevents the use of the
-                # small-scale box beyond the range of artifacts.
-                low_vals_ind = np.where(rms_map1[tuple(bbox)]/out_rms2[tuple(bbox)] < 2.0)
-                if len(low_vals_ind[0]) > 0:
-                    dist_to_cen = []
-                    for (x,y) in zip(low_vals_ind[0],low_vals_ind[1]):
-                        dist_to_cen.append(np.sqrt( (x-src_center[0])**2 +
-                                           (y-src_center[1])**2 ))
-                    med_dist_to_cen = np.min(dist_to_cen)
-                    for x in range(bbox_xsize):
-                        for y in range(bbox_ysize):
-                            dist_to_cen = np.sqrt( (x-src_center[0])**2 +
-                                               (y-src_center[1])**2 )
-                            if dist_to_cen >= med_dist_to_cen:
-                                weights[x,y] = max(0.0, 1.0 - dist_to_cen/np.sqrt(bbox_xsize**2+bbox_ysize**2)*2.0)
-                rms_map[tuple(bbox)] = rms_map1[tuple(bbox)]*weights + out_rms2[tuple(bbox)]*(1.0-weights)
-                mean_map[tuple(bbox)] = mean_map1[tuple(bbox)]*weights + out_mean2[tuple(bbox)]*(1.0-weights)
+                # Taper weights to 0 where small-scale value is within a factor of
+                # 2 of the original large scale value. Use distance to the center of
+                # the box to determine taper value. This tapering prevents the use of
+                # the small scale box beyond the range of artifacts.
+                low = rms_map1[tuple(bbox)] / out_rms2[tuple(bbox)] < 2.0
+                if low.any():
+                    d_min = dist[low].min()
+                    taper = np.maximum(0.0, 1.0 - dist / np.hypot(bbox_xsize, bbox_ysize) * 2.0)
+                    weights = np.where(dist >= d_min, taper, 1.0)
+
+                weights_map[tuple(bbox)] = np.maximum(weights_map[tuple(bbox)], weights)
+
+            # Blend once. Pixels outside every bbox keep the large-scale value,
+            # so NaN/inf in the small-scale maps there cannot leak (0*NaN = NaN)
+            blend = weights_map > 0
+            rms_map = np.where(blend, rms_map1 * weights_map + out_rms2 * (1.0 - weights_map), out_rms2)
+            mean_map = np.where(blend, mean_map1 * weights_map + out_mean2 * (1.0 - weights_map), out_mean2)
+
         else:
             rms_map = rms_map1
             mean_map = mean_map1
@@ -704,14 +714,20 @@ class Op_rmsimage(Op):
             out_mean[pix_masked] = np.nan
             out_rms[pix_masked] = np.nan
 
-    def rms_mean_map(self, arr, mask=False, kappa=3, box=None, ncores=None):
+    def rms_mean_map(self, arr, mask=False, kappa=3, box=None, ncores=None,
+                 cache=None):
         """Calculate map of the mean/rms values
 
         Parameters:
         arr:  2D array with data
         mask: mask
         kappa: clipping for calculating rms/mean within each box
-        box: box parameters (box_size, box_step)
+        box: box parameters (box_size, box_step); if None, (50, 25) is used
+        ncores: number of cores to use
+        cache: optional dict used to store and reuse results, keyed by
+               (box, kappa). A given cache must only be shared between calls
+               that use the same arr and mask. The returned arrays are
+               shared with the cache and must not be modified in place.
 
         Returns:
         axes: list of 2 arrays with coordinates of boxes alongside each axis
@@ -747,9 +763,19 @@ class Op_rmsimage(Op):
         rms_map[0,0] is extrapolated as .5*(rms_map[0,1] + rms_map[1,0])
         rms_map[0,1] is extrapolated as rms_map[1,1]
         """
-        mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
         if box is None:
             box = (50, 25)
+        if cache is None:
+            return self._calculate_rms_mean_map(arr, mask, kappa, box, ncores)
+        key = (tuple(box), kappa)
+        if key not in cache:
+            cache[key] = self._calculate_rms_mean_map(arr, mask, kappa, box, ncores)
+        return cache[key]
+
+
+    def _calculate_rms_mean_map(self, arr, mask, kappa, box, ncores):
+        """Compute the mean/rms maps; see rms_mean_map() for details."""
+        mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
         if box[0] < box[1]:
             raise RuntimeError('Box size is less than step size.')
 
@@ -774,6 +800,13 @@ class Op_rmsimage(Op):
         else:
             boxcount = 1 + imgshape // SS
             bounds   = np.asarray((boxcount-1)*SS < imgshape, dtype=int)
+            if int(BS) % 2 == 1:
+                # Odd BS: regular box centres are at i*SS and the extra border box
+                # is centred at N-1. Keep only regular boxes centred before N-1,
+                # so that the axis stays increasing and inside the image
+                # (otherwise remap_axis fails or divides by 0)
+                boxcount = (imgshape + SS - 2) // SS
+                bounds   = np.ones_like(boxcount)
             mapshape = boxcount + bounds
             pad_border_size = int(BS/2.0)
             arr_pad = np.pad(arr, pad_width=pad_border_size, mode='symmetric')
@@ -852,9 +885,9 @@ class Op_rmsimage(Op):
                     axes[i][-2] = imgshape[i] - BS/2. - .5
                 axes[i][-1] = imgshape[i] - 1
             else:
-                axes[i][0:boxcount[i]] = np.arange(boxcount[i])*SS - .5
+                axes[i][0:boxcount[i]] = np.arange(boxcount[i])*SS + (BS-1)/2.0 - pad_border_size
                 if bounds[i]:
-                    axes[i][-1] = imgshape[i] - .5
+                    axes[i][-1] = imgshape[i] + pad_border_size - BS/2. - .5
 
         # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
         # np.inf)
@@ -877,8 +910,9 @@ class Op_rmsimage(Op):
         cm, cr: arrays with the clipped mean and rms of each region
         """
         nbox = len(ind_list)
-        # Use many chunks, as parallel_map() gives each process an equal number
-        # of chunks; this keeps the load imbalance between processes small
+        # parallel_map() hands the chunks out in batches to whichever process
+        # is free. Fewer chunks (1, 4 or 16 per process instead of 100), or no
+        # chunks at all, were not faster in benchmarks
         nchunks = min(nbox, 100 * (ncores or mp.nproc()))
         edges = np.linspace(0, nbox, nchunks + 1).astype(int)
 
@@ -934,16 +968,15 @@ class Op_rmsimage(Op):
 
     def for_masked_mp(self, mask, arr, ind, kappa):
 
-        bstat = func.bstat #_cbdsm.bstat
         a, b, c, d = ind
         if mask is None:
-            m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask, kappa)
+            m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
             if cnt > 198: cm = m; cr = r
         else:
             mask_win = mask[a:b, c:d]
             npix_unmasked = mask_win.size - np.count_nonzero(mask_win)
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = bstat(arr[a:b, c:d], mask_win, kappa)
+                m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask_win, kappa)
                 if cnt > 198: cm = m; cr = r
             else:
                 if npix_unmasked > 5:
@@ -1007,10 +1040,15 @@ class Op_rmsimage(Op):
 
         return res
 
-    def make_bright_src_bbox(self, coord, scale, size, shape):
-        """Returns bbox given coordinates of center and scale"""
-        xindx = int(coord[0]/scale[0])
-        yindx = int(coord[1]/scale[1])
+    def make_bright_src_bbox(self, coord, axes, size, shape):
+        """Returns bbox given coordinates of center and axes"""
+        xindx = int(np.rint(np.interp(
+            coord[0], axes[0], np.arange(len(axes[0]))
+        )))
+        yindx = int(np.rint(np.interp(
+            coord[1], axes[1], np.arange(len(axes[1]))
+        )))
+
         xlow = xindx - int(size/2.0)
         if xlow < 0:
             xlow = 0
