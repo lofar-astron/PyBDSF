@@ -119,7 +119,10 @@ class Op_psf_vary(Op):
                 g_gauls = self.trans_gaul(tr)
 
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
-                flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
+                flag_unresolved = self.get_unresolved(
+                    g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot,
+                    debug_log=mylog if opts.debug else None,
+                )
                 if N.sum(flag_unresolved) == 0:
                     mylog.warning('Insufficient number of sources to determine PSF variation.\nTry changing the PSF options or specify a (constant) PSF with the "psf_fwhm" option')
                     return
@@ -465,7 +468,8 @@ class Op_psf_vary(Op):
         return s_c, s_dm
 
 ##################################################################################################
-    def get_unresolved(self, g_gauls, beam, nsig, kappa2, over, bright_snr_cut=20.0, plot=False):
+    def get_unresolved(self, g_gauls, beam, nsig, kappa2, over,
+                       bright_snr_cut=20.0, plot=False, *, debug_log=None):
         """"Gets subset of unresolved sources
 
         Also flags as unresolved all sources with SNRs above
@@ -488,6 +492,7 @@ class Op_psf_vary(Op):
 
 #         if plot: pl.figure()
         f_sclip=N.zeros((2,num), dtype=bool)
+        clip_scores = []
         for idx, nbeam in enumerate([nmaj, nmin]):
             xarr=N.copy(snr)
             yarr=N.copy(nbeam)
@@ -510,7 +515,10 @@ class Op_psf_vary(Op):
             logsnr=N.log10(snr)
             dumr = N.sqrt(s_c[0]*s_c[0]+s_c[1]*s_c[1]/(snr*snr))
             med = s_dm[0]+s_dm[1]*logsnr+s_dm[2]*(logsnr*logsnr)
-            f_sclip[idx] = N.abs((nbeam-med)/(med*dumr)) < N.array([kappa2]*num)
+            score = N.abs((nbeam-med)/(med*dumr))
+            f_sclip[idx] = score < kappa2
+            if debug_log is not None:
+                clip_scores.append(score)
         f_s = f_sclip[0]*f_sclip[1]
 
         # Add bright sources
@@ -535,6 +543,21 @@ class Op_psf_vary(Op):
 #             pl.semilogx(snr,med-med*dumr*(N.array([kappa2]*num)),'-')
 #             pl.title(' axis ' + str(idx))
 #
+        if debug_log is not None:
+            for sorted_idx, source_idx in enumerate(index):
+                debug_log.debug(
+                    "PSF candidate source=%s x_pix=%.12g y_pix=%.12g snr=%.12g "
+                    "major_arcsec=%.12g minor_arcsec=%.12g "
+                    "major_score=%.12g minor_score=%.12g kappa2=%.12g "
+                    "passes_clipping=%s bright_override=%s unresolved=%s",
+                    g_gauls[0][source_idx], g_gauls[2][source_idx],
+                    g_gauls[3][source_idx], snr[sorted_idx],
+                    g_gauls[4][source_idx], g_gauls[5][source_idx],
+                    clip_scores[0][sorted_idx], clip_scores[1][sorted_idx], kappa2,
+                    f_sclip[:, sorted_idx].all(),
+                    bright_snr_cut is not None and snr[sorted_idx] >= bright_snr_cut,
+                    f_s[sorted_idx],
+                )
         return f_s[index.argsort()]
 
 ##################################################################################################

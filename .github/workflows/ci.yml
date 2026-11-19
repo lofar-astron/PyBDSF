@@ -58,3 +58,10 @@ jobs:
     - name: Test PyBDSF
       run: |
         cd test && python tmulti_proc.py && python tbdsf_process_image.py --rtol 0.05
+
+    - name: Upload PyBDSF image test log
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: pybdsf-image-test-log
+        path: test/tbdsf_process_image.in_fits.pybdsf.log

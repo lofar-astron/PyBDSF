@@ -21,7 +21,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Process the image
-img = bdsf.process_image('tbdsf_process_image.in', ncores=2, output_all=True)
+img = bdsf.process_image('tbdsf_process_image.in', ncores=2, output_all=True, debug=True)
 
 # List of operations that must have been done on `img`.
 operations = [
