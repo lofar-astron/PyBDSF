@@ -212,7 +212,7 @@ class Op_islands(Op):
             significant_pixels = island_pixels & (
                 (image[s] - mean[s]) > thresh_pix * rms[s]
             )
-            if (isl_size >= img.minpix_isl) and (isl_size <= img.maxpix_isl) and N.any(significant_pixels):
+            if (img.minpix_isl <= isl_size <= img.maxpix_isl) and N.any(significant_pixels):
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
         return res
