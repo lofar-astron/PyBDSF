@@ -209,10 +209,11 @@ class Op_islands(Op):
             idx += 1  # nd.labels indices are counted from 1
             island_pixels = labels[s] == idx
             isl_size = island_pixels.sum()  # number of pixels inside bounding box which are in island
-            significant_pixels = island_pixels & (
-                (image[s] - mean[s]) > thresh_pix * rms[s]
-            )
-            if (img.minpix_isl <= isl_size <= img.maxpix_isl) and N.any(significant_pixels):
+            if (img.minpix_isl <= isl_size <= img.maxpix_isl):
+                significant_pixels = island_pixels & (
+                    (image[s] - mean[s]) > thresh_pix * rms[s]
+                )
+                if N.any(significant_pixels):
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
         return res
