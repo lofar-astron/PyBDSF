@@ -54,11 +54,16 @@ def _can_fit_gaussian_shape(mask):
     return eig[0] > 1e-10 * eig[-1]
 
 
-def _fixed_shape_for_mask(mask, beam, g3_only):
-    """Return the beam shape to hold fixed, or None if the shape can be fitted."""
-    if g3_only or _can_fit_gaussian_shape(mask):
-        return None
-    return tuple(beam)
+def _fit_beam(mask, beam, true_beam, fix_to_beam):
+    """Return the (beam, g3_only) pair to fit with on `mask`.
+
+    Islands whose active pixels cannot constrain a Gaussian shape are fitted
+    as with fix_to_beam, but with the true beam rather than the widened
+    initial guess `beam`.
+    """
+    if fix_to_beam or _can_fit_gaussian_shape(mask):
+        return beam, fix_to_beam
+    return true_beam, True
 
 
 class Op_gausfit(Op):
@@ -388,12 +393,13 @@ class Op_gausfit(Op):
         thr_fit = opts.thresh_isl * isl.rms
         # flag_minsnr is defined relative to thresh_pix and the island RMS.
         thr_flag = opts.flag_minsnr * img.thresh_pix * isl.rms
-        g3_only = opts.fix_to_beam
         # Hold the shape fixed to the beam when the active pixels cannot
         # constrain all six Gaussian parameters.
-        isl_fixed_shape = _fixed_shape_for_mask(isl.mask_active, true_beam, g3_only)
-        fixed_shape = isl_fixed_shape
-        if verbose and fixed_shape is not None:
+        free_beam = beam
+        beam, g3_only = _fit_beam(isl.mask_active, free_beam, true_beam, opts.fix_to_beam)
+        isl_beam = beam
+        shape_fixed = g3_only and not opts.fix_to_beam
+        if verbose and shape_fixed:
             print('Island %s cannot constrain a Gaussian shape; fixing shape to the beam'
                   % (isl.island_id,))
         peak = fcn.find_peak()[0]
@@ -409,14 +415,14 @@ class Op_gausfit(Op):
             ini_gausfit = 'default'
         if ini_gausfit == 'simple' and ngmax is None:
             ngmax = 25
-        if ini_gausfit == 'default' or opts.fix_to_beam:
+        if ini_gausfit == 'default' or g3_only:
             gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr_fit, beam, img)
             if len(gaul) > 25:
                 ini_gausfit = 'simple'
                 gaul = []
                 ng1 = 0
                 ngmax = 25
-        if ini_gausfit == 'nobeam' and not opts.fix_to_beam:
+        if ini_gausfit == 'nobeam' and not g3_only:
             gaul = self.inigaus_nobeam(isl, thr_fit, beam, img)
             ng1 = len(gaul)
             ngmax = ng1+2
@@ -426,8 +432,7 @@ class Op_gausfit(Op):
             iter += 1
             if verbose:
                 print('In Gaussian flag loop, iter =', iter)
-            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, ini_gausfit, ngmax, verbose, g3_only,
-                                  fixed_shape=fixed_shape)
+            fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, ini_gausfit, ngmax, verbose, g3_only)
             if verbose:
                 print('Calling flag_gaussians')
             gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
@@ -449,8 +454,7 @@ class Op_gausfit(Op):
             ngmax = 25
             while iter < 15:
                 iter += 1
-                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only,
-                                      fixed_shape=fixed_shape)
+                fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                 gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                   beam, thr_flag, peak, shape, isl.mask_active,
                                                   fit_image, fitok)
@@ -468,7 +472,7 @@ class Op_gausfit(Op):
                 # If fitting still fails, shrink the island a little and try again
                 fcn = MGFunction(fit_image, sm_isl, 1)
                 dof = N.sum(~sm_isl)
-                fixed_shape = _fixed_shape_for_mask(sm_isl, true_beam, g3_only)
+                beam, g3_only = _fit_beam(sm_isl, free_beam, true_beam, opts.fix_to_beam)
                 island_modified = 'shrunk'
                 island_modified_npix = dof
                 gaul = []
@@ -477,8 +481,7 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only,
-                                          fixed_shape=fixed_shape)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr_flag, peak, shape, sm_isl,
                                                       fit_image, fitok)
@@ -494,7 +497,7 @@ class Op_gausfit(Op):
                 # If fitting still fails, expand the island a little and try again
                 fcn = MGFunction(fit_image, lg_isl, 1)
                 dof = N.sum(~lg_isl)
-                fixed_shape = _fixed_shape_for_mask(lg_isl, true_beam, g3_only)
+                beam, g3_only = _fit_beam(lg_isl, free_beam, true_beam, opts.fix_to_beam)
                 island_modified = 'expanded'
                 island_modified_npix = dof
                 gaul = []
@@ -503,8 +506,7 @@ class Op_gausfit(Op):
                 ngmax = 25
                 while iter < 15:
                     iter += 1
-                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only,
-                                          fixed_shape=fixed_shape)
+                    fitok = self.fit_iter(gaul, ng1, fcn, dof, beam, thr_fit, iter, 'simple', ngmax, verbose, g3_only)
                     gaul, fgaul = self.flag_gaussians(fcn.parameters, opts,
                                                       beam, thr_flag, peak, shape, lg_isl,
                                                       fit_image, fitok)
@@ -533,12 +535,12 @@ class Op_gausfit(Op):
                     par = mompara.tolist()
                     par[3] /= fwsig
                     par[4] /= fwsig
-                    if isl_fixed_shape is not None:
+                    if shape_fixed:
                         # Moments of a rank-deficient mask give a degenerate
                         # shape; use the beam, as in the fits above.
-                        par[3:6] = isl_fixed_shape
+                        par[3:6] = true_beam
                     gaul, fgaul = self.flag_gaussians([par], opts,
-                                                      beam, thr_flag, peak, shape, isl.mask_active,
+                                                      isl_beam, thr_flag, peak, shape, isl.mask_active,
                                                       fit_image, fitok)
             except ValueError:
                 pass
@@ -782,8 +784,7 @@ class Op_gausfit(Op):
 
         return gaul
 
-    def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax,
-                 verbose=1, g3_only=False, *, fixed_shape=None):
+    def fit_iter(self, gaul, ng1, fcn, dof, beam, thr, iter, inifit, ngmax, verbose=1, g3_only=False):
         """One round of fitting
 
         Parameters:
@@ -794,7 +795,6 @@ class Op_gausfit(Op):
                [bmaj, bmin, bpa] in pixels
         thr  : peak threshold for adding more gaussians
         verbose: whether to print fitting progress information
-        fixed_shape: beam shape to hold fixed when the mask cannot constrain a Gaussian shape
         """
         from ._cbdsm import lmder_fit
 
@@ -802,10 +802,6 @@ class Op_gausfit(Op):
             print('Greetings from fit_iter')
         fit = lmder_fit
         beam = list(beam)
-        if fixed_shape is not None:
-            beam = list(fixed_shape)
-            gaul = [list(g[:3]) + beam for g in gaul]
-            g3_only = True
 
         # First drop-in initial gaussians
         # No error-checking here, they MUST fit

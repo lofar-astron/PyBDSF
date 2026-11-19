@@ -1,7 +1,7 @@
 """Unit checks for the rank test that decides whether a Gaussian shape can be fitted."""
 import numpy as N
 
-from bdsf.gausfit import _can_fit_gaussian_shape, _fixed_shape_for_mask
+from bdsf.gausfit import _can_fit_gaussian_shape, _fit_beam
 
 
 def mask_from_active(shape, pixels):
@@ -43,18 +43,21 @@ def test_rank_check():
     assert _can_fit_gaussian_shape(big)
 
 
-def test_fixed_shape_for_mask():
-    beam = (2.2, 2.0, 90.0)
+def test_fit_beam():
+    beam = (2.2, 2.0, 90.0)       # widened initial guess
+    true_beam = (2.0, 2.0, 90.0)
     line = mask_from_active((10, 10), [(4, j) for j in range(10)])
     block = N.zeros((10, 10), dtype=bool)
 
-    assert _fixed_shape_for_mask(line, beam, g3_only=False) == beam
-    assert _fixed_shape_for_mask(block, beam, g3_only=False) is None
-    # With fix_to_beam the shape is already fixed; nothing to override.
-    assert _fixed_shape_for_mask(line, beam, g3_only=True) is None
+    # Rank-deficient island: fit like fix_to_beam, with the true beam.
+    assert _fit_beam(line, beam, true_beam, fix_to_beam=False) == (true_beam, True)
+    # Shape can be fitted: free fit from the widened initial guess.
+    assert _fit_beam(block, beam, true_beam, fix_to_beam=False) == (beam, False)
+    # With fix_to_beam the existing behaviour is unchanged.
+    assert _fit_beam(line, beam, true_beam, fix_to_beam=True) == (beam, True)
 
 
 if __name__ == '__main__':
     test_rank_check()
-    test_fixed_shape_for_mask()
+    test_fit_beam()
     print('tgausfit_shape: all checks passed')
