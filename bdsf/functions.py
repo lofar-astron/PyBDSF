@@ -1,3 +1,5 @@
+import numpy as N
+
 def residual_sumsq_in_sigma(resid, mean, rms):
     """Return (sum of z**2, number of valid pixels), z = (resid - mean) / rms."""
 
