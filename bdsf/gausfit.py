@@ -20,7 +20,7 @@ if has_pl:
     import matplotlib.pyplot as pl
 import scipy.ndimage as nd
 from . import multi_proc as mp
-from .mgfunction import Gtype, MGFunction, lmder_fit
+from .mgfunction import GaussianType, MGFunction, lmder_fit
 import itertools
 
 
@@ -825,10 +825,10 @@ class Op_gausfit(Op):
         dof: total possible number of fitted parameters
         """
         if g3_only:
-            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.g3 if fcn.fitted_parameters() + 3 <= dof else None)
         else:
-            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
-            gtype = (Gtype.g6 if fcn.fitted_parameters() + 6 <= dof else gtype)
+            gtype = (GaussianType.g3 if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.g6 if fcn.fitted_parameters() + 6 <= dof else gtype)
 
         if gtype:
             fcn.add_gaussian(gtype, parameters)

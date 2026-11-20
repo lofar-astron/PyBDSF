@@ -62,7 +62,7 @@ def _gaussian_scalars(s1, s2, pa):
     return cs, sn, ratio
 
 
-class Gtype(IntEnum):
+class GaussianType(IntEnum):
     """Type of a Gaussian: the number of its fitted parameters."""
     g1 = 1  # amplitude only
     g3 = 3  # amplitude and position
@@ -113,7 +113,7 @@ class MGFunction:
     def add_gaussian(self, gtype, parameters):
         """Add a Gaussian of type `gtype` (a `Gtype`) with the given six
         parameters."""
-        gtype = Gtype(gtype)
+        gtype = GaussianType(gtype)
         if len(parameters) != 6:
             raise ValueError("Wrong number of parameters for gaussian")
         self._gtypes.append(gtype)
@@ -270,7 +270,7 @@ class MGFunction:
             # Rows for this Gaussian (indexing jac creates a new view each time)
             d = list(jac[row:row + gtype])
             N.negative(val, out=d[0])
-            if gtype != Gtype.g1:
+            if gtype != GaussianType.g1:
                 v = val * -a
                 # Position: v * (f1 * cs / s1 - f2 * sn / s2)
                 #           v * (f1 * sn / s1 + f2 * cs / s2)
@@ -286,7 +286,7 @@ class MGFunction:
                 u /= s2
                 N.add(t, u, out=d[2])
                 d[2] *= v
-                if gtype == Gtype.g6:
+                if gtype == GaussianType.g6:
                     # Widths: v * f1 * f1 / s1 and v * f2 * f2 / s2
                     N.multiply(v, f1, out=d[3])
                     d[3] *= f1
