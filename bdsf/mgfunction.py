@@ -305,9 +305,9 @@ class MGFunction:
 def lmder_fit(fcn, final=False, verbose=1):
     """Fit `fcn` to its data using the Levenberg-Marquardt algorithm.
 
-    This uses LMDER from MINPACK (through scipy.optimize.leastsq), with an
-    analytical Jacobian, like the former C++ code. On return, the parameters
-    of `fcn` hold the result of the fit.
+    This uses scipy.optimize.leastsq, a wrapper around MINPACK’s lmdif and
+    lmder algorithms. It uses an analytical Jacobian, like the former C++
+    code. On return, the parameters of `fcn` hold the result of the fit.
 
     Parameters
     ----------
