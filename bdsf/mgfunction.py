@@ -70,7 +70,7 @@ class Gtype(IntEnum):
 
 
 class MGFunction:
-    """Multi-Gaussian function, to be fitted with `lmder_fit`.
+    """Multi-Gaussian function, to be fitted with `lm_fit_with_derivatives`.
 
     Parameters
     ----------
@@ -101,7 +101,7 @@ class MGFunction:
         self._x1, self._x2 = N.array(N.nonzero(unmasked), dtype=N.float64)
         self._data = data[unmasked].astype(N.float64)
         self._weight = float(weight)
-        self._fit_results = {}  # see lmder_fit
+        self._fit_results = {}  # see lm_fit_with_derivatives
         self.reset()
 
     def reset(self):
@@ -156,8 +156,9 @@ class MGFunction:
             return float(N.dot(resid, resid))
 
     # ------------------------------------------------------------------
-    # Interface for leastsq (see _lmder_fit). The fitted parameters are a
-    # flat array, which excludes the fixed parameters of each Gaussian.
+    # Interface for leastsq (see _lm_fit_with_derivatives). The fitted
+    # parameters are a flat array, which excludes the fixed parameters
+    # of each Gaussian.
     # ------------------------------------------------------------------
 
     def get_fitted_parameters(self):
@@ -302,8 +303,9 @@ class MGFunction:
         return jac
 
 
-def lmder_fit(func, final=False, verbose=1):
-    """Fit `func` to its data using the Levenberg-Marquardt algorithm.
+def lm_fit_with_derivatives(func, final=False, verbose=1):
+    """Fit `func` to its data using the Levenberg-Marquardt algorithm
+    with derivatives (the Jacobian matrix).
 
     This uses scipy.optimize.leastsq, a wrapper around MINPACK’s lmdif and
     lmder algorithms. It uses an analytical Jacobian, like the former C++
@@ -330,7 +332,7 @@ def lmder_fit(func, final=False, verbose=1):
     # so the results are cached.
     key = (tuple(func._gtypes), func._params.tobytes(), final)
     if key not in func._fit_results:
-        func._fit_results[key] = _lmder_fit(func, final)
+        func._fit_results[key] = _lm_fit_with_derivatives(func, final)
     params, info, nfev, njev = func._fit_results[key]
     func._params[...] = params
     converged = 0 < info < 4
@@ -343,7 +345,7 @@ def lmder_fit(func, final=False, verbose=1):
     return converged
 
 
-def _lmder_fit(func, final):
+def _lm_fit_with_derivatives(func, final):
     """Fit `func` with LMDER, and return (parameters, info, nfev, njev)."""
     npar = func.fitted_parameters()
     if npar == 0 or npar > func.data_size():
