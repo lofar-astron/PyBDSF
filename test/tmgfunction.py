@@ -1,4 +1,4 @@
-"""Tests for bdsf.mgfunction (MGFunction and lmder_fit)
+"""Tests for bdsf.mgfunction (MGFunction and lm_fit_with_derivatives)
 
 Run with: python tmgfunction.py (exit status 0 if all tests pass)
 """
@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 
-from bdsf.mgfunction import GaussianType, MGFunction, lmder_fit
+from bdsf.mgfunction import GaussianType, MGFunction, lm_fit_with_derivatives
 
 
 def gaussian(shape, a, x1, x2, s1, s2, pa):
@@ -68,14 +68,14 @@ def test_fit_recovers_gaussians():
     start = [(4.0, 11.5, 10.3, 2.0, 2.0, 20.0), (2.5, 18.2, 14.8, 1.7, 1.7, 90.0)]
     fcn, _, _ = make_function([GaussianType.all_parameters, GaussianType.all_parameters], start, image=make_image(),
                               mask=np.zeros(SHAPE, bool))
-    assert lmder_fit(fcn, final=True, verbose=0)
+    assert lm_fit_with_derivatives(fcn, final=True, verbose=0)
     assert np.allclose(fcn.parameters, GAUSSIANS, rtol=1e-6)
     assert abs(fcn.find_peak()[0]) < 1e-6
 
 
 def test_fixed_parameters():
     fcn, _, _ = make_function([GaussianType.amplitude_and_position, GaussianType.amplitude_only], START)
-    assert lmder_fit(fcn, verbose=0)
+    assert lm_fit_with_derivatives(fcn, verbose=0)
     result = fcn.parameters
     assert result[0][3:] == START[0][3:]
     assert result[1][1:] == START[1][1:]
@@ -91,7 +91,8 @@ def test_repeated_fits():
         fcn.reset()
         for t, p in zip(gtypes, START):
             fcn.add_gaussian(t, p)
-        return lmder_fit(fcn, final=final, verbose=0), fcn.parameters
+        converged = lm_fit_with_derivatives(fcn, final=final, verbose=0)
+        return converged, fcn.parameters
 
     for final in (False, True):
         # A new MGFunction does not have cached fit results
@@ -155,14 +156,14 @@ def test_degenerate_fits():
             for params in ((1, 12, 10, 0.0, 1, 30), (1, 12, 10, 1, 1, np.inf),
                            (1, 12, 10, 1, 1, np.nan), (np.inf, 12, 10, 1, 1, 0)):
                 fcn, _, _ = make_function([GaussianType.all_parameters], [params])
-                assert not lmder_fit(fcn, verbose=0)
+                assert not lm_fit_with_derivatives(fcn, verbose=0)
                 fcn.find_peak()
                 fcn.residual_chi2()
             # Fewer pixels than fitted parameters
             mask = np.ones(SHAPE, bool)
             mask[12, 8:13] = False
             fcn, _, _ = make_function([GaussianType.all_parameters], [GAUSSIANS[0]], mask=mask)
-            assert not lmder_fit(fcn, verbose=0)
+            assert not lm_fit_with_derivatives(fcn, verbose=0)
             assert fcn.parameters == [GAUSSIANS[0]]
     finally:
         np.seterr(**old)

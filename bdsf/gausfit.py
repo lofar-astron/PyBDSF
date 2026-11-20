@@ -7,7 +7,7 @@ in the image, and do post-fitting flagging of the extracted
 gaussians.
 
 The fitting itself is implemented by the means of MGFunction
-class and the lmder_fit fitter routine in the mgfunction module.
+class and the lm_fit_with_derivatives fitter routine in the mgfunction module.
 MGFunction class implements multi-gaussian function and
 provides all functionality required by the fitter.
 """
@@ -20,7 +20,7 @@ if has_pl:
     import matplotlib.pyplot as pl
 import scipy.ndimage as nd
 from . import multi_proc as mp
-from .mgfunction import GaussianType, MGFunction, lmder_fit
+from .mgfunction import GaussianType, MGFunction, lm_fit_with_derivatives
 import itertools
 
 
@@ -764,7 +764,7 @@ class Op_gausfit(Op):
         """
         if verbose:
             print('Greetings from fit_iter')
-        fit = lmder_fit
+        fit = lm_fit_with_derivatives
         beam = list(beam)
 
         # First drop-in initial gaussians
