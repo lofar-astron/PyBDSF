@@ -40,7 +40,7 @@ def make_function(gtypes, params, image=None, mask=None):
 
 
 def test_residual():
-    fcn, image, mask = make_function([GaussianType.g6, GaussianType.g3], START)
+    fcn, image, mask = make_function([GaussianType.all_parameters, GaussianType.amplitude_and_position], START)
     expected = (image - sum(gaussian(SHAPE, *p) for p in START))[~mask]
     residual = fcn.residual(fcn.get_fitted_parameters())
     assert np.allclose(residual, expected, rtol=0, atol=1e-12)
@@ -48,7 +48,7 @@ def test_residual():
 
 
 def test_jacobian():
-    fcn, _, _ = make_function([GaussianType.g6, GaussianType.g3, GaussianType.g1],
+    fcn, _, _ = make_function([GaussianType.all_parameters, GaussianType.amplitude_and_position, GaussianType.amplitude_only],
                               START + [(1.0, 5.0, 5.0, 1.5, 1.5, 0.0)])
     x = fcn.get_fitted_parameters()
     assert len(x) == fcn.fitted_parameters() == 10
@@ -66,7 +66,7 @@ def test_jacobian():
 
 def test_fit_recovers_gaussians():
     start = [(4.0, 11.5, 10.3, 2.0, 2.0, 20.0), (2.5, 18.2, 14.8, 1.7, 1.7, 90.0)]
-    fcn, _, _ = make_function([GaussianType.g6, GaussianType.g6], start, image=make_image(),
+    fcn, _, _ = make_function([GaussianType.all_parameters, GaussianType.all_parameters], start, image=make_image(),
                               mask=np.zeros(SHAPE, bool))
     assert lmder_fit(fcn, final=True, verbose=0)
     assert np.allclose(fcn.parameters, GAUSSIANS, rtol=1e-6)
@@ -74,7 +74,7 @@ def test_fit_recovers_gaussians():
 
 
 def test_fixed_parameters():
-    fcn, _, _ = make_function([GaussianType.g3, GaussianType.g1], START)
+    fcn, _, _ = make_function([GaussianType.amplitude_and_position, GaussianType.amplitude_only], START)
     assert lmder_fit(fcn, verbose=0)
     result = fcn.parameters
     assert result[0][3:] == START[0][3:]
@@ -84,7 +84,7 @@ def test_fixed_parameters():
 
 
 def test_repeated_fits():
-    gtypes = [GaussianType.g6, GaussianType.g6]
+    gtypes = [GaussianType.all_parameters, GaussianType.all_parameters]
     fcn, _, _ = make_function(gtypes, START)
 
     def fit(fcn, final):
@@ -109,7 +109,7 @@ def test_find_peak():
     peak, (i, j) = fcn.find_peak()
     assert peak == masked.max()
     assert (i, j) == np.unravel_index(np.argmax(masked), SHAPE)
-    fcn.add_gaussian(GaussianType.g6, GAUSSIANS[0])
+    fcn.add_gaussian(GaussianType.all_parameters, GAUSSIANS[0])
     peak, (i, j) = fcn.find_peak()
     assert (i, j) == (18, 15)
 
@@ -117,9 +117,9 @@ def test_find_peak():
 def test_python_interface():
     fcn = MGFunction(make_image(), np.zeros(SHAPE, bool))
     assert fcn.parameters == [] and fcn.fitted_parameters() == 0
-    fcn.add_gaussian(GaussianType.g6, GAUSSIANS[0])
-    fcn.add_gaussian(GaussianType.g3, [np.float32(1), 2, 3, 4, 5, 6])
-    fcn.add_gaussian(GaussianType.g1, GAUSSIANS[1])
+    fcn.add_gaussian(GaussianType.all_parameters, GAUSSIANS[0])
+    fcn.add_gaussian(GaussianType.amplitude_and_position, [np.float32(1), 2, 3, 4, 5, 6])
+    fcn.add_gaussian(GaussianType.amplitude_only, GAUSSIANS[1])
     assert fcn.fitted_parameters() == 10
     assert fcn.parameters == [GAUSSIANS[0], (1.0, 2.0, 3.0, 4.0, 5.0, 6.0), GAUSSIANS[1]]
     fcn.reset()
@@ -134,7 +134,7 @@ def test_invalid_input():
                         (lambda: MGFunction(image, mask[1:]), ValueError),
                         (lambda: MGFunction(image, mask.astype(int)), TypeError),
                         (lambda: MGFunction(image.astype(int), mask), TypeError),
-                        (lambda: fcn.add_gaussian(GaussianType.g6, (1, 2, 3)), ValueError),
+                        (lambda: fcn.add_gaussian(GaussianType.all_parameters, (1, 2, 3)), ValueError),
                         (lambda: fcn.add_gaussian(2, GAUSSIANS[0]), ValueError)):
         try:
             call()
@@ -154,14 +154,14 @@ def test_degenerate_fits():
             warnings.simplefilter('error')
             for params in ((1, 12, 10, 0.0, 1, 30), (1, 12, 10, 1, 1, np.inf),
                            (1, 12, 10, 1, 1, np.nan), (np.inf, 12, 10, 1, 1, 0)):
-                fcn, _, _ = make_function([GaussianType.g6], [params])
+                fcn, _, _ = make_function([GaussianType.all_parameters], [params])
                 assert not lmder_fit(fcn, verbose=0)
                 fcn.find_peak()
                 fcn.residual_chi2()
             # Fewer pixels than fitted parameters
             mask = np.ones(SHAPE, bool)
             mask[12, 8:13] = False
-            fcn, _, _ = make_function([GaussianType.g6], [GAUSSIANS[0]], mask=mask)
+            fcn, _, _ = make_function([GaussianType.all_parameters], [GAUSSIANS[0]], mask=mask)
             assert not lmder_fit(fcn, verbose=0)
             assert fcn.parameters == [GAUSSIANS[0]]
     finally:

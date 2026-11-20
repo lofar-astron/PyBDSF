@@ -825,10 +825,10 @@ class Op_gausfit(Op):
         dof: total possible number of fitted parameters
         """
         if g3_only:
-            gtype = (GaussianType.g3 if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.amplitude_and_position if fcn.fitted_parameters() + 3 <= dof else None)
         else:
-            gtype = (GaussianType.g3 if fcn.fitted_parameters() + 3 <= dof else None)
-            gtype = (GaussianType.g6 if fcn.fitted_parameters() + 6 <= dof else gtype)
+            gtype = (GaussianType.amplitude_and_position if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.all_parameters if fcn.fitted_parameters() + 6 <= dof else gtype)
 
         if gtype:
             fcn.add_gaussian(gtype, parameters)

@@ -64,9 +64,9 @@ def _gaussian_scalars(s1, s2, pa):
 
 class GaussianType(IntEnum):
     """Type of a Gaussian: the number of its fitted parameters."""
-    g1 = 1  # amplitude only
-    g3 = 3  # amplitude and position
-    g6 = 6  # all parameters
+    amplitude_only = 1
+    amplitude_and_position = 3
+    all_parameters = 6
 
 
 class MGFunction:
@@ -270,7 +270,7 @@ class MGFunction:
             # Rows for this Gaussian (indexing jac creates a new view each time)
             d = list(jac[row:row + gtype])
             N.negative(val, out=d[0])
-            if gtype != GaussianType.g1:
+            if gtype != GaussianType.amplitude_only:
                 v = val * -a
                 # Position: v * (f1 * cs / s1 - f2 * sn / s2)
                 #           v * (f1 * sn / s1 + f2 * cs / s2)
@@ -286,7 +286,7 @@ class MGFunction:
                 u /= s2
                 N.add(t, u, out=d[2])
                 d[2] *= v
-                if gtype == GaussianType.g6:
+                if gtype == GaussianType.all_parameters:
                     # Widths: v * f1 * f1 / s1 and v * f2 * f2 / s2
                     N.multiply(v, f1, out=d[3])
                     d[3] *= f1
