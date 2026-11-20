@@ -6,7 +6,6 @@
 requires = [
     "build",
     "cmake>=3.18",
-    "meson",
     "ninja",
     "numpy",
     "scikit-build>=0.13",
@@ -88,7 +87,7 @@ environment = """ \
     FC=gfortran \
     LD_LIBRARY_PATH="${BOOST_INSTALL_DIR}/lib" \
 """
-test-command = "cd {package}/test && python tmulti_proc.py && python tbdsf_process_image.py --rtol 0.03"
+test-command = "cd {package}/test && python tmulti_proc.py && python ttessellate.py && python tbdsf_process_image.py --rtol 0.03"
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = """\
