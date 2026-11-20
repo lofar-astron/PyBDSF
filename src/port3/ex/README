@@ -1,5 +1,0 @@
-File links added so "send dpostx1 from port" works as described
-in Norm's memos.
-
-These files are compiled into /usr/local/lib/libportP/ex.a, so that
-the ldM and lib programs will work properly.  What a hack!
