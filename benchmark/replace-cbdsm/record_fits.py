@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Record all lmder_fit calls of a PyBDSF run.
+"""Record all fit calls (lmder_fit or lm_fit_with_derivatives) of a PyBDSF run.
 
 For each call, the data, mask, Gaussian types, initial parameters and
 precision are saved, together with the result. This works with the C++
@@ -23,8 +23,12 @@ try:
 except ImportError:
     import bdsf.gausfit as impl  # gausfit imported from bdsf.mgfunction
 
+# The fit function is called lmder_fit in _cbdsm and older versions of
+# bdsf.mgfunction, and lm_fit_with_derivatives in newer versions
+FIT_NAME = ('lmder_fit' if hasattr(impl, 'lmder_fit')
+            else 'lm_fit_with_derivatives')
 records = []
-MGFunction, lmder_fit = impl.MGFunction, impl.lmder_fit
+MGFunction, fit = impl.MGFunction, getattr(impl, FIT_NAME)
 
 
 class RecordingMGFunction:
@@ -47,9 +51,9 @@ class RecordingMGFunction:
         return getattr(self.fcn, name)
 
 
-def recording_lmder_fit(fcn, final=False, verbose=1):
+def recording_fit(fcn, final=False, verbose=1):
     p0 = fcn.parameters
-    ok = lmder_fit(fcn.fcn, final=final, verbose=verbose)
+    ok = fit(fcn.fcn, final=final, verbose=verbose)
     records.append(dict(data=fcn.data, mask=fcn.mask, gtypes=list(fcn.gtypes),
                         p0=p0, final=bool(final), ok=bool(ok),
                         p1=fcn.parameters))
@@ -57,10 +61,10 @@ def recording_lmder_fit(fcn, final=False, verbose=1):
 
 
 impl.MGFunction = RecordingMGFunction
-impl.lmder_fit = recording_lmder_fit
+setattr(impl, FIT_NAME, recording_fit)
 
 kwargs = ast.literal_eval(sys.argv[3]) if len(sys.argv) > 3 else {}
 bdsf.process_image(sys.argv[2], ncores=1, quiet=True, **kwargs)
 with open(sys.argv[1], 'wb') as f:
     pickle.dump(records, f, protocol=5)
-print(len(records), 'lmder_fit calls recorded')
+print(len(records), FIT_NAME, 'calls recorded')

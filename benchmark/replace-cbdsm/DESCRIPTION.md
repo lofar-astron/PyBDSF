@@ -4,13 +4,14 @@ Branch: `replace_cbdsm`, on top of `master` (7ddb350).
 
 ## What changed
 
-- **New module `bdsf/mgfunction.py`** with `MGFunction`, `Gtype` and
-  `lmder_fit`, which have the interface of those of `_cbdsm` that
-  `gausfit.py` uses (the unused `dn2g_fit` and `dnsg_fit`, and the unused
-  `MGFunction` methods for removing, getting and setting single Gaussians,
-  were dropped). `gausfit.py` imports them
-  from there; nothing else in `gausfit.py` changed.
-- **Fitting:** `lmder_fit` uses MINPACK's LMDER through
+- **New module `bdsf/mgfunction.py`** with `MGFunction`, `GaussianType` and
+  `lm_fit_with_derivatives` (called `Gtype` and `lmder_fit` in `_cbdsm`;
+  `MGFunction.chi2` is now `residual_chi2`), which have the interface of
+  those of `_cbdsm` that `gausfit.py` uses (the unused `dn2g_fit` and
+  `dnsg_fit`, and the unused `MGFunction` methods for removing, getting and
+  setting single Gaussians, were dropped). `gausfit.py` imports them from
+  there; apart from these names, nothing in `gausfit.py` changed.
+- **Fitting:** `lm_fit_with_derivatives` uses MINPACK's LMDER through
   `scipy.optimize.leastsq` (the same algorithm, with the same settings, as
   the C++ code), with an analytical Jacobian.
 - **Exact arithmetic:** the fits of some islands are ill-conditioned: a 1-ulp
@@ -41,7 +42,7 @@ Branch: `replace_cbdsm`, on top of `master` (7ddb350).
   This is more than made up for by caching the **results** of fits:
   `fit_island` repeats `fit_iter` up to 15 times, and most fits are exact
   repeats of an earlier one (74% of the fits for the test image, 84% for
-  NGC6048), because their input did not change. `lmder_fit` caches the
+  NGC6048), because their input did not change. `lm_fit_with_derivatives` caches the
   results per `MGFunction` (keyed on the Gaussian types, the initial
   parameters and `final`), which gives exactly the same results.
 - **Floating point errors** in diverging fits (division by zero, overflow)
@@ -129,17 +130,20 @@ checked again for the current 8 fits.)
 
 | File | Purpose |
 | --- | --- |
-| `record_fits.py <out.pkl> <fits> [kwargs]` | Records all `lmder_fit` calls of a run, with `_cbdsm` or `mgfunction` |
-| `replay_fits.py <records.pkl> <impl A> <impl B> [repeats]` | Compares results, speed and memory of single fits of two implementations (a `.py` file or a module name such as `bdsf._cbdsm`) |
+| `record_fits.py <out.pkl> <fits> [kwargs]` | Records all fit calls of a run (`lmder_fit` with `_cbdsm`, `lm_fit_with_derivatives` with `mgfunction`) |
+| `replay_fits.py <records.pkl> <impl A> <impl B> [repeats]` | Compares results, speed and memory of single fits of two implementations (a `.py` file or a module name such as `bdsf._cbdsm`; old and new names are both supported) |
 | `run_comparison.sh <work dir> [rev] [repeats]` | Unit tests, end-to-end timing, and exact comparison of all FITS outputs |
 
 `run_comparison.sh` and comparisons with C++ need `venv` with an installed
 PyBDSF that still has `_cbdsm`, as `../rmsimage-optimization/setup_overlays.sh`
-does. Example:
+does. The baseline revision of `run_comparison.sh` must be the base of this
+branch (7ddb350): `test/tbdsf_process_image.py` compares the outputs with the
+reference outputs of the working tree, and later versions of `master` changed
+those outputs (e.g. #604 and #605). Example:
 
 ```bash
 venv/bin/python -I benchmark/replace-cbdsm/record_fits.py /tmp/test.pkl test/tbdsf_process_image.in_fits \
     "{'beam': (0.015, 0.015, 0.0), 'thresh_isl': 3.0, 'thresh_pix': 5.0, 'atrous_do': True}"
 venv/bin/python -I benchmark/replace-cbdsm/replay_fits.py /tmp/test.pkl bdsf._cbdsm bdsf/mgfunction.py
-benchmark/replace-cbdsm/run_comparison.sh /tmp/cbdsm-bench master
+benchmark/replace-cbdsm/run_comparison.sh /tmp/cbdsm-bench 7ddb350
 ```
