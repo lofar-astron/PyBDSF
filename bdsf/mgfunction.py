@@ -10,9 +10,15 @@ An MGFunction with N 2D Gaussians is defined as::
     f1_i = ( (x1 - x1_i) * cos(pa_i) + (x2 - x2_i) * sin(pa_i)) / s1_i
     f2_i = (-(x1 - x1_i) * sin(pa_i) + (x2 - x2_i) * cos(pa_i)) / s2_i
 
-Each Gaussian has the six parameters ``(A, x1, x2, s1, s2, pa)``, with the
-position angle ``pa`` in degrees. Depending on its type (see `Gtype`), only
-the first 1, 3 or all 6 of them are fitted; the others are kept fixed.
+Each Gaussian has the six parameters ``(A, x1, x2, s1, s2, pa)``: the
+amplitude (``amp`` in the code), the centre (``center_x1``, ``center_x2``),
+the widths (sigmas) along the major and minor axes (``sigma_major``,
+``sigma_minor``), and the position angle ``pa`` of the major axis, in degrees.
+``f1`` and ``f2`` are the offsets from the centre along the major and minor
+axes, in units of sigma (``major_offset``, ``minor_offset``). The fit does
+not enforce ``sigma_major >= sigma_minor``; gausfit takes care of that
+afterwards. Depending on its type (see `GaussianType`), only the first 1, 3
+or all 6 parameters are fitted; the others are kept fixed.
 
 The function is only evaluated at the unmasked pixels of the data, with
 vectorized NumPy operations. The results are cached, and only recomputed
@@ -38,10 +44,10 @@ from scipy.optimize import leastsq
 _DEG = pi / 180.0  # a Python float, like all per-Gaussian numbers
 
 
-def _gaussian_scalars(s1, s2, pa):
+def _gaussian_scalars(sigma_major, sigma_minor, pa):
     """Return the numbers, besides the parameters, that are needed to
     evaluate a Gaussian and its derivatives: (cos(pa), sin(pa),
-    s1 / s2 - s2 / s1).
+    sigma_major / sigma_minor - sigma_minor / sigma_major).
 
     For speed, these are computed with Python floats, which gives the same
     results as the former C++ code, except that Python raises an exception
@@ -56,10 +62,12 @@ def _gaussian_scalars(s1, s2, pa):
         cos_pa = sin_pa = N.nan
     # Only used in the derivative with respect to pa (see _compute_jacobian)
     try:
-        sigma_ratio_diff = s1 / s2 - s2 / s1
+        sigma_ratio_diff = (sigma_major / sigma_minor
+                            - sigma_minor / sigma_major)
     except ZeroDivisionError:
         with N.errstate(all='ignore'):
-            sigma_ratio_diff = float(N.float64(s1) / s2 - s2 / N.float64(s1))
+            sigma_ratio_diff = float(N.float64(sigma_major) / sigma_minor
+                                     - sigma_minor / N.float64(sigma_major))
     return cos_pa, sin_pa, sigma_ratio_diff
 
 
@@ -211,11 +219,13 @@ class MGFunction:
         data - MGF for all data points.
 
         This sets the following attributes:
-        - _terms: for each Gaussian, a tuple (amp, s1, s2, cos_pa, sin_pa,
-                  sigma_ratio_diff, f1, f2, val) with its parameters and
-                  the numbers returned by
-                  _gaussian_scalars, and the values of f1, f2 and the
-                  (unscaled) Gaussian for all data points
+        - _terms: for each Gaussian, a tuple (amp, sigma_major, sigma_minor,
+                  cos_pa, sin_pa, sigma_ratio_diff, major_offset,
+                  minor_offset, gaussian) with its parameters, the numbers
+                  returned by _gaussian_scalars, and, for all data points,
+                  the offsets from the centre along the major and minor axes
+                  (in units of sigma) and the value of the (unscaled)
+                  Gaussian
         - _resid: data - MGF for all data points
         - _jac:   None (the Jacobian is computed when needed)
 
@@ -230,28 +240,32 @@ class MGFunction:
             return self._resid
         resid = self._data.copy()
         terms = []
-        for p in self._params.tolist():
-            amp, x1c, x2c, s1, s2, pa = p
-            cos_pa, sin_pa, sigma_ratio_diff = _gaussian_scalars(s1, s2, pa)
-            dx1 = self._x1 - x1c
-            dx2 = self._x2 - x2c
-            # f1 = (dx1 * cos_pa + dx2 * sin_pa) / s1
-            f1 = dx1 * cos_pa
-            f1 += dx2 * sin_pa
-            f1 /= s1
-            # f2 = (-dx1 * sin_pa + dx2 * cos_pa) / s2
-            f2 = dx2 * cos_pa
-            f2 -= dx1 * sin_pa
-            f2 /= s2
-            # val = exp((f1 * f1 + f2 * f2) / -2), with the exponential
-            # evaluated in long double precision
-            val = f1 * f1
-            val += f2 * f2
-            val *= -0.5
-            N.exp(val, out=val, dtype=N.longdouble)
-            resid -= amp * val
-            terms.append((amp, s1, s2, cos_pa, sin_pa, sigma_ratio_diff,
-                          f1, f2, val))
+        for params in self._params.tolist():
+            amp, center_x1, center_x2, sigma_major, sigma_minor, pa = params
+            cos_pa, sin_pa, sigma_ratio_diff = _gaussian_scalars(
+                sigma_major, sigma_minor, pa)
+            dx1 = self._x1 - center_x1
+            dx2 = self._x2 - center_x2
+            # Offset along the major axis, in units of sigma:
+            # (dx1 * cos_pa + dx2 * sin_pa) / sigma_major
+            major_offset = dx1 * cos_pa
+            major_offset += dx2 * sin_pa
+            major_offset /= sigma_major
+            # Offset along the minor axis, in units of sigma:
+            # (-dx1 * sin_pa + dx2 * cos_pa) / sigma_minor
+            minor_offset = dx2 * cos_pa
+            minor_offset -= dx1 * sin_pa
+            minor_offset /= sigma_minor
+            # Unscaled Gaussian: exp((major_offset**2 + minor_offset**2) / -2),
+            # with the exponential evaluated in long double precision
+            gaussian = major_offset * major_offset
+            gaussian += minor_offset * minor_offset
+            gaussian *= -0.5
+            N.exp(gaussian, out=gaussian, dtype=N.longdouble)
+            resid -= amp * gaussian
+            terms.append((amp, sigma_major, sigma_minor, cos_pa, sin_pa,
+                          sigma_ratio_diff, major_offset, minor_offset,
+                          gaussian))
         self._terms = terms
         self._resid = resid
         self._jac = None
@@ -263,45 +277,53 @@ class MGFunction:
         parameters, as an array of shape (fitted_parameters, data_size).
 
         All values are computed exactly as in the former C++ code, in place
-        (see _update). The derivatives have a minus sign, because we
-        differentiate data - MGF.
+        (see _evaluate_and_update_results). The derivatives have a minus
+        sign, because we differentiate data - MGF.
         """
         jac = N.empty((self._fit_idx.size, self._data.size))
         row = 0
-        for gtype, (amp, s1, s2, cos_pa, sin_pa, sigma_ratio_diff,
-                    f1, f2, val) in zip(self._gtypes, self._terms):
-            # Rows for this Gaussian (indexing jac creates a new view each time)
-            d = list(jac[row:row + gtype])
-            N.negative(val, out=d[0])
+        for gtype, (amp, sigma_major, sigma_minor, cos_pa, sin_pa,
+                    sigma_ratio_diff, major_offset, minor_offset,
+                    gaussian) in zip(self._gtypes, self._terms):
+            # Rows of jac for the fitted parameters of this Gaussian, in the
+            # order (amp, center_x1, center_x2, sigma_major, sigma_minor, pa)
+            # (indexing jac creates a new view each time)
+            rows = list(jac[row:row + gtype])
+            N.negative(gaussian, out=rows[0])
             if gtype != GaussianType.amplitude_only:
-                v = val * -amp
-                # Position: v * (f1 * cos_pa / s1 - f2 * sin_pa / s2)
-                #           v * (f1 * sin_pa / s1 + f2 * cos_pa / s2)
-                t = f1 * cos_pa
-                t /= s1
-                u = f2 * sin_pa
-                u /= s2
-                N.subtract(t, u, out=d[1])
-                d[1] *= v
-                N.multiply(f1, sin_pa, out=t)
-                t /= s1
-                N.multiply(f2, cos_pa, out=u)
-                u /= s2
-                N.add(t, u, out=d[2])
-                d[2] *= v
+                minus_amp_gaussian = gaussian * -amp
+                # Centre, with g = minus_amp_gaussian:
+                # x1: g * (major_offset * cos_pa / sigma_major
+                #          - minor_offset * sin_pa / sigma_minor)
+                # x2: g * (major_offset * sin_pa / sigma_major
+                #          + minor_offset * cos_pa / sigma_minor)
+                major_term = major_offset * cos_pa
+                major_term /= sigma_major
+                minor_term = minor_offset * sin_pa
+                minor_term /= sigma_minor
+                N.subtract(major_term, minor_term, out=rows[1])
+                rows[1] *= minus_amp_gaussian
+                N.multiply(major_offset, sin_pa, out=major_term)
+                major_term /= sigma_major
+                N.multiply(minor_offset, cos_pa, out=minor_term)
+                minor_term /= sigma_minor
+                N.add(major_term, minor_term, out=rows[2])
+                rows[2] *= minus_amp_gaussian
                 if gtype == GaussianType.all_parameters:
-                    # Widths: v * f1 * f1 / s1 and v * f2 * f2 / s2
-                    N.multiply(v, f1, out=d[3])
-                    d[3] *= f1
-                    d[3] /= s1
-                    N.multiply(v, f2, out=d[4])
-                    d[4] *= f2
-                    d[4] /= s2
-                    # Position angle: v * deg * f1 * f2 * (s1 / s2 - s2 / s1)
-                    N.multiply(v, _DEG, out=d[5])
-                    d[5] *= f1
-                    d[5] *= f2
-                    d[5] *= sigma_ratio_diff
+                    # Widths: g * major_offset**2 / sigma_major and
+                    #         g * minor_offset**2 / sigma_minor
+                    N.multiply(minus_amp_gaussian, major_offset, out=rows[3])
+                    rows[3] *= major_offset
+                    rows[3] /= sigma_major
+                    N.multiply(minus_amp_gaussian, minor_offset, out=rows[4])
+                    rows[4] *= minor_offset
+                    rows[4] /= sigma_minor
+                    # Position angle: g * deg * major_offset * minor_offset
+                    #                 * sigma_ratio_diff
+                    N.multiply(minus_amp_gaussian, _DEG, out=rows[5])
+                    rows[5] *= major_offset
+                    rows[5] *= minor_offset
+                    rows[5] *= sigma_ratio_diff
             row += gtype
         return jac
 
