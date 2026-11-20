@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 1
 
       - name: Run Claude Code
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@v1.0.284
         with:
           # Set ONE of these as a repository secret:
           #   ANTHROPIC_API_KEY        - an API key from console.anthropic.com
