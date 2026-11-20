@@ -106,14 +106,14 @@ Type ``inp process_image`` to list the main reduction parameters:
                                    Specify as (box, step) in pixels. E.g., rms_box =
                                    (40, 10) => box of 40x40 pixels, step of 10
                                    pixels. None => calculate inside program
-    :term:`rms_map` ............... None : Background rms map: True => use 2-D rms map;
+    :term:`rms_map` ............... None : Background RMS map: True => use 2-D rms map;
                                    False => use constant rms; None => calculate
                                    inside program
     :term:`shapelet_do` .......... False : Decompose islands into shapelets
     :term:`spectralindex_do` ..... False : Calculate spectral indices (for multi-channel
                                    image)
     :term:`thresh` ................ None : Type of thresholding: None => calculate inside
-                                   program, 'fdr' => use false detection rate
+                                   program, 'fdr' => use False Detection Rate
                                    algorithm, 'hard' => use sigma clipping
     :term:`thresh_isl` ............. 3.0 : Threshold for the island boundary in number of
                                    sigma above the mean. Determines extent of
