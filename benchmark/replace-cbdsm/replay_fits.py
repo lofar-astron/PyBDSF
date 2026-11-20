@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-"""Replay recorded lmder_fit calls with two implementations of MGFunction and
-lmder_fit, and compare their results, run times and memory use.
+"""Replay recorded fits with two implementations of MGFunction and its fit
+function (lm_fit_with_derivatives, formerly lmder_fit), and compare their
+results, run times and memory use.
 
 Every recorded call is replayed with a new MGFunction, so the cache of fit
 results of the Python version is not used; this compares single fits.
@@ -37,12 +38,24 @@ A, B = load(sys.argv[2], 'impl_a'), load(sys.argv[3], 'impl_b')
 repeats = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 
 
+def gaussian_type(M):
+    """Return the Gaussian type class of implementation `M` (it was called
+    Gtype before)."""
+    return getattr(M, 'GaussianType', None) or M.Gtype
+
+
+def fit_function(M):
+    """Return the fit function of implementation `M` (it was called
+    lmder_fit before)."""
+    return getattr(M, 'lm_fit_with_derivatives', None) or M.lmder_fit
+
+
 def run(M, r):
     fcn = M.MGFunction(r['data'], r['mask'], 1)
     fcn.find_peak()
     for gtype, p in zip(r['gtypes'], r['p0']):
-        fcn.add_gaussian(M.Gtype(gtype), p)
-    ok = M.lmder_fit(fcn, final=r['final'], verbose=0)
+        fcn.add_gaussian(gaussian_type(M)(gtype), p)
+    ok = fit_function(M)(fcn, final=r['final'], verbose=0)
     return ok, fcn.parameters, fcn.find_peak()
 
 

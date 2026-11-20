@@ -7,7 +7,7 @@ in the image, and do post-fitting flagging of the extracted
 gaussians.
 
 The fitting itself is implemented by the means of MGFunction
-class and the lmder_fit fitter routine in the mgfunction module.
+class and the lm_fit_with_derivatives fitter routine in the mgfunction module.
 MGFunction class implements multi-gaussian function and
 provides all functionality required by the fitter.
 """
@@ -20,7 +20,7 @@ if has_pl:
     import matplotlib.pyplot as pl
 import scipy.ndimage as nd
 from . import multi_proc as mp
-from .mgfunction import Gtype, MGFunction, lmder_fit
+from .mgfunction import GaussianType, MGFunction, lm_fit_with_derivatives
 import itertools
 
 
@@ -764,7 +764,7 @@ class Op_gausfit(Op):
         """
         if verbose:
             print('Greetings from fit_iter')
-        fit = lmder_fit
+        fit = lm_fit_with_derivatives
         beam = list(beam)
 
         # First drop-in initial gaussians
@@ -815,9 +815,8 @@ class Op_gausfit(Op):
         It's trying to reduce number of fitted parameters if
         there is not enough DoF left.
 
-        Note: g1 fits amplitude only
-              g3 fits amplitude and position
-              g6 fits all parameters
+        Note: see GaussianType for the types of Gaussians, which
+              determine which parameters are fitted
 
         Parameters:
         fcn: MGFunction object
@@ -825,10 +824,10 @@ class Op_gausfit(Op):
         dof: total possible number of fitted parameters
         """
         if g3_only:
-            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.AMPLITUDE_AND_POSITION if fcn.fitted_parameters() + 3 <= dof else None)
         else:
-            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
-            gtype = (Gtype.g6 if fcn.fitted_parameters() + 6 <= dof else gtype)
+            gtype = (GaussianType.AMPLITUDE_AND_POSITION if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.ALL_PARAMETERS if fcn.fitted_parameters() + 6 <= dof else gtype)
 
         if gtype:
             fcn.add_gaussian(gtype, parameters)
