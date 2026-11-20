@@ -141,7 +141,7 @@ class MGFunction:
         (value, (x1, x2))
         """
         with N.errstate(all='ignore'):
-            resid = self._update()
+            resid = self._evaluate_and_update_results()
         pidx = int(N.argmax(resid))
         if resid[pidx] != resid[pidx] and resid[0] == resid[0]:
             # Like the former C++ code, ignore NaNs unless the first value
@@ -152,7 +152,7 @@ class MGFunction:
     def chi2(self):
         """Chi^2 of the residual image (uniform weights)."""
         with N.errstate(all='ignore'):
-            resid = self._update() / self._weight
+            resid = self._evaluate_and_update_results() / self._weight
             return float(N.dot(resid, resid))
 
     # ------------------------------------------------------------------
@@ -173,7 +173,7 @@ class MGFunction:
         pixels: an array of shape (data_size,), which must not be modified.
         """
         self.set_fitted_parameters(x)
-        return self._update()
+        return self._evaluate_and_update_results()
 
     def jacobian(self, x):
         """Return the derivatives of data - MGF with respect to the fitted
@@ -181,7 +181,7 @@ class MGFunction:
         which must not be modified.
         """
         self.set_fitted_parameters(x)
-        self._update()
+        self._evaluate_and_update_results()
         if self._jac is None:
             self._jac = self._compute_jacobian()
         return self._jac
@@ -203,7 +203,7 @@ class MGFunction:
         self._pflat = self._params.reshape(-1)
         self._cache_key = None
 
-    def _update(self):
+    def _evaluate_and_update_results(self):
         """Evaluate the Gaussians for the current parameters, unless the
         cached results are for the same parameters already, and return
         data - MGF for all data points.
