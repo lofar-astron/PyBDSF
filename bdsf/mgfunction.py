@@ -333,7 +333,7 @@ def lmder_fit(fcn, final=False, verbose=1):
         fcn._fit_results[key] = _lmder_fit(fcn, final)
     params, info, nfev, njev = fcn._fit_results[key]
     fcn._params[...] = params
-    converged = 0 < info < 4
+converged = 0 < info < 5
 
     if verbose:
         chi2 = fcn.chi2()
