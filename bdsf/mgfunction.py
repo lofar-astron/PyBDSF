@@ -302,16 +302,16 @@ class MGFunction:
         return jac
 
 
-def lmder_fit(fcn, final=False, verbose=1):
-    """Fit `fcn` to its data using the Levenberg-Marquardt algorithm.
+def lmder_fit(func, final=False, verbose=1):
+    """Fit `func` to its data using the Levenberg-Marquardt algorithm.
 
     This uses scipy.optimize.leastsq, a wrapper around MINPACK’s lmdif and
     lmder algorithms. It uses an analytical Jacobian, like the former C++
-    code. On return, the parameters of `fcn` hold the result of the fit.
+    code. On return, the parameters of `func` hold the result of the fit.
 
     Parameters
     ----------
-    fcn : MGFunction
+    func : MGFunction
         The function to fit.
     final : bool
         If True, use a higher precision (for the final fit).
@@ -328,35 +328,35 @@ def lmder_fit(fcn, final=False, verbose=1):
     # the types and initial parameters of the Gaussians, and `final`. When
     # gausfit fits an island, it usually repeats the same fit several times,
     # so the results are cached.
-    key = (tuple(fcn._gtypes), fcn._params.tobytes(), final)
-    if key not in fcn._fit_results:
-        fcn._fit_results[key] = _lmder_fit(fcn, final)
-    params, info, nfev, njev = fcn._fit_results[key]
-    fcn._params[...] = params
+    key = (tuple(func._gtypes), func._params.tobytes(), final)
+    if key not in func._fit_results:
+        func._fit_results[key] = _lmder_fit(func, final)
+    params, info, nfev, njev = func._fit_results[key]
+    func._params[...] = params
     converged = 0 < info < 4
 
     if verbose:
-        chi2 = fcn.chi2()
+        chi2 = func.chi2()
         print("status: %d  code: %d  Fev/Jev: %d/%d  chi2(/dp): %g(%g)  LMDER"
-              % (converged, info, nfev, njev, chi2, chi2 / fcn.data_size()))
+              % (converged, info, nfev, njev, chi2, chi2 / func.data_size()))
 
     return converged
 
 
-def _lmder_fit(fcn, final):
-    """Fit `fcn` with LMDER, and return (parameters, info, nfev, njev)."""
-    npar = fcn.fitted_parameters()
-    if npar == 0 or npar > fcn.data_size():
+def _lmder_fit(func, final):
+    """Fit `func` with LMDER, and return (parameters, info, nfev, njev)."""
+    npar = func.fitted_parameters()
+    if npar == 0 or npar > func.data_size():
         # Improper input for LMDER
-        return fcn._params.copy(), 0, 0, 0
+        return func._params.copy(), 0, 0, 0
     tol = 1e-6 if final else 1e-4
-    x0 = fcn.get_fitted_parameters()
+    x0 = func.get_fitted_parameters()
     # Like the former C++ code, ignore floating point errors (which may occur
     # when a fit diverges)
     with N.errstate(all='ignore'):
         x, _, infodict, _, info = leastsq(
-            fcn.residual, x0, Dfun=fcn.jacobian, full_output=True,
+            func.residual, x0, Dfun=func.jacobian, full_output=True,
             col_deriv=True, ftol=tol, xtol=tol, gtol=0.0, maxfev=200,
             factor=10.0)
-    fcn.set_fitted_parameters(x)
-    return fcn._params.copy(), info, infodict['nfev'], infodict['njev']
+    func.set_fitted_parameters(x)
+    return func._params.copy(), info, infodict['nfev'], infodict['njev']
