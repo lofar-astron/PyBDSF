@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""Replay recorded lmder_fit calls with two implementations of MGFunction and
-lmder_fit, and compare their results, run times and memory use.
+"""Replay recorded fit calls with two implementations of MGFunction and its
+fit function, and compare their results, run times and memory use.
 
 Every recorded call is replayed with a new MGFunction, so the cache of fit
 results of the Python version is not used; this compares single fits.
@@ -9,7 +9,9 @@ Usage: replay_fits.py <records.pkl> <impl A> <impl B> [repeats]
 
 Each implementation is the path of a Python file (e.g. bdsf/mgfunction.py, or
 an older version from `git show`), or the name of a module (e.g. bdsf._cbdsm,
-which needs a PyBDSF version that still has it).
+which needs a PyBDSF version that still has it). Both the old names (`Gtype`,
+`lmder_fit`, as in _cbdsm) and the new ones (`GaussianType`,
+`lm_fit_with_derivatives`) are supported.
 """
 import gc
 import importlib
@@ -23,11 +25,17 @@ import numpy as np
 
 
 def load(impl, name):
-    if not impl.endswith('.py'):
-        return importlib.import_module(impl)
-    spec = importlib.util.spec_from_file_location(name, impl)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    if impl.endswith('.py'):
+        spec = importlib.util.spec_from_file_location(name, impl)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    else:
+        module = importlib.import_module(impl)
+    # Use the same (old) names for all implementations
+    if not hasattr(module, 'Gtype'):
+        module.Gtype = module.GaussianType
+    if not hasattr(module, 'lmder_fit'):
+        module.lmder_fit = module.lm_fit_with_derivatives
     return module
 
 

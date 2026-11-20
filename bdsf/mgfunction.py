@@ -120,7 +120,7 @@ class MGFunction:
         self._layout_changed()
 
     def add_gaussian(self, gtype, parameters):
-        """Add a Gaussian of type `gtype` (a `Gtype`) with the given six
+        """Add a Gaussian of type `gtype` (a `GaussianType`) with the given six
         parameters."""
         gtype = GaussianType(gtype)
         if len(parameters) != 6:
@@ -363,7 +363,7 @@ def lm_fit_with_derivatives(func, final=False, verbose=1):
     converged = 0 < info < 4
 
     if verbose:
-        chi2 = func.chi2()
+        chi2 = func.residual_chi2()
         print("status: %d  code: %d  Fev/Jev: %d/%d  chi2(/dp): %g(%g)  LMDER"
               % (converged, info, nfev, njev, chi2, chi2 / func.data_size()))
 

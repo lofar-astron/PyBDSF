@@ -2,6 +2,8 @@
 
 Run with: python tmgfunction.py (exit status 0 if all tests pass)
 """
+import contextlib
+import io
 import sys
 import warnings
 
@@ -99,6 +101,16 @@ def test_repeated_fits():
         fresh, _, _ = make_function(gtypes, START)
         assert fit(fcn, final) == fit(fcn, final) == fit(fresh, final)
     assert len(fcn._fit_results) == 2  # one for each value of `final`
+
+
+def test_verbose_fit():
+    fcn, _, _ = make_function([GaussianType.all_parameters] * 2, START)
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        assert lm_fit_with_derivatives(fcn, verbose=1)
+    chi2 = fcn.residual_chi2()
+    assert out.getvalue().startswith('status: 1')
+    assert ('chi2(/dp): %g(%g)' % (chi2, chi2 / fcn.data_size())) in out.getvalue()
 
 
 def test_find_peak():
