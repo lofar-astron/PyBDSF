@@ -6,7 +6,6 @@
 requires = [
     "build",
     "cmake>=3.18",
-    "meson",
     "ninja",
     "numpy",
     "scikit-build>=0.13",
@@ -79,7 +78,7 @@ environment = """ \
     CC=gcc \
     FC=gfortran \
 """
-test-command = "cd {package}/test && python tmgfunction.py && python tmulti_proc.py && python tbdsf_process_image.py --rtol 0.03"
+test-command = "cd {package}/test && python tmgfunction.py && python tmulti_proc.py && python ttessellate.py && python tbdsf_process_image.py --rtol 0.03"
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = """\

@@ -21,4 +21,4 @@ jobs:
 
     - name: Test PyBDSF
       run: |
-        cd test && python tmgfunction.py && python tmulti_proc.py && python tbdsf_process_image.py --rtol 0.03
+        cd test && python tgausfit_shape.py && python tmgfunction.py && python tmulti_proc.py && python ttessellate.py && python tbdsf_process_image.py --rtol 0.03
