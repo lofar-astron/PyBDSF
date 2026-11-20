@@ -37,20 +37,58 @@ def _update_subisland_fit_stats(island, active_pixels, mean_map, rms_map):
 
 
 def _can_fit_gaussian_shape(mask):
-    """Check whether active pixels can constrain a 2D quadratic."""
+    """Check whether the active pixels of `mask` can constrain a Gaussian shape.
+
+    The logarithm of an elliptical Gaussian is a quadratic in the pixel
+    coordinates,
+
+        ln I = a + b*x + c*y + d*x**2 + e*x*y + f*y**2,
+
+    whose six coefficients fix the peak, position and shape. They can only
+    be determined if the six terms [1, x, y, x**2, x*y, y**2], evaluated on
+    the active pixels, are linearly independent (rank 6). Otherwise some
+    combination of the terms is zero on every active pixel: adding any
+    amount of it changes the model only outside the island, so the data
+    cannot constrain it and the fitter stops at an arbitrary, often
+    platform-dependent, shape.
+
+    This happens whenever all active pixels lie on a conic, for example:
+      - a strip only 1 or 2 pixels wide: x takes at most two values, so
+        x**2 = p + q*x on those pixels and the width across the strip is
+        free, however long the strip is;
+      - a diagonal line: x**2, x*y and y**2 are the same column;
+      - a plus or L shape: (x - x0)*(y - y0) = 0 on every pixel, so the x*y
+        term is free.
+
+    The number of active pixels alone is therefore not a sufficient test:
+    islands with many pixels can be degenerate, while 6 well-placed pixels
+    (e.g. a staircase over three rows) are not.
+
+    Parameters:
+    mask : 2D boolean array, True for masked (inactive) pixels
+
+    Returns True if all six Gaussian parameters can be fitted.
+    """
     x, y = N.nonzero(~mask)
+
+    # Cheap early exits for the most common degenerate islands: fewer pixels
+    # than parameters, or fewer than three distinct rows or columns, in which
+    # case the curvature along that axis cannot be measured. This also
+    # guarantees that ptp(x) and ptp(y) are non-zero below.
     if x.size < 6 or N.ptp(x) < 2 or N.ptp(y) < 2:
         return False
 
-    # The logarithm of an elliptical Gaussian is a quadratic. Its six
-    # coefficients must be independently observable on the active pixels.
-    # Rescale coordinates so the rank test is insensitive to island size,
-    # and test the 6x6 normal matrix instead of the (npix x 6) design matrix.
+    # Rescale the coordinates to [0, 1], so that the relative tolerance below
+    # does not depend on the island size or position.
     x = (x - x.min()) / N.ptp(x)
     y = (y - y.min()) / N.ptp(y)
     terms = N.column_stack((N.ones_like(x), x, y, x*x, x*y, y*y))
+
+    # The (npix x 6) matrix `terms` has rank 6 if and only if the 6x6 matrix
+    # terms.T @ terms is non-singular. Testing its smallest eigenvalue is much
+    # cheaper than an SVD of `terms` for large islands.
     gram = terms.T @ terms
-    eig = N.linalg.eigvalsh(gram)
+    eig = N.linalg.eigvalsh(gram)  # ascending order
     return eig[0] > 1e-10 * eig[-1]
 
 
