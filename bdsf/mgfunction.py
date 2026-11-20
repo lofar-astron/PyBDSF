@@ -163,11 +163,11 @@ class MGFunction:
 
     def get_fitted_parameters(self):
         """Return a copy of the fitted parameters."""
-        return self._pflat[self._fit_idx]
+        return self._params_flat[self._fit_idx]
 
     def set_fitted_parameters(self, x):
         """Set the fitted parameters."""
-        self._pflat[self._fit_idx] = x
+        self._params_flat[self._fit_idx] = x
 
     def residual(self, x):
         """Return data - MGF for the fitted parameters `x`, for all unmasked
@@ -195,13 +195,13 @@ class MGFunction:
         """Update the bookkeeping after adding Gaussians or resetting.
 
         `_fit_idx` holds the indices of the fitted parameters (the first
-        `gtype` parameters of each Gaussian) into `_pflat`, a flat view of
-        the (ngaus, 6) parameter array.
+        `gtype` parameters of each Gaussian) into `_params_flat`, a flat
+        view of the (ngaus, 6) parameter array.
         """
         self._fit_idx = N.array(
             [6 * i + j for i, t in enumerate(self._gtypes) for j in range(t)],
             dtype=N.intp)
-        self._pflat = self._params.reshape(-1)
+        self._params_flat = self._params.reshape(-1)
         self._cache_key = None
 
     def _evaluate_and_update_results(self):
