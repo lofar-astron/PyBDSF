@@ -44,7 +44,7 @@ def test_residual():
     expected = (image - sum(gaussian(SHAPE, *p) for p in START))[~mask]
     residual = fcn.residual(fcn.get_fitted_parameters())
     assert np.allclose(residual, expected, rtol=0, atol=1e-12)
-    assert np.isclose(fcn.chi2(), np.sum(expected**2), rtol=1e-12)
+    assert np.isclose(fcn.residual_chi2(), np.sum(expected**2), rtol=1e-12)
 
 
 def test_jacobian():
@@ -157,7 +157,7 @@ def test_degenerate_fits():
                 fcn, _, _ = make_function([GaussianType.g6], [params])
                 assert not lmder_fit(fcn, verbose=0)
                 fcn.find_peak()
-                fcn.chi2()
+                fcn.residual_chi2()
             # Fewer pixels than fitted parameters
             mask = np.ones(SHAPE, bool)
             mask[12, 8:13] = False

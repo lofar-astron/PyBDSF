@@ -149,7 +149,7 @@ class MGFunction:
             pidx = int(N.nanargmax(resid))
         return float(resid[pidx]), (int(self._x1[pidx]), int(self._x2[pidx]))
 
-    def chi2(self):
+    def residual_chi2(self):
         """Chi^2 of the residual image (uniform weights)."""
         with N.errstate(all='ignore'):
             resid = self._evaluate_and_update_results() / self._weight
