@@ -109,6 +109,14 @@ class Op_threshold(Op):
         cutoff = 5.0
         spin = -0.80
         freq = img.frequency
+
+        self.logger.warning(
+            f"Automatic threshold selection uses source counts scaled "
+            f"from 1.4 GHz assuming spectral index {spin:.2f}. "
+            "The estimated number of source pixels is model-dependent "
+            "and may differ from the actual source population in this image."
+        )
+
         bm = (img.beam[0], img.beam[1])
         cdelt = img.wcs_obj.acdelt[:2]
         x = 2.0*pi*N.prod(bm)/abs(N.prod(cdelt))/(fwsig*fwsig)*img.omega
