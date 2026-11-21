@@ -24,6 +24,16 @@ from scipy.stats import circstd
 N.seterr(divide='raise')
 
 
+def robust_mc_std(values):
+    values = values[N.isfinite(values)]
+
+    if len(values) < 2:
+        return N.nan
+
+    q16, q50, q84 = N.percentile(values, [15.865, 50.0, 84.135])
+
+    return max(q50 - q16, q84 - q50)
+
 class Op_gaul2srl(Op):
     """
     Slightly modified from fortran.
@@ -501,8 +511,9 @@ class Op_gaul2srl(Op):
                     mompara4_MC[i] = N.nan
                     mompara5_MC[i] = N.nan
 
-            mompara1E = N.nanstd(mompara1_MC)
-            mompara2E = N.nanstd(mompara2_MC)
+            # Estimate positional errors robustly to avoid outliers.
+            mompara1E = robust_mc_std(mompara1_MC)
+            mompara2E = robust_mc_std(mompara2_MC)
 
             mompara3E = N.nanstd(mompara3_MC)
             mompara3E = min(mompara3E, 2.0*mompara[3]) # Don't let errors get too large
@@ -511,9 +522,13 @@ class Op_gaul2srl(Op):
             mompara4E = min(mompara4E, 2.0*mompara[4]) # Don't let errors get too large
 
             # Use circular statistics for Position Angle error.
-            valid_mompara5_MC = mompara5_MC[~N.isnan(mompara5_MC)]
+            valid_mompara5_MC = mompara5_MC[N.isfinite(mompara5_MC)]
             if len(valid_mompara5_MC) > 0:
                 mompara5E = circstd(valid_mompara5_MC, high=180.0, low=0.0)
+                if not N.isfinite(mompara5E):
+                    mompara5E = 90.0
+                else:
+                    mompara5E = min(mompara5E, 90.0)
             else:
                 mompara5E = N.nan
 
