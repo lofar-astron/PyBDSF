@@ -49,21 +49,23 @@ class Op_threshold(Op):
             rms_valid = img.rms_arr
             size = N.prod(data.shape)
 
-        if img.opts.thresh is None:
-            source_p = self.get_srcp(img)
-            cutoff = 5.0
-            false_p = 0.5*erfc(cutoff/sq2)*size
-            if false_p < opts.fdr_ratio*source_p:
+
+        if opts.thresh is None:
+            cutoff = opts.thresh_pix
+            source_p = self.get_srcp(img, cutoff)
+            false_p = 0.5 * erfc(cutoff / sq2) * size
+
+            if false_p < opts.fdr_ratio * source_p:
                 img.thresh = 'hard'
-                mylogger.userinfo(self.logger, "Expected 5-sigma-clipped false detection rate < fdr_ratio")
+                mylogger.userinfo(self.logger, f"Expected {cutoff:g}-sigma-clipped false detection rate < fdr_ratio")
                 mylogger.userinfo(self.logger, "Using sigma-clipping ('hard') thresholding")
             else:
                 img.thresh = 'fdr'
-                mylogger.userinfo(self.logger, "Expected 5-sigma-clipped false detection rate > fdr_ratio")
+                mylogger.userinfo(self.logger, f"Expected {cutoff:g}-sigma-clipped false detection rate > fdr_ratio")
                 mylogger.userinfo(self.logger, "Using FDR (False Detection Rate) thresholding")
-                self.logger.debug('%s %g' % ("Estimated number of source pixels (using sourcecounts.py) is ",source_p))
-                self.logger.debug('%s %g' % ("Number of false positive pixels expected for 5-sigma is ",false_p))
-                self.logger.debug("Threshold for pixels set to : "+str.swapcase(img.thresh))
+                self.logger.debug("Estimated number of source pixels (using sourcecounts.py) is %g", source_p)
+                self.logger.debug("Number of false positive pixels expected for %g-sigma is %g", cutoff, false_p)
+                self.logger.debug("Threshold for pixels set to : " + str.swapcase(img.thresh))
         else:
             img.thresh = img.opts.thresh
 
@@ -103,10 +105,9 @@ class Op_threshold(Op):
         img.completed_Ops.append('threshold')
         return img
 
-    def get_srcp(self, img):
+    def get_srcp(self, img, cutoff=5.0):
         from . import sourcecounts as sc
         fwsig = const.fwsig
-        cutoff = 5.0
         spin = -0.80
         freq = img.frequency
         bm = (img.beam[0], img.beam[1])
