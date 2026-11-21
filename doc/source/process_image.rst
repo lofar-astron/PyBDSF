@@ -765,6 +765,10 @@ The output options are:
       :term:`print_timing` ....... False : Print basic timing information
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
                                    sent to the log file as usual
+      :term:`resid_sigma_stats_do` True: This parameter is a Boolean (default is ``True``).
+                                   If ``True``, calculate and log residual RMS and mean statistics
+                                   in units of the background rms before and after standard and wavelet fitting.
+                                   This calculation has a computational cost.
       :term:`savefits_det_meanim`  False : Save detection background mean image as fits file
       :term:`savefits_det_rmsim` . False : Save detection background rms image as fits file
       :term:`savefits_meanim` .... False : Save background mean image as fits file
