@@ -1,21 +1,28 @@
 import numpy as N
 
 def residual_sumsq_in_sigma(resid, mean, rms):
-    """Return (sum of z, sum of z**2, number of valid pixels), z = (resid - mean) / rms."""
+    """Return (sum of z, sum of z**2, number of valid pixels)."""
 
     if mean is None:
         mean = 0.0
-
-    valid = N.isfinite(resid) & N.isfinite(rms) & (rms > 0.0)
+    valid = N.isfinite(resid)
+    valid &= N.isfinite(rms)
+    valid &= rms > 0.0
 
     if N.ndim(mean) > 0:
         valid &= N.isfinite(mean)
-        z = (resid[valid] - mean[valid]) / rms[valid]
+        z = resid[valid] - mean[valid]
     else:
-        z = (resid[valid] - mean) / rms[valid]
+        z = resid[valid] - mean
 
-    return N.sum(z, dtype=N.float64), N.sum(z * z, dtype=N.float64), z.size
+    # Divide in-place to avoid allocating another array
+    N.divide(z, rms[valid], out=z)
+    s1 = N.sum(z, dtype=N.float64)
 
+    # Sum of squares without creating a temporary z*z array
+    ss = N.einsum('i,i->', z, z, dtype=N.float64)
+
+    return s1, ss, z.size
 
 def residual_rms_in_sigma(resid, mean, rms):
     """Calculate residual RMS in units of noise."""
