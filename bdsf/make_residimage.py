@@ -105,6 +105,8 @@ class Op_make_residimage(Op):
                 mylogger.userinfo(mylog, "Residual mean outside islands (before / after)",
                                   "%+.3f / %+.3f sigma" % ((s1_b_all - s1_b_in) / n_out,
                                                            (s1_a_all - s1_a_in) / n_out))
+            if not img.opts.residual_stats_do:
+                mylog.info("More residual statistics can be enabled with the 'residual_stats_do' option.")
 
         if img.opts.output_all or img.opts.savefits_residim:
             if img.waveletimage:
