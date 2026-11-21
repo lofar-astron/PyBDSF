@@ -969,6 +969,10 @@ class Opts(object):
                              doc = "Calculate and print to log statistics of residual "\
                              "images (there is a computational cost)",
                              group = "output_opts")
+    resid_sigma_stats_do = Bool(True,
+                            doc = "Calculate and print residual statistics in units of "\
+                                  "the background RMS (there is a computational cost)",
+                            group = "output_opts")
 
 
     #------------------------POLARISATION OPTIONS------------------------------
