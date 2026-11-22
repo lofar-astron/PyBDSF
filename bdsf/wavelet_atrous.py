@@ -64,7 +64,9 @@ class Op_wavelet_atrous(Op):
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
             if img.opts.resid_sigma_stats_do:
-                rms_before = func.residual_rms_in_sigma(resid, img.mean_arr, img.rms_arr)
+                rms_before = getattr(img, '_resid_gaus_rms_sigma', None)
+                if rms_before is None:
+                    rms_before = func.residual_rms_in_sigma(resid, img.mean_arr, img.rms_arr)
             img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf

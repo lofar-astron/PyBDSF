@@ -68,6 +68,7 @@ class Op_make_residimage(Op):
             s1_a_all, ss_a_all, n_all_a = func.residual_sumsq_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
             rms_before = N.sqrt(ss_b_all / n_all) if n_all > 0 else N.nan
             rms_after = N.sqrt(ss_a_all / n_all_a) if n_all_a > 0 else N.nan
+            img._resid_gaus_rms_sigma = rms_after
             mylogger.userinfo(mylog, 'Calculating sigma statistics of residual image (\'resid_sigma_stats_do\')')
             mylogger.userinfo(mylog, "Residual RMS  before / after Gaussian fitting ", "%.3f / %.3f σ" % (rms_before, rms_after))
             if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
