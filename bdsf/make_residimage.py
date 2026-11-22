@@ -69,10 +69,10 @@ class Op_make_residimage(Op):
             rms_before = N.sqrt(ss_b_all / n_all) if n_all > 0 else N.nan
             rms_after = N.sqrt(ss_a_all / n_all_a) if n_all_a > 0 else N.nan
             mylogger.userinfo(mylog, 'Calculating sigma statistics of residual image (\'resid_sigma_stats_do\')')
-            mylogger.userinfo(mylog, "Residual RMS before / after Gaussian fitting  ", "%.3f / %.3f σ" % (rms_before, rms_after))
+            mylogger.userinfo(mylog, "Residual RMS  before / after Gaussian fitting ", "%.3f / %.3f σ" % (rms_before, rms_after))
             if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
                 change = 100.0 * (rms_after / rms_before - 1.0)
-                mylogger.userinfo(mylog, "Residual RMS change after Gaussian fitting    ", "%+.2f%%" % change)
+                mylogger.userinfo(mylog, "Residual RMS  change after Gaussian fitting   ", "%+.2f%%" % change)
 
             # The same statistic separately inside and outside islands
             s1_b_in = s1_a_in = 0.0
