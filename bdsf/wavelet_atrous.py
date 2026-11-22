@@ -297,8 +297,7 @@ class Op_wavelet_atrous(Op):
                         break
             if img.opts.resid_sigma_stats_do:
                 rms_after = func.residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr)
-                mylogger.userinfo(mylog, "Residual RMS before wavelet fitting", "%.3f sigma" % rms_before)
-                mylogger.userinfo(mylog, "Residual RMS after wavelet fitting", "%.3f sigma" % rms_after)
+                mylogger.userinfo(mylog, "Residual RMS before / after wavelet fitting", "%.3f / %.3f σ" % (rms_before, rms_after))
                 if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
                     change = 100.0 * (rms_after / rms_before - 1.0)
                     mylogger.userinfo(mylog, "Residual RMS change after wavelet fitting", "%+.2f%%" % change)
