@@ -111,10 +111,8 @@ class Op_threshold(Op):
         freq = img.frequency
 
         self.logger.warning(
-            f"Automatic threshold selection uses source counts scaled "
-            f"from 1.4 GHz assuming spectral index {spin:.2f}. "
-            "The estimated number of source pixels is model-dependent "
-            "and may differ from the actual source population in this image."
+            f"Automatic threshold selection uses source counts scaled from 1.4 GHz assuming spectral index {spin:.2f}. "
+            "The estimated number of source pixels is model-dependent and may differ from the actual source population in this image."
         )
 
         bm = (img.beam[0], img.beam[1])
