@@ -300,7 +300,7 @@ class Op_wavelet_atrous(Op):
                 mylogger.userinfo(mylog, "Residual RMS before / after wavelet fitting", "%.3f / %.3f σ" % (rms_before, rms_after))
                 if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
                     change = 100.0 * (rms_after / rms_before - 1.0)
-                    mylogger.userinfo(mylog, "Residual RMS change after wavelet fitting", "%+.2f%%" % change)
+                    mylogger.userinfo(mylog, "Residual RMS change after wavelet fitting  ", "%+.2f%%" % change)
 
             pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
