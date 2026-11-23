@@ -88,7 +88,10 @@ def _assign(n, m, x, y, weights, eps=0.0, fuzzy=False, centroids=None):
     image = np.empty((ni * block, nj * block), dtype=np.float64, order="F")
     # This is a view of the output, indexed as (block_x, block_y, pixel_x,
     # pixel_y). Batched assignments write directly into the final image.
+    # Splitting each axis in place never needs a copy, even for a
+    # Fortran-ordered image, so the default C-order reshape is a view.
     tiles = image.reshape(ni, block, nj, block).transpose(0, 2, 1, 3)
+    assert np.shares_memory(tiles, image)
     offsets = np.arange(block)
     for start in range(0, ni * nj, 512):
         # Bound temporary arrays by processing at most 512 blocks at a time.

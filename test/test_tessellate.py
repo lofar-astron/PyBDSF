@@ -1,6 +1,6 @@
 """Require exact Python/Fortran equality for deterministic and random cases.
 
-Run: python test/testtessellate.py --random-cases 200
+Run: python test/test_tessellate.py --random-cases 200
 Requires NumPy, a C compiler and gfortran (plus Meson for NumPy 2).
 """
 

@@ -1,6 +1,6 @@
 """Compare tessellation runtimes after checking exact output equivalence.
 
-Run: python benchmark/python-tessellation/benchmarktessellate.py --output tessellation-benchmark.json
+Run: python benchmark/python-tessellation/benchmark_tessellation.py --output tessellation-benchmark.json
 Compilation, imports, data generation, equality checks and warmup are not timed.
 Both implementations use the same inputs; output allocation is included.
 """

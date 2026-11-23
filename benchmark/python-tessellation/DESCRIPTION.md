@@ -5,7 +5,7 @@ extension with NumPy. All commands below run from the repository root.
 
 | File | Purpose |
 | --- | --- |
-| `benchmarktessellate.py` | Check exact equality and time Python against the original Fortran |
+| `benchmark_tessellation.py` | Check exact equality and time Python against the original Fortran |
 | `tessellation-benchmark.json` | Recorded 512 × 512 and 1024 × 1024 results |
 | `tessellation-benchmark-2048.json` | Recorded 2048 × 2048 results |
 
@@ -14,7 +14,7 @@ Run the default correctness suite with pytest (requires pytest, NumPy, a C
 compiler and gfortran, plus Meson/Ninja for the Meson backend):
 
 ```sh
-python -m pytest test/testtessellate.py
+python -m pytest test/test_tessellate.py
 ```
 
 The test module also retains a standalone CLI for larger runs and detailed
@@ -111,8 +111,8 @@ be recorded below as the work proceeds.
 From the repository root, using an environment with NumPy:
 
 ```sh
-python test/testtessellate.py --random-cases 1000 --large-cases 8
-python benchmark/python-tessellation/benchmarktessellate.py --repeat 7 --min-speedup 1 \
+python test/test_tessellate.py --random-cases 1000 --large-cases 8
+python benchmark/python-tessellation/benchmark_tessellation.py --repeat 7 --min-speedup 1 \
     --output benchmark/python-tessellation/tessellation-benchmark.json
 ```
 
@@ -158,7 +158,7 @@ repeats) also passed every equality and performance check: **1.33x to 30.03x**.
 Raw samples are in `tessellation-benchmark-2048.json`. Reproduce with:
 
 ```sh
-python benchmark/python-tessellation/benchmarktessellate.py --sizes 2048 --generators 2 8 64 \
+python benchmark/python-tessellation/benchmark_tessellation.py --sizes 2048 --generators 2 8 64 \
     --repeat 3 --min-speedup 1 --output benchmark/python-tessellation/tessellation-benchmark-2048.json
 ```
 
