@@ -273,8 +273,6 @@ class Op_rmsimage(Op):
             do_adapt = False
         else:
             img._adapt_rms_isl_pos = isl_pos
-            if do_adapt:
-                mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
         min_size_allowed = int(img.pixel_beam()[0]*9.0)
 
         if opts.rms_box is None or (opts.rms_box_bright is None and do_adapt):
@@ -356,6 +354,10 @@ class Op_rmsimage(Op):
                     CheckShape(rms); rms = rms[0,0]
 
                 elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
+                    if do_adapt and ipol == 0:
+                        # Only report adaptive scaling once we know the
+                        # rms/mean maps are actually computed with it
+                        mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
                     if len(data.shape) == 2:   ## 2d case
                         mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
                                         bright_pt_coords=isl_pos, rms_box2=img.rms_box,
