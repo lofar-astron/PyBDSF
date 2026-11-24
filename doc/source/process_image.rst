@@ -765,7 +765,7 @@ The output options are:
       :term:`print_timing` ....... False : Print basic timing information
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
                                    sent to the log file as usual
-      :term:`resid_sigma_stats_do` True: This parameter is a Boolean (default is ``True``).
+      :term:`resid_sigma_stats_do` False : This parameter is a Boolean (default is ``False``).
                                    If ``True``, calculate and log residual RMS and mean statistics
                                    in units of the background rms before and after standard and wavelet fitting.
                                    This calculation has a computational cost.

@@ -81,7 +81,7 @@ class Op_make_residimage(Op):
             rms_before = N.sqrt(sum_sq_norm_resid_before_all / n_valid_pix_before_all) if n_valid_pix_before_all > 0 else N.nan
             rms_after = N.sqrt(sum_sq_norm_resid_after_all / n_valid_pix_before_all_a) if n_valid_pix_before_all_a > 0 else N.nan
             img._resid_gaus_rms_sigma = rms_after
-            mylogger.userinfo(mylog, 'Calculating sigma statistics of residual image (\'resid_sigma_stats_do\')')
+            mylogger.userinfo(mylog, 'Calculating sigma statistics of residual image')
             mylogger.userinfo(mylog, "Residual RMS  before / after Gaussian fitting ", "%.3f / %.3f σ" % (rms_before, rms_after))
             if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
                 change = 100.0 * (rms_after / rms_before - 1.0)
@@ -131,6 +131,8 @@ class Op_make_residimage(Op):
                                                        n_valid_pix_outside_isl))
             if not img.opts.residual_stats_do:
                 mylog.info("More residual statistics can be enabled with the 'residual_stats_do' option.")
+        else:
+            mylogger.userinfo(mylog, "To assess how well the fitting went, rerun using \'resid_sigma_stats_do=True\'")
 
         if img.opts.output_all or img.opts.savefits_residim:
             if img.waveletimage:
