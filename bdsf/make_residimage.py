@@ -64,7 +64,9 @@ class Op_make_residimage(Op):
 
         if img.opts.resid_sigma_stats_do and not img.waveletimage and not img._pi and \
             not (img.opts.atrous_do and 'wavelet_atrous' in img.completed_Ops):
-            s1_b_all, ss_b_all, n_all = func.residual_sumsq_in_sigma(img.ch0_arr, img.mean_arr, img.rms_arr)
+            # Use the same valid pixels for before and after statistics.
+            r_b_all = N.where(N.isfinite(resid_gaus), img.ch0_arr, N.nan)
+            s1_b_all, ss_b_all, n_all   = func.residual_sumsq_in_sigma(r_b_all,    img.mean_arr, img.rms_arr)
             s1_a_all, ss_a_all, n_all_a = func.residual_sumsq_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
             rms_before = N.sqrt(ss_b_all / n_all) if n_all > 0 else N.nan
             rms_after = N.sqrt(ss_a_all / n_all_a) if n_all_a > 0 else N.nan
