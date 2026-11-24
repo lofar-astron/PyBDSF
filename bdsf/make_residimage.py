@@ -8,6 +8,7 @@ from scipy import stats # for skew and kurtosis
 from .image import *
 from .shapelets import *
 from . import mylogger
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Op_make_residimage(Op):
@@ -66,8 +67,17 @@ class Op_make_residimage(Op):
             not (img.opts.atrous_do and 'wavelet_atrous' in img.completed_Ops):
             # Use the same valid pixels for before and after statistics.
             r_b_all = N.where(N.isfinite(resid_gaus), img.ch0_arr, N.nan)
-            s1_b_all, ss_b_all, n_all   = func.residual_sumsq_in_sigma(r_b_all,    img.mean_arr, img.rms_arr)
-            s1_a_all, ss_a_all, n_all_a = func.residual_sumsq_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
+
+            if img.ch0_arr.size >= 1_000_000:
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    f_before = executor.submit(func.residual_sumsq_in_sigma, r_b_all,    img.mean_arr, img.rms_arr)
+                    f_after  = executor.submit(func.residual_sumsq_in_sigma, resid_gaus, img.mean_arr, img.rms_arr)
+                    s1_b_all, ss_b_all, n_all   = f_before.result()
+                    s1_a_all, ss_a_all, n_all_a = f_after.result()
+            else:
+                s1_b_all, ss_b_all, n_all   = func.residual_sumsq_in_sigma(r_b_all,    img.mean_arr, img.rms_arr)
+                s1_a_all, ss_a_all, n_all_a = func.residual_sumsq_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
+
             rms_before = N.sqrt(ss_b_all / n_all) if n_all > 0 else N.nan
             rms_after = N.sqrt(ss_a_all / n_all_a) if n_all_a > 0 else N.nan
             img._resid_gaus_rms_sigma = rms_after
