@@ -132,7 +132,7 @@ class Op_make_residimage(Op):
             if not img.opts.residual_stats_do:
                 mylog.info("More residual statistics can be enabled with the 'residual_stats_do' option.")
         else:
-            mylogger.userinfo(mylog, "To assess how well the fitting went, rerun using \'resid_sigma_stats_do=True\'")
+            mylogger.userinfo(mylog, "To assess how well the fitting went, rerun using 'resid_sigma_stats_do=True'")
 
         if img.opts.output_all or img.opts.savefits_residim:
             if img.waveletimage:
