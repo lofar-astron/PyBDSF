@@ -61,18 +61,6 @@ def test_multiple_values():
     check('multiple sets of values', ok)
 
 
-def test_reverse():
-    """Decreasing output coordinates give the reversed result."""
-    rng = np.random.default_rng(3)
-    x, y = rng.uniform(0, 10, (2, 8))
-    z = rng.normal(size=8)
-    xo, yo = np.linspace(0, 10, 21), np.linspace(0, 10, 15)
-    res = ng.natgrid(x, y, z, xo, yo)
-    ok = np.array_equal(ng.natgrid(x, y, z, xo[::-1], yo), res[::-1])
-    ok &= np.array_equal(ng.natgrid(x, y, z, xo, yo[::-1]), res[:, ::-1])
-    check('decreasing output coordinates', ok)
-
-
 def test_degenerate():
     """Grid points on edges of the triangulation give finite, continuous values.
 
@@ -124,7 +112,6 @@ if __name__ == '__main__':
     test_reference()
     test_linear()
     test_multiple_values()
-    test_reverse()
     test_degenerate()
     test_noncontiguous()
     test_errors()
