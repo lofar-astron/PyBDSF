@@ -49,7 +49,6 @@ class Op_threshold(Op):
             rms_valid = img.rms_arr
             size = N.prod(data.shape)
 
-
         if opts.thresh is None:
             cutoff = opts.thresh_pix
             source_p = self.get_srcp(img, cutoff)
