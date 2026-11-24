@@ -51,7 +51,7 @@ class Op_threshold(Op):
 
         if opts.thresh is None:
             cutoff = opts.thresh_pix
-            source_p = self.get_srcp(img, cutoff)
+            source_p = self.get_srcp(img, cutoff) * (size / N.prod(data.shape))
             false_p = 0.5 * erfc(cutoff / sq2) * size
 
             if false_p < opts.fdr_ratio * source_p:
