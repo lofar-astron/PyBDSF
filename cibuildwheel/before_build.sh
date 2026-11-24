@@ -9,21 +9,22 @@
 # must have been set.
 
 # Ensure we start with a clean slate
-function cleanup
-{
-  rm -rf "${BOOST_BUILD_DIR}/boost/bin.v2" 
+function cleanup {
+  # Remove stale scikit-build state
+  project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  rm -rf "${project_dir}/_skbuild"
+  # Remove stale Boost binaries
+  rm -rf "${BOOST_BUILD_DIR}/boost/bin.v2"
   rm -rf "${BOOST_INSTALL_DIR}"
 }
 
 # Install numpy
-function install_numpy
-{
+function install_numpy {
   pip install 'numpy'
 }
 
 # Build the Boost Python libraries
-function build_boost_python
-{
+function build_boost_python {
   nproc=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
   inc_dir=$(python -c 'import sysconfig as sc; print(sc.get_path("include"))')
   cd "${BOOST_BUILD_DIR}/boost"

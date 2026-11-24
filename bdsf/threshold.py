@@ -8,7 +8,6 @@ probability is first calculated, and if the number of false source
 pixels is more than fdr_ratio times the estimated number of true source
 pixels, then FDR is chosen, else the hard threshold option is chosen.
 """
-from __future__ import absolute_import
 
 import numpy as N
 from .image import Op
@@ -78,8 +77,7 @@ class Op_threshold(Op):
                 s0 +=  1.0/(i+1)
             slope = opts.fdr_alpha/s0
             # Compute and sort p-values only for unmasked data
-            # Boolean indexing flattens the array automatically
-            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2))
+            v = N.sort(0.5*erfc(((data_valid - mean_valid) / rms_valid) / sq2), axis=None)
             pcrit = None
             
             # Find the largest index k (from 'size' down to 1) 
@@ -89,13 +87,14 @@ class Op_threshold(Op):
                 if v[k-1] <= slope * k / size:
                     pcrit = v[k-1]
                     break
-            if pcrit is None:
-                raise RuntimeError("FDR thresholding failed. Please check the input image for problems.")
-            # Inverse of the complementary error function
-            sigcrit = erfcinv(2.0 * pcrit) * sq2
-            if pcrit == 0.0:
+            if pcrit is None or pcrit == 0.0:
+                self.logger.warning("FDR procedure found no significant pixels. "
+                                    f"Falling back to 'hard' thresholding (thresh_pix = {opts.thresh_pix:g}).")
                 img.thresh = 'hard'
+                img.thresh_pix = opts.thresh_pix
             else:
+                # Inverse of the complementary error function
+                sigcrit = erfcinv(2.0 * pcrit) * sq2
                 img.thresh_pix = sigcrit
                 mylogger.userinfo(self.logger, "FDR threshold (replaces thresh_pix)", str(round(sigcrit, 4)))
         else:
@@ -135,7 +134,6 @@ class Op_threshold(Op):
         s1 = scflux[index]; s2 = scflux[-1]
         alpha = 1.0-log(n1/n2)/log(s1/s2)
         A = (alpha-1.0)*n1/(s1**(1.0-alpha))
-        source_p = x*A*((cutoff*img.clipped_rms)**(1.0-alpha)) \
-                     /((1.0-alpha)*(1.0-alpha))
+        source_p = x*A*(smin_L**(1.0-alpha)) / ((1.0-alpha)*(1.0-alpha))
 
         return source_p

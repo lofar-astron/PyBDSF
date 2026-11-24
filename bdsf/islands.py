@@ -10,8 +10,6 @@ If this (scipy.ndimage.label) isn't fixed by the time we need 3D source
 extraction, one will have to adopt my old pixel-runs algorithm for 3D data.
 Check out islands.py rev. 1362 from repository for it.
 """
-from __future__ import absolute_import
-from __future__ import division
 
 import numpy as N
 import scipy.ndimage as nd
@@ -228,12 +226,14 @@ class Op_islands(Op):
 
         Returns a list of island objects.
         """
+        mylog = mylogger.logging.getLogger("PyBDSF."+img.log+"Islands")
         coords = opts.src_ra_dec  # list of RA and Dec tuples
         isl_radius_pix = opts.src_radius_pix
         if isl_radius_pix is None:
             isl_radius_pix = img.beam2pix(img.beam)[0]  # twice beam major axis radius at half max (= FWHM)
 
         res = []
+        skipped = 0
         for idx, coord in enumerate(coords):
             idx += 1  # nd.labels indices are counted from 1
             isl_posn_pix = img.sky2pix(coord)
@@ -246,7 +246,7 @@ class Op_islands(Op):
                 aper_mask = labels.astype(bool) & ~mask
             else:
                 aper_mask = labels.astype(bool)
-            if aper_mask.sum() >= img.minpix_isl and aper_mask.sum() <= img.maxpix_isl:
+            if img.minpix_isl <= aper_mask.sum() <= img.maxpix_isl:
                 labels[aper_mask] = idx
                 s = [slice(max(0, isl_posn_pix[0] - isl_radius_pix - 1),
                      min(image.shape[0], isl_posn_pix[0] + isl_radius_pix + 1)),
@@ -254,6 +254,12 @@ class Op_islands(Op):
                      min(image.shape[1], isl_posn_pix[1] + isl_radius_pix + 1))]
                 isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
                 res.append(isl)
+            else:
+                skipped += 1
+        if skipped:
+            mylog.warning(
+                f'While constructing islands from user-supplied source positions, {skipped} position(s) were skipped because the aperture pixel count was '
+                f'outside the allowed range ({img.minpix_isl} to {img.maxpix_isl}). This can happen when an aperture extends beyond the image or contains masked pixels.')
         return res
 
     def setpara_bdsm(self, img, det_file):

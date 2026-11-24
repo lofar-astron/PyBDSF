@@ -2,7 +2,6 @@
 
 It calculates residual image from the list of gaussians and shapelets
 """
-from __future__ import absolute_import
 
 import numpy as N
 from scipy import stats # for skew and kurtosis
@@ -77,13 +76,24 @@ class Op_make_residimage(Op):
             else:
                 moddir = img.basedir + '/model/'
             os.makedirs(moddir, exist_ok=True)
-            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0_arr - resid_gaus), img, moddir)
+            func.write_image_to_file(img.use_io, img.imagename + '.model_gaus.fits', (img.ch0_arr - resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 
         ### residual rms and mean per island
+        no_gaus_ids = []
         for isl in img.islands:
+            if len(isl.gaul) == 0:
+                no_gaus_ids.append(isl.island_id)
             resid = resid_gaus[tuple(isl.bbox)]
             self.calc_resid_mean_rms(isl, resid, type='gaus')
+
+        if no_gaus_ids and img.opts.verbose_fitting:
+            shown = ', '.join(str(i) for i in no_gaus_ids[:20])
+            if len(no_gaus_ids) > 20:
+                shown += ', ...'
+            mylog.warning("%d island(s) have no fitted Gaussians; their residual "
+                          "mean/rms are computed from the unmodified image data "
+                          "(island ids: %s)" % (len(no_gaus_ids), shown))
 
         if img.opts.residual_stats_do:
             # Calculate some statistics for the Gaussian residual image
@@ -196,9 +206,11 @@ class Op_make_residimage(Op):
         """Inserts mean and rms of residual image into isl, src, and gaussians
 
         type - specifies 'gaus' or 'shap'
+
+        If an island has no fitted Gaussians, the residual data are left
+        unaltered (nothing was subtracted), so the statistics describe the
+        local background noise plus any unmodeled emission.
         """
-        if len(isl.gaul) == 0:
-            resid = N.zeros(isl.shape, dtype=N.float32)
 
         ind = N.where(~isl.mask_active)
         resid = resid[ind]

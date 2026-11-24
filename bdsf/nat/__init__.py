@@ -359,7 +359,6 @@
            cdat natgridtest.py
 
 --------------------------------------------------------------------------------------------------------------"""
-from __future__ import print_function
 
 # import string, math, sys, numpy, cdms2, natgridmodule
 import string, math, sys, numpy

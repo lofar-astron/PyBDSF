@@ -3,8 +3,6 @@
    This module calculates spectral indices for Gaussians and sources for a multichannel cube.
 
 """
-from __future__ import print_function
-from __future__ import absolute_import
 
 import numpy as N
 from .image import Op

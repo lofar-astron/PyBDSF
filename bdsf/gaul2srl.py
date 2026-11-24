@@ -36,7 +36,7 @@ class Op_gaul2srl(Op):
         mylogger.userinfo(mylog, 'Grouping Gaussians into sources')
         img.aperture = img.opts.aperture
         if img.aperture is not None and img.aperture <= 0.0:
-            mylog.warn('Specified aperture is <= 0. Skipping aperture fluxes.')
+            mylog.warning('Specified aperture is <= 0. Skipping aperture fluxes.')
             img.aperture = None
 
         src_index = -1
@@ -131,9 +131,9 @@ class Op_gaul2srl(Op):
         peak_flux_centroid = peak_flux_max = [g.peak_flux, g.peak_fluxE]
         posn_sky_centroid = posn_sky_max = [g.centre_sky, g.centre_skyE]
         size_sky = [g.size_sky, g.size_skyE]
-        size_sky_uncorr = [g.size_sky_uncorr, g.size_skyE]
+        size_sky_uncorr = [g.size_sky_uncorr, g.size_skyE_uncorr]
         deconv_size_sky = [g.deconv_size_sky, g.deconv_size_skyE]
-        deconv_size_sky_uncorr = [g.deconv_size_sky_uncorr, g.deconv_size_skyE]
+        deconv_size_sky_uncorr = [g.deconv_size_sky_uncorr, g.deconv_size_skyE_uncorr]
         bbox = img.islands[g.island_id].bbox
         ngaus = 1
         island_id = g.island_id
@@ -175,9 +175,13 @@ class Op_gaul2srl(Op):
         delc = [boxx.start, boxy.start]
         subim = self.make_subim(subn, subm, g_list, delc)
 
+        subim_group = subim
+        if not img.opts.group_by_isl and img.opts.group_method == 'curvature':
+            subim_group = -1.0 * func.make_curvature_map(subim)
+
         index = [(i,j) for i in range(ngau) for j in range(ngau) if j > i]
         for pair in index:
-            same_island = self.in_same_island(pair, img, g_list, isl, subim, subn, subm, delc)
+            same_island = self.in_same_island(pair, img, g_list, isl, subim_group, subn, subm, delc)
             if same_island:
                 nsrc -= 1
                 mmax, mmin = max(src_id[pair[0]],src_id[pair[1]]), min(src_id[pair[0]],src_id[pair[1]])
@@ -227,18 +231,20 @@ class Op_gaul2srl(Op):
             pix2 = N.array(g2.centre_pix)
 
             x1, y1 = map(int, N.floor(pix1)-delc); x2, y2 = map(int, N.floor(pix2)-delc)
-            pix1 = N.array(N.unravel_index(N.argmax(subim[x1:x1+2,y1:y1+2]), (2,2)))+[x1,y1]
-            pix2 = N.array(N.unravel_index(N.argmax(subim[x2:x2+2,y2:y2+2]), (2,2)))+[x2,y2]
-            if pix1[0] >= subn: pix1[0] = pix1[0]-1
-            if pix1[1] >= subm: pix1[1] = pix1[1]-1
-            if pix2[0] >= subn: pix2[0] = pix2[0]-1
-            if pix2[1] >= subm: pix2[1] = pix2[1]-1
-            pix1 = pix1.astype(float) #N.array(map(float, pix1))
-            pix2 = pix2.astype(float) #N.array(map(float, pix2))
+            blk1 = subim[x1:x1+2, y1:y1+2]
+            blk2 = subim[x2:x2+2, y2:y2+2]
+            pix1 = N.array(N.unravel_index(N.argmax(blk1), blk1.shape)) + [x1, y1]
+            pix2 = N.array(N.unravel_index(N.argmax(blk2), blk2.shape)) + [x2, y2]
+            pix1 = pix1.astype(float) # N.array(map(float, pix1))
+            pix2 = pix2.astype(float) # N.array(map(float, pix2))
 
-            maxline = int(round(N.max(N.abs(pix1-pix2)+1)))
-            flux1 = g1.peak_flux
-            flux2 = g2.peak_flux
+            maxline = round(N.max(N.abs(pix1-pix2)+1))
+            if img.opts.group_method == 'curvature':
+                flux1 = subim[int(pix1[0]), int(pix1[1])]
+                flux2 = subim[int(pix2[0]), int(pix2[1])]
+            else:
+                flux1 = g1.peak_flux
+                flux2 = g2.peak_flux
                                                 # get pix values of the line
             pixdif = pix2 - pix1
             same_island_min = False
@@ -303,8 +309,6 @@ class Op_gaul2srl(Op):
             same_isl1_cont = True
             same_isl2 = True
         else:
-            if img.opts.group_method == 'curvature':
-                subim = -1.0 * func.make_curvature_map(subim)
             tol = img.opts.group_tol
             same_isl1_min, same_isl1_cont = same_island_min(pair, g_list, subim, delc, tol)
             same_isl2 = same_island_dist(pair, g_list, tol/2.0)
@@ -348,13 +352,16 @@ class Op_gaul2srl(Op):
         x_ax, y_ax = N.indices(data.shape)
 
         if N.sum(~rmask) >=6:
-            para, ierr = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
+            para, _ = func.fit_gaus2d(data, p_ini, x_ax, y_ax, rmask)
             if (0.0<para[1]<s_imsize[0]) and (0.0<para[2]<s_imsize[1]) and \
               para[3]<s_imsize[0] and para[4]<s_imsize[1]:
                 maxpeak = para[0]
+                posn = para[1:3] + blc + delc
             else:
+                # Fit rejected: take both the peak and its position from the
+                # maximum of the model
                 maxpeak = maxv
-            posn = para[1:3] + blc + delc
+                posn = N.array([maxx, maxy]) + N.array(delc)
         else:
             maxpeak = maxv
             posn = N.unravel_index(N.argmax(data*~rmask), data.shape)+N.array(delc) +blc
@@ -423,7 +430,8 @@ class Op_gaul2srl(Op):
 
         # Don't let s_peak fall too far below the normalized peak (this can
         # happen when, e.g., the centroid falls outside of the source)
-        norm_peak = mompara[0]*bmar_p/(mompara[3]*mompara[4])
+        # Gaussian peak from pixel sum and FWHMs: sum / (2*pi*sigma_x*sigma_y), sigma = FWHM/fwsig
+        norm_peak = mompara[0] * bmar_p * fwsig**2 / (2.0 * N.pi * mompara[3] * mompara[4])
         if s_peak < norm_peak/2.0:
             s_peak = norm_peak/2.0
 
@@ -445,11 +453,10 @@ class Op_gaul2srl(Op):
 
         # update all objects etc
         tot = 0.0
-        totE_sq = 0.0
+        totE = 0.0
         for g in g_sublist:
             tot += g.total_flux
-            totE_sq += g.total_fluxE**2
-        totE = sqrt(totE_sq)
+            totE += g.total_fluxE
         size_pix = [mompara[3], mompara[4], mompara[5]]
         size_sky = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]])
         size_sky_uncorr = img.pix2gaus(size_pix, [mompara[1]+delc[0], mompara[2]+delc[1]], use_wcs=False)
@@ -457,10 +464,14 @@ class Op_gaul2srl(Op):
         # Estimate uncertainties in source size and position due to
         # errors in the constituent Gaussians using a Monte Carlo technique.
         # Sum with Condon (1997) errors in quadrature.
-        plist = mompara.tolist()+[tot]
+        plist = mompara.tolist() + [tot]
         plist[0] = s_peak
         plist[3] /= fwsig
         plist[4] /= fwsig
+        # mompara[5] is a position angle (from +y), but get_errors expects the
+        # fit-parameter convention (angle from the x axis) and converts it
+        # with corrected_size(), which subtracts 90 deg. Convert back here.
+        plist[5] += 90.0
         errors = func.get_errors(img, plist, isl.rms)
 
         if img.opts.do_mc_errors:
@@ -523,9 +534,31 @@ class Op_gaul2srl(Op):
         size_skyE = [sqrt(mompara3E**2 + errors[3]**2) * sqrt(cdeltsq),
                      sqrt(mompara4E**2 + errors[4]**2) * sqrt(cdeltsq),
                      sqrt(mompara5E**2 + errors[5]**2)]
-        sraE, sdecE = (sqrt(mompara1E**2 + errors[1]**2) * sqrt(cdeltsq),
-                       sqrt(mompara2E**2 + errors[2]**2) * sqrt(cdeltsq))
-        deconv_size_skyE = size_skyE # set deconvolved errors to non-deconvolved ones
+
+        sraE =  sqrt(mompara1E**2 + errors[1]**2) * img.wcs_obj.acdelt[0]
+        sdecE = sqrt(mompara2E**2 + errors[2]**2) * img.wcs_obj.acdelt[1]
+
+        # Calculate errors for the deconvolved axes using the standard law of error propagation.
+        # Assuming theta_dec = sqrt(theta_obs^2 - theta_beam^2) and a negligible error in beam size,
+        # propagating the uncertainty yields: delta_theta_dec = delta_theta_obs * (theta_obs / theta_dec).
+        deconv_size_skyE = [0.0, 0.0, 0.0]
+
+        # Major axis error
+        if deconv_size_sky[0] > 0.0:
+            deconv_size_skyE[0] = size_skyE[0] * (size_sky[0] / deconv_size_sky[0])
+        else:
+            # Fallback for a point-like source
+            deconv_size_skyE[0] = size_skyE[0]  
+
+        # Minor axis error
+        if deconv_size_sky[1] > 0.0:
+            deconv_size_skyE[1] = size_skyE[1] * (size_sky[1] / deconv_size_sky[1])
+        else:
+            # Fallback for a point-like source
+            deconv_size_skyE[1] = size_skyE[1]
+
+        # Position Angle error is unchanged as a reasonable approximation
+        deconv_size_skyE[2] = size_skyE[2]
 
         # Find aperture flux
         if img.opts.aperture_posn == 'centroid':

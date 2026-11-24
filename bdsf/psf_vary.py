@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
 
 import numpy as N
 from astropy.io import fits as pyfits
@@ -11,7 +9,6 @@ if has_pl:
     import matplotlib.pyplot as pl
 import scipy
 import scipy.signal as S
-from . import _cbdsm
 from . import functions as func
 from . import _pytesselate as _pytess
 from . import shapelets as sh
@@ -121,19 +118,18 @@ class Op_psf_vary(Op):
                     tr = [n for n in tr_gauls if n[1]/n[8]>snrcut]
                 g_gauls = self.trans_gaul(tr)
 
-                # computes statistics of fitted sizes. Same as psfvary_fullstat.f in fBDSM.
-                bmaj_a, bmaj_r, bmaj_ca, bmaj_cr, ni = _cbdsm.bstat(bmaj, None, nsig)
-                bmin_a, bmin_r, bmin_ca, bmin_cr, ni = _cbdsm.bstat(bmin, None, nsig)
-                bpa_a, bpa_r, bpa_ca, bpa_cr, ni = _cbdsm.bstat(bpa, None, nsig)
-
                 # get subset of sources deemed to be unresolved. Same as size_ksclip_wenss.f in fBDSM.
                 flag_unresolved = self.get_unresolved(g_gauls, img.beam, nsig, kappa2, over, img.psf_high_snr, plot)
-                if len(flag_unresolved) == 0:
+                if N.sum(flag_unresolved) == 0:
                     mylog.warning('Insufficient number of sources to determine PSF variation.\nTry changing the PSF options or specify a (constant) PSF with the "psf_fwhm" option')
                     return
 
                 # see how much the SNR-weighted sizes of unresolved sources differ from the synthesized beam.
                 wtsize_beam_snr = self.av_psf(g_gauls, img.beam, flag_unresolved)
+                mylogger.userinfo(mylog, 'Weighted size difference from beam (maj, min, pa)', 
+                  '(%.2f, %.2f, %.2f) sigma' % (wtsize_beam_snr[0], 
+                                                wtsize_beam_snr[1], 
+                                                wtsize_beam_snr[2]))
 
                 # filter out resolved sources
                 tr_gaul = self.trans_gaul(g_gauls)
@@ -372,17 +368,17 @@ class Op_psf_vary(Op):
 
 ##################################################################################################
 
-    def bindata(self, over, num): #ptpbin,nbin,ptplastbin, same as get_bins in fBDSM.
+    def bindata(self, over, num): #ptpbin, nbin, ptplastbin, same as get_bins in fBDSM.
 
-        if num <= 100: ptpbin=num/5
-        if num > 100: ptpbin=num/10
-        if num > 1000: ptpbin=num/20
-        if ptpbin % 2 == 1: ptpbin=ptpbin+1
-        if num < 10: ptpbin=num
+        if num <= 100: ptpbin = num // 5
+        if num > 100: ptpbin = num // 10
+        if num > 1000: ptpbin = num // 20
+        if ptpbin % 2 == 1: ptpbin = ptpbin + 1
+        if num < 10: ptpbin = num
         ptpbin = float(ptpbin) # cast to float to avoid integer division errors
-        nbin=int((num-ptpbin)/(ptpbin/over)+1)
-        ptplastbin=int((num-1)-(nbin-1)*ptpbin/over)
-        nbin=nbin+1
+        nbin = int( (num-ptpbin) / (ptpbin/over)+1 )
+        ptplastbin = int( (num-1)-(nbin-1)*ptpbin / over )
+        nbin = nbin + 1
 
         return ptpbin, nbin, ptplastbin
 
@@ -560,7 +556,7 @@ class Op_psf_vary(Op):
         wtstdbm = N.sqrt((dumrar - wtavbm*wtavbm*sumwt)*sumwt/dd)
 
         avpa  = N.sum(bpa*flagwt-180.0*flagwt*N.array(bpa >= 90))/sumwt
-        stdpa = N.sum(bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
+        stdpa = N.sum(bpa*bpa*flagwt+(180.0*180.0-360.0*bpa)*flagwt*N.array(bpa >= 90))
         stdpa = sqrt(abs((stdpa-avpa*avpa*sumwt)*sumwt/dd))
         if stdpa < wtstdbm[2]:
             wtstdbm[2] = stdpa
