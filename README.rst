@@ -43,29 +43,14 @@ ease of use):
 
     pip install .[ishell]
 
-If you get the error::
-
-  RuntimeError: module compiled against API version 0xf but this version of numpy is 0xd
-
-then please update ``numpy`` with ``pip install -U numpy``.
-
 .. attention:: It is *not* recommend to use ``python setup.py install``. It is
   deprecated, and we do *not* support it.
 
-External requirements include the ubuntu packages (or similar packages in another Linux distribution):
-
-* ``gfortran``
-* ``python-setuptools``.
-
-Also, a working ``numpy`` installation is required. At runtime, you will need ``scipy`` and either ``pyfits`` and ``pywcs`` or ``python-casacore`` or ``astropy``.
+PyBDSF is a pure Python package: no compilers are needed. Its
+dependencies (``numpy``, ``scipy`` and ``astropy``) are installed by ``pip``.
 
 If you install as a user not using conda, use ``pip install --user``.
-Make sure to use similar versions for gcc and gfortran
-(use update-alternatives if multiple versions of gcc/gfortran are present on the system).
 In this case, the script ``pybdsf`` is installed in ``~/.local/bin``, so you might want to add that to your ``$PATH``.
-
-Installation on MacOS / OSX is more involved, you will need the packages mentioned above, for example installed with Homebrew.
-You will need to tell `setup.py` to use the same compiler for fortran as for C. In case of problems, see https://github.com/lofar-astron/PyBDSF/issues/104#issuecomment-509267088 for some possible steps to try.
 
 .. image:: https://github.com/lofar-astron/PyBDSF/actions/workflows/ci.yml/badge.svg?branch=master
     :target: https://github.com/lofar-astron/PyBDSF/actions/workflows/ci.yml
