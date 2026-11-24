@@ -57,7 +57,10 @@ def natgrid(x, y, z, xo, yo):
     numpy.ndarray, shape (len(xo), len(yo)) or (len(xo), len(yo), k)
         Element [i, j] is the value at (xo[i], yo[j]).
     """
-    x, y, xo, yo = (N.asarray(a, dtype=float).ravel() for a in (x, y, xo, yo))
+    x = N.asarray(x, dtype=float).ravel()
+    y = N.asarray(y, dtype=float).ravel()
+    xo = N.asarray(xo, dtype=float).ravel()
+    yo = N.asarray(yo, dtype=float).ravel()
     z = N.asarray(z, dtype=float)
     if not (x.size == y.size == len(z) >= 4) or z.ndim > 2:
         raise ValueError('x, y and z must have the same length (at least 4)')
@@ -77,18 +80,29 @@ def _add_enclosing_triangle(x, y, z, xo, yo):
     Returns the scaled and perturbed data points with the three vertices of
     the enclosing triangle appended, their values, and the scale factors.
     """
-    # The region: the output grid, extended to include all data points.
-    # (natgrid computes the limits in single precision.)
     def limits(v, vo):
-        lo, hi, olo, ohi = (float(N.float32(a)) for a in (v.min(), v.max(), vo.min(), vo.max()))
-        overlap = 1.01 * max(olo - lo, hi - ohi, 0.0)
-        if overlap <= 1e-5:
-            overlap = 0.01 * (ohi - olo)
-        return olo - overlap, ohi + overlap
+        """Return the limits of the region along one axis.
 
-    (xmin, xmax), (ymin, ymax) = limits(x, xo), limits(y, yo)
+        The region is the range of the output coordinates `vo`, extended by
+        1% more than needed to include all data coordinates `v` (and by 1% of
+        its length if that is less). As in natgrid, the minima and maxima
+        are rounded to single precision.
+        """
+        vmin = float(N.float32(v.min()))
+        vmax = float(N.float32(v.max()))
+        vomin = float(N.float32(vo.min()))
+        vomax = float(N.float32(vo.max()))
+        overlap = 1.01 * max(vomin - vmin, vmax - vomax, 0.0)
+        if overlap <= 1e-5:
+            overlap = 0.01 * (vomax - vomin)
+        return vomin - overlap, vomax + overlap
+
+    # Only the data points inside the region are used
+    xmin, xmax = limits(x, xo)
+    ymin, ymax = limits(y, yo)
     inside = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
-    p, z = N.column_stack((x, y))[inside], z[inside]
+    p = N.column_stack((x, y))[inside]
+    z = z[inside]
     if len(p) < 4:
         raise ValueError('At least four data points near the output grid are needed')
     if len(N.unique(p, axis=0)) < len(p):
@@ -103,7 +117,9 @@ def _add_enclosing_triangle(x, y, z, xo, yo):
         scale[1] = ratio
     elif 1 / ratio > 2 + 1e-5:
         scale[0] = 1 / ratio
-    p, lo, ext = p * scale, lo * scale, ext * scale
+    p = p * scale
+    lo = lo * scale
+    ext = ext * scale
 
     # Enclosing triangle (60 times the extent), on the least-squares plane
     plane = N.linalg.lstsq(N.column_stack((N.ones(len(p)), p)), z, rcond=None)[0]
@@ -133,13 +149,19 @@ def _interpolate(pts, vals, xo, yo, fix=True):
     # to the grid; the coordinates below are relative to it), and gives each
     # edge the same orientation in both triangles that share it.
     tri = N.sort(Delaunay(pts).simplices, axis=1)
-    p0, p1, p2 = pts[tri[:, 0]], pts[tri[:, 1]], pts[tri[:, 2]]
-    z0, z1, z2 = vals[tri[:, 0]], vals[tri[:, 1]], vals[tri[:, 2]]
+    p0 = pts[tri[:, 0]]
+    p1 = pts[tri[:, 1]]
+    p2 = pts[tri[:, 2]]
+    z0 = vals[tri[:, 0]]
+    z1 = vals[tri[:, 1]]
+    z2 = vals[tri[:, 2]]
 
     # Circumcircles (center p0 + u, radius**2 r2) and twice the signed areas
-    e1, e2 = p1 - p0, p2 - p0
+    e1 = p1 - p0
+    e2 = p2 - p0
     area2 = e1[:, 0] * e2[:, 1] - e1[:, 1] * e2[:, 0]
-    n1, n2 = (e1 ** 2).sum(axis=1), (e2 ** 2).sum(axis=1)
+    n1 = (e1 ** 2).sum(axis=1)
+    n2 = (e2 ** 2).sum(axis=1)
     u = N.column_stack((e2[:, 1] * n1 - e1[:, 1] * n2,
                         e1[:, 0] * n2 - e2[:, 0] * n1)) / (2 * area2[:, None])
     center = p0 + u
@@ -159,14 +181,20 @@ def _interpolate(pts, vals, xo, yo, fix=True):
     # and nearly cancel. L is computed in exactly the same way for both, so
     # that its rounding errors cancel as well.
     kappa = -area2 * N.abs(area2)
-    # L(a, b) = (ay - by) * (x - ax) + (bx - ax) * (y - ay), as
-    # (ay - by, bx - ax, ax, ay) for each triangle
-    edges = [(a[:, 1] - b[:, 1], b[:, 0] - a[:, 0], a[:, 0], a[:, 1])
-             for a, b in ((p1, p2), (p0, p2), (p0, p1))]
+    edges = ((p1, p2), (p0, p2), (p0, p1))
 
     def line(t, edge, xs, ys, out):
-        cx, cy, ax, ay = (c[t] for c in edge)
-        return N.add.outer(cx * (xs - ax), cy * (ys - ay), out=out)
+        """Evaluate the line function of an edge of triangle t on a grid.
+
+        For the edge (a, b) = edges[edge], this is
+        L(x, y) = (ay - by) * (x - ax) + (bx - ax) * (y - ay), which is zero
+        on the line through a and b. It is evaluated at the points
+        (xs[i], ys[j]) and stored in `out`, which is returned.
+        """
+        a = edges[edge][0][t]
+        b = edges[edge][1][t]
+        return N.add.outer((a[1] - b[1]) * (xs - a[0]),
+                           (b[0] - a[0]) * (ys - a[1]), out=out)
 
     # Scratch arrays for one block, reused for every triangle (allocating
     # them for each triangle makes the interpolation about 10% slower)
@@ -177,29 +205,41 @@ def _interpolate(pts, vals, xo, yo, fix=True):
     out = N.empty((xo.size, yo.size, vals.shape[1]))
     for r0 in range(0, xo.size, BLOCK_ROWS):
         xb = xo[r0:r0 + BLOCK_ROWS]
-        total, wsum = total_buf[:xb.size], wsum_buf[:xb.size]
+        total = total_buf[:xb.size]
+        wsum = wsum_buf[:xb.size]
         total[:] = 0
         wsum[:] = 0
         for t in N.flatnonzero((center[:, 0] + r > xb[0]) & (center[:, 0] - r < xb[-1])):
-            # The part of the block that the circumcircle covers
+            # The part of the block that the circumcircle covers: the rows
+            # within the radius, and the columns within the half-width h of
+            # the circle at the row closest to its center
             i0, i1 = N.searchsorted(xb, center[t, 0] + (-r[t], r[t]))
-            dxmin = max(xb[i0] - center[t, 0], center[t, 0] - xb[i1 - 1], 0) if i1 > i0 else r[t]
+            if i0 >= i1:
+                continue
+            dxmin = max(xb[i0] - center[t, 0], center[t, 0] - xb[i1 - 1], 0)
             h = N.sqrt(max(r2[t] - dxmin ** 2, 0))
             j0, j1 = N.searchsorted(yo, center[t, 1] + (-h, h))
-            if i0 >= i1 or j0 >= j1:
+            if j0 >= j1:
                 continue
-            xs, ys = xb[i0:i1], yo[j0:j1]
-            dx, dy = xs - p0[t, 0], ys - p0[t, 1]
-            d, lines, f = (a[:xs.size * ys.size].reshape(xs.size, ys.size) for a in scratch)
+            xs = xb[i0:i1]
+            ys = yo[j0:j1]
+            dx = xs - p0[t, 0]
+            dy = ys - p0[t, 1]
+
+            # Views of the scratch arrays with the shape of this part
+            shape = (xs.size, ys.size)
+            d = scratch[0][:xs.size * ys.size].reshape(shape)
+            lines = scratch[1][:xs.size * ys.size].reshape(shape)
+            f = scratch[2][:xs.size * ys.size].reshape(shape)
 
             # w = kappa * D**2 / (product of the line functions), computed
             # in place in d (zero outside the circumcircle, where D <= 0)
             N.add.outer(dx * (2 * u[t, 0] - dx), dy * (2 * u[t, 1] - dy), out=d)
             N.maximum(d, 0, out=d)
             d *= d
-            line(t, edges[0], xs, ys, out=lines)
-            lines *= line(t, edges[1], xs, ys, out=f)
-            lines *= line(t, edges[2], xs, ys, out=f)
+            line(t, 0, xs, ys, out=lines)
+            lines *= line(t, 1, xs, ys, out=f)
+            lines *= line(t, 2, xs, ys, out=f)
             w = N.divide(d, lines, out=d, where=d > 0)
             w *= kappa[t]
             total[i0:i1, j0:j1] += w
