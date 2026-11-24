@@ -353,7 +353,7 @@ class Op_wavelet_atrous(Op):
                                 stop_wav = True
                                 break
                             answ = raw_input_no_history(prompt)
-                    n_gaus_per_scale[j] = len(wimg.gaussians) 
+                    n_gaus_per_scale[j] = len(wimg.gaussians)
                     if len(wimg.gaussians) > 0:
                         img.resid_wavelets_arr = self.subtract_wvgaus(img.opts, img.resid_wavelets_arr, wimg.gaussians, wimg.islands)
                         if img.opts.atrous_sum:
