@@ -106,14 +106,14 @@ Type ``inp process_image`` to list the main reduction parameters:
                                    Specify as (box, step) in pixels. E.g., rms_box =
                                    (40, 10) => box of 40x40 pixels, step of 10
                                    pixels. None => calculate inside program
-    :term:`rms_map` ............... None : Background rms map: True => use 2-D rms map;
+    :term:`rms_map` ............... None : Background RMS map: True => use 2-D rms map;
                                    False => use constant rms; None => calculate
                                    inside program
     :term:`shapelet_do` .......... False : Decompose islands into shapelets
     :term:`spectralindex_do` ..... False : Calculate spectral indices (for multi-channel
                                    image)
     :term:`thresh` ................ None : Type of thresholding: None => calculate inside
-                                   program, 'fdr' => use false detection rate
+                                   program, 'fdr' => use False Detection Rate
                                    algorithm, 'hard' => use sigma clipping
     :term:`thresh_isl` ............. 3.0 : Threshold for the island boundary in number of
                                    sigma above the mean. Determines extent of
@@ -765,6 +765,7 @@ The output options are:
       :term:`print_timing` ....... False : Print basic timing information
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
                                    sent to the log file as usual
+      :term:`residual_stats_do` .. False : Calculate and log statistics of residual images
       :term:`savefits_det_meanim`  False : Save detection background mean image as fits file
       :term:`savefits_det_rmsim` . False : Save detection background rms image as fits file
       :term:`savefits_meanim` .... False : Save background mean image as fits file
@@ -816,6 +817,11 @@ The output options are:
     quiet
         This parameter is a Boolean (default is ``False``). If ``True``\, suppress text output to screen. Output is still
         sent to the log file as usual.
+
+    residual_stats_do
+        This parameter is a Boolean (default is ``False``). If ``True``, calculate and log
+        statistics of the Gaussian residual image and, when applicable, the Shapelet residual
+        image. Calculating these statistics adds computational cost.
 
     savefits_det_rmsim
         This parameter is a Boolean (default is ``False``). If ``True``\, save detection background rms image as a FITS file.
