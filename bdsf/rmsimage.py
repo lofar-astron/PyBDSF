@@ -321,6 +321,10 @@ class Op_rmsimage(Op):
         else:
             map_opts = (kappa, img.rms_box, opts.spline_rank)
 
+        external_maps_supplied = (
+            opts.rmsmean_map_filename is not None
+            and len(opts.rmsmean_map_filename) != 0
+        )
         for ipol, pol in enumerate(pols):
             data = ch0_images[ipol]
             mean = np.zeros(data.shape, dtype=np.float32)
@@ -331,7 +335,10 @@ class Op_rmsimage(Op):
                 pol_txt = ''
 
             ## calculate rms/mean maps if needed
-            if ((opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const'])) and img.rms_box[0] > min(image.shape)/4.0:
+            if (not external_maps_supplied
+                    and ((opts.rms_map is not False) or
+                        (opts.mean_map not in ['zero', 'const']))
+                    and img.rms_box[0] > min(image.shape)/4.0):
             # rms box is too large - just use constant rms and mean
                 self.output_rmsbox_size(img)
                 mylogger.userinfo(mylog, 'Size of rms_box larger than 1/4 of image size')
@@ -360,6 +367,13 @@ class Op_rmsimage(Op):
                     # rms = pyfits.open(rms_fits_name, mode="readonly")[0].data
                     rms, hdr = read_image_from_file(rms_fits_name, img, img.indir)
                     CheckShape(rms); rms = rms[0,0]
+                    # External maps are authoritative by default. Respect user options.
+                    if pol == 'I':
+                        if opts.rms_map is None:
+                            img.use_rms_map = True
+
+                        if opts.mean_map == 'default':
+                            img.mean_map_type = 'map'
 
                 elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
                     if do_adapt and ipol == 0:
@@ -900,11 +914,14 @@ class Op_rmsimage(Op):
                 if bounds[i]:
                     axes[i][-1] = imgshape[i] + pad_border_size - BS/2. - .5
 
-        # Step 5: fill in boxes with < 5 unmasked pixels (set to values of
-        # np.inf)
-        if np.count_nonzero(mean_map != np.inf) < mapshape[0]*mapshape[1]:
-            mean_map = self.fill_masked_regions(mean_map)
-            rms_map = self.fill_masked_regions(rms_map)
+        # Step 5: fill in boxes with too few unmasked pixels (set to inf).
+        # Check the two maps independently: one can be invalid even when the
+        # other is complete.
+        if np.any(~np.isfinite(mean_map)):
+            mean_map = self.fill_masked_regions(mean_map, map_name='mean')
+
+        if np.any(~np.isfinite(rms_map)):
+            rms_map = self.fill_masked_regions(rms_map, map_name='RMS')
 
         return axes, mean_map, rms_map
 
@@ -939,11 +956,22 @@ class Op_rmsimage(Op):
         return cm_cr[:, 0], cm_cr[:, 1]
 
 
-    def fill_masked_regions(self, themap):
-        """Fill masked regions in themap using local median, with global median fallback."""
-        # Compute global median as a fallback for finite values
+    def fill_masked_regions(self, themap, map_name='map'):
+        """Fill masked regions using local median, with global median fallback."""
+        # Compute global median as a fallback for finite values.
+        # If the entire map is invalid, fall back to 1.0 everywhere.
         valid_mask = np.isfinite(themap)
-        global_fallback = np.nanmedian(themap[valid_mask]) if np.any(valid_mask) else 1.0
+
+        if np.any(valid_mask):
+            global_fallback = np.nanmedian(themap[valid_mask])
+        else:
+            mylog = mylogger.logging.getLogger("PyBDSF.RmsMean")
+            mylog.warning(
+                "No finite estimates in %s map (shape %d x %d); "
+                "using 1.0 everywhere.",
+                map_name, *themap.shape
+            )
+            return np.full_like(themap, 1.0)
 
         # Find coordinates of missing or invalid data
         masked_boxes = np.where(~np.isfinite(themap))
