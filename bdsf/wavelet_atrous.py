@@ -97,7 +97,7 @@ class Op_wavelet_atrous(Op):
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
                 if min_size < min(resid.shape):
-                    mylog.warning("Automatic j_max = %d is limited by the largest island (bounding box %d x %d pixels, "
+                    mylog.info("Automatic j_max = %d is limited by the largest island (bounding box %d x %d pixels, "
                             "%d pixels in the island), not by the image size. Larger scales are not decomposed.",
                             jmax, max_isl_shape[0], max_isl_shape[1], max_isl_npix)
             img.wavelet_lpf = lpf
@@ -118,7 +118,7 @@ class Op_wavelet_atrous(Op):
             pix_masked = N.where(N.isnan(resid))
             n_masked = len(pix_masked[0])
             if n_masked > 0:
-                mylog.warning("%.1f%% of pixels are blanked (NaN). Wavelet images may be biased near blanked regions.",
+                mylog.info("%.1f%% of pixels are blanked (NaN). Wavelet images may be biased near blanked regions.",
                               100.0 * n_masked / resid.size)
             jmin = 1
             if img.opts.ncores is None:
@@ -156,7 +156,7 @@ class Op_wavelet_atrous(Op):
                     y1 = (l + (l - 1) * (2 ** (j - 1) - 1))
                     bs = max(5 * y1, box)  # changed from 10 to 5
                     if bs > min(n, m) / 2:
-                        mylog.warning("Wavelet scale #%d: rms box (%d px) exceeds half of the image; "
+                        mylog.info("Wavelet scale #%d: rms box (%d px) exceeds half of the image; "
                                       "using constant rms and mean over the whole image.", j, bs)
                         wopts['rms_map'] = False
                         wopts['mean_map'] = 'const'
