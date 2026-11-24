@@ -105,7 +105,7 @@ class Op_threshold(Op):
         img.completed_Ops.append('threshold')
         return img
 
-    def get_srcp(self, img, cutoff=5.0):
+    def get_srcp(self, img, cutoff):
         from . import sourcecounts as sc
         fwsig = const.fwsig
         spin = -0.80
