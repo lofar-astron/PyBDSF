@@ -110,7 +110,8 @@ class Op_threshold(Op):
         spin = -0.80
         freq = img.frequency
 
-        self.logger.warning(
+        mylogger.userinfo(
+            self.logger,
             f"Automatic threshold selection uses source counts scaled from 1.4 GHz assuming spectral index {spin:.2f}. "
             "The estimated number of source pixels is model-dependent and may differ from the actual source population in this image."
         )
