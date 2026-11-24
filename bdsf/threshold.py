@@ -124,7 +124,7 @@ class Op_threshold(Op):
         index = 0
         for i, s in enumerate(scflux):
             if s > smin_L:
-                index = i
+                index = min(i, len(scflux) - 2) # https://github.com/lofar-astron/PyBDSF/pull/453#discussion_r4678221607
                 break
         else:
             # smin_L is above the calibrated range:
