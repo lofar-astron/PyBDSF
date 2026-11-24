@@ -106,14 +106,14 @@ Type ``inp process_image`` to list the main reduction parameters:
                                    Specify as (box, step) in pixels. E.g., rms_box =
                                    (40, 10) => box of 40x40 pixels, step of 10
                                    pixels. None => calculate inside program
-    :term:`rms_map` ............... None : Background rms map: True => use 2-D rms map;
+    :term:`rms_map` ............... None : Background RMS map: True => use 2-D rms map;
                                    False => use constant rms; None => calculate
                                    inside program
     :term:`shapelet_do` .......... False : Decompose islands into shapelets
     :term:`spectralindex_do` ..... False : Calculate spectral indices (for multi-channel
                                    image)
     :term:`thresh` ................ None : Type of thresholding: None => calculate inside
-                                   program, 'fdr' => use false detection rate
+                                   program, 'fdr' => use False Detection Rate
                                    algorithm, 'hard' => use sigma clipping
     :term:`thresh_isl` ............. 3.0 : Threshold for the island boundary in number of
                                    sigma above the mean. Determines extent of
@@ -765,6 +765,7 @@ The output options are:
       :term:`print_timing` ....... False : Print basic timing information
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
                                    sent to the log file as usual
+      :term:`residual_stats_do` .. False : Calculate and log statistics of residual images
       :term:`savefits_det_meanim`  False : Save detection background mean image as fits file
       :term:`savefits_det_rmsim` . False : Save detection background rms image as fits file
       :term:`savefits_meanim` .... False : Save background mean image as fits file
@@ -816,6 +817,11 @@ The output options are:
     quiet
         This parameter is a Boolean (default is ``False``). If ``True``\, suppress text output to screen. Output is still
         sent to the log file as usual.
+
+    residual_stats_do
+        This parameter is a Boolean (default is ``False``). If ``True``, calculate and log
+        statistics of the Gaussian residual image and, when applicable, the Shapelet residual
+        image. Calculating these statistics adds computational cost.
 
     savefits_det_rmsim
         This parameter is a Boolean (default is ``False``). If ``True``\, save detection background rms image as a FITS file.
@@ -950,9 +956,20 @@ The wavelet module performs the following steps:
 
 * For each scale (*j*), the appropriate *à trous* wavelet transformation is made (see Holschneider et al. 1989 for details). Additionally, the "remainder" image (called the *c_J* image) is also made. This image includes all emission not included in the other wavelet images.
 
-* Depending on the value of the ``atrous_sum`` option, fitting is done to either an image that is a sum over all scales equal to or larger than the scale under consideration (``atrous_sum = True``) or to an image of a single scale (``atrous_sum = False``). Fitting to the sum over all larger scales will generally result in increased signal to noise.
+* Depending on the value of the `atrous_sum` option, fitting is
+  done either to the remaining-scale image (`atrous_sum = True`)
+  or to an individual wavelet scale (`atrous_sum = False`).
+  Fitting to the remaining-scale image generally results in
+  increased signal to noise.
 
-* If ``atrous_bdsm = True``, an rms map and a mean map are made for each wavelet image and Gaussians are fit in the normal way. Gaussians can be optionally restricted to lie within islands found from the initial image. If a wavelet island overlaps spatially with an existing island, the two islands are merged together to form a single island. The wavelet Gaussians can then be included in source catalogs (see :ref:`write_catalog`).
+  When `atrous_sum = True`, the remaining-scale image includes
+  emission from the current and larger wavelet scales, with
+  contributions from previously fitted wavelet Gaussians removed.
+  When `atrous_sum = False`, fitting is performed on the individual
+  wavelet component, calculated as the difference between two
+  consecutive low-pass images.
+
+* If ``atrous_bdsm_do = True``, an rms map and a mean map are made for each wavelet image and Gaussians are fit in the normal way. Gaussians can be optionally restricted to lie within islands found from the initial image. If a wavelet island overlaps spatially with an existing island, the two islands are merged together to form a single island. The wavelet Gaussians can then be included in source catalogs (see :ref:`write_catalog`).
 
 The options for this module are as follows:
 
@@ -1001,6 +1018,34 @@ The options for this module are as follows:
     atrous_sum
         This parameter is a Boolean (default is ``True``). If ``True``, fitting is done on an image that is the sum of the remaining wavelet scales. Using the sum will generally result in improved signal.
         If ``False``, fitting is done on only the wavelet scale under consideration.
+
+
+Wavelet output images
+---------------------
+
+If `output_all = True`, the wavelet module writes the following
+FITS images to the `wavelet` output directory:
+
+* `*.atrous.wJ.fits`: Individual wavelet component at scale J,
+  when `atrous_sum = False`.
+
+* `*.atrous.remainingJ.fits`: Remaining-scale image used for
+  Gaussian fitting at scale J, when `atrous_sum = True`.
+
+* `*.atrous.cJ.fits`: Final low-pass (remainder) image after
+  the wavelet decomposition.
+
+* `model/*.model_wavelets.fits`: Complete source model,
+  including both the standard Gaussian model and the additional
+  wavelet Gaussian model.
+
+* `model/*.model_wavelets_component.fits`: Additional model
+  contributed by wavelet Gaussian fitting only.
+
+* `residual/*.resid_wavelets.fits`: Final residual image after
+  subtraction of both the standard Gaussian model and the
+  wavelet Gaussian model.
+
 
 .. _psf_vary_do:
 

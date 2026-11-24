@@ -693,9 +693,9 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
             # ds9 does not correct for postion-dependent angle or pixel scale
             # for region files, so we must use the uncorrected values
             if deconvolve:
-                deconv = g.deconv_size_sky_uncorr
+                deconv = list(g.deconv_size_sky_uncorr)
             else:
-                deconv = g.size_sky_uncorr
+                deconv = list(g.size_sky_uncorr)
             if deconv[0] == 0.0 and deconv[1] == 0.0:
                 deconv[2] = 0.0
                 region = 'point(' + str(ra) + ',' + str(dec) + \
@@ -820,8 +820,11 @@ def write_islands(img):
 
     if img.j == 0:
         f = open(filename, 'w')
-        f.write('Wavelet# Island_id  bbox origin shape mask_active mask_noisy size_active mean rms max_value ngaul gresid_mean ' +
-                'gresid_rms resid_rms resid_mean nsource \n')
+        f.write(
+            'Wavelet# Island_id bbox_x0 bbox_x1 bbox_y0 bbox_y1 '
+            'origin_x origin_y shape_x shape_y mask_active mask_noisy '
+            'size_active mean rms max_value ngaul gresid_mean gresid_rms nsource\n'
+        )
     else:
         f = open(filename, 'a')
 
