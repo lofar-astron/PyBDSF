@@ -110,13 +110,25 @@ class Op_make_residimage(Op):
 
             n_valid_pix_outside_isl = n_valid_pix_before_all_a - n_valid_pix_inside_isl
             if n_valid_pix_inside_isl > 0:
-                mylogger.userinfo(mylog, "Residual RMS  inside  islands (before / after)", "%.3f / %.3f σ" % (N.sqrt(sum_sq_norm_resid_before_inside_isl / n_valid_pix_inside_isl), N.sqrt(sum_sq_norm_resid_after_inside_isl / n_valid_pix_inside_isl)))
-                mylogger.userinfo(mylog, "Residual mean inside  islands (before / after)", "%+.3f / %+.3f σ" % (sum_norm_resid_before_inside_isl / n_valid_pix_inside_isl, sum_norm_resid_after_inside_isl / n_valid_pix_inside_isl))
+                mylogger.userinfo(mylog,
+                                  "Residual RMS  inside  islands (before / after)",
+                                  "%.3f / %.3f σ" % (N.sqrt(sum_sq_norm_resid_before_inside_isl / n_valid_pix_inside_isl),
+                                                     N.sqrt(sum_sq_norm_resid_after_inside_isl / n_valid_pix_inside_isl)))
+                mylogger.userinfo(mylog,
+                                  "Residual mean inside  islands (before / after)",
+                                  "%+.3f / %+.3f σ" % (sum_norm_resid_before_inside_isl / n_valid_pix_inside_isl,
+                                                       sum_norm_resid_after_inside_isl / n_valid_pix_inside_isl))
             if n_valid_pix_outside_isl > 0:
-                mylogger.userinfo(mylog, "Residual RMS  outside islands (before / after)", "%.3f / %.3f σ" % ( N.sqrt((sum_sq_norm_resid_before_all - sum_sq_norm_resid_before_inside_isl) / n_valid_pix_outside_isl),
-                                                                                                              N.sqrt((sum_sq_norm_resid_after_all - sum_sq_norm_resid_after_inside_isl) / n_valid_pix_outside_isl)))
-                mylogger.userinfo(mylog, "Residual mean outside islands (before / after)", "%+.3f / %+.3f σ" % ( (sum_norm_resid_before_all - sum_norm_resid_before_inside_isl) / n_valid_pix_outside_isl,
-                                                                                                                (sum_norm_resid_after_all - sum_norm_resid_after_inside_isl) / n_valid_pix_outside_isl))
+                mylogger.userinfo(mylog,
+                                  "Residual RMS  outside islands (before / after)",
+                                  "%.3f / %.3f σ" % ( N.sqrt((sum_sq_norm_resid_before_all - sum_sq_norm_resid_before_inside_isl) /
+                                                             n_valid_pix_outside_isl), N.sqrt((sum_sq_norm_resid_after_all - sum_sq_norm_resid_after_inside_isl) /
+                                                                                              n_valid_pix_outside_isl)))
+                mylogger.userinfo(mylog,
+                                  "Residual mean outside islands (before / after)",
+                                  "%+.3f / %+.3f σ" % ( (sum_norm_resid_before_all - sum_norm_resid_before_inside_isl) /
+                                                       n_valid_pix_outside_isl, (sum_norm_resid_after_all - sum_norm_resid_after_inside_isl) /
+                                                       n_valid_pix_outside_isl))
             if not img.opts.residual_stats_do:
                 mylog.info("More residual statistics can be enabled with the 'residual_stats_do' option.")
 
