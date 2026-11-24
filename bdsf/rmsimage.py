@@ -214,7 +214,7 @@ class Op_rmsimage(Op):
                 isl_maxposn = []
                 isl_area_highthresh = []
                 if img.masked:
-                    act_pixels = ~(mask.copy())
+                    act_pixels = ~mask
                     act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
                 else:
                     act_pixels = (image-cmean)/threshold >= crms
@@ -234,7 +234,7 @@ class Op_rmsimage(Op):
         # largest island at this threshold to set the large-scale rms_box
         threshold = 10.0
         if img.masked:
-            act_pixels = ~(mask.copy())
+            act_pixels = ~mask
             act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
         else:
             act_pixels = (image-cmean)/threshold >= crms
@@ -684,6 +684,7 @@ class Op_rmsimage(Op):
             ][::-1]
             mapcoord_threaded(rms_map2,  ax2, order=interp, output=out_rms2, ncores=ncores)
             mapcoord_threaded(mean_map2, ax2, order=interp, output=out_mean2, ncores=ncores)
+            del rms_map2, mean_map2
 
             # For each bright source, find nearest points and weight them towards
             # the small scale maps.
@@ -702,7 +703,6 @@ class Op_rmsimage(Op):
                 xx, yy = np.indices((bbox_xsize, bbox_ysize))
                 dist = np.hypot(xx - src_center[0], yy - src_center[1])
                 weights = np.ones((bbox_xsize, bbox_ysize))
-
                 # Taper weights to 0 where small-scale value is within a factor of
                 # 2 of the original large scale value. Use distance to the center of
                 # the box to determine taper value. This tapering prevents the use of
@@ -720,7 +720,7 @@ class Op_rmsimage(Op):
             blend = weights_map > 0
             rms_map = np.where(blend, rms_map1 * weights_map + out_rms2 * (1.0 - weights_map), out_rms2)
             mean_map = np.where(blend, mean_map1 * weights_map + out_mean2 * (1.0 - weights_map), out_mean2)
-
+            del rms_map1, mean_map1
         else:
             rms_map = rms_map1
             mean_map = mean_map1
