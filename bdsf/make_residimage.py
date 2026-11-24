@@ -77,31 +77,32 @@ class Op_make_residimage(Op):
                 change = 100.0 * (rms_after / rms_before - 1.0)
                 mylogger.userinfo(mylog, "Residual RMS  change after Gaussian fitting   ", "%+.2f%%" % change)
 
-            # The same statistic separately inside and outside islands
-            s1_b_in = s1_a_in = 0.0
-            ss_b_in = ss_a_in = 0.0
-            n_in = 0
+            # Build a combined mask of all active island pixels.
+            # Overlapping islands must contribute each pixel only once.
+            island_mask = N.zeros(shape, dtype=bool)
+
             for isl in img.islands:
                 bb = tuple(isl.bbox)
-                # Active island pixels only; NaN elsewhere is skipped by the helper.
-                # 'before' uses the same pixel set as 'after' (also excludes masked pixels).
-                r_a = N.where(~isl.mask_active, resid_gaus[bb], N.nan)
-                r_b = N.where(N.isfinite(r_a), img.ch0_arr[bb], N.nan)
-                m = img.mean_arr[bb]
-                s = img.rms_arr[bb]
-                s1b, sb, _  = func.residual_sumsq_in_sigma(r_b, m, s)
-                s1a, sa, na = func.residual_sumsq_in_sigma(r_a, m, s)
-                s1_b_in += s1b
-                s1_a_in += s1a
-                ss_b_in += sb
-                ss_a_in += sa
-                n_in += na
+                island_mask[bb] |= ~isl.mask_active
+
+            # Use the same valid pixels for before and after.
+            island_mask &= N.isfinite(resid_gaus)
+            r_a_in = resid_gaus[island_mask]
+            r_b_in = img.ch0_arr[island_mask]
+            m_in = img.mean_arr[island_mask]
+            s_in = img.rms_arr[island_mask]
+            s1_b_in, ss_b_in, _ = func.residual_sumsq_in_sigma(r_b_in, m_in, s_in)
+            s1_a_in, ss_a_in, n_in = func.residual_sumsq_in_sigma(r_a_in, m_in, s_in)
+
             n_out = n_all_a - n_in
-            if n_in > 0 and n_out > 0:
-                mylogger.userinfo(mylog, "Residual RMS  inside  islands (before / after)", "%.3f / %.3f σ"   % (N.sqrt(ss_b_in / n_in),               N.sqrt(ss_a_in / n_in)))
-                mylogger.userinfo(mylog, "Residual RMS  outside islands (before / after)", "%.3f / %.3f σ"   % (N.sqrt((ss_b_all - ss_b_in) / n_out), N.sqrt((ss_a_all - ss_a_in) / n_out)))
-                mylogger.userinfo(mylog, "Residual mean inside  islands (before / after)", "%+.3f / %+.3f σ" % (s1_b_in / n_in,                       s1_a_in / n_in))
-                mylogger.userinfo(mylog, "Residual mean outside islands (before / after)", "%+.3f / %+.3f σ" % ((s1_b_all - s1_b_in) / n_out,         (s1_a_all - s1_a_in) / n_out))
+            if n_in > 0:
+                mylogger.userinfo(mylog, "Residual RMS  inside  islands (before / after)", "%.3f / %.3f σ" % (N.sqrt(ss_b_in / n_in), N.sqrt(ss_a_in / n_in)))
+                mylogger.userinfo(mylog, "Residual mean inside  islands (before / after)", "%+.3f / %+.3f σ" % (s1_b_in / n_in, s1_a_in / n_in))
+            if n_out > 0:
+                mylogger.userinfo(mylog, "Residual RMS  outside islands (before / after)", "%.3f / %.3f σ" % ( N.sqrt((ss_b_all - ss_b_in) / n_out),
+                                                                                                              N.sqrt((ss_a_all - ss_a_in) / n_out)))
+                mylogger.userinfo(mylog, "Residual mean outside islands (before / after)", "%+.3f / %+.3f σ" % ( (s1_b_all - s1_b_in) / n_out,
+                                                                                                                (s1_a_all - s1_a_in) / n_out))
             if not img.opts.residual_stats_do:
                 mylog.info("More residual statistics can be enabled with the 'residual_stats_do' option.")
 
