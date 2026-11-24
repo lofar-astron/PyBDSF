@@ -1,8 +1,0 @@
-1s/ DTTGR/DTG/
-2d
-1r zap.head
-w
-4d
-.-1r zap.ex
-w
-q

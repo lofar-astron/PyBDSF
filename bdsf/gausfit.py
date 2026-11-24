@@ -7,9 +7,9 @@ in the image, and do post-fitting flagging of the extracted
 gaussians.
 
 The fitting itself is implemented by the means of MGFunction
-class and a number of fitter routines in _cbdsm module.
+class and the lm_fit_with_derivatives fitter routine in the mgfunction module.
 MGFunction class implements multi-gaussian function and
-provides all functionality required by the specific fitters.
+provides all functionality required by the fitter.
 """
 
 from .image import *
@@ -17,6 +17,7 @@ from . import mylogger
 from . import statusbar
 import scipy.ndimage as nd
 from . import multi_proc as mp
+from .mgfunction import GaussianType, MGFunction, lm_fit_with_derivatives
 import itertools
 from . import functions as func
 from .const import fwsig
@@ -402,7 +403,6 @@ class Op_gausfit(Op):
                and one or more flagged Gaussians indicate
                that significant residuals remain (peak > thr).
         """
-        from ._cbdsm import MGFunction
 
         verbose = opts.verbose_fitting
         if verbose:
@@ -586,7 +586,6 @@ class Op_gausfit(Op):
         # Return whatever we got
         if verbose:
             print('Preparing to return')
-        isl.mg_fcn = fcn
         gaul = [self.fixup_gaussian(isl, g) for g in gaul]
         fgaul = [(flag, self.fixup_gaussian(isl, g)) for flag, g in fgaul]
 
@@ -834,11 +833,9 @@ class Op_gausfit(Op):
         thr  : peak threshold for adding more gaussians
         verbose: whether to print fitting progress information
         """
-        from ._cbdsm import lmder_fit
-
         if verbose:
             print('Greetings from fit_iter')
-        fit = lmder_fit
+        fit = lm_fit_with_derivatives
         beam = list(beam)
 
         # First drop-in initial gaussians
@@ -850,7 +847,7 @@ class Op_gausfit(Op):
 
         # Do a round of fitting if any initials were provided
         if verbose:
-            print('About to call C++ wrapper')
+            print('About to call the fitter')
         fitok = True
         if len(gaul) != 0:
             fitok = fit(fcn, final=0, verbose=verbose)
@@ -898,13 +895,11 @@ class Op_gausfit(Op):
         parameters: initial values for gaussian parameters
         dof: total possible number of fitted parameters
         """
-        from ._cbdsm import Gtype
-
         if g3_only:
-            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.amplitude_and_position if fcn.fitted_parameters() + 3 <= dof else None)
         else:
-            gtype = (Gtype.g3 if fcn.fitted_parameters() + 3 <= dof else None)
-            gtype = (Gtype.g6 if fcn.fitted_parameters() + 6 <= dof else gtype)
+            gtype = (GaussianType.amplitude_and_position if fcn.fitted_parameters() + 3 <= dof else None)
+            gtype = (GaussianType.all_parameters if fcn.fitted_parameters() + 6 <= dof else gtype)
 
         if gtype:
             fcn.add_gaussian(gtype, parameters)
