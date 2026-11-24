@@ -63,9 +63,9 @@ class Op_threshold(Op):
                 img.thresh = 'fdr'
                 mylogger.userinfo(self.logger, f"Expected {cutoff:g}-sigma-clipped false detection rate > fdr_ratio")
                 mylogger.userinfo(self.logger, "Using FDR (False Detection Rate) thresholding")
-                self.logger.debug("Estimated number of source pixels (using sourcecounts.py) is %g", source_p)
-                self.logger.debug("Number of false positive pixels expected for %g-sigma is %g", cutoff, false_p)
-                self.logger.debug("Threshold for pixels set to : " + str.swapcase(img.thresh))
+            self.logger.debug("Estimated number of source pixels (using sourcecounts.py) is %g", source_p)
+            self.logger.debug("Number of false positive pixels expected for %g-sigma is %g", cutoff, false_p)
+            self.logger.debug("Threshold for pixels set to : " + str.swapcase(img.thresh))
         else:
             img.thresh = img.opts.thresh
 
