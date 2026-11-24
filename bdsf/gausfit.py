@@ -615,7 +615,8 @@ class Op_gausfit(Op):
         gaul = []
         fgaul = []
         ffimg_tot = N.zeros(isl.shape, dtype=N.float32)
-        peak_val = N.max(isl.image - isl.islmean)
+        resid = isl.image - isl.islmean
+        peak_val = N.max(resid[~isl.mask_active])
         count = 0
         while peak_val >= thr:
             count += 1
@@ -644,7 +645,8 @@ class Op_gausfit(Op):
                     ffimg = func.gaussian_fcn(gcopy, x_ax, y_ax)
                     ffimg_tot[bbox] += ffimg
                 peak_val_prev = peak_val
-                peak_val = N.max(isl.image - isl.islmean - ffimg_tot)
+                resid = isl.image - isl.islmean - ffimg_tot
+                peak_val = N.max(resid[~isl.mask_active])
                 if func.approx_equal(peak_val, peak_val_prev):
                     break
             else:
@@ -689,6 +691,7 @@ class Op_gausfit(Op):
             # So limit the total number of initial Gaussians, including those added during the CLEAN-like iterations.
             if len(inipeak) >= 25:
                 break
+
             _, stdnew, maxv, maxp, _, _ = func.arrstatmask(im1, mask)
             if stdnew > isl.rms and maxv >= thr and maxv >= 2.0*isl.rms:
                 domore = True
