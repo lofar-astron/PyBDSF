@@ -8,7 +8,6 @@
 
 #define PY_ARRAY_UNIQUE_SYMBOL PyArrayHandle
 
-#include "stat.h"
 #include "MGFunction.h"
 #include "Fitters.h"
 #include <num_util/num_util.h>
@@ -39,10 +38,6 @@ BOOST_PYTHON_MODULE(_cbdsm)
 
   scope().attr("__doc__") =
     "A collection of optimized C & Fortran routines for pybdsf";
-
-  def("bstat", &bstat, (arg("array"), arg("mask") = false, arg("kappa") = 3),
-      "calculate (clipped) mean and rms of the n-dimensional (masked) image\n"
-      "returns 4-tuple (mean, dev, cmean, cdev)\n");
 
   MGFunction::register_class();
 

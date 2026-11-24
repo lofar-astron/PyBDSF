@@ -7,8 +7,6 @@ use, even if weights are unity.
 
 import numpy as N
 from .image import *
-from . import _cbdsm
-#_cbdsm.init_numpy()
 from . import mylogger
 from . import functions as func
 
@@ -193,7 +191,6 @@ class Op_collapse(Op):
 
 def chan_stats(img, kappa):
 
-    bstat = func.bstat #_cbdsm.bstat
     nchan = img.shape[1]
     mean = []; rms = []; cmean = []; crms = []
     for ichan in range(nchan):
@@ -208,9 +205,9 @@ def chan_stats(img, kappa):
                 m, r, cm, cr = 0, 0, 0, 0
             else:
                 if immask.any():
-                    m, r, cm, cr, cnt = bstat(im, immask, kappa)
+                    m, r, cm, cr, cnt = func.bstat(im, immask, kappa)
                 else:
-                    m, r, cm, cr, cnt = bstat(im, None, kappa)
+                    m, r, cm, cr, cnt = func.bstat(im, None, kappa)
         else:
             m, r, cm, cr = 0, 0, 0, 0
         mean.append(m); rms.append(r); cmean.append(cm); crms.append(cr)
