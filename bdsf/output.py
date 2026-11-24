@@ -693,9 +693,9 @@ def make_ds9_str(img, glist, gnames, deconvolve=False, objtype='gaul', incl_empt
             # ds9 does not correct for postion-dependent angle or pixel scale
             # for region files, so we must use the uncorrected values
             if deconvolve:
-                deconv = g.deconv_size_sky_uncorr
+                deconv = list(g.deconv_size_sky_uncorr)
             else:
-                deconv = g.size_sky_uncorr
+                deconv = list(g.size_sky_uncorr)
             if deconv[0] == 0.0 and deconv[1] == 0.0:
                 deconv[2] = 0.0
                 region = 'point(' + str(ra) + ',' + str(dec) + \
