@@ -131,8 +131,9 @@ class Op_make_residimage(Op):
                                                        n_valid_pix_outside_isl))
             if not img.opts.residual_stats_do:
                 mylog.info("More residual statistics can be enabled with the 'residual_stats_do' option.")
-        else:
+        elif not img.opts.resid_sigma_stats_do and not img.waveletimage and not getattr(img, '_resid_sigma_hint_shown', False):
             mylogger.userinfo(mylog, "To assess how well the fitting went, rerun using 'resid_sigma_stats_do=True'")
+            img._resid_sigma_hint_shown = True
 
         if img.opts.output_all or img.opts.savefits_residim:
             if img.waveletimage:
