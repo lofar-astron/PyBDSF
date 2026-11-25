@@ -1,5 +1,36 @@
-from shutil import get_terminal_size
+import numpy as N
 
+def residual_sumsq_in_sigma(resid, mean, rms):
+    """Return (sum of z, sum of z**2, number of valid pixels)."""
+
+    if mean is None:
+        mean = 0.0
+    valid = N.isfinite(resid)
+    valid &= N.isfinite(rms)
+    valid &= rms > 0.0
+
+    if N.ndim(mean) > 0:
+        valid &= N.isfinite(mean)
+        z = resid[valid] - mean[valid]
+    else:
+        z = resid[valid] - mean
+
+    # Divide in-place to avoid allocating another array
+    N.divide(z, rms[valid], out=z)
+    s1 = N.sum(z, dtype=N.float64)
+
+    # Sum of squares without creating a temporary z*z array
+    ss = N.einsum('i,i->', z, z, dtype=N.float64)
+
+    return s1, ss, z.size
+
+def residual_rms_in_sigma(resid, mean, rms):
+    """Calculate residual RMS in units of noise."""
+
+    _, ss, n = residual_sumsq_in_sigma(resid, mean, rms)
+    if n == 0:
+        return N.nan
+    return N.sqrt(ss / n)
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""

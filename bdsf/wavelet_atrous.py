@@ -37,7 +37,6 @@ class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""
 
     def __call__(self, img):
-
         mylog = mylogger.logging.getLogger("PyBDSF." + img.log + "Wavelet")
 
         if img.opts.atrous_do:
@@ -64,6 +63,10 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
+            if img.opts.resid_sigma_stats_do:
+                rms_before = getattr(img, '_resid_gaus_rms_sigma', None)
+                if rms_before is None:
+                    rms_before = func.residual_rms_in_sigma(resid, img.mean_arr, img.rms_arr)
             img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
@@ -294,6 +297,12 @@ class Op_wavelet_atrous(Op):
                             im_old = self.subtract_wvgaus(img.opts, im_old, wimg.gaussians, wimg.islands)
                     if stop_wav:
                         break
+            if img.opts.resid_sigma_stats_do:
+                rms_after = func.residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr)
+                mylogger.userinfo(mylog, "Residual RMS before / after wavelet fitting", "%.3f / %.3f σ" % (rms_before, rms_after))
+                if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
+                    change = 100.0 * (rms_after / rms_before - 1.0)
+                    mylogger.userinfo(mylog, "Residual RMS change after wavelet fitting  ", "%+.2f%%" % change)
 
             pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
