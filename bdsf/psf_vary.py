@@ -936,9 +936,7 @@ class Op_psf_vary(Op):
         # All coefficients are interpolated at once
         z = N.transpose([tr_psf_cf[coord] for coord in index])
         interp = natgrid(xi, yi, z, xo, yo)
-        p={}
-        for k, coord in enumerate(index):
-            p[coord] = interp[:, :, k]
+        p = {coord: interp[:, :, k] for k, coord in enumerate(index)}
 
 #         if plot:
 #           for i,coord in enumerate(index):
@@ -965,8 +963,7 @@ class Op_psf_vary(Op):
         xi, yi = N.transpose(psfcoords)
         xo=N.arange(0.0,round(imshape[0]), round(compress))
         yo=N.arange(0.0,round(imshape[1]), round(compress))
-        prop_int = natgrid(xi, yi, prop, xo, yo)
-        return prop_int
+        return natgrid(xi, yi, prop, xo, yo)
 
 ##################################################################################################
     def create_psf_grid(self, psf_coeff_interp, imshape, xgrid, ygrid, skip, nmax, psfshape, basis, beta,

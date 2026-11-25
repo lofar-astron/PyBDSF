@@ -208,7 +208,7 @@ class _Triangles:
         self.z0 = z0
         self.gx = ((z1 - z0) * e2[:, 1:] - (z2 - z0) * e1[:, 1:]) / area2[:, None]
         self.gy = ((z2 - z0) * e1[:, :1] - (z1 - z0) * e2[:, :1]) / area2[:, None]
-        self.finite = N.isfinite(self.z0) & N.isfinite(self.gx) & N.isfinite(self.gy)
+        self.finite = (N.isfinite(self.z0) & N.isfinite(self.gx) & N.isfinite(self.gy)).all(axis=1)
 
         # The barycentric coordinates are l0 = L(p1, p2) / area2,
         # l1 = -L(p0, p2) / area2 and l2 = L(p0, p1) / area2, with L(a, b)
@@ -241,6 +241,7 @@ class _Triangles:
         total_buf = N.empty((BLOCK_ROWS, yo.size))
         abssum_buf = N.empty((BLOCK_ROWS, yo.size))
         wsum_buf = N.empty((BLOCK_ROWS, yo.size, nvals))
+        fbuf = N.empty(BLOCK_ROWS * yo.size * nvals)
 
         out = N.empty((xo.size, yo.size, nvals))
         bad = []
@@ -287,16 +288,17 @@ class _Triangles:
                 w *= self.kappa[t]
                 total[i0:i1, j0:j1] += w
                 abssum[i0:i1, j0:j1] += N.abs(w, out=f)
-                for k in range(nvals):
-                    N.add.outer(self.gx[t, k] * dx + self.z0[t, k], self.gy[t, k] * dy, out=f)
-                    f *= w
-                    ws = wsum[i0:i1, j0:j1, k]
-                    if self.finite[t, k]:
-                        ws += f
-                    else:
-                        # Skip the grid points outside the circumcircle
-                        # (w == 0), where f is NaN instead of zero
-                        N.add(ws, f, out=ws, where=w != 0)
+                # The weighted values of all sets at once; outside the
+                # circumcircle w is zero, but a nonfinite value would make
+                # the product NaN, so such grid points are skipped then
+                f = fbuf[:w.size * nvals].reshape(*shape, nvals)
+                N.add((dx[:, None] * self.gx[t] + self.z0[t])[:, None], dy[:, None] * self.gy[t], out=f)
+                f *= w[:, :, None]
+                ws = wsum[i0:i1, j0:j1]
+                if self.finite[t]:
+                    ws += f
+                else:
+                    N.add(ws, f, out=ws, where=w[:, :, None] != 0)
             N.divide(wsum, total[:, :, None], out=out[r0:r0 + BLOCK_ROWS])
             ok = N.isfinite(total) & (total > 0) & (abssum <= ILL_CONDITIONED * total)
             bad.extend(N.argwhere(~ok) + (r0, 0))
