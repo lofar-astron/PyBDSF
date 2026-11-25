@@ -45,6 +45,9 @@ BLOCK_ROWS = 32
 # precision. They get the mean of the values at two points shifted by
 # +/- SHIFT times the size of the triangulation instead, along one of
 # DIRECTIONS; these are perpendicular, so that no edge is parallel to both.
+# The slope 0.755 of the first direction is arbitrary. It only needs to differ
+# from the slopes of edges between points on a (near-)regular grid, such as 0,
+# +/-1 and other simple fractions, so that the second direction is rarely needed.
 ILL_CONDITIONED = 1e7
 SHIFT = 1e-8
 DIRECTIONS = ((1.0, 0.755), (-0.755, 1.0))
