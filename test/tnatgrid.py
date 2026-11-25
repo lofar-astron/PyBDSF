@@ -166,6 +166,19 @@ def test_nonfinite_values():
           and np.array_equal(res[:, :, 0], ng.natgrid(x, y, z[:, 0], grid, grid)))
     check('nonfinite values', ok, '(%d triangulations)' % len(calls))
 
+    # Only the grid points inside the circumcircles of the triangles with a
+    # nonfinite value get a nonfinite value; the number of finite points and
+    # the value at [13, 43] are those of the C extension
+    rng = np.random.default_rng(6)
+    x, y = rng.uniform(0, 100, (2, 10))
+    z = 1 + rng.normal(size=10)
+    z[3] = np.nan
+    grid = np.arange(101.0)
+    res = ng.natgrid(x, y, z, grid, grid)
+    nfinite = np.isfinite(res).sum()
+    ok = nfinite == 4401 and abs(res[13, 43] - 0.1317956654) < 1e-9
+    check('nonfinite values: affected values', ok, '(%d finite)' % nfinite)
+
 
 def test_noncontiguous():
     """Strided input arrays (as from numpy.transpose) are handled correctly."""

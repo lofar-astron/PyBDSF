@@ -208,6 +208,7 @@ class _Triangles:
         self.z0 = z0
         self.gx = ((z1 - z0) * e2[:, 1:] - (z2 - z0) * e1[:, 1:]) / area2[:, None]
         self.gy = ((z2 - z0) * e1[:, :1] - (z1 - z0) * e2[:, :1]) / area2[:, None]
+        self.finite = N.isfinite(self.z0) & N.isfinite(self.gx) & N.isfinite(self.gy)
 
         # The barycentric coordinates are l0 = L(p1, p2) / area2,
         # l1 = -L(p0, p2) / area2 and l2 = L(p0, p1) / area2, with L(a, b)
@@ -226,7 +227,8 @@ class _Triangles:
         are ill-conditioned: on or very close to an edge or a data point,
         where the total weight is zero, infinite or has lost its precision.
         This only depends on the weights, not on the values, so nonfinite
-        values are simply passed on to the output.
+        values are simply passed on to the output (at the grid points inside
+        the circumcircles of the triangles with such a value).
         """
         center = self.center
         r = self.r
@@ -288,7 +290,13 @@ class _Triangles:
                 for k in range(nvals):
                     N.add.outer(self.gx[t, k] * dx + self.z0[t, k], self.gy[t, k] * dy, out=f)
                     f *= w
-                    wsum[i0:i1, j0:j1, k] += f
+                    ws = wsum[i0:i1, j0:j1, k]
+                    if self.finite[t, k]:
+                        ws += f
+                    else:
+                        # Skip the grid points outside the circumcircle
+                        # (w == 0), where f is NaN instead of zero
+                        N.add(ws, f, out=ws, where=w != 0)
             N.divide(wsum, total[:, :, None], out=out[r0:r0 + BLOCK_ROWS])
             ok = N.isfinite(total) & (total > 0) & (abssum <= ILL_CONDITIONED * total)
             bad.extend(N.argwhere(~ok) + (r0, 0))
