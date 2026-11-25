@@ -42,10 +42,9 @@ BLOCK_ROWS = 32
 # Grid points where the sum of the absolute triangle weights exceeds the total
 # weight by more than this factor (close to an edge of the triangulation, where
 # the weights of the two triangles that share it nearly cancel) lose too much
-# precision; they get the mean of the values at two points shifted by
-# +/- SHIFT times the size of the triangulation instead, along the first of
-# DIRECTIONS for which both shifted points are well-conditioned. The two
-# directions are perpendicular, so that no edge is parallel to both.
+# precision. They get the mean of the values at two points shifted by
+# +/- SHIFT times the size of the triangulation instead, along one of
+# DIRECTIONS; these are perpendicular, so that no edge is parallel to both.
 ILL_CONDITIONED = 1e7
 SHIFT = 1e-8
 DIRECTIONS = ((1.0, 0.755), (-0.755, 1.0))
@@ -154,146 +153,154 @@ def _glibc_rand(seed, count):
     return N.array(r[344:], dtype=float) // 2
 
 
-def _interpolate(pts, vals, xo, yo, fix=True):
-    """Sibson interpolation of `vals` (shape (n, k)) at the grid (xo, yo).
+def _interpolate(pts, vals, xo, yo):
+    """Sibson interpolation of `vals` (shape (n, k)) at the grid (xo, yo)."""
+    triangles = _Triangles(pts, vals)
+    out, bad = triangles.evaluate(xo, yo)
+    for i, j in bad:
+        out[i, j] = triangles.retry(xo[i], yo[j])
+    return out
 
-    With `fix` False, ill-conditioned grid points are not retried, and a
-    boolean array that marks them is returned along with the values.
+
+def _line(a, b, xs, ys, out):
+    """Evaluate the line function of the edge (a, b) on a grid.
+
+    This is L(x, y) = (ay - by) * (x - ax) + (bx - ax) * (y - ay), which is
+    zero on the line through a and b. It is evaluated at the points
+    (xs[i], ys[j]) and stored in `out`, which is returned.
     """
-    # Sorting the vertices by index makes the first one a data point (close
-    # to the grid; the coordinates below are relative to it), and gives each
-    # edge the same orientation in both triangles that share it.
-    tri = N.sort(Delaunay(pts).simplices, axis=1)
-    p0 = pts[tri[:, 0]]
-    p1 = pts[tri[:, 1]]
-    p2 = pts[tri[:, 2]]
-    z0 = vals[tri[:, 0]]
-    z1 = vals[tri[:, 1]]
-    z2 = vals[tri[:, 2]]
+    return N.add.outer((a[1] - b[1]) * (xs - a[0]),
+                       (b[0] - a[0]) * (ys - a[1]), out=out)
 
-    # Circumcircles (center p0 + u, radius**2 r2) and twice the signed areas
-    e1 = p1 - p0
-    e2 = p2 - p0
-    area2 = e1[:, 0] * e2[:, 1] - e1[:, 1] * e2[:, 0]
-    n1 = (e1 ** 2).sum(axis=1)
-    n2 = (e2 ** 2).sum(axis=1)
-    u = N.column_stack((e2[:, 1] * n1 - e1[:, 1] * n2,
-                        e1[:, 0] * n2 - e2[:, 0] * n1)) / (2 * area2[:, None])
-    center = p0 + u
-    r2 = (u ** 2).sum(axis=1)
-    r = N.sqrt(r2)
 
-    # Gradient of the linear interpolant f = z0 + gx * (x - x0) + gy * (y - y0)
-    gx = ((z1 - z0) * e2[:, 1:] - (z2 - z0) * e1[:, 1:]) / area2[:, None]
-    gy = ((z2 - z0) * e1[:, :1] - (z1 - z0) * e2[:, :1]) / area2[:, None]
+class _Triangles:
+    """The Delaunay triangles of the data points, with what the interpolation needs."""
 
-    # The barycentric coordinates are l0 = L(p1, p2) / area2,
-    # l1 = -L(p0, p2) / area2 and l2 = L(p0, p1) / area2, with L(a, b) the
-    # line function of edge (a, b) below, so
-    #     W = D**2 / (|area2| * l0 * l1 * l2) * constant
-    #       = kappa * D**2 / (L(p1, p2) * L(p0, p2) * L(p0, p1)).
-    # Near an edge, the weights of the two triangles that share it are large
-    # and nearly cancel. L is computed in exactly the same way for both, so
-    # that its rounding errors cancel as well.
-    kappa = -area2 * N.abs(area2)
-    edges = ((p1, p2), (p0, p2), (p0, p1))
+    def __init__(self, pts, vals):
+        # Sorting the vertices by index makes the first one a data point
+        # (close to the grid; the coordinates below are relative to it), and
+        # gives each edge the same orientation in both triangles that share it.
+        tri = N.sort(Delaunay(pts).simplices, axis=1)
+        self.p0 = pts[tri[:, 0]]
+        self.p1 = pts[tri[:, 1]]
+        self.p2 = pts[tri[:, 2]]
+        z0 = vals[tri[:, 0]]
+        z1 = vals[tri[:, 1]]
+        z2 = vals[tri[:, 2]]
+        self.size = N.abs(pts).max()
 
-    def line(t, edge, xs, ys, out):
-        """Evaluate the line function of an edge of triangle t on a grid.
+        # Circumcircles (center p0 + u, radius**2 r2) and twice the signed areas
+        e1 = self.p1 - self.p0
+        e2 = self.p2 - self.p0
+        area2 = e1[:, 0] * e2[:, 1] - e1[:, 1] * e2[:, 0]
+        n1 = (e1 ** 2).sum(axis=1)
+        n2 = (e2 ** 2).sum(axis=1)
+        self.u = N.column_stack((e2[:, 1] * n1 - e1[:, 1] * n2,
+                                 e1[:, 0] * n2 - e2[:, 0] * n1)) / (2 * area2[:, None])
+        self.center = self.p0 + self.u
+        self.r2 = (self.u ** 2).sum(axis=1)
+        self.r = N.sqrt(self.r2)
 
-        For the edge (a, b) = edges[edge], this is
-        L(x, y) = (ay - by) * (x - ax) + (bx - ax) * (y - ay), which is zero
-        on the line through a and b. It is evaluated at the points
-        (xs[i], ys[j]) and stored in `out`, which is returned.
+        # Gradient of the linear interpolant f = z0 + gx * (x - x0) + gy * (y - y0)
+        self.z0 = z0
+        self.gx = ((z1 - z0) * e2[:, 1:] - (z2 - z0) * e1[:, 1:]) / area2[:, None]
+        self.gy = ((z2 - z0) * e1[:, :1] - (z1 - z0) * e2[:, :1]) / area2[:, None]
+
+        # The barycentric coordinates are l0 = L(p1, p2) / area2,
+        # l1 = -L(p0, p2) / area2 and l2 = L(p0, p1) / area2, with L(a, b)
+        # the line function of edge (a, b) (see _line), so
+        #     W = D**2 / (|area2| * l0 * l1 * l2) * constant
+        #       = kappa * D**2 / (L(p1, p2) * L(p0, p2) * L(p0, p1)).
+        # Near an edge, the weights of the two triangles that share it are
+        # large and nearly cancel. L is computed in exactly the same way for
+        # both, so that its rounding errors cancel as well.
+        self.kappa = -area2 * N.abs(area2)
+
+    def evaluate(self, xo, yo):
+        """Interpolate at the grid (xo, yo).
+
+        Returns the values, and the indices (i, j) of the grid points that
+        are ill-conditioned: on or very close to an edge or a data point,
+        where the total weight is zero, infinite or has lost its precision.
+        This only depends on the weights, not on the values, so nonfinite
+        values are simply passed on to the output.
         """
-        a = edges[edge][0][t]
-        b = edges[edge][1][t]
-        return N.add.outer((a[1] - b[1]) * (xs - a[0]),
-                           (b[0] - a[0]) * (ys - a[1]), out=out)
+        center = self.center
+        r = self.r
+        nvals = self.z0.shape[1]
 
-    # Scratch arrays for one block, reused for every triangle (allocating
-    # them for each triangle makes the interpolation about 10% slower)
-    scratch = [N.empty(BLOCK_ROWS * yo.size) for _ in range(3)]
-    total_buf = N.empty((BLOCK_ROWS, yo.size))
-    abssum_buf = N.empty((BLOCK_ROWS, yo.size))
-    wsum_buf = N.empty((BLOCK_ROWS, yo.size, vals.shape[1]))
+        # Arrays for one block of rows; the scratch arrays are reused for
+        # every triangle (allocating them for each triangle makes the
+        # interpolation about 10% slower)
+        scratch = [N.empty(BLOCK_ROWS * yo.size) for _ in range(3)]
+        total_buf = N.empty((BLOCK_ROWS, yo.size))
+        abssum_buf = N.empty((BLOCK_ROWS, yo.size))
+        wsum_buf = N.empty((BLOCK_ROWS, yo.size, nvals))
 
-    out = N.empty((xo.size, yo.size, vals.shape[1]))
-    if not fix:
-        bad_out = N.empty((xo.size, yo.size), dtype=bool)
-    for r0 in range(0, xo.size, BLOCK_ROWS):
-        xb = xo[r0:r0 + BLOCK_ROWS]
-        total = total_buf[:xb.size]
-        abssum = abssum_buf[:xb.size]
-        wsum = wsum_buf[:xb.size]
-        total[:] = 0
-        abssum[:] = 0
-        wsum[:] = 0
-        for t in N.flatnonzero((center[:, 0] + r > xb[0]) & (center[:, 0] - r < xb[-1])):
-            # The part of the block that the circumcircle covers: the rows
-            # within the radius, and the columns within the half-width h of
-            # the circle at the row closest to its center
-            i0, i1 = N.searchsorted(xb, center[t, 0] + (-r[t], r[t]))
-            if i0 >= i1:
-                continue
-            dxmin = max(xb[i0] - center[t, 0], center[t, 0] - xb[i1 - 1], 0)
-            h = N.sqrt(max(r2[t] - dxmin ** 2, 0))
-            j0, j1 = N.searchsorted(yo, center[t, 1] + (-h, h))
-            if j0 >= j1:
-                continue
-            xs = xb[i0:i1]
-            ys = yo[j0:j1]
-            dx = xs - p0[t, 0]
-            dy = ys - p0[t, 1]
+        out = N.empty((xo.size, yo.size, nvals))
+        bad = []
+        for r0 in range(0, xo.size, BLOCK_ROWS):
+            xb = xo[r0:r0 + BLOCK_ROWS]
+            total = total_buf[:xb.size]
+            abssum = abssum_buf[:xb.size]
+            wsum = wsum_buf[:xb.size]
+            total[:] = 0
+            abssum[:] = 0
+            wsum[:] = 0
+            for t in N.flatnonzero((center[:, 0] + r > xb[0]) & (center[:, 0] - r < xb[-1])):
+                # The part of the block that the circumcircle covers: the rows
+                # within the radius, and the columns within the half-width h of
+                # the circle at the row closest to its center
+                i0, i1 = N.searchsorted(xb, center[t, 0] + (-r[t], r[t]))
+                if i0 >= i1:
+                    continue
+                dxmin = max(xb[i0] - center[t, 0], center[t, 0] - xb[i1 - 1], 0)
+                h = N.sqrt(max(self.r2[t] - dxmin ** 2, 0))
+                j0, j1 = N.searchsorted(yo, center[t, 1] + (-h, h))
+                if j0 >= j1:
+                    continue
+                xs = xb[i0:i1]
+                ys = yo[j0:j1]
+                dx = xs - self.p0[t, 0]
+                dy = ys - self.p0[t, 1]
 
-            # Views of the scratch arrays with the shape of this part
-            shape = (xs.size, ys.size)
-            d = scratch[0][:xs.size * ys.size].reshape(shape)
-            lines = scratch[1][:xs.size * ys.size].reshape(shape)
-            f = scratch[2][:xs.size * ys.size].reshape(shape)
+                # Views of the scratch arrays with the shape of this part
+                shape = (xs.size, ys.size)
+                d = scratch[0][:xs.size * ys.size].reshape(shape)
+                lines = scratch[1][:xs.size * ys.size].reshape(shape)
+                f = scratch[2][:xs.size * ys.size].reshape(shape)
 
-            # w = kappa * D**2 / (product of the line functions), computed
-            # in place in d (zero outside the circumcircle, where D <= 0)
-            N.add.outer(dx * (2 * u[t, 0] - dx), dy * (2 * u[t, 1] - dy), out=d)
-            N.maximum(d, 0, out=d)
-            d *= d
-            line(t, 0, xs, ys, out=lines)
-            lines *= line(t, 1, xs, ys, out=f)
-            lines *= line(t, 2, xs, ys, out=f)
-            w = N.divide(d, lines, out=d, where=d > 0)
-            w *= kappa[t]
-            total[i0:i1, j0:j1] += w
-            abssum[i0:i1, j0:j1] += N.abs(w, out=f)
-            for k in range(vals.shape[1]):
-                N.add.outer(gx[t, k] * dx + z0[t, k], gy[t, k] * dy, out=f)
-                f *= w
-                wsum[i0:i1, j0:j1, k] += f
-        block = out[r0:r0 + BLOCK_ROWS]
-        N.divide(wsum, total[:, :, None], out=block)
+                # w = kappa * D**2 / (product of the line functions), computed
+                # in place in d (zero outside the circumcircle, where D <= 0)
+                N.add.outer(dx * (2 * self.u[t, 0] - dx), dy * (2 * self.u[t, 1] - dy), out=d)
+                N.maximum(d, 0, out=d)
+                d *= d
+                _line(self.p1[t], self.p2[t], xs, ys, out=lines)
+                lines *= _line(self.p0[t], self.p2[t], xs, ys, out=f)
+                lines *= _line(self.p0[t], self.p1[t], xs, ys, out=f)
+                w = N.divide(d, lines, out=d, where=d > 0)
+                w *= self.kappa[t]
+                total[i0:i1, j0:j1] += w
+                abssum[i0:i1, j0:j1] += N.abs(w, out=f)
+                for k in range(nvals):
+                    N.add.outer(self.gx[t, k] * dx + self.z0[t, k], self.gy[t, k] * dy, out=f)
+                    f *= w
+                    wsum[i0:i1, j0:j1, k] += f
+            N.divide(wsum, total[:, :, None], out=out[r0:r0 + BLOCK_ROWS])
+            ok = N.isfinite(total) & (total > 0) & (abssum <= ILL_CONDITIONED * total)
+            bad.extend(N.argwhere(~ok) + (r0, 0))
+        return out, bad
 
-        # Grid points on or very close to an edge or a data point (where the
-        # total weight is zero, infinite or has lost its precision) get the
-        # mean of the values at two points on either side. This only depends
-        # on the weights, not on the values, so nonfinite values are simply
-        # passed on to the output.
-        bad = ~(N.isfinite(total) & (total > 0) & (abssum <= ILL_CONDITIONED * total))
-        if not fix:
-            bad_out[r0:r0 + BLOCK_ROWS] = bad
-        elif bad.any():
-            for i, j in N.argwhere(bad):
-                block[i, j] = _retry(pts, vals, xb[i], yo[j])
-    return out if fix else (out, bad_out)
+    def retry(self, x, y):
+        """Value at the ill-conditioned grid point (x, y).
 
-
-def _retry(pts, vals, x, y):
-    """Value at the ill-conditioned point (x, y), from two shifted points."""
-    size = N.abs(pts).max()
-    for direction in DIRECTIONS:
-        shift = SHIFT * size * N.array(direction)
-        lo, lo_bad = _interpolate(pts, vals, N.array([x - shift[0]]),
-                                  N.array([y - shift[1]]), fix=False)
-        hi, hi_bad = _interpolate(pts, vals, N.array([x + shift[0]]),
-                                  N.array([y + shift[1]]), fix=False)
-        if not (lo_bad[0, 0] or hi_bad[0, 0]):
-            break
-    return (lo[0, 0] + hi[0, 0]) / 2
+        This is the mean of the values at two points on either side, shifted
+        along the first of DIRECTIONS for which both are well-conditioned.
+        """
+        for direction in DIRECTIONS:
+            dx, dy = SHIFT * self.size * N.array(direction)
+            lo, lo_bad = self.evaluate(N.array([x - dx]), N.array([y - dy]))
+            hi, hi_bad = self.evaluate(N.array([x + dx]), N.array([y + dy]))
+            if not (lo_bad or hi_bad):
+                break
+        return (lo[0, 0] + hi[0, 0]) / 2
