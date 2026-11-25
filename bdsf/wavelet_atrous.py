@@ -37,7 +37,6 @@ class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""
 
     def __call__(self, img):
-
         mylog = mylogger.logging.getLogger("PyBDSF." + img.log + "Wavelet")
 
         if img.opts.atrous_do:
@@ -53,6 +52,9 @@ class Op_wavelet_atrous(Op):
                 os.makedirs(bdir + '/residual/', exist_ok=True)
                 os.makedirs(bdir + '/model/', exist_ok=True)
             dobdsm = img.opts.atrous_bdsm_do
+            if not dobdsm and not img.opts.output_all:
+                mylog.warning("atrous_bdsm_do=False and output_all=False: wavelet decomposition "
+                              "neither fits sources nor saves any image, so it has no effect on the results.")
             filter = {'tr': {'size': 3, 'vec': [1. / 4, 1. / 2, 1. / 4], 'name': 'Triangle'},
                       'b3': {'size': 5, 'vec': [1. / 16, 1. / 4, 3. / 8, 1. / 4, 1. / 16], 'name': 'B3 spline'}}
 
@@ -64,10 +66,15 @@ class Op_wavelet_atrous(Op):
             # Calculate residual image that results from normal (non-wavelet) Gaussian fitting
             Op_make_residimage()(img)
             resid = img.resid_gaus_arr
+            if img.opts.resid_sigma_stats_do:
+                rms_before = getattr(img, '_resid_gaus_rms_sigma', None)
+                if rms_before is None:
+                    rms_before = func.residual_rms_in_sigma(resid, img.mean_arr, img.rms_arr)
             img.model_gaus_arr = None  # To save RAM. Not used in this module; recreated at the end by Op_make_residimage
 
             lpf = img.opts.atrous_lpf
             if lpf not in ['b3', 'tr']:
+                mylog.warning("Invalid atrous_lpf=%s. Expected 'b3' or 'tr'. Using 'b3' instead.", lpf)
                 lpf = 'b3'
             jmax = img.opts.atrous_jmax
             l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
@@ -80,9 +87,11 @@ class Op_wavelet_atrous(Op):
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
                 min_size = min(resid.shape)
                 max_isl_shape = (0, 0)
+                max_isl_npix = 0
                 for isl in img.islands:
                     if isl.image.shape[0] * isl.image.shape[1] > max_isl_shape[0] * max_isl_shape[1]:
                         max_isl_shape = isl.image.shape
+                        max_isl_npix = int((~isl.mask_active).sum())  # pixels actually in the island
                 if max_isl_shape != (0, 0) and min(max_isl_shape) < min(resid.shape) / 3.0:
                     min_size = min(max_isl_shape) * 4.0
                 else:
@@ -90,6 +99,10 @@ class Op_wavelet_atrous(Op):
                 jmax = floor(log(((min_size // 3) * 3.0 - l) / (l - 1) + 1) / log(2.0) + 1.0) + 1
                 if min_size * 0.55 <= (l + (l - 1) * (2 ** (jmax) - 1)):
                     jmax = jmax - 1
+                if min_size < min(resid.shape):
+                    mylog.info("Automatic j_max = %d is limited by the largest island (bounding box %d x %d pixels, "
+                            "%d pixels in the island), not by the image size. Larger scales are not decomposed.",
+                            jmax, max_isl_shape[0], max_isl_shape[1], max_isl_npix)
             img.wavelet_lpf = lpf
             img.wavelet_jmax = jmax
             mylog.info("Using " + filter[lpf]['name'] + ' filter with J_max = ' + str(jmax))
@@ -102,13 +115,25 @@ class Op_wavelet_atrous(Op):
             im_old = img.resid_wavelets_arr
             total_flux = 0.0
             stop_wav = False
+            n_gaus_per_scale = {}
+            flux_per_scale = {}
+            rejections_per_scale = {}
             pix_masked = N.where(N.isnan(resid))
+            n_masked = len(pix_masked[0])
+            if n_masked > 0:
+                mylog.info("%.1f%% of pixels are blanked (NaN). Wavelet images may be biased near blanked regions.",
+                              100.0 * n_masked / resid.size)
             jmin = 1
             if img.opts.ncores is None:
                 numcores = 1
             else:
                 numcores = img.opts.ncores
             for j in range(jmin, jmax + 1):  # extra +1 is so we can do bdsm on cJ as well
+                scale_rej = {
+                    'flags': {},
+                    'centre_n': 0,
+                    'island_n': 0,
+                }
                 mylogger.userinfo(mylog, "\nWavelet scale #" + str(j))
                 # Clear the largest not needed variables, since FFT needs a lot of RAM
                 w = None          # wavelet image from previous scale
@@ -134,6 +159,8 @@ class Op_wavelet_atrous(Op):
                     y1 = (l + (l - 1) * (2 ** (j - 1) - 1))
                     bs = max(5 * y1, box)  # changed from 10 to 5
                     if bs > min(n, m) / 2:
+                        mylog.info("Wavelet scale #%d: rms box (%d px) exceeds half of the image; "
+                                      "using constant rms and mean over the whole image.", j, bs)
                         wopts['rms_map'] = False
                         wopts['mean_map'] = 'const'
                         wopts['rms_box'] = None
@@ -146,6 +173,8 @@ class Op_wavelet_atrous(Op):
                                 wopts['rms_box_bright'] = (bs_bright, bs_bright//3)
                             else:
                                 wopts['adaptive_rms_box'] = False
+                                mylog.info("Wavelet scale #%d: adaptive_rms_box disabled "
+                                           "(bright-source box %d px is not < rms box %d px / 1.5).", j, bs_bright, bs)
                     if j <= 3:
                         wopts['ini_gausfit'] = 'default'
                     else:
@@ -201,9 +230,20 @@ class Op_wavelet_atrous(Op):
                                         good_isl.append(wvisl)
                                     else:
                                         wvisl.valid = False
+                                        scale_rej['island_n'] += 1
                                 del valid_ids
 
+                                n_total_isl = len(wimg.islands)
                                 wimg.islands = good_isl
+                                n_rej_isl = n_total_isl - len(good_isl)
+                                if n_rej_isl > 0:
+                                    mylogger.userinfo(
+                                        mylog,
+                                        "Wavelet islands rejected",
+                                        "%d of %d wavelet islands do not overlap any original island. "
+                                        "These islands are excluded before Gaussian fitting because atrous_orig_isl=True, so their emission is not modelled."
+                                        % (n_rej_isl, n_total_isl)
+                                    )
                                 wimg.nisl = len(good_isl)
                                 mylogger.userinfo(mylog, "Number of islands found", '%i' % wimg.nisl)
 
@@ -215,6 +255,14 @@ class Op_wavelet_atrous(Op):
                             # If opts.atrous_orig_isl then exclude Gaussians outside of
                             # the original ch0 islands
                             nwvgaus = 0
+                            # Collect Gaussians rejected by fitting flags.
+                            # Each Gaussian is counted only once, by its exact flag value.
+                            for isl in wimg.islands:
+                                for g in getattr(isl, 'fgaul', []):
+                                    flag = int(g.flag)
+                                    scale_rej['flags'][flag] = (
+                                        scale_rej['flags'].get(flag, 0) + 1
+                                    )
                             if img.opts.atrous_orig_isl:
                                 gaul = wimg.gaussians
                                 tot_flux = 0.0
@@ -254,11 +302,30 @@ class Op_wavelet_atrous(Op):
                                         else:
                                             g.valid = False
                                             g.jlevel = 0
+
+                                # Report wavelet Gaussians rejected by the centre filter
+                                n_rej_gaus = 0
+                                rej_flux = 0.0
+                                for g in gaul:
+                                    if not g.valid:
+                                        n_rej_gaus += 1
+                                        rej_flux += g.total_flux
+                                scale_rej['centre_n'] = n_rej_gaus
+                                if n_rej_gaus > 0:
+                                    rej_msg = ("Scale #%d: %d wavelet Gaussian(s) with total flux %.3g Jy rejected "
+                                               "because their centres lie outside the original islands "
+                                               "(atrous_orig_isl=True). This emission is not modelled.")
+                                    if abs(rej_flux) > 0.1 * abs(tot_flux):
+                                        mylog.warning(rej_msg, j, n_rej_gaus, rej_flux)
+                                    else:
+                                        mylog.info(rej_msg, j, n_rej_gaus, rej_flux)
+
                                 vg = []
                                 for g in wimg.gaussians:
                                     if g.valid:
                                         vg.append(g)
                                 wimg.gaussians = vg
+                                wimg.ngaus = len(vg)
                                 mylogger.userinfo(mylog, "Number of valid wavelet Gaussians", str(nwvgaus))
                             else:
                                 # Keep all Gaussians and merge islands that overlap
@@ -267,7 +334,9 @@ class Op_wavelet_atrous(Op):
                                 # Now renumber the islands and adjust the rank image before going to next wavelet image
                                 renumber_islands(img)
 
+                    rejections_per_scale[j] = scale_rej
                     total_flux += tot_flux
+                    flux_per_scale[j] = tot_flux
                     if img.opts.interactive and has_pl:
                         dc = '\033[34;1m'
                         nc = '\033[0m'
@@ -287,13 +356,22 @@ class Op_wavelet_atrous(Op):
                                 stop_wav = True
                                 break
                             answ = raw_input_no_history(prompt)
+                    n_gaus_per_scale[j] = len(wimg.gaussians)
                     if len(wimg.gaussians) > 0:
                         img.resid_wavelets_arr = self.subtract_wvgaus(img.opts, img.resid_wavelets_arr, wimg.gaussians, wimg.islands)
                         if img.opts.atrous_sum:
                             im_old = self.subtract_wvgaus(img.opts, im_old, wimg.gaussians, wimg.islands)
                     if stop_wav:
                         break
+            if img.opts.resid_sigma_stats_do:
+                rms_after = func.residual_rms_in_sigma(img.resid_wavelets_arr, img.mean_arr, img.rms_arr)
+                mylogger.userinfo(mylog, "Residual RMS before / after wavelet fitting", "%.3f / %.3f σ" % (rms_before, rms_after))
+                if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
+                    change = 100.0 * (rms_after / rms_before - 1.0)
+                    mylogger.userinfo(mylog, "Residual RMS change after wavelet fitting  ", "%+.2f%%" % change)
 
+            if dobdsm:
+                report_wavelet_rejections(rejections_per_scale, mylog)
             pyrank = N.zeros(img.pyrank.shape, dtype=N.int32)
             for i, isl in enumerate(img.islands):
                 isl.island_id = i
@@ -307,6 +385,18 @@ class Op_wavelet_atrous(Op):
 
             img.total_flux_gaus += total_flux
             mylogger.userinfo(mylog, "Total flux density in model on all scales", '%.3f Jy' % img.total_flux_gaus)
+            if dobdsm:
+                n_wav = sum(n_gaus_per_scale.values())
+                n_done = img.wavelet_jmax  # scales actually processed (smaller if stopped interactively)
+                if n_wav == 0:
+                    mylog.warning("Wavelet decomposition (%d scale(s)) added no Gaussians to the model, so atrous_do "
+                                  "has no effect on the result. Either no significant structures were found in "
+                                  "the wavelet images, or all wavelet Gaussians were rejected.", n_done)
+                else:
+                    scales = ', '.join('#%d: %d (%.3g Jy)' % (jj, n_gaus_per_scale[jj], flux_per_scale.get(jj, 0.0))
+                                       for jj in sorted(n_gaus_per_scale))
+                    mylogger.userinfo(mylog, "Gaussians added by wavelet fitting",
+                                      '%d (%.3g Jy); per scale -> %s' % (n_wav, total_flux, scales))
 
             if img.opts.output_all:
                 # Save the final low-pass (cJ) image.
@@ -442,6 +532,67 @@ class Op_wavelet_atrous(Op):
         return residim
 
 
+def report_wavelet_rejections(rejections_per_scale, mylog):
+    """Report wavelet Gaussians and islands rejected at each scale."""
+
+    lines = []
+    totals = {
+        'fit_n': 0,
+        'centre_n': 0,
+        'island_n': 0,
+    }
+    for j, r in sorted(rejections_per_scale.items()):
+        parts = []
+
+        # Gaussians rejected by fitting flags
+        flag_counts = r['flags']
+        n_fit = sum(flag_counts.values())
+        invalid_count = flag_counts.get(-1, 0)
+        normal_flags = ', '.join(
+            '%d:%d' % (flag, count)
+            for flag, count in sorted(flag_counts.items())
+            if flag != -1
+        )
+
+        flag_parts = []
+        if invalid_count:
+            flag_parts.append('invalid: %d' % invalid_count)
+
+        if normal_flags:
+            flag_parts.append('flags: %s' % normal_flags)
+
+        parts.append('fit flags: %d G [%s]' % (n_fit, '; '.join(flag_parts)))
+
+        # Gaussians rejected by atrous_orig_isl centre filter
+        if r['centre_n']:
+            parts.append('orig_isl: %d G' % r['centre_n'])
+
+        # Islands rejected before Gaussian fitting
+        if r['island_n']:
+            parts.append('rejected islands: %d' % r['island_n'])
+
+        if parts:
+            lines.append('  Scale #%d: %s' % (j, '; '.join(parts)))
+
+        totals['fit_n'] += n_fit
+        totals['centre_n'] += r['centre_n']
+        totals['island_n'] += r['island_n']
+
+    # Do not print an empty summary
+    if not lines:
+        return
+
+    lines.append(
+        '  Total: fit flags: %d G; orig_isl: %d G; rejected islands: %d'
+        % (
+            totals['fit_n'],
+            totals['centre_n'],
+            totals['island_n']
+        )
+    )
+
+    mylogger.userinfo(mylog, 'Wavelet rejection summary', '\n' + '\n'.join(lines))
+
 def rebase_bbox(box, minv):
     # return a new bounding box tuple where minv is subtracted from
     # all the co-ordinate values
@@ -557,6 +708,7 @@ def renumber_islands(img):
     img.pyrank = pyrank
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
     img.gaussians = gaussian_list
+    img.ngaus = len(gaussian_list)
 
 
 def check_islands_for_overlap(img, wimg):
@@ -639,6 +791,7 @@ def check_islands_for_overlap(img, wimg):
                     
                     # Regenerate the global gaussian list to keep gaus_num and island_id properly synchronized
                     img.gaussians = [g for isl in img.islands for g in isl.gaul]
+                    img.ngaus = len(img.gaussians)
                     
                 # Recalculate the overlap images, since the islands have changed
                 # Removed global array recalculation block
