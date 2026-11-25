@@ -43,9 +43,12 @@ BLOCK_ROWS = 32
 # weight by more than this factor (close to an edge of the triangulation, where
 # the weights of the two triangles that share it nearly cancel) lose too much
 # precision; they get the mean of the values at two points shifted by
-# +/- SHIFT times the size of the triangulation instead.
+# +/- SHIFT times the size of the triangulation instead, along the first of
+# DIRECTIONS for which both shifted points are well-conditioned. The two
+# directions are perpendicular, so that no edge is parallel to both.
 ILL_CONDITIONED = 1e7
 SHIFT = 1e-8
+DIRECTIONS = ((1.0, 0.755), (-0.755, 1.0))
 
 
 def natgrid(x, y, z, xo, yo):
@@ -152,7 +155,11 @@ def _glibc_rand(seed, count):
 
 
 def _interpolate(pts, vals, xo, yo, fix=True):
-    """Sibson interpolation of `vals` (shape (n, k)) at the grid (xo, yo)."""
+    """Sibson interpolation of `vals` (shape (n, k)) at the grid (xo, yo).
+
+    With `fix` False, ill-conditioned grid points are not retried, and a
+    boolean array that marks them is returned along with the values.
+    """
     # Sorting the vertices by index makes the first one a data point (close
     # to the grid; the coordinates below are relative to it), and gives each
     # edge the same orientation in both triangles that share it.
@@ -212,6 +219,8 @@ def _interpolate(pts, vals, xo, yo, fix=True):
     wsum_buf = N.empty((BLOCK_ROWS, yo.size, vals.shape[1]))
 
     out = N.empty((xo.size, yo.size, vals.shape[1]))
+    if not fix:
+        bad_out = N.empty((xo.size, yo.size), dtype=bool)
     for r0 in range(0, xo.size, BLOCK_ROWS):
         xb = xo[r0:r0 + BLOCK_ROWS]
         total = total_buf[:xb.size]
@@ -267,14 +276,24 @@ def _interpolate(pts, vals, xo, yo, fix=True):
         # mean of the values at two points on either side. This only depends
         # on the weights, not on the values, so nonfinite values are simply
         # passed on to the output.
-        if fix:
-            bad = ~(N.isfinite(total) & (total > 0) & (abssum <= ILL_CONDITIONED * total))
-            if bad.any():
-                shift = SHIFT * N.abs(pts).max() * N.array([1.0, 0.755])
-                for i, j in N.argwhere(bad):
-                    lo = _interpolate(pts, vals, xb[i:i + 1] - shift[0],
-                                      yo[j:j + 1] - shift[1], fix=False)
-                    hi = _interpolate(pts, vals, xb[i:i + 1] + shift[0],
-                                      yo[j:j + 1] + shift[1], fix=False)
-                    block[i, j] = (lo[0, 0] + hi[0, 0]) / 2
-    return out
+        bad = ~(N.isfinite(total) & (total > 0) & (abssum <= ILL_CONDITIONED * total))
+        if not fix:
+            bad_out[r0:r0 + BLOCK_ROWS] = bad
+        elif bad.any():
+            for i, j in N.argwhere(bad):
+                block[i, j] = _retry(pts, vals, xb[i], yo[j])
+    return out if fix else (out, bad_out)
+
+
+def _retry(pts, vals, x, y):
+    """Value at the ill-conditioned point (x, y), from two shifted points."""
+    size = N.abs(pts).max()
+    for direction in DIRECTIONS:
+        shift = SHIFT * size * N.array(direction)
+        lo, lo_bad = _interpolate(pts, vals, N.array([x - shift[0]]),
+                                  N.array([y - shift[1]]), fix=False)
+        hi, hi_bad = _interpolate(pts, vals, N.array([x + shift[0]]),
+                                  N.array([y + shift[1]]), fix=False)
+        if not (lo_bad[0, 0] or hi_bad[0, 0]):
+            break
+    return (lo[0, 0] + hi[0, 0]) / 2

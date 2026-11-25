@@ -99,6 +99,7 @@ def test_near_edges():
         return ng._interpolate(pts, vals, q[:1], q[1:])[0, 0, 0]
 
     err = 0.0
+    finite = True
     edges = set()
     for s in ng.Delaunay(pts).simplices:
         edges.update(tuple(sorted((s[a], s[b]))) for a, b in ((0, 1), (1, 2), (0, 2)))
@@ -111,8 +112,40 @@ def test_near_edges():
             normal *= 1e-6 / np.hypot(*normal)
             exp = (value(mid - normal) + value(mid + normal)) / 2
             for q in (mid, np.nextafter(mid, mid + normal)):
-                err = max(err, abs(value(q) - exp))
-    check('grid points close to edges', err < 1e-7, '(max diff %.1e)' % err)
+                v = value(q)
+                finite &= bool(np.isfinite(v) and np.isfinite(exp))
+                err = max(err, abs(v - exp))
+    check('grid points close to edges', finite and err < 1e-7, '(max diff %.1e)' % err)
+
+
+def test_edge_parallel_to_shift():
+    """Grid points on an edge parallel to the first retry direction.
+
+    Ill-conditioned grid points are retried at two points shifted along a
+    fixed direction. If an edge is parallel to it, both shifted points are on
+    the edge as well, and another direction must be used.
+    """
+    a = np.array([40.0, 40.0])
+    b = a + 20 * np.array(ng.DIRECTIONS[0])
+    pts = np.array([a, b, [20, 80], [80, 20], [10, 10], [90, 90],
+                    [-1000, -1000], [-1000, 5000], [5000, -1000]])
+    vals = np.array([[1.0], [3.0], [-2.0], [5.0], [0.5], [1.5], [0.0], [0.0], [0.0]])
+    normal = np.array([a[1] - b[1], b[0] - a[0]])
+    normal *= 1e-6 / np.hypot(*normal)
+
+    def value(q):
+        return ng._interpolate(pts, vals, q[:1], q[1:])[0, 0, 0]
+
+    err = 0.0
+    finite = True
+    with np.errstate(divide='ignore', invalid='ignore'):
+        for t in np.linspace(0.05, 0.95, 91):
+            q = a + t * (b - a)
+            v = value(q)
+            exp = (value(q - normal) + value(q + normal)) / 2
+            finite &= bool(np.isfinite(v) and np.isfinite(exp))
+            err = max(err, abs(v - exp))
+    check('edge parallel to the retry direction', finite and err < 1e-7, '(max diff %.1e)' % err)
 
 
 def test_nonfinite_values():
@@ -167,6 +200,7 @@ if __name__ == '__main__':
     test_multiple_values()
     test_degenerate()
     test_near_edges()
+    test_edge_parallel_to_shift()
     test_nonfinite_values()
     test_noncontiguous()
     test_errors()
