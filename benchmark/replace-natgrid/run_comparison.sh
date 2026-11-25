@@ -38,7 +38,8 @@ rm -rf "$WORK/pkg_fix"
 cp -r "$WORK/pkg_orig" "$WORK/pkg_fix"
 sed -i 's/x, y = N.transpose(psfcoords)/x, y = N.ascontiguousarray(N.transpose(psfcoords))/' \
     "$WORK/pkg_fix/bdsf/psf_vary.py"
-[ "$(grep -c 'N.ascontiguousarray(N.transpose(psfcoords))' "$WORK/pkg_fix/bdsf/psf_vary.py")" = 3 ]
+# Both natgrid calls (interp_shapcoefs and interp_prop) must be patched
+[ "$(grep -c 'N.ascontiguousarray(N.transpose(psfcoords))' "$WORK/pkg_fix/bdsf/psf_vary.py")" = 2 ]
 
 compare() {  # compare <dir ref> <dir new>: max relative difference of FITS data
     $PY -I -c "
