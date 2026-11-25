@@ -622,7 +622,10 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
                 # The following error is calculated using Eq. 36 of Condon+ (1998)
                 e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
                         (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
-            except:
+            except Exception as exc:
+                if img.opts.verbose_fitting:
+                    mylog.warning("Could not calculate errors for Gaussian with parameters %s: %s. "
+                                  "Setting errors to 0.", list(pp), exc)
                 e_peak = 0.0
                 e_x0 = 0.0
                 e_y0 = 0.0
