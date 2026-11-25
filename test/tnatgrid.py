@@ -81,6 +81,59 @@ def test_degenerate():
     check('grid points on edges', ok, '(max diff with shifted grid %.1e)' % np.abs(res - near).max())
 
 
+def test_near_edges():
+    """Grid points very close to an edge (but not on it) give accurate values.
+
+    There, the weights of the two triangles that share the edge are large and
+    nearly cancel. The value one float64 step from the midpoint of each edge
+    between data points must agree with the mean of the values 1e-6 to
+    either side of the edge.
+    """
+    rng = np.random.default_rng(5)
+    x, y = rng.uniform(0, 100, (2, 10))
+    z = rng.normal(size=(10, 1))
+    grid = np.linspace(0, 100, 32)
+    pts, vals, _ = ng._add_enclosing_triangle(x, y, z, grid, grid)
+
+    def value(q):
+        return ng._interpolate(pts, vals, q[:1], q[1:])[0, 0, 0]
+
+    err = 0.0
+    edges = set()
+    for s in ng.Delaunay(pts).simplices:
+        edges.update(tuple(sorted((s[a], s[b]))) for a, b in ((0, 1), (1, 2), (0, 2)))
+    with np.errstate(divide='ignore', invalid='ignore'):
+        for i, j in edges:
+            if max(i, j) >= len(x):
+                continue
+            mid = (pts[i] + pts[j]) / 2
+            normal = np.array([pts[i, 1] - pts[j, 1], pts[j, 0] - pts[i, 0]])
+            normal *= 1e-6 / np.hypot(*normal)
+            exp = (value(mid - normal) + value(mid + normal)) / 2
+            for q in (mid, np.nextafter(mid, mid + normal)):
+                err = max(err, abs(value(q) - exp))
+    check('grid points close to edges', err < 1e-7, '(max diff %.1e)' % err)
+
+
+def test_nonfinite_values():
+    """Nonfinite data values are passed on, without retrying grid points."""
+    rng = np.random.default_rng(6)
+    x, y = rng.uniform(0, 100, (2, 10))
+    z = rng.normal(size=(10, 2))
+    z[3, 1] = np.nan
+    grid = np.linspace(0, 100, 32)
+    calls = []
+    delaunay = ng.Delaunay
+    ng.Delaunay = lambda p: calls.append(1) or delaunay(p)
+    try:
+        res = ng.natgrid(x, y, z, grid, grid)
+    finally:
+        ng.Delaunay = delaunay
+    ok = (len(calls) == 1 and np.isfinite(res[:, :, 0]).all()
+          and np.array_equal(res[:, :, 0], ng.natgrid(x, y, z[:, 0], grid, grid)))
+    check('nonfinite values', ok, '(%d triangulations)' % len(calls))
+
+
 def test_noncontiguous():
     """Strided input arrays (as from numpy.transpose) are handled correctly."""
     rng = np.random.default_rng(4)
@@ -113,6 +166,8 @@ if __name__ == '__main__':
     test_linear()
     test_multiple_values()
     test_degenerate()
+    test_near_edges()
+    test_nonfinite_values()
     test_noncontiguous()
     test_errors()
     if failures:

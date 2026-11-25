@@ -39,6 +39,14 @@ from scipy.spatial import Delaunay
 # Number of grid rows that are processed at a time
 BLOCK_ROWS = 32
 
+# Grid points where the sum of the absolute triangle weights exceeds the total
+# weight by more than this factor (close to an edge of the triangulation, where
+# the weights of the two triangles that share it nearly cancel) lose too much
+# precision; they get the mean of the values at two points shifted by
+# +/- SHIFT times the size of the triangulation instead.
+ILL_CONDITIONED = 1e7
+SHIFT = 1e-8
+
 
 def natgrid(x, y, z, xo, yo):
     """Interpolate scattered data to a rectangular grid.
@@ -200,14 +208,17 @@ def _interpolate(pts, vals, xo, yo, fix=True):
     # them for each triangle makes the interpolation about 10% slower)
     scratch = [N.empty(BLOCK_ROWS * yo.size) for _ in range(3)]
     total_buf = N.empty((BLOCK_ROWS, yo.size))
+    abssum_buf = N.empty((BLOCK_ROWS, yo.size))
     wsum_buf = N.empty((BLOCK_ROWS, yo.size, vals.shape[1]))
 
     out = N.empty((xo.size, yo.size, vals.shape[1]))
     for r0 in range(0, xo.size, BLOCK_ROWS):
         xb = xo[r0:r0 + BLOCK_ROWS]
         total = total_buf[:xb.size]
+        abssum = abssum_buf[:xb.size]
         wsum = wsum_buf[:xb.size]
         total[:] = 0
+        abssum[:] = 0
         wsum[:] = 0
         for t in N.flatnonzero((center[:, 0] + r > xb[0]) & (center[:, 0] - r < xb[-1])):
             # The part of the block that the circumcircle covers: the rows
@@ -243,6 +254,7 @@ def _interpolate(pts, vals, xo, yo, fix=True):
             w = N.divide(d, lines, out=d, where=d > 0)
             w *= kappa[t]
             total[i0:i1, j0:j1] += w
+            abssum[i0:i1, j0:j1] += N.abs(w, out=f)
             for k in range(vals.shape[1]):
                 N.add.outer(gx[t, k] * dx + z0[t, k], gy[t, k] * dy, out=f)
                 f *= w
@@ -250,11 +262,19 @@ def _interpolate(pts, vals, xo, yo, fix=True):
         block = out[r0:r0 + BLOCK_ROWS]
         N.divide(wsum, total[:, :, None], out=block)
 
-        # Grid points exactly on an edge (in practice never, because of the
-        # perturbation) get the value at a slightly shifted point
-        if fix and not N.isfinite(block).all():
-            for i, j in N.argwhere(~N.isfinite(block).all(axis=2)):
-                shift = 1e-9 * N.abs(pts).max()
-                block[i, j] = _interpolate(pts, vals, xb[i:i + 1] + shift,
-                                           yo[j:j + 1] + 0.755 * shift, fix=False)[0, 0]
+        # Grid points on or very close to an edge or a data point (where the
+        # total weight is zero, infinite or has lost its precision) get the
+        # mean of the values at two points on either side. This only depends
+        # on the weights, not on the values, so nonfinite values are simply
+        # passed on to the output.
+        if fix:
+            bad = ~(N.isfinite(total) & (total > 0) & (abssum <= ILL_CONDITIONED * total))
+            if bad.any():
+                shift = SHIFT * N.abs(pts).max() * N.array([1.0, 0.755])
+                for i, j in N.argwhere(bad):
+                    lo = _interpolate(pts, vals, xb[i:i + 1] - shift[0],
+                                      yo[j:j + 1] - shift[1], fix=False)
+                    hi = _interpolate(pts, vals, xb[i:i + 1] + shift[0],
+                                      yo[j:j + 1] + shift[1], fix=False)
+                    block[i, j] = (lo[0, 0] + hi[0, 0]) / 2
     return out
