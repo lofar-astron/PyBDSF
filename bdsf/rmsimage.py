@@ -376,7 +376,7 @@ class Op_rmsimage(Op):
                             img.mean_map_type = 'map'
 
                 elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
-                    if do_adapt and ipol == 0:
+                    if do_adapt and ipol == 0 and not img.waveletimage:
                         # Only report adaptive scaling once we know the
                         # rms/mean maps are actually computed with it
                         mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
