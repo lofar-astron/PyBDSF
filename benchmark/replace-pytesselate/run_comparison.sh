@@ -19,6 +19,9 @@
 # identical.
 set -e
 WORK=${1:?usage: $0 <work dir> [baseline git revision]}
+# The subshells below change directory, so PYTHONPATH must be absolute
+mkdir -p "$WORK"
+WORK=$(cd "$WORK" && pwd)
 REV=${2:-master}
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(git -C "$HERE" rev-parse --show-toplevel)
