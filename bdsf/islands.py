@@ -163,18 +163,21 @@ class Op_islands(Op):
         for 2D images) pixels with emission.
 
         The following cuts are applied:
-         - pixel is considered to have emission if it is 'thresh_isl' times
-           higher than RMS.
-         - Island should have at least 'minsize' active pixels
+         - A pixel is considered to have emission ("active") if it is
+           'thresh_isl' times higher than the local rms (above the local mean).
+         - The island must have at least 'minpix_isl' and at most
+           'maxpix_isl' active pixels.
          - At least one pixel in the island must exceed the local threshold
-           mean + thresh_pix * rms.
+           mean + thresh_pix * rms (peak significance cut).
 
         Parameters:
-        image, mask: arrays with image data and mask
-        mean, rms: arrays with mean & rms maps
-        thresh_isl: threshold for 'active pixels'
-        thresh_pix: threshold for peak
-        minsize: minimal acceptable island size
+        img: Image object. The following attributes are used:
+            ch0_arr, mask_arr, mean_arr, rms_arr: image data, mask, and
+                mean and rms maps
+            thresh_pix: threshold (in sigma) for the peak significance cut
+            minpix_isl, maxpix_isl: minimal and maximal acceptable island size
+        opts: Opts object. The following option is used:
+            thresh_isl: threshold (in sigma) for active pixels
 
         Function returns a list of Island objects.
         """
