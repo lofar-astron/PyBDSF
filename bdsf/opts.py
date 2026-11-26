@@ -287,7 +287,7 @@ class Opts(object):
                                  "The local threshold is calculated for each pixel as "\
                                  "thr = mean + thresh_pix * rms, where mean and rms are "\
                                  "the values of the mean and rms maps at that pixel. "\
-                                 "For images with constant noise this is equivalent to "\
+                                 "For images with constant noise and mean this is equivalent to "\
                                  "a threshold on the island peak. Use the mean_map "\
                                  "and rms_map parameters to control the way "\
                                  "the mean and rms are determined.")

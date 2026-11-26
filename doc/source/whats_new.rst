@@ -4,6 +4,9 @@
 What's New
 **********
 
+    Version  ():
+    * Fix island peak clipping with varying noise (#590)
+
     Version 1.12.0 (2024/11/25):
     * Fix string checks and clean up (#243)
 
