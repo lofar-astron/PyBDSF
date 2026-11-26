@@ -289,6 +289,21 @@ def test_small_images():
     for_block_sizes(run)
 
 
+def test_negative_weights_large_overlap():
+    """Fuzzy tessellation with eps < -1 and a negative weight.
+
+    The nearest generator then has a negative distance, so the fuzzy threshold
+    (1 + eps) * d_l is positive, and far generators can be within it.
+    """
+    xg, yg, wts = [1.0, 100.0, 200.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0]
+
+    def run(block):
+        for eps in (-100.0, -2.0, -1.5):
+            check(tessellate.tessellate_simple(8, 8, xg, yg, [1.0] * 3, wts, eps, 'c'),
+                  reference_simple(8, 8, xg, yg, wts, eps, 'c'), f'{block}, eps {eps}')
+    for_block_sizes(run)
+
+
 def test_elongated_and_empty():
     """Very elongated images, and no generators (undefined in Fortran: 0 here)."""
     result = tessellate.tessellate_simple(1, 200000, [0.5], [7.0], [1.0], [1.0], 0.05, 's')
@@ -326,7 +341,14 @@ def test_interface():
     fuzzy = tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, 'c')
     check(tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, 'x'), fuzzy)
     assert set(np.unique(result)) == {1.0, 2.0, 3.0}
-    assert tessellate.tessellate_roundness(13, 15, xg, yg, snr, 0.05, 's').shape == (13, 15)
+    roundness = tessellate.tessellate_roundness(13, 15, xg, yg, snr, 0.05, 's')
+    assert roundness.shape == (13, 15)
+    # Bytes are accepted as well (as by the f2py wrapper)
+    check(tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, b's'), result)
+    check(tessellate.tessellate_simple(13, 15, xg, yg, snr, wts, 0.05, b'c'), fuzzy)
+    check(tessellate.tessellate_roundness(13, 15, xg, yg, snr, 0.05, b's'), roundness)
+    check(tessellate.tessellate_roundness(13, 15, xg, yg, snr, 0.05, b'c'),
+          tessellate.tessellate_roundness(13, 15, xg, yg, snr, 0.05, 'c'))
     try:
         tessellate.tessellate_simple(13, 15, xg, yg[:2], snr, wts, 0.05, 's')
     except ValueError:

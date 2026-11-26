@@ -75,7 +75,7 @@ def tessellate_simple(n, m, xgens, ygens, snrgens, wts, eps, code):
         Weights of the generators.
     eps : float
         Fractional overlap of the tiles for fuzzy tessellation.
-    code : str
+    code : str or bytes
         's' for normal tessellation, anything else for fuzzy tessellation.
 
     Returns
@@ -125,7 +125,10 @@ def _as_arrays(*arrays):
 
 
 def _is_fuzzy(code):
-    # The Fortran code uses only the first character of `code`
+    # The Fortran code uses only the first character of `code`. Like the f2py
+    # wrapper, accept bytes as well (str(b's') would be "b's'").
+    if isinstance(code, (bytes, bytearray)):
+        return code[:1] != b's'
     return str(code)[:1] != 's'
 
 
@@ -169,11 +172,15 @@ class _Simple:
             return cand
         # If the nearest generator l is not regular, d_l is not larger than
         # the distance to any regular generator either, so it suffices to
-        # select the regular generators among themselves
+        # select the regular generators among themselves. That does not hold
+        # for fuzzy tessellation with 1 + eps < 0: if d_l < 0 (a negative
+        # weight), the threshold (1 + eps) * d_l is positive, and a regular
+        # generator that is not near may be within it. Then all generators
+        # are candidates.
         regular = self.regular[gens]
         if N.all(regular):
             rgens = gens
-        elif N.any(regular):
+        elif N.any(regular) and not (fuzzy and eps < -1.0):
             rgens = gens[regular]
         else:
             return cand
