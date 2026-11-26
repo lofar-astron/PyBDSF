@@ -25,14 +25,21 @@ N.seterr(divide='raise')
 
 
 def robust_mc_std(values):
+    """Robust 1-sigma estimate of the scatter of Monte Carlo draws.
+
+    Returns half the width of the central 68.27% interval,
+    (q84.135 - q15.865) / 2, which equals the standard deviation for
+    Gaussian scatter but is insensitive to outliers in the tails.
+    Non-finite draws (failed MC realisations) are ignored. If fewer than
+    2 finite draws remain, 0.0 is returned so that the caller falls back
+    to the analytic Condon (1997) error.
+    """
     values = values[N.isfinite(values)]
-
     if len(values) < 2:
-        return 0
+        return 0.0
 
-    q16, q50, q84 = N.percentile(values, [15.865, 50.0, 84.135])
-
-    return max(q50 - q16, q84 - q50)
+    q16, q84 = N.percentile(values, [15.865, 84.135])
+    return 0.5 * (q84 - q16)
 
 class Op_gaul2srl(Op):
     """
