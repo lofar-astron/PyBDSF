@@ -1008,7 +1008,7 @@ class Op_rmsimage(Op):
     def for_masked_mp(self, mask, arr, ind, kappa):
 
         a, b, c, d = ind
-        cnt = None
+        cnt = 0
         if mask is None:
             _, _, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
         else:
