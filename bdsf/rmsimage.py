@@ -582,8 +582,7 @@ class Op_rmsimage(Op):
                 raise RuntimeError("No finite unmasked pixels in RMS map")
 
             negative_pixels = valid_pixels & (rms < 0.0)
-            test = np.any(negative_pixels)
-            if test:
+            if np.any(negative_pixels):
                 rms_ok = False
                 if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
                         # Increase box by 20%
