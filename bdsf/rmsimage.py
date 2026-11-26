@@ -208,7 +208,6 @@ class Op_rmsimage(Op):
         rank = len(shape)
         connectivity = ndimage.generate_binary_structure(rank, rank)
         if do_adapt:
-            mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
             while len(isl_size_bright) < 5 and threshold >= adapt_thresh:
                 isl_size_bright=[]
                 isl_maxposn = []
@@ -377,6 +376,10 @@ class Op_rmsimage(Op):
                             img.mean_map_type = 'map'
 
                 elif (opts.rms_map is not False) or (opts.mean_map not in ['zero', 'const']):
+                    if do_adapt and ipol == 0 and not img.waveletimage:
+                        # Only report adaptive scaling once we know the
+                        # rms/mean maps are actually computed with it
+                        mylogger.userinfo(mylog, "Using adaptive scaling of rms_box")
                     if len(data.shape) == 2:   ## 2d case
                         mean, rms = self.calculate_maps(img, data, mean, rms, mask, map_opts, do_adapt=do_adapt,
                                         bright_pt_coords=isl_pos, rms_box2=img.rms_box,
