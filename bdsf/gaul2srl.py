@@ -41,6 +41,7 @@ def robust_mc_std(values):
     q16, q84 = N.percentile(values, [15.865, 84.135])
     return 0.5 * (q84 - q16)
 
+
 class Op_gaul2srl(Op):
     """
     Slightly modified from fortran.
@@ -614,7 +615,6 @@ class Op_gaul2srl(Op):
                 # draw random variables from distributions given by errors
                 params_err = func.g2param_err(g)
                 for i in range(len(params)):
-                    mc_param = N.random.normal(loc=params[i], scale=params_err[i])
                     # A non-finite error (e.g. E_PA is NaN for a circular Gaussian, see get_errors) means "no scatter", not a NaN draw
                     scale = params_err[i] if N.isfinite(params_err[i]) else 0.0
                     mc_param = N.random.normal(loc=params[i], scale=scale)
