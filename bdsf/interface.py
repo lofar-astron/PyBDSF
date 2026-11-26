@@ -57,6 +57,8 @@ def process(img, **kwargs):
         # Run op's in chain
         img, op_chain = get_op_chain(img)
         if op_chain is not None:
+            # Show the 'resid_sigma_stats_do' hint again on every run
+            img._resid_sigma_hint_shown = False
             _run_op_list(img, op_chain)
             img._prev_opts = img.opts.to_dict()
         return True
