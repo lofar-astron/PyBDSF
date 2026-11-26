@@ -615,6 +615,9 @@ class Op_gaul2srl(Op):
                 params_err = func.g2param_err(g)
                 for i in range(len(params)):
                     mc_param = N.random.normal(loc=params[i], scale=params_err[i])
+                    # A non-finite error (e.g. E_PA is NaN for a circular Gaussian, see get_errors) means "no scatter", not a NaN draw
+                    scale = params_err[i] if N.isfinite(params_err[i]) else 0.0
+                    mc_param = N.random.normal(loc=params[i], scale=scale)
                     params[i] = mc_param
             gau = func.gaus_2d(params, x, y)
             subim = subim + gau
