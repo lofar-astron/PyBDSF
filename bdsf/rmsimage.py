@@ -1038,7 +1038,7 @@ class Op_rmsimage(Op):
 
         # Warn when sigma-clipping requires an unusually large number of iterations.
         # This does not necessarily indicate non-convergence.
-        if cnt is not None and cnt > 198:
+        if cnt > 198:
             mylogger.logging.getLogger("PyBDSF.RmsMean").warning(
                 f'Sigma clipping required {cnt} iterations in RMS window [{a}, {b}, {c}, {d}]. '
                 'Keeping the clipped mean and rms.'
