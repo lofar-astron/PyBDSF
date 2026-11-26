@@ -348,9 +348,8 @@ class Opts(object):
                              group = 'advanced_opts')
     fdr_alpha = Float(0.05,
                              doc = "Alpha for FDR algorithm for thresholds\n"\
-                                 "If thresh is 'fdr', then the estimate of fdr_alpha "\
-                                 "(see Hancock et al. 2002 for details) is stored "\
-                                 "in this parameter.",
+                                 "If thresh is set to 'fdr', this parameter specifies the "\
+                                 "value of fdr_alpha (see Hancock et al. 2002 for details).",
                              group = "advanced_opts")
     fdr_ratio = Float(0.1,
                              doc = "For thresh = None; " \
