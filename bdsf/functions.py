@@ -1,5 +1,36 @@
-from shutil import get_terminal_size
+import numpy as N
 
+def residual_sumsq_in_sigma(resid, mean, rms):
+    """Return (sum of z, sum of z**2, number of valid pixels)."""
+
+    if mean is None:
+        mean = 0.0
+    valid = N.isfinite(resid)
+    valid &= N.isfinite(rms)
+    valid &= rms > 0.0
+
+    if N.ndim(mean) > 0:
+        valid &= N.isfinite(mean)
+        z = resid[valid] - mean[valid]
+    else:
+        z = resid[valid] - mean
+
+    # Divide in-place to avoid allocating another array
+    N.divide(z, rms[valid], out=z)
+    s1 = N.sum(z, dtype=N.float64)
+
+    # Sum of squares without creating a temporary z*z array
+    ss = N.einsum('i,i->', z, z, dtype=N.float64)
+
+    return s1, ss, z.size
+
+def residual_rms_in_sigma(resid, mean, rms):
+    """Calculate residual RMS in units of noise."""
+
+    _, ss, n = residual_sumsq_in_sigma(resid, mean, rms)
+    if n == 0:
+        return N.nan
+    return N.sqrt(ss / n)
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
@@ -392,6 +423,7 @@ def trans_gaul(q):
             y.append(elem)
     return y
 
+
 def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     """ Compute 2d gaussian parameters from moment analysis, for an island with
         multiple gaussians. Compute only for gaussian with index (mask value) isrc.
@@ -402,7 +434,6 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     from math import sqrt, atan, pi
     from .const import fwsig
     import numpy as N
-    N.seterr(all='ignore')
 
     m1 = N.zeros(2); m2 = N.zeros(2); m11 = 0.0; tot = 0.0
     mompara = N.zeros(6)
@@ -411,22 +442,25 @@ def momanalmask_gaus(subim, mask, isrc, bmar_p, allpara=True):
     for coord in index:
         tot += subim[coord]
         m1 += N.array(coord)*subim[coord]
-    mompara[0] = tot/bmar_p
-    mompara[1:3] = m1/tot
 
-    if allpara:
-        for coord in index:
-            co = N.array(coord)
-            m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
-            m11 += N.prod(co - mompara[1:3])*subim[coord]
+    with N.errstate(divide='ignore'):
+        mompara[0] = tot/bmar_p
+        mompara[1:3] = m1/tot
 
-        mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-        mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
-        dumr = atan(abs(2.0*m11/(m2[0]-m2[1])))
-        dumr = atanproper(dumr, m2[0]-m2[1], 2.0*m11)
-        mompara[5] = 0.5*dumr*180.0/pi - 90.0
-        if mompara[5] < 0.0: mompara[5] += 180.0
+        if allpara:
+            for coord in index:
+                co = N.array(coord)
+                m2 += (co - mompara[1:3])*(co - mompara[1:3])*subim[coord]
+                m11 += N.prod(co - mompara[1:3])*subim[coord]
+
+            mompara[3] = sqrt((m2[0]+m2[1]+sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+            mompara[4] = sqrt((m2[0]+m2[1]-sqrt((m2[0]-m2[1])*(m2[0]-m2[1])+4.0*m11*m11))/(2.0*tot))*fwsig
+            dumr = atan(abs(2.0*m11/(m2[0]-m2[1])))
+            dumr = atanproper(dumr, m2[0]-m2[1], 2.0*m11)
+            mompara[5] = 0.5*dumr*180.0/pi - 90.0
+            if mompara[5] < 0.0: mompara[5] += 180.0
     return mompara
+
 
 def fit_gaus2d(data, p_ini, x, y, mask = None, err = None):
     """ Fit 2d gaussian to data with x and y also being 2d numpy arrays with x and y positions.
@@ -588,7 +622,10 @@ def get_errors(img, p, stdav, bm_pix=None, fixed_to_beam=False):
                 # The following error is calculated using Eq. 36 of Condon+ (1998)
                 e_tot = pp[6] * sqrt(e_peak * e_peak / (pp[0] * pp[0]) + (0.25 / dumr / dumr) *
                         (e_maj * e_maj / (size[0] * size[0]) + e_min * e_min / (size[1] * size[1])))
-            except:
+            except Exception as exc:
+                if img.opts.verbose_fitting:
+                    mylog.warning("Could not calculate errors for Gaussian with parameters %s: %s. "
+                                  "Setting errors to 0.", list(pp), exc)
                 e_peak = 0.0
                 e_x0 = 0.0
                 e_y0 = 0.0

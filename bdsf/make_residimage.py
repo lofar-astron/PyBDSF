@@ -8,6 +8,7 @@ from scipy import stats # for skew and kurtosis
 from .image import *
 from .shapelets import *
 from . import mylogger
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Op_make_residimage(Op):
@@ -62,6 +63,77 @@ class Op_make_residimage(Op):
         img.model_gaus_arr = model_gaus
         img.resid_gaus_arr = resid_gaus
 
+        if img.opts.resid_sigma_stats_do and not img.waveletimage and not img._pi and \
+            not (img.opts.atrous_do and 'wavelet_atrous' in img.completed_Ops):
+            # Use the same valid pixels for before and after statistics.
+            im_before_fitting = N.where(N.isfinite(resid_gaus), img.ch0_arr, N.nan)
+
+            if img.ch0_arr.size >= 1_000_000:
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    f_before = executor.submit(func.residual_sumsq_in_sigma, im_before_fitting,    img.mean_arr, img.rms_arr)
+                    f_after  = executor.submit(func.residual_sumsq_in_sigma, resid_gaus, img.mean_arr, img.rms_arr)
+                    sum_norm_resid_before_all, sum_sq_norm_resid_before_all, n_valid_pix_before_all   = f_before.result()
+                    sum_norm_resid_after_all, sum_sq_norm_resid_after_all, n_valid_pix_before_all_a = f_after.result()
+            else:
+                sum_norm_resid_before_all, sum_sq_norm_resid_before_all, n_valid_pix_before_all   = func.residual_sumsq_in_sigma(im_before_fitting,    img.mean_arr, img.rms_arr)
+                sum_norm_resid_after_all, sum_sq_norm_resid_after_all, n_valid_pix_before_all_a = func.residual_sumsq_in_sigma(resid_gaus, img.mean_arr, img.rms_arr)
+
+            rms_before = N.sqrt(sum_sq_norm_resid_before_all / n_valid_pix_before_all) if n_valid_pix_before_all > 0 else N.nan
+            rms_after = N.sqrt(sum_sq_norm_resid_after_all / n_valid_pix_before_all_a) if n_valid_pix_before_all_a > 0 else N.nan
+            img._resid_gaus_rms_sigma = rms_after
+            mylogger.userinfo(mylog, 'Calculating sigma statistics of residual image')
+            mylogger.userinfo(mylog, "Residual RMS  before / after Gaussian fitting ", "%.3f / %.3f σ" % (rms_before, rms_after))
+            if N.isfinite(rms_before) and rms_before > 0 and N.isfinite(rms_after):
+                change = 100.0 * (rms_after / rms_before - 1.0)
+                mylogger.userinfo(mylog, "Residual RMS  change after Gaussian fitting   ", "%+.2f%%" % change)
+
+            # Build a combined mask of all active island pixels.
+            # Overlapping islands must contribute each pixel only once.
+            island_mask = N.zeros(shape, dtype=bool)
+
+            for isl in img.islands:
+                bb = tuple(isl.bbox)
+                island_mask[bb] |= ~isl.mask_active
+
+            # Use the same valid pixels for before and after.
+            island_mask &= N.isfinite(resid_gaus)
+            resid_pix_inside_isl = resid_gaus[island_mask]
+            orig_im_pix_inside_isl = img.ch0_arr[island_mask]
+            mean_map_pix_inside_isl = img.mean_arr[island_mask]
+            noise_rms_map_pix_inside_isl = img.rms_arr[island_mask]
+            sum_norm_resid_before_inside_isl, sum_sq_norm_resid_before_inside_isl, _ = func.residual_sumsq_in_sigma(orig_im_pix_inside_isl,
+                                                                                                                    mean_map_pix_inside_isl,
+                                                                                                                    noise_rms_map_pix_inside_isl)
+            sum_norm_resid_after_inside_isl, sum_sq_norm_resid_after_inside_isl, n_valid_pix_inside_isl = func.residual_sumsq_in_sigma(resid_pix_inside_isl,
+                                                                                                                                       mean_map_pix_inside_isl,
+                                                                                                                                       noise_rms_map_pix_inside_isl)
+
+            n_valid_pix_outside_isl = n_valid_pix_before_all_a - n_valid_pix_inside_isl
+            if n_valid_pix_inside_isl > 0:
+                mylogger.userinfo(mylog,
+                                  "Residual RMS  inside  islands (before / after)",
+                                  "%.3f / %.3f σ" % (N.sqrt(sum_sq_norm_resid_before_inside_isl / n_valid_pix_inside_isl),
+                                                     N.sqrt(sum_sq_norm_resid_after_inside_isl / n_valid_pix_inside_isl)))
+                mylogger.userinfo(mylog,
+                                  "Residual mean inside  islands (before / after)",
+                                  "%+.3f / %+.3f σ" % (sum_norm_resid_before_inside_isl / n_valid_pix_inside_isl,
+                                                       sum_norm_resid_after_inside_isl / n_valid_pix_inside_isl))
+            if n_valid_pix_outside_isl > 0:
+                mylogger.userinfo(mylog,
+                                  "Residual RMS  outside islands (before / after)",
+                                  "%.3f / %.3f σ" % ( N.sqrt((sum_sq_norm_resid_before_all - sum_sq_norm_resid_before_inside_isl) /
+                                                             n_valid_pix_outside_isl), N.sqrt((sum_sq_norm_resid_after_all - sum_sq_norm_resid_after_inside_isl) /
+                                                                                              n_valid_pix_outside_isl)))
+                mylogger.userinfo(mylog,
+                                  "Residual mean outside islands (before / after)",
+                                  "%+.3f / %+.3f σ" % ( (sum_norm_resid_before_all - sum_norm_resid_before_inside_isl) /
+                                                       n_valid_pix_outside_isl, (sum_norm_resid_after_all - sum_norm_resid_after_inside_isl) /
+                                                       n_valid_pix_outside_isl))
+            if not img.opts.residual_stats_do:
+                mylog.info("More residual statistics can be enabled with the 'residual_stats_do' option.")
+        else:
+            mylogger.userinfo(mylog, "To assess how well the fitting went, rerun using 'resid_sigma_stats_do=True'")
+
         if img.opts.output_all or img.opts.savefits_residim:
             if img.waveletimage:
                 resdir = img.basedir + '/wavelet/residual/'
@@ -76,7 +148,7 @@ class Op_make_residimage(Op):
             else:
                 moddir = img.basedir + '/model/'
             os.makedirs(moddir, exist_ok=True)
-            func.write_image_to_file(img.use_io, img.imagename + '.model.fits', (img.ch0_arr - resid_gaus), img, moddir)
+            func.write_image_to_file(img.use_io, img.imagename + '.model_gaus.fits', (img.ch0_arr - resid_gaus), img, moddir)
             mylog.info('%s %s' % ('Writing', moddir+img.imagename+'.model_gaus.fits'))
 
         ### residual rms and mean per island
