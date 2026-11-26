@@ -765,7 +765,12 @@ The output options are:
       :term:`print_timing` ....... False : Print basic timing information
       :term:`quiet` .............. False : Suppress text output to screen. Output is still
                                    sent to the log file as usual
-      :term:`residual_stats_do` .. False : Calculate and log statistics of residual images
+      :term:`resid_sigma_stats_do` False : This parameter is a Boolean (default is ``False``).
+                                   If ``True``, calculate and log residual RMS and mean statistics
+                                   in units of the background rms before and after standard and wavelet fitting.
+                                   This calculation has a computational cost.
+      :term:`residual_stats_do` .. False : Calculate and log statistics of residual images.
+                                   This calculation has a computational cost.
       :term:`savefits_det_meanim`  False : Save detection background mean image as fits file
       :term:`savefits_det_rmsim` . False : Save detection background rms image as fits file
       :term:`savefits_meanim` .... False : Save background mean image as fits file
@@ -1018,6 +1023,44 @@ The options for this module are as follows:
     atrous_sum
         This parameter is a Boolean (default is ``True``). If ``True``, fitting is done on an image that is the sum of the remaining wavelet scales. Using the sum will generally result in improved signal.
         If ``False``, fitting is done on only the wavelet scale under consideration.
+
+
+Wavelet rejection summary
+-------------------------
+
+When ``atrous_bdsm_do = True``, PyBDSF reports the number of rejected
+wavelet components for each scale, followed by a total across all
+processed scales. The summary distinguishes three types of rejection:
+
+* ``fit flags``: Number of wavelet Gaussians rejected by the Gaussian
+  flagging criteria. Details in square brackets distinguish two cases:
+
+  * ``invalid: N``: Number of Gaussians with flag value ``-1``,
+    indicating invalid Gaussian parameters.
+
+  * ``flags: flag_value:count, ...``: Counts of Gaussians rejected
+    with each other flag value. A flag value may represent multiple
+    flagging conditions, in which case their values are summed.
+
+  For example, ``[invalid: 1; flags: 64:2]`` means that one Gaussian
+  had invalid parameters and two Gaussians were rejected with flag
+  value 64. See :ref:`flagging_opts` for the individual flag definitions.
+
+* ``orig_isl``: Number of fitted wavelet Gaussians rejected because
+  their centres do not fall on an unmasked pixel belonging to an
+  island in the original image. This filter is applied when
+  ``atrous_orig_isl = True``.
+
+* ``rejected islands``: Number of wavelet islands that do not overlap
+  any island in the original image. These islands are rejected before
+  Gaussian fitting when ``atrous_orig_isl = True``.
+
+The total gives the sum of rejected components across all processed
+scales; it does not represent a count of unique astronomical sources.
+
+The summary reports counts only, not flux densities. It is a diagnostic
+of these specific rejection stages and does not account for all
+emission that may remain unmodelled in the residual image.
 
 
 Wavelet output images
