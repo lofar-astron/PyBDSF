@@ -28,7 +28,7 @@ def robust_mc_std(values):
     values = values[N.isfinite(values)]
 
     if len(values) < 2:
-        return N.nan
+        return 0
 
     q16, q50, q84 = N.percentile(values, [15.865, 50.0, 84.135])
 
