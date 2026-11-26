@@ -99,7 +99,9 @@ def _add_enclosing_triangle(x, y, z, xo, yo):
         The region is the range of the output coordinates `vo`, extended by
         1% more than needed to include all data coordinates `v` (and by 1% of
         its length if that is less). As in natgrid, the minima and maxima
-        are rounded to single precision.
+        are rounded to single precision, and the rest is computed in double
+        precision. Hence the conversion back to `float`: arithmetic on
+        float32 scalars would stay in single precision.
         """
         vmin = float(N.float32(v.min()))
         vmax = float(N.float32(v.max()))
