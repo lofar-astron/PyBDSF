@@ -579,7 +579,10 @@ class Op_rmsimage(Op):
 
             n_valid = np.count_nonzero(valid_pixels)
             if n_valid == 0:
-                raise RuntimeError("No finite unmasked pixels in RMS map")
+                # Nothing to check (e.g., a fully masked plane); accept the map as is, as was done before this check was added
+                mylog.warning('No finite unmasked pixels in RMS map; skipping check for negative values')
+                rms_ok = True
+                break
 
             negative_pixels = valid_pixels & (rms < 0.0)
             if np.any(negative_pixels):
