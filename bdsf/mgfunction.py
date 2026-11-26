@@ -125,8 +125,11 @@ class MGFunction:
         gtype = GaussianType(gtype)
         if len(parameters) != 6:
             raise ValueError("Wrong number of parameters for gaussian")
+        # Build the new parameter array first, so that the model is left
+        # unchanged if any parameter can't be converted.
+        params = N.vstack((self._params, [float(p) for p in parameters]))
         self._gtypes.append(gtype)
-        self._params = N.vstack((self._params, [float(p) for p in parameters]))
+        self._params = params
         self._layout_changed()
 
     @property
