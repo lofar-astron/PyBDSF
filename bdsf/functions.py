@@ -1796,9 +1796,8 @@ def bstat(indata, mask, kappa_npixbeam):
             npixbeam = abs(kappa_npixbeam)
             kappa = numpy.sqrt(2.0)*erfcinv(1.0 / (2.0*npix/npixbeam))
             # Floor at 3.0. erfcinv returns NaN when npix < npixbeam/4
-            # (and -inf when npix == npixbeam/4).
-            if numpy.isnan(kappa) or kappa < 3.0:
-                kappa = 3.0
+            # (and -inf when npix == npixbeam/4); fmax ignores NaN.
+            kappa = numpy.fmax(kappa, 3.0)
         lastct = ct
         medval = skpix[npix//2]
         if iter == 0:
