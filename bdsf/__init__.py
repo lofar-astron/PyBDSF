@@ -102,7 +102,9 @@ def _run_op_list(img, chain):
     from .interface import raw_input_no_history
     from .gausfit import Op_gausfit
     from . import mylogger
-    import gc
+
+    # Collect any leftover reference cycles before starting a new run
+    gc.collect()
 
     ops = []
     stopat = img.opts.stop_at
@@ -152,7 +154,6 @@ def _run_op_list(img, chain):
         op.__start_time = time()
         op(img)
         op.__stop_time = time()
-        gc.collect()
 
     if img.opts.interactive and not img._pi:
         print(dc + 'Fitting complete. Displaying results...' + nc)
