@@ -9,6 +9,514 @@ def changelog():
     PyBDSF Changelog.
     -----------------------------------------------------------------------
 
+    2026/11/26 - Fix Monte Carlo uncertainty clipping for source positions and PAs (#585)
+
+    2026/11/26 - Fix island peak clipping with varying noise (#590)
+
+    2026/11/26 - Fix NaN propagation in `get_rot` (#592)
+
+    2026/11/26 - Fix masked pixel handling when repairing negative RMS values (#577)
+
+    2026/11/25 - Clean and optimize `psf_vary.py` (#552)
+
+    2026/11/25 - Fix beam distortion when `fix_to_beam` is enabled (#570)
+
+    2026/11/25 - Fix adaptive RMS message triggering (#593)
+
+    2026/11/25 - Add info and warnings in the wavelet module (#597)
+
+    2026/11/25 - Add a warning in `get_errors` when an exception occurs (#607)
+
+    2026/11/25 - Add residual sigma statistics for standard and wavelet fitting (#600)
+
+    2026/11/24 - Fix treshold warning triggering in `treshold.py` (#453)
+
+    2026/11/24 - Add log message saying that source counts were extrapolated (#596)
+
+    2026/11/24 - Fix automatic threshold selection for custom `thresh_pix` (#595)
+
+    2026/11/23 - Add `residual_stats_do` to the docs (#602)
+
+    2026/11/23 - Compute curvature map only once per island (#599)
+
+    2026/11/23 - Fix DS9 generation modifies source parameters (#598)
+
+    2026/11/23 - Add warning in `coords_to_isl` if user-supplied islands were skipped (#589)
+
+    2026/11/23 - Fix silent external RMS map rejection (#580)
+
+    2026/11/23 - Warn if fallback to 1.0 was executed in `fill_masked_regions` (#579)
+
+    2026/11/23 - Add warning if adaptive RMS failed (#594)
+
+    2026/11/23 - Update reference outputs after fixed Gaussian shape change (#604) (#606)
+
+    2026/11/20 - Use Claude token
+
+    2026/11/20 - Use fixed Gaussian shape for rank-deficient island masks (#604)
+
+    2026/11/20 - Renamed reference model FITS files (#605)
+
+    2026/11/20 - Add GitHub Actions workflow for @claude mentions (#582)
+
+    2026/11/19 - Fix distorted beam detection for wrapped PAs (#571)
+
+    2026/11/19 - Fix updating Gaussian counter after island merging (#490)
+
+    2026/11/19 - Fix model filename (#484)
+
+    2026/11/19 - Make `seterr` local only (#477)
+
+    2026/11/17 - Fix peak flux comparison in curvature-based Gaussian grouping (#588)
+
+    2026/11/17 - Fix Deprecation Warning in `gaul2srl` (#587)
+
+    2026/11/17 - Fix normalization factor in the `norm_peak` calculation (#586)
+
+    2026/11/16 - Fix incorrect peak-pixel coordinate calculation in `same_island_min` (#584)
+
+    2026/11/16 - Fix `island_file` column header (#583)
+
+    2026/11/16 - Fix order-dependent blending of small- and large-scale maps (#573)
+
+    2026/11/11 - Fix coordinate mapping in RMS calculations (#561)
+
+    2026/11/11 - Clean `gausfit.py` (#572)
+
+    2026/11/11 - Merge pull request #569 from AlexKurek/Fix-FDR-crash-when-no-sources-are-found
+
+    2026/11/11 - Merge pull request #544 from AlexKurek/Simplify-and-optimize-shapelets
+
+    2026/11/09 - Combined reference updates (#576)
+
+    2026/11/09 - Update reference outputs
+
+    2026/11/09 - Update reference outputs and make output comparison stricter (#565)
+
+    2026/11/09 - Fix wavelet output files (#548)
+
+    2026/11/09 - Fix `inigaus_fbdsm` PA (#535)
+
+    2026/11/09 - Fix intermittent hang of parallel_map when called from several threads (#566)
+
+    2026/11/09 - Fix flaky test_interrupt_stops_workers on Python 3.10 (#567)
+
+    2026/11/06 - Fix setting of `img.thresh_pix` when `pcrit == 0.0` (#559)
+
+    2026/11/06 - Add microoptimization in `gausfit.py` (#558)
+
+    2026/11/06 - Rewrite parallel_map with a process pool and dynamic scheduling (#503)
+
+    2026/11/06 - Fix logging of compare outputs script (#563)
+
+    2026/11/05 - Fix `fit_shapeletbasis` never running `leastsq` (#557)
+
+    2026/11/05 - Fix message in polarization module (#556)
+
+    2026/11/05 - Fix duplicated IDs for polarisation-only sources after island renumbering (#555)
+
+    2026/11/05 - Skip Gaussian fit when adding a component fails (#554)
+
+    2026/11/05 - Avoid unnecessary final Gaussian fit (#553)
+
+    2026/11/05 - Add warning when automatic jmax is forced (#549)
+
+    2026/11/04 - Took `m` out of the loop
+
+    2026/11/04 - Fix filename completion for `tput` and `tget` (#547)
+
+    2026/11/04 - Fix sorting in `output.py` (#546)
+
+    2026/11/04 - Fix Gaussian numbering and preserve wavelet statistics (#542)
+
+    2026/11/04 - Fix duplicated `gaus_num` after island renumbering in wavelet module (#541)
+
+    2026/11/04 - Remove global warning ignoring from `plotresults.py` (#540)
+
+    2026/11/04 - Remove 5 usnused methods and few variables (#539)
+
+    2026/11/03 - Fix inconsistent Gaussian fitting thresholds (#538)
+
+    2026/11/03 - Fix islands statistics after splitting (#537)
+
+    2026/11/03 - Fix offset in `make_curvature_map` (#536)
+
+    2026/11/02 - Modernize `readimage.py` (#534)
+
+    2026/11/02 - Fix the 25-Gaussian limit in `inigaus_fbdsm` (#533)
+
+    2026/11/02 - Remove C version of `bstat` (#525)
+
+    2026/11/02 - Fix sorting of `p-values` in `threshold.py` (#530)
+
+    2026/11/01 - Simplify and optimize shapelets
+
+    2026/10/29 - Cache `rms_mean_map` results (#517)
+
+    2026/10/29 - Fix masked pixels in nobeam Gaussian initialization (#500)
+
+    2026/10/29 - Fix half-pixel offset in `generate_aperture` (#506)
+
+    2026/10/29 - Clean output.py (#528)
+
+    2026/10/29 - Fix masked neighbour handling in `get_maxima()` (#527)
+
+    2026/10/29 - Remove Python 2 compatibility branches in `readimage.py` (#526)
+
+    2026/10/27 - Fix incorrect axis coordinates in the padding edge case (#521)
+
+    2026/10/27 - Fix detection of fully masked images in `rmsimage.py` (#520)
+
+    2026/10/27 - Remove `morphfilter_pyramid` (#519)
+
+    2026/10/26 - Speedup `rmsimage.py` (#514)
+
+    2026/10/26 - Fix `outside_univ` (#513)
+
+    2026/10/26 - Reduce RAM usage in wavelets (#512)
+
+    2026/10/26 - Add early stop for `gaul` limit (#472)
+
+    2026/10/26 - Fix `plist` passing to `get_errors` (#505)
+
+    2026/10/26 - Fix inconsistent max position when the fit is rejected in `process_Multiple` (#502)
+
+    2026/10/26 - Print PSF differences info (#501)
+
+    2026/10/26 - Fix handling PA errors for circular Gaussians (#498)
+
+    2026/10/26 - Fix extra islands criterion in `isl_tosplit` (#499)
+
+    2026/10/26 - Fix background mean selection for polarization maps (#497)
+
+    2026/10/26 - Fix background levels in Gaussian flagging (#496)
+
+    2026/10/26 - Fix flux threshold consistency in `get_srcp` (#495)
+
+    2026/10/26 - Revert "Fix automatic zero-mean mode handling in `rmsimage.py` (#493)" (#529)
+
+    2026/10/23 - Fix automatic zero-mean mode handling in `rmsimage.py` (#493)
+
+    2026/10/23 - Fix residual statistics for islands without Gaussians [bias] (#486)
+
+    2026/10/22 - Fix updating of the Gaussian counter (#489)
+
+    2026/10/22 - Add message in verbose fitting mode if the island was modified (#492)
+
+    2026/10/22 - Fix island peak position for concave morphologies (#491)
+
+    2026/10/22 - Fix the update of the island counter (#488)
+
+    2026/10/22 - Fix source size errors assigment (#485)
+
+    2026/10/21 - Remove output silencing from `functions.py` (#481)
+
+    2026/10/21 - Remove `av` from Gaussian fitting (#480)
+
+    2026/10/21 - Simplify gaussian fitting (#479)
+
+    2026/10/21 - Call `momanalmask_gaus` only when needed (#478)
+
+    2026/10/21 - Fix mean map test in `rmsimage.py` (#476)
+
+    2026/10/21 - Remove dead code from `rmsimage.py` (#475)
+
+    2026/10/21 - Speedup RMS calculations (#474)
+
+    2026/10/21 - Remove unnecessary chceck in `deconv2` (#473)
+
+    2026/10/21 - Fix eroding the island mask in `fit_island` (#465)
+
+    2026/10/21 - Fix NaN support in `arrstatmask` (#424)
+
+    2026/10/21 - Fix invalid IDs assigned to flagged Gaussians in `fgaul` (#412)
+
+    2026/10/21 - Fix negative RMS map weights near image boundaries (#409)
+
+    2026/10/20 - Fix `IndexError` and optimize bilinear interpolation in `fit_island` (#406)
+
+    2026/10/20 - Speed up rms/mean map calculation in rmsimage (#504)
+
+    2026/10/20 - Fix `ptbin` division in `psfvary.py` (#382)
+
+    2026/10/20 - Add flagging of no-fit Gaussians (#483)
+
+    2026/10/19 - Cache downloaded Boost tar-ball (#509)
+
+    2026/10/18 - Cleanup scikit-build build directory (#508)
+
+    2026/10/18 - Add NGC6048 FITS image via Git LFS (#507)
+
+    2026/10/18 - Add benchmark script
+
+    2026/10/12 - Fix WCS position error scaling for non-square pixels (#398)
+
+    2026/10/09 - Skip `isl_tosplit` when `split_isl` is disabled (#471)
+
+    2026/10/09 - Add warning on large islands before fitting (#467)
+
+    2026/10/08 - Fix weighted sum of squares for the position angle in `psfvary.py` (#399)
+
+    2026/10/08 - Fix underestimation of `deconv_size_skyE` (#397)
+
+    2026/10/08 - Fix flux error aggregation for multi-component sources (#395)
+
+    2026/10/08 - Fix determining the number of sources in `psfvary.py` (#374)
+
+    2026/10/08 - Fix degree-to-pixel fallback in angdist2pixdist (#371)
+
+    2026/10/05 - Speedup `inigaus_nobeam` (#464)
+
+    2026/10/05 - Optimise Gaussian fitting (#463)
+
+    2026/10/05 - Simplify `fit_mulgaus2d` (#462)
+
+    2026/09/24 - Fix stale dof and mask in island fitting fallbacks (#461)
+
+    2026/09/24 - Remove dead code in `_flag_gaussian` (#460)
+
+    2026/09/24 - Remove `correct_borders` and `pad_array` (#457)
+
+    2026/09/23 - Fix Gaussian deconvolution error handling in `deconv2` (#450)
+
+    2026/09/22 - Replace `correct_borders` with `numpy.pad` (#455)
+
+    2026/09/22 - Replace `pad_array` with `numpy.pad` (#454)
+
+    2026/09/21 - Remove from __future__ import statements (#447)
+
+    2026/09/17 - Fix `img.blankpix` calculation (#445)
+
+    2026/09/17 - Fix flux and RMS calculations in plotting (#446)
+
+    2026/09/15 - Fix support of peak position change in `rmsimage.py` (#419)
+
+    2026/09/14 - Fix regression in `check_islands_for_overlap` (#440)
+
+    2026/09/14 - Fix off by one error in island lookup for wavelet Gaussians in `wavelet_atrous.py` (#441)
+
+    2026/09/11 - Revert `Fix RMS explosion near strong sources` (#438)
+
+    2026/09/09 - Fix PA error calculation in `gaul2srl.py` (#429)
+
+    2026/09/08 - Revert "Make p2s faster" (#434)
+
+    2026/09/08 - Fix RMS explosion near strong sources (#431)
+
+    2026/09/07 - Make progressbar more universal (#430)
+
+    2026/09/07 - Fix bias towards 0 for flagged Gaussians (#425)
+
+    2026/09/07 - Fix NaN support in `bstat` (#423)
+
+    2026/09/07 - Add comment to `fit_island_iteratively` in `gausfit.py` (#427)
+
+    2026/09/07 - Fix std calculation and zero division in moment (#422)
+
+    2026/09/07 - Fix `s_imsize` dimension mismatch when sub-image reaches boundary (#421)
+
+    2026/09/07 - Fix image boundary detection in `rms_mean_map` (#420)
+
+    2026/09/07 - Fix masked region filling bias towards 0 and loop safety in `fill_masked_regions` (#415)
+
+    2026/08/27 - Fix NaN propagation for very low SNR in `for_masked_mp` (#417)
+
+    2026/08/27 - Fix negative `brightsize` values in `rmsimage.py` (#416)
+
+    2026/08/27 - Fix NaN values handling in island peak detection (#414)
+
+    2026/08/25 - Fix NaN contamination in island/source residual statistics `calc_resid_mean_rms` (#411)
+
+    2026/08/24 - Fix shifting only along axis 0 in `imageshift` (#402)
+
+    2026/08/24 - Fix `jmax` calcultion in wavelets (#381)
+
+    2026/08/24 - Add another fallback in RMS MAD calculation (#376)
+
+    2026/08/24 - Fix `area_pix` calculation in FDR (#358)
+
+    2026/08/24 - Add warning to `treshold.py` (#346)
+
+    2026/08/24 - Remove 14 unused functions from `functions.py` (#333)
+
+    2026/08/24 - Fix threshold index search condition for ascending scflux (#408)
+
+    2026/08/24 - Fix incorrect amplitude initialization in `fit_mask_1d` (#400)
+
+    2026/08/21 - Fix stability of MC error estimation in `gaul2srl.py` (#396)
+
+    2026/08/21 - Fix Gaussian size error scaling in `g2param_err` (#407)
+
+    2026/08/21 - Remove unnecessary check in `isl_tosplit` (#405)
+
+    2026/08/20 - Fix position angle normalization in `corrected_size` (#404)
+
+    2026/08/20 - Add comment to `drawellipse` (#403)
+
+    2026/08/20 - Fix crash due to typo in `fit_mulgaus2d` (#401)
+
+    2026/08/20 - Fix Monte Carlo variance bias in `process_Multiple` (#394)
+
+    2026/08/20 - Fix incorrect coordinate shift in `process_Multiple` (#393)
+
+    2026/08/20 - Fix axis boundary checking in `same_island_min` (#392)
+
+    2026/08/20 - Fix array index wrap-around in `same_island_min` (#391)
+
+    2026/08/19 - Fix masked pixels included in image moment calculations (#389)
+
+    2026/08/19 - Fix PA angle normalization in `deconv2` (#388)
+
+    2026/08/19 - Replace `IOError` with `OSError` in `read_image_from_file` (#387)
+
+    2026/08/19 - Fix mutation of `img.sources` causing duplicate entries (#386)
+
+    2026/08/19 - Fix division in `gaul2srl.py` (#384)
+
+    2026/08/19 - Fix `rms_box` size in wavelets (#383)
+
+    2026/08/19 - Fix shapelets statistics (#380)
+
+    2026/08/19 - Fix flux and RMS calculation in plotting (#379)
+
+    2026/08/19 - Fix brightest pixel search for adaptive RMS map (#377)
+
+    2026/07/27 - Fix typo in logging in `psfvary.py` (#375)
+
+    2026/07/24 - Remove `nanmean` from functions.py (#297)
+
+    2026/07/24 - Remove `fftconvolve` (#323)
+
+    2026/07/24 - Fix island pixel counting in `rmsimage.py` validation check (#319)
+
+    2026/07/24 - Clean `gaul2srl.py.py` (#318)
+
+    2026/07/24 - Make `mapcoord_threaded` faster (#334)
+
+    2026/07/24 - Make `p2s` faster (#359)
+
+    2026/07/24 - Fix negative array dimensions in `psfvary.py` (#373)
+
+    2026/07/24 - Fix plotting in `psfvary.py` (#372)
+
+    2026/07/23 - Fix pixel count mismatch between total flux and its error (#370)
+
+    2026/07/23 - Issue 366 (#368)
+
+    2026/07/23 - Make `pixdist2angdist` faster (#282)
+
+    2026/07/23 - Fix external mask in `list_and_sort_gaussians` (#331)
+
+    2026/07/22 - Fix: mask pixels outside FOV before calculating statistics (#365)
+
+    2026/07/22 - Clean `interface.py` (#348)
+
+    2026/07/21 - Fix TOCTOU race in directory creation (#357)
+
+    2026/07/21 - Fine-tune Gaussian fitting (#328)
+
+    2026/07/21 - Remove duplicate from `opts.py` (#324)
+
+    2026/07/21 - Fix `shapelet_getroot` logic (#321)
+
+    2026/07/21 - Fix the calculation of mean island values (#351)
+
+    2026/07/20 - Fix seconds formatting in `plotresults.py` (#364)
+
+    2026/07/20 - Fix SED errorbars (#363)
+
+    2026/07/20 - Fix `nmax` calculation in shapelets by removing incorrect upper limit (#362)
+
+    2026/07/20 - Fix import in `shapefit.py` (#361)
+
+    2026/07/20 - Implement mask support for `tresholdy.py` (#360)
+
+    2026/07/17 - Fix formatting of `beam_spectrum` option in `print_opts()` (#349)
+
+    2026/07/17 - Fix: subtract background when computing `total_flux` (#350)
+
+    2026/07/17 - Add nproc() method (#354)
+
+    2026/07/17 - Increase numeric tolerance (#355)
+
+    2026/07/16 - Use correct mask
+
+    2026/07/16 - Fix FDR algorithm (#345)
+
+    2026/07/16 - Fix statistics of the residual image (#299)
+
+    2026/07/16 - Remove `getTerminalSize` (#298)
+
+    2026/07/16 - Fix island IDs map when `coords_to_isl` is used (#352)
+
+    2026/07/16 - Fix `total_fluxE` computation (#301)
+
+    2026/07/15 - Fix external mask in `list_and_sort_gaussians` (2) (#332)
+
+    2026/07/15 - Improve the accuracy of `B1950toJ2000` (#330)
+
+    2026/07/15 - Remove unnecessary `np.where` from `gausfit.py` (#329)
+
+    2026/07/14 - Simplify adaptive RMS (#327)
+
+    2026/07/14 - Fix `total_flux` computation (#295)
+
+    2026/07/14 - Fix `RuntimeWarning: overflow encountered in cast` (#343)
+
+    2026/07/13 - Fix initial Gaussian size estimation in `inigaus_nobeam` (#291)
+
+    2026/07/13 - Fix computing the number of unmasked pixels assigned to current island in `Island` class (#294)
+
+    2026/07/13 - Remove dead code from `treshold.py` (#344)
+
+    2026/07/13 - Fix extended source filtering in adaptive rms box calculation (#339)
+
+    2026/07/08 - Fix Numpy 2.5 deprecation (#341)
+
+    2026/07/08 - Remove backport to `shutil_get_terminal_size` (#338)
+
+    2026/07/08 - Simplify `for_masked` (#337)
+
+    2026/07/08 - Fix Numpy 2.5 incompatibility (#325)
+
+    2026/07/06 - Remove unused `np_where` from `rmsimage.py` (#315)
+
+    2026/07/06 - More robust statistics of a very small RMS window (#335)
+
+    2026/07/05 - Fine-tune inverse of the complementary error function in `treshold.py` (#336)
+
+    2026/06/22 - Fix `try` block in `shape_findcen` (#322)
+
+    2026/06/19 - Fix mean value computation in `rmsimage.py` (#320)
+
+    2026/06/17 - Update reference output files (#314)
+
+    2026/06/16 - Fix Gaussian fitting (#309)
+
+    2026/06/16 - Clean `shapelets.py` (#312)
+
+    2026/06/16 - Speedup statistics for the Gaussian residual image (#311)
+
+    2026/06/15 - Remove duplicate from `gaul2srl.py` (#292)
+
+    2026/06/15 - Cleanup of `rmsimage.py` (#289)
+
+    2026/06/15 - Make printing of stats of residual images optional (#306)
+
+    2026/06/15 - Don't use "input" symbol as it is a builtin Python function (#307)
+
+    2026/06/15 - Remove `func_poly2d` and `func_poly2d_ini` (#285)
+
+    2026/06/15 - Fix typo in `shapelet_check_centre` (#308)
+
+    2026/06/12 - Fix indentation in `getzeroes_matrix` (#304)
+
+
+    2026/06/12 - Version 1.14.1
+
+    2026/06/12 - Use fork-style multiprocessing context (#305)
+
+
     2026/06/10 - Version 1.14.0
 
     2026/06/10 - Drop support for Python 3.9
