@@ -4,10 +4,92 @@
 What's New
 **********
 
-    Version  ():
-    * Fix island peak clipping with varying noise (#590)
+Version 1.15.0 (unreleased):
 
-    Version 1.12.0 (2024/11/25):
+    * Rewrite the parallel processing with a process pool and dynamic scheduling, which balances the load across cores better and fixes intermittent hangs (#503, #566)
+
+    * Speed up many parts of the processing considerably, in particular the computation of the rms and mean maps (#474, #504, #514, #517), the Gaussian fitting (#463, #464, #472, #599) and the PSF variation module (#552), and reduce memory usage of the wavelet module (#512)
+
+    * Add the ``residual_stats_do`` option, to make calculating the statistics of the residual images optional, since it can take a considerable amount of time (#306)
+
+    * Add the ``resid_sigma_stats_do`` option, to print the residual rms in units of the noise before and after (wavelet) Gaussian fitting, as a measure of fit quality (#600)
+
+    * Add the ``flag_nofit`` option, to flag Gaussians whose fit did not succeed (#483)
+
+    * Fix the peak and integrated flux densities being underestimated by about 5% when ``fix_to_beam`` is enabled (#570)
+
+    * Fix external rms and mean maps (``rmsmean_map_filename``) being silently ignored (#580)
+
+    * Fix numerous issues in the calculation of the background rms and mean maps, including the handling of masked pixels, image boundaries, adaptive rms boxes and blending of small- and large-scale maps (#409, #415, #420, #493, #520, #561, #573, #577, #593)
+
+    * Fix several issues with the detection threshold, including the False Detection Rate (FDR) algorithm and its crash when no sources are found, the use of a user-supplied ``thresh_pix``, and handling of NaNs (#345, #358, #360, #530, #559, #569, #595)
+
+    * Fix several issues in the Gaussian fitting that affected the number and parameters of the fitted Gaussians, such as inconsistent fitting and flagging thresholds, a broken limit on the number of initial Gaussians, and ill-constrained fits on small islands, and initial Gaussians rotated by 90 degrees (#309, #461, #465, #533, #535, #538, #604)
+
+    * Fix the determination of island peaks, island statistics and island numbering, especially after splitting or merging islands, and with user-supplied islands (``src_ra_dec``) (#351, #352, #414, #488, #490, #491, #537, #541, #542, #555, #590)
+
+    * Fix several issues in the calculation of total flux densities and their errors (#295, #301, #350, #370, #395)
+
+    * Fix several issues in the estimation of uncertainties of source positions, sizes and position angles, including the Monte Carlo error estimation (#394, #396, #397, #398, #407, #429, #485, #498, #585)
+
+    * Fix the detection of distorted beams for position angles that wrap around (#571)
+
+    * Fix several issues in the PSF variation module (#372, #373, #374, #382, #399)
+
+    * Fix several issues in the shapelet decomposition, which was effectively never fitting the shapelet coefficients (#321, #362, #380, #557)
+
+    * Fix the wavelet model and residual images, which did not include the model of the standard Gaussian fit (#548)
+
+    * Fix several issues in the wavelet module, and report when the automatically determined number of wavelet scales (``atrous_jmax``) was adjusted (#381, #383, #441, #549, #597)
+
+    * Fix the background used for polarization maps and duplicated source IDs for polarization-only sources (#497, #555)
+
+    * Fix output catalogs: writing DS9 region files no longer modifies the source sizes written to other catalogs, duplicate sources no longer appear, and the header of the ``island_file`` now matches its columns (#386, #546, #583, #598)
+
+    * Fix the name of the saved model image (#484)
+
+    * Fix plotting issues in ``show_fit``, including incorrect flux and rms values and SED error bars (#363, #364, #379, #446)
+
+    * Add warnings when PyBDSF falls back on default behaviour, e.g. when the adaptive rms fails, masked regions cannot be filled, user-supplied islands are skipped, error estimation fails, or source counts are extrapolated (#579, #589, #594, #596, #607)
+
+    * Improve the accuracy of the ``B1950toJ2000`` coordinate conversion (#330)
+
+    * Fix filename completion for ``tput`` and ``tget`` in the interactive shell (#547)
+
+    * PyBDSF no longer changes the global NumPy error handling and warning filters when used as a library (#477, #540)
+
+    * Fix compatibility with NumPy 2.5 (#325, #341)
+
+Version 1.14.1 (2026/06/12):
+
+    * Always use fork-style multiprocessing, since the spawn and forkserver start methods are not supported (#305)
+
+Version 1.14.0 (2026/06/11):
+
+    * Drop support for Python 3.9
+
+    * Add binary wheels for Python 3.14 (#267)
+
+    * Speed up Gaussian fitting by improving the scheduling of islands over the available cores (#271, #273)
+
+    * Speed up the calculation of the background rms, using multiple threads where possible (#259, #260, #261, #262)
+
+    * Fix estimating the brightest pixel and source in islands (#290, #296)
+
+    * Fix renumbering of islands (#281)
+
+    * Check the exit code of each worker process, so that failures are no longer silently ignored (#255)
+
+    * Drop support for MacOS 13 (Intel), add binary wheels for MacOS 15 (#303)
+
+Version 1.13.0 (2025/04/08):
+
+    * Add support for NumPy 2.0 (#251)
+
+    * Fix support for Python 3.13 (#252)
+
+Version 1.12.0 (2024/11/25):
+
     * Fix string checks and clean up (#243)
 
     * Fix unintended removal of handlers from the root logger (#245)
@@ -18,14 +100,16 @@ What's New
 
     * Fix bug that resulted in ncores being at most 8 and improve method for getting no. of available cores (#240)
 
-    Version 1.11.1 (2024/09/06):
+Version 1.11.1 (2024/09/06):
+
     * Add macos arm binary wheels (#238)
 
     * Remove manylinux2014 directory (#237)
 
     * GitHub action download artifact security update (#236)
 
-    Version 1.11.0 (2024/07/26):
+Version 1.11.0 (2024/07/26):
+
     * Add checks of output to tests (#231)
 
     * Set upper limit on NumPy version (#230)
