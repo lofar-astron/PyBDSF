@@ -35,7 +35,6 @@ from ._version import __version__
 from .functions import set_up_output_paths
 import gc
 
-
 default_chain = [Op_readimage(),
                  Op_collapse(),
                  Op_preprocess(),
@@ -104,7 +103,7 @@ def _run_op_list(img, chain):
     from .gausfit import Op_gausfit
     from . import mylogger
 
-    # Free RAM from previously processed images before loading another
+    # Collect any leftover reference cycles before starting a new run
     gc.collect()
 
     ops = []
@@ -130,8 +129,6 @@ def _run_op_list(img, chain):
         if val != v._default and v.group() != 'hidden':
             par_msg += '    %-20s = %s\n' % (k, repr(val))
     mylog.info(par_msg[:-1]) # -1 is to trim final newline
-    # Clear RAM at the end
-    gc.collect()
 
     # Run all op's
     dc = '\033[34;1m'
