@@ -31,10 +31,11 @@ img = bdsf.process_image(fitsname,
                          advanced_opts = True,
                          blank_limit = None,
                          frequency = 143.65e6,
+                         psf_vary_do = True,
                          clobber = True)
 
 stop = timeit.default_timer()
 total_timeHi = stop - start
 mins, secs  = divmod(total_timeHi, 60)
 hours, mins = divmod(mins, 60)
-sys.stdout.write("PyBDSF running time: %d:%d:%d\n" % (hours, mins, secs))
+sys.stdout.write("PyBDSF running time: %d:%02d:%02d\n" % (hours, mins, secs))

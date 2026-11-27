@@ -9,7 +9,7 @@ from . import functions as func
 from . import tessellate
 from . import shapelets as sh
 from scipy.optimize import leastsq
-from . import nat
+from .natgrid import natgrid
 from math import *
 from . import statusbar
 from .const import fwsig
@@ -925,19 +925,18 @@ class Op_psf_vary(Op):
 
 ##################################################################################################
     def interp_shapcoefs(self, nmax, tr_psf_cf, psfcoords, imshape, compress, plot):
-        """Interpolate using natgrid.
+        """Interpolate using natural neighbor interpolation.
 
         Check to see if variation is significant.
         """
-        x, y = N.transpose(psfcoords)
+        xi, yi = N.transpose(psfcoords)
         index = [(i,j) for i in range(nmax+1) for j in range(nmax+1-i)]
         xo=N.arange(0.0,round(imshape[0]), round(compress))
         yo=N.arange(0.0,round(imshape[1]), round(compress))
-        rgrid=nat.Natgrid(x,y,xo,yo)
-        p={}
-        for coord in index:
-            z = N.array(tr_psf_cf[coord])    # else natgrid cant deal with noncontiguous memory
-            p[coord] = rgrid.rgrd(z)
+        # All coefficients are interpolated at once
+        z = N.transpose([tr_psf_cf[coord] for coord in index])
+        interp = natgrid(xi, yi, z, xo, yo)
+        p = {coord: interp[:, :, k] for k, coord in enumerate(index)}
 
 #         if plot:
 #           for i,coord in enumerate(index):
@@ -957,18 +956,14 @@ class Op_psf_vary(Op):
 
 ##################################################################################################
     def interp_prop(self, prop, psfcoords, imshape, compress=1):
-        """Interpolate using natgrid.
+        """Interpolate using natural neighbor interpolation.
 
         Should check to see if variation is significant.
         """
-        x, y = N.transpose(psfcoords)
-        xi=x
-        yi=y
+        xi, yi = N.transpose(psfcoords)
         xo=N.arange(0.0,round(imshape[0]), round(compress))
         yo=N.arange(0.0,round(imshape[1]), round(compress))
-        rgrid=nat.Natgrid(xi,yi,xo,yo)
-        prop_int = rgrid.rgrd(prop)
-        return prop_int
+        return natgrid(xi, yi, prop, xo, yo)
 
 ##################################################################################################
     def create_psf_grid(self, psf_coeff_interp, imshape, xgrid, ygrid, skip, nmax, psfshape, basis, beta,
