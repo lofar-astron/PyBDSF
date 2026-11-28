@@ -315,6 +315,21 @@ class Op_rmsimage(Op):
             kappa = -img.pixel_beamarea()
         else:
             kappa = img.opts.kappa_clip
+        if opts.kappa_clip is None:
+            mylog.info('Background statistics: noise assumed Gaussian and stationary within each '
+                       'rms_box, correlated only on the scale of the restoring beam (one independent '
+                       'sample per beam area, N_eff = N_pix / A_beam, '
+                       f'A_beam = {img.pixel_beamarea():.1f} pixels).')
+            mylog.info('Clipping threshold: kappa = sqrt(2) * erfcinv(1 / (2 * N_eff)), with a '
+                       'minimum of 3.0.')
+        else:
+            mylog.info('Background statistics: noise assumed Gaussian and stationary within each '
+                       f'rms_box. Clipping threshold fixed at kappa_clip = {opts.kappa_clip}; correlation between '
+                       'pixels is not taken into account.')
+        mylog.info('The clipped rms is not corrected for bias from correlated pixels; it may be less '
+                   'accurate if the noise correlation differs from the restoring beam (e.g. resampled, '
+                   'smoothed or mosaicked images, strong sidelobes) or if rms_box contains only a few beams.')
+
 
         if do_adapt:
             map_opts = (kappa, img.rms_box_bright, opts.spline_rank)
