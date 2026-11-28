@@ -6,7 +6,8 @@ import numpy as N
 from .image import *
 from . import mylogger
 import os
-from math import log, floor, sqrt
+from math import log, floor, sqrt, exp
+from scipy.optimize import brentq
 from .const import fwsig
 from copy import deepcopy as cp
 from . import functions as func
@@ -32,6 +33,14 @@ try:
 except ImportError:
     has_pyfftw = False
 
+
+def _dog_halfmax_sigma(v_prev, v_curr, a_prev, a_curr):
+    """Sigma of a Gaussian with the same FWHM as the central lobe of
+    a_prev*G(v_prev) - a_curr*G(v_curr) (along one principal axis)."""
+    f = lambda r: a_prev * exp(-r * r / (2 * v_prev)) - a_curr * exp(-r * r / (2 * v_curr))
+    r_zero = sqrt(2 * log(a_prev / a_curr) * v_prev * v_curr / (v_curr - v_prev))
+    rh = brentq(lambda r: f(r) - 0.5 * f(0.0), 0.0, r_zero)
+    return rh / sqrt(2 * log(2))
 
 class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""
@@ -178,17 +187,21 @@ class Op_wavelet_atrous(Op):
                         var1 = b1**2 + filter_var_total
                         var2 = b2**2 + filter_var_total
                     else:
-                        # Fitting the band-pass image c_(j-1) - c_j.
-                        # Use the geometric mean of the adjacent cumulative variances
-                        # as an approximation for Gaussian fitting.
+                        # Fitting the band-pass image c_(j-1) - c_j, which for a point
+                        # source is a difference of two Gaussians (DoG), not a Gaussian.
+                        # Use the half-maximum width of the DoG central lobe.
                         var1_prev = b1**2 + filter_var_prev
                         var2_prev = b2**2 + filter_var_prev
 
                         var1_curr = b1**2 + filter_var_total
                         var2_curr = b2**2 + filter_var_total
 
-                        var1 = sqrt(var1_prev * var1_curr)
-                        var2 = sqrt(var2_prev * var2_curr)
+                        # Peak amplitudes of unit-flux 2D Gaussians
+                        a_prev = 1.0 / sqrt(var1_prev * var2_prev)
+                        a_curr = 1.0 / sqrt(var1_curr * var2_curr)
+
+                        var1 = _dog_halfmax_sigma(var1_prev, var1_curr, a_prev, a_curr) ** 2
+                        var2 = _dog_halfmax_sigma(var2_prev, var2_curr, a_prev, a_curr) ** 2
 
                     # Effective Gaussian beam (FWHM) in pixel coordinates.
                     beam_pix = (
