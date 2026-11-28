@@ -1266,15 +1266,18 @@ class Gaussian(object):
                 self.deconv_size_skyE = list(self.size_skyE)
                 self.deconv_size_skyE_uncorr = list(self.size_skyE_uncorr)
             else:
-                self.deconv_size_skyE = [
-                    self.size_skyE[i] * self.size_sky[i] / self.deconv_size_sky[i] if self.deconv_size_sky[i] > 0.0
-                    else self.size_skyE[i] for i in range(2)
-                ] + [self.size_skyE[2]]
-
-                self.deconv_size_skyE_uncorr = [
-                    self.size_skyE_uncorr[i] * self.size_sky_uncorr[i] / self.deconv_size_sky_uncorr[i] if self.deconv_size_sky_uncorr[i] > 0.0
-                    else self.size_skyE_uncorr[i] for i in range(2)
-                ] + [self.size_skyE_uncorr[2]]
+                # Work in pixels, where the axis order is known, and pair each deconvolved axis with the
+                # observed axis closest in orientation. Cap the error at sqrt(2 * obs * e_obs), the
+                # deconvolved size of an unresolved axis observed 1-sigma larger, as e_obs * obs / dc
+                # diverges for dc -> 0.
+                dpa = abs((gaus_dc[2] - size[2] + 90.0) % 180.0 - 90.0)
+                dc_err = []
+                for dc, i in zip(gaus_dc[:2], (0, 1) if dpa <= 45.0 else (1, 0)):
+                    cap = N.sqrt(2.0 * size[i] * errors[3+i])
+                    dc_err.append(min(errors[3+i] * size[i] / dc, cap) if dc > 0.0 else cap)
+                dc_err.append(errors[5])
+                self.deconv_size_skyE =        img.pix2gaus(dc_err, self.centre_pix, use_wcs=use_wcs, is_error=True)
+                self.deconv_size_skyE_uncorr = img.pix2gaus(dc_err, self.centre_pix, use_wcs=False,   is_error=True)
         else:
             # These are flagged Gaussians, so set to NaN
             errors = [N.nan] * 7
