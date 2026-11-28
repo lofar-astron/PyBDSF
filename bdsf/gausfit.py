@@ -1255,13 +1255,31 @@ class Gaussian(object):
             self.size_sky_uncorr = img.pix2gaus(size, self.centre_pix, use_wcs=False)  # FWHM in degrees and P.A. east from +y axis
             self.size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
             self.size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
-            gaus_dc, _ = func.deconv2(bm_pix, size)
+            gaus_dc, deconv_status = func.deconv2(bm_pix, size)
+
+            # Keep the deconvolved sizes returned by deconv2, including degenerate results for unresolved or invalid sources
             self.deconv_size_sky = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=use_wcs)
             self.deconv_size_sky_uncorr = img.pix2gaus(gaus_dc, self.centre_pix, use_wcs=False)
-            self.deconv_size_skyE = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=use_wcs, is_error=True)
-            self.deconv_size_skyE_uncorr = img.pix2gaus(errors[3:6], self.centre_pix, use_wcs=False, is_error=True)
+
+            # Propagate observed-size errors to deconvolved-size errors. For invalid deconvolution, use observed errors as a fallback.
+            if deconv_status == 2:
+                self.deconv_size_skyE = list(self.size_skyE)
+                self.deconv_size_skyE_uncorr = list(self.size_skyE_uncorr)
+            else:
+                # Work in pixels, where the axis order is known, and pair each deconvolved axis with the
+                # observed axis closest in orientation. Cap the error at sqrt(2 * obs * e_obs), the
+                # deconvolved size of an unresolved axis observed 1-sigma larger, as e_obs * obs / dc
+                # diverges for dc -> 0.
+                dpa = abs((gaus_dc[2] - size[2] + 90.0) % 180.0 - 90.0)
+                dc_err = []
+                for dc, i in zip(gaus_dc[:2], (0, 1) if dpa <= 45.0 else (1, 0)):
+                    cap = N.sqrt(2.0 * size[i] * errors[3+i])
+                    dc_err.append(min(errors[3+i] * size[i] / dc, cap) if dc > 0.0 else cap)
+                dc_err.append(errors[5])
+                self.deconv_size_skyE =        img.pix2gaus(dc_err, self.centre_pix, use_wcs=use_wcs, is_error=True)
+                self.deconv_size_skyE_uncorr = img.pix2gaus(dc_err, self.centre_pix, use_wcs=False,   is_error=True)
         else:
-            # These are flagged Gaussians, so set errors and uncalculated values to NaN
+            # These are flagged Gaussians, so set to NaN
             errors = [N.nan] * 7
             nan_sky2 = [N.nan, N.nan]
             nan_sky3 = [N.nan, N.nan, N.nan]
@@ -1276,6 +1294,7 @@ class Gaussian(object):
             self.deconv_size_sky_uncorr = nan_sky3
             self.deconv_size_skyE = nan_sky3
             self.deconv_size_skyE_uncorr = nan_sky3
+
         self.total_flux = tot
         self.total_fluxE = errors[6]
         self.peak_fluxE = errors[0]
