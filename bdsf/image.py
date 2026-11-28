@@ -44,6 +44,7 @@ class Image(object):
         self.completed_Ops = []
         self.waveletimage = False
         self._pi = False
+        self._resid_sigma_hint_shown = False
         self.do_cache = False
         self.bbspatchnum = 0
         self.blankpix = 0
