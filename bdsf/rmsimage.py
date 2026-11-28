@@ -572,11 +572,20 @@ class Op_rmsimage(Op):
             self.map_2d(data, mean, rms, mask, *map_opts, do_adapt=do_adapt,
                         bright_pt_coords=bright_pt_coords, rms_box2=rms_box2,
                         logname=logname, ncores=ncores, cache=cache)
-            if img.masked:
-                test = np.any(rms[~img.mask_arr] < 0.0)
-            else:
-                test = np.any(rms < 0.0)
-            if test:
+            # Only consider finite, unmasked pixels when checking the RMS map
+            valid_pixels = np.isfinite(rms)
+            if isinstance(mask, np.ndarray):
+                valid_pixels &= ~mask
+
+            n_valid = np.count_nonzero(valid_pixels)
+            if n_valid == 0:
+                # Nothing to check (e.g., a fully masked plane); accept the map as is, as was done before this check was added
+                mylog.warning('No finite unmasked pixels in RMS map; skipping check for negative values')
+                rms_ok = True
+                break
+
+            negative_pixels = valid_pixels & (rms < 0.0)
+            if np.any(negative_pixels):
                 rms_ok = False
                 if (opts.rms_box_bright is None and do_adapt) or (opts.rms_box is None and not do_adapt):
                         # Increase box by 20%
@@ -623,17 +632,17 @@ class Op_rmsimage(Op):
                     else:
                         # We could be catastrophically wrong, or have a local problem with the
                         # interpolation. If the latter, we can rescue it by interpolating again
-                        fraction = np.sum(rms<0)/np.size(rms)
+                        fraction = np.count_nonzero(negative_pixels) / n_valid
                         if fraction < 1e-3:
                             mylog.warning('Trying to interpolate for small fraction (%.2g) of negative rms values' % fraction)
                             ys,xs=rms.shape
                             xx, yy = np.meshgrid(np.arange(xs), np.arange(ys))
-                            mask = rms<0
-                            good_x = xx[~mask]
-                            good_y = yy[~mask]
-                            good_v = rms[~mask]
-                            missing_x = xx[mask]
-                            missing_y = yy[mask]
+                            good = valid_pixels & ~negative_pixels
+                            good_x = xx[good]
+                            good_y = yy[good]
+                            good_v = rms[good]
+                            missing_x = xx[negative_pixels]
+                            missing_y = yy[negative_pixels]
                             interp_values = interpolate.griddata((good_x, good_y), good_v, (missing_x, missing_y), method='nearest')
                             rms[missing_y, missing_x] = interp_values
                             rms_ok = True
@@ -1008,15 +1017,15 @@ class Op_rmsimage(Op):
     def for_masked_mp(self, mask, arr, ind, kappa):
 
         a, b, c, d = ind
+        cnt = 0
         if mask is None:
-            m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
-            if cnt > 198: cm = m; cr = r
+            _, _, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask, kappa)
         else:
             mask_win = mask[a:b, c:d]
             npix_unmasked = mask_win.size - np.count_nonzero(mask_win)
+
             if npix_unmasked > 20: # find clipped mean/rms
-                m, r, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask_win, kappa)
-                if cnt > 198: cm = m; cr = r
+                _, _, cm, cr, cnt = func.bstat(arr[a:b, c:d], mask_win, kappa)
             else:
                 if npix_unmasked > 5:
                     # First take the same windows for which the mask was calculated
@@ -1026,15 +1035,23 @@ class Op_rmsimage(Op):
                     # Calculate standard deviation estimated from Median Absolute Deviation (MAD)
                     # MAD = median(|x - median(x)|). The scale factor for a Gaussian distribution is 1.4826
                     cr = np.nanmedian(np.abs(valid_pixels - cm)) * 1.4826
-                    
+
                     # Protection against zero noise (e.g. all pixels have the same value)
                     if cr == 0.0:
                         cr = np.nanstd(valid_pixels) # fallback
                         if cr == 0.0:
-                            cr = np.inf           # finall fallback
+                            cr = np.inf           # final fallback
                 else: # too few unmasked pixels --> set mean/rms to inf
                     cm = np.inf
                     cr = np.inf
+
+        # Warn when sigma-clipping requires an unusually large number of iterations.
+        # This does not necessarily indicate non-convergence.
+        if cnt > 198:
+            mylogger.logging.getLogger("PyBDSF.RmsMean").warning(
+                f'Sigma clipping required {cnt} iterations in RMS window [{a}, {b}, {c}, {d}]. '
+                'Keeping the clipped mean and rms.'
+            )
 
         return cm, cr
 

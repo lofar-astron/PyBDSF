@@ -85,6 +85,11 @@ def test_overlapping_calls():
     # after both calls have prepared their functions and input sequences.
     ready = threading.Barrier(2, timeout=10)
 
+    # Pending output can make a worker inherit a locked stdout/stderr (both
+    # callers flush them right before forking), so that it hangs at exit
+    sys.stdout.flush()
+    sys.stderr.flush()
+
     class SynchronizedExecutor(concurrent.futures.ProcessPoolExecutor):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -209,8 +214,10 @@ if __name__ == '__main__':
         if name.startswith('test_') and callable(test):
             try:
                 test()
-                print('PASSED', name)
+                # Flush so that the CI log shows when each test ends (with a
+                # pipe, stdout is otherwise only flushed when a test forks)
+                print('PASSED', name, flush=True)
             except Exception as e:
                 failed += 1
-                print('FAILED', name, repr(e))
+                print('FAILED', name, repr(e), flush=True)
     sys.exit(1 if failed else 0)
