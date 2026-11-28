@@ -210,9 +210,10 @@ class Op_wavelet_atrous(Op):
                         bpa
                     )
 
-                    # Use the effective beam major axis (FWHM) to determine
-                    # the characteristic spatial scale for RMS estimation.
-                    y1 = max(1, int(N.ceil(max(abs(beam_pix[0]), abs(beam_pix[1])))))
+                    # Use the full support of the a-trous kernel at scale j to set
+                    # the RMS box size: the noise is correlated over about this scale.
+                    # The effective beam is used only for wimg.beam.
+                    y1 = l + (l - 1) * (2 ** (j - 1) - 1)
 
                     # Determine RMS box size.
                     box = img.rms_box[0]
