@@ -237,24 +237,35 @@ class Op_rmsimage(Op):
             act_pixels[~mask] = (image[~mask]-cmean)/threshold >= crms
         else:
             act_pixels = (image-cmean)/threshold >= crms
-        labels, count = ndimage.label(act_pixels, connectivity)
+        labels, _ = ndimage.label(act_pixels, connectivity)
         slices = ndimage.find_objects(labels)
         isl_size = []
         isl_size_highthresh = []
         for idx, s in enumerate(slices):
             isl_size += [s[0].stop-s[0].start, s[1].stop-s[1].start]
             if do_adapt and len(isl_maxposn) > 0:
-                isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(np.where(labels[s] == idx+1, image[s], -np.inf)), image[s].shape))+
+                isl_maxposn_lowthresh = tuple(np.array(np.unravel_index(np.nanargmax(np.where(labels[s] == idx+1, image[s], -np.inf)), image[s].shape)) +
                                           np.array((s[0].start, s[1].start)))
-                dists = [np.hypot(p[0] - isl_maxposn_lowthresh[0], p[1] - isl_maxposn_lowthresh[1]) for p in isl_maxposn]
-                # When changing the treshold from 500 to 10 sigma, peak position can move by a few pixels,
-                # so we allow for a small arbitrary distance between the two positions
-                if min(dists) <= 2.5:
-                    isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
-                    bright_indx = int(np.argmin(dists))
-                    if isl_area_lowthresh < 25.0 or isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0:
-                        isl_pos.append(isl_maxposn_lowthresh)
-                        isl_size_highthresh.append(isl_size_bright[bright_indx])
+                dists = [
+                    np.hypot(p[0] - isl_maxposn_lowthresh[0],
+                             p[1] - isl_maxposn_lowthresh[1])
+                    for p in isl_maxposn
+                ]
+
+                # Find high-threshold islands belonging to the current low-threshold island
+                bright_candidates = [i for i, p in enumerate(isl_maxposn) if labels[p] == idx + 1]
+
+                if bright_candidates:
+                    bright_indx = min(bright_candidates, key=lambda i: dists[i])
+
+                    # Allow a small displacement of the peak position
+                    if dists[bright_indx] <= 2.5:
+                        isl_area_lowthresh = (labels[s] == idx+1).sum()/img.pixel_beamarea()*2.0
+
+                        if (isl_area_lowthresh < 25.0 or
+                                isl_area_lowthresh / isl_area_highthresh[bright_indx] < 8.0):
+                            isl_pos.append(isl_maxposn_lowthresh)
+                            isl_size_highthresh.append(isl_size_bright[bright_indx])
 
         if len(isl_size) == 0:
             max_isl_size = 0.0
