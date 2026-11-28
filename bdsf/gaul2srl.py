@@ -24,6 +24,24 @@ from scipy.stats import circstd
 N.seterr(divide='raise')
 
 
+def robust_mc_std(values):
+    """Robust 1-sigma estimate of the scatter of Monte Carlo draws.
+
+    Returns half the width of the central 68.27% interval,
+    (q84.135 - q15.865) / 2, which equals the standard deviation for
+    Gaussian scatter but is insensitive to outliers in the tails.
+    Non-finite draws (failed MC realisations) are ignored. If fewer than
+    2 finite draws remain, 0.0 is returned so that the caller falls back
+    to the analytic Condon (1997) error.
+    """
+    values = values[N.isfinite(values)]
+    if len(values) < 2:
+        return 0.0
+
+    q16, q84 = N.percentile(values, [15.865, 84.135])
+    return 0.5 * (q84 - q16)
+
+
 class Op_gaul2srl(Op):
     """
     Slightly modified from fortran.
@@ -175,9 +193,13 @@ class Op_gaul2srl(Op):
         delc = [boxx.start, boxy.start]
         subim = self.make_subim(subn, subm, g_list, delc)
 
+        subim_group = subim
+        if not img.opts.group_by_isl and img.opts.group_method == 'curvature':
+            subim_group = -1.0 * func.make_curvature_map(subim)
+
         index = [(i,j) for i in range(ngau) for j in range(ngau) if j > i]
         for pair in index:
-            same_island = self.in_same_island(pair, img, g_list, isl, subim, subn, subm, delc)
+            same_island = self.in_same_island(pair, img, g_list, isl, subim_group, subn, subm, delc)
             if same_island:
                 nsrc -= 1
                 mmax, mmin = max(src_id[pair[0]],src_id[pair[1]]), min(src_id[pair[0]],src_id[pair[1]])
@@ -305,8 +327,6 @@ class Op_gaul2srl(Op):
             same_isl1_cont = True
             same_isl2 = True
         else:
-            if img.opts.group_method == 'curvature':
-                subim = -1.0 * func.make_curvature_map(subim)
             tol = img.opts.group_tol
             same_isl1_min, same_isl1_cont = same_island_min(pair, g_list, subim, delc, tol)
             same_isl2 = same_island_dist(pair, g_list, tol/2.0)
@@ -500,27 +520,28 @@ class Op_gaul2srl(Op):
                     mompara3_MC[i] = N.nan
                     mompara4_MC[i] = N.nan
                     mompara5_MC[i] = N.nan
-            mompara1E = N.nanstd(mompara1_MC)
-            if mompara1E > 2.0*mompara[1]:
-                mompara1E = 2.0*mompara[1] # Don't let errors get too large
-            mompara2E = N.nanstd(mompara2_MC)
-            if mompara2E > 2.0*mompara[2]:
-                mompara2E = 2.0*mompara[2] # Don't let errors get too large
+
+            # Estimate positional errors robustly to avoid outliers.
+            mompara1E = robust_mc_std(mompara1_MC)
+            mompara2E = robust_mc_std(mompara2_MC)
+
             mompara3E = N.nanstd(mompara3_MC)
-            if mompara3E > 2.0*mompara[3]:
-                mompara3E = 2.0*mompara[3] # Don't let errors get too large
+            mompara3E = min(mompara3E, 2.0*mompara[3]) # Don't let errors get too large
+
             mompara4E = N.nanstd(mompara4_MC)
-            if mompara4E > 2.0*mompara[4]:
-                mompara4E = 2.0*mompara[4] # Don't let errors get too large
+            mompara4E = min(mompara4E, 2.0*mompara[4]) # Don't let errors get too large
 
             # Use circular statistics for Position Angle error.
-            valid_mompara5_MC = mompara5_MC[~N.isnan(mompara5_MC)]
+            valid_mompara5_MC = mompara5_MC[N.isfinite(mompara5_MC)]
             if len(valid_mompara5_MC) > 0:
                 mompara5E = circstd(valid_mompara5_MC, high=180.0, low=0.0)
+                if not N.isfinite(mompara5E):
+                    mompara5E = 90.0
+                else:
+                    mompara5E = min(mompara5E, 90.0)
             else:
                 mompara5E = N.nan
-            if mompara5E > 2.0*mompara[5]:
-                mompara5E = 2.0*mompara[5] # Don't let errors get too large
+
         else:
             mompara1E = 0.0
             mompara2E = 0.0
@@ -594,7 +615,9 @@ class Op_gaul2srl(Op):
                 # draw random variables from distributions given by errors
                 params_err = func.g2param_err(g)
                 for i in range(len(params)):
-                    mc_param = N.random.normal(loc=params[i], scale=params_err[i])
+                    # A non-finite error (e.g. E_PA is NaN for a circular Gaussian, see get_errors) means "no scatter", not a NaN draw
+                    scale = params_err[i] if N.isfinite(params_err[i]) else 0.0
+                    mc_param = N.random.normal(loc=params[i], scale=scale)
                     params[i] = mc_param
             gau = func.gaus_2d(params, x, y)
             subim = subim + gau

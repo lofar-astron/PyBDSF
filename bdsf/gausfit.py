@@ -36,6 +36,74 @@ def _update_subisland_fit_stats(island, active_pixels, mean_map, rms_map):
     island.islmean = island.mean
 
 
+def _can_fit_gaussian_shape(mask):
+    """Check whether the active pixels of `mask` can constrain a Gaussian shape.
+
+    The logarithm of an elliptical Gaussian is a quadratic in the pixel
+    coordinates,
+
+        ln I = a + b*x + c*y + d*x**2 + e*x*y + f*y**2,
+
+    whose six coefficients fix the peak, position and shape. They can only
+    be determined if the six terms [1, x, y, x**2, x*y, y**2], evaluated on
+    the active pixels, are linearly independent (rank 6). Otherwise some
+    combination of the terms is zero on every active pixel: adding any
+    amount of it changes the model only outside the island, so the data
+    cannot constrain it and the fitter stops at an arbitrary, often
+    platform-dependent, shape.
+
+    This happens whenever all active pixels lie on a conic, for example:
+      - a strip only 1 or 2 pixels wide: x takes at most two values, so
+        x**2 = p + q*x on those pixels and the width across the strip is
+        free, however long the strip is;
+      - a diagonal line: x**2, x*y and y**2 are the same column;
+      - a plus or L shape: (x - x0)*(y - y0) = 0 on every pixel, so the x*y
+        term is free.
+
+    The number of active pixels alone is therefore not a sufficient test:
+    islands with many pixels can be degenerate, while 6 well-placed pixels
+    (e.g. a staircase over three rows) are not.
+
+    Parameters:
+    mask : 2D boolean array, True for masked (inactive) pixels
+
+    Returns True if all six Gaussian parameters can be fitted.
+    """
+    x, y = N.nonzero(~mask)
+
+    # Cheap early exits for the most common degenerate islands: fewer pixels
+    # than parameters, or fewer than three distinct rows or columns, in which
+    # case the curvature along that axis cannot be measured. This also
+    # guarantees that ptp(x) and ptp(y) are non-zero below.
+    if x.size < 6 or N.ptp(x) < 2 or N.ptp(y) < 2:
+        return False
+
+    # Rescale the coordinates to [0, 1], so that the relative tolerance below
+    # does not depend on the island size or position.
+    x = (x - x.min()) / N.ptp(x)
+    y = (y - y.min()) / N.ptp(y)
+    terms = N.column_stack((N.ones_like(x), x, y, x*x, x*y, y*y))
+
+    # The (npix x 6) matrix `terms` has rank 6 if and only if the 6x6 matrix
+    # terms.T @ terms is non-singular. Testing its smallest eigenvalue is much
+    # cheaper than an SVD of `terms` for large islands.
+    gram = terms.T @ terms
+    eig = N.linalg.eigvalsh(gram)  # ascending order
+    return eig[0] > 1e-10 * eig[-1]
+
+
+def _fit_beam(mask, beam, true_beam, fix_to_beam):
+    """Return the (beam, g3_only) pair to fit with on `mask`.
+
+    Islands whose active pixels cannot constrain a Gaussian shape are fitted
+    as with fix_to_beam, but with the true beam rather than the widened
+    initial guess `beam`.
+    """
+    if fix_to_beam or _can_fit_gaussian_shape(mask):
+        return beam, fix_to_beam
+    return true_beam, True
+
+
 class Op_gausfit(Op):
     """Fit a number of 2D gaussians to each island.
 
@@ -351,8 +419,13 @@ class Op_gausfit(Op):
         # wavelet images, but img.beam is)
         beam = N.array(img.beam2pix(img.beam))
         beam = (beam[0]/fwsig, beam[1]/fwsig, beam[2]+90.0)  # change angle from +y-axis to +x-axis and FWHM to sigma
+        # Keep the true beam for shapes held fixed below: the widening that
+        # follows only gives free fits a non-circular starting point.
+        true_beam = beam
 
-        if abs(beam[0]/beam[1]) < 1.1:
+        # Avoid distorting the beam for fixed-shape fits, as this biases
+        # the fitted amplitude ( https://github.com/lofar-astron/PyBDSF/pull/570 )
+        if abs(beam[0]/beam[1]) < 1.1 and not opts.fix_to_beam:
             beam = (1.1*beam[0], beam[1], beam[2])
 
         # fit_image has isl.islmean subtracted, so fitting thresholds must
@@ -360,7 +433,15 @@ class Op_gausfit(Op):
         thr_fit = opts.thresh_isl * isl.rms
         # flag_minsnr is defined relative to thresh_pix and the island RMS.
         thr_flag = opts.flag_minsnr * img.thresh_pix * isl.rms
-        g3_only = opts.fix_to_beam
+        # Hold the shape fixed to the beam when the active pixels cannot
+        # constrain all six Gaussian parameters.
+        free_beam = beam
+        beam, g3_only = _fit_beam(isl.mask_active, free_beam, true_beam, opts.fix_to_beam)
+        isl_beam = beam
+        shape_fixed = g3_only and not opts.fix_to_beam
+        if verbose and shape_fixed:
+            print('Island %s cannot constrain a Gaussian shape; fixing shape to the beam'
+                  % (isl.island_id,))
         peak = fcn.find_peak()[0]
         dof = isl.size_active
         shape = isl.shape
@@ -374,14 +455,14 @@ class Op_gausfit(Op):
             ini_gausfit = 'default'
         if ini_gausfit == 'simple' and ngmax is None:
             ngmax = 25
-        if ini_gausfit == 'default' or opts.fix_to_beam:
+        if ini_gausfit == 'default' or g3_only:
             gaul, ng1, ngmax = self.inigaus_fbdsm(isl, thr_fit, beam, img)
             if len(gaul) > 25:
                 ini_gausfit = 'simple'
                 gaul = []
                 ng1 = 0
                 ngmax = 25
-        if ini_gausfit == 'nobeam' and not opts.fix_to_beam:
+        if ini_gausfit == 'nobeam' and not g3_only:
             gaul = self.inigaus_nobeam(isl, thr_fit, beam, img)
             ng1 = len(gaul)
             ngmax = ng1+2
@@ -431,6 +512,7 @@ class Op_gausfit(Op):
                 # If fitting still fails, shrink the island a little and try again
                 fcn = MGFunction(fit_image, sm_isl, 1)
                 dof = N.sum(~sm_isl)
+                beam, g3_only = _fit_beam(sm_isl, free_beam, true_beam, opts.fix_to_beam)
                 island_modified = 'shrunk'
                 island_modified_npix = dof
                 gaul = []
@@ -455,6 +537,7 @@ class Op_gausfit(Op):
                 # If fitting still fails, expand the island a little and try again
                 fcn = MGFunction(fit_image, lg_isl, 1)
                 dof = N.sum(~lg_isl)
+                beam, g3_only = _fit_beam(lg_isl, free_beam, true_beam, opts.fix_to_beam)
                 island_modified = 'expanded'
                 island_modified_npix = dof
                 gaul = []
@@ -492,8 +575,12 @@ class Op_gausfit(Op):
                     par = mompara.tolist()
                     par[3] /= fwsig
                     par[4] /= fwsig
+                    if shape_fixed:
+                        # Moments of a rank-deficient mask give a degenerate
+                        # shape; use the beam, as in the fits above.
+                        par[3:6] = true_beam
                     gaul, fgaul = self.flag_gaussians([par], opts,
-                                                      beam, thr_flag, peak, shape, isl.mask_active,
+                                                      isl_beam, thr_flag, peak, shape, isl.mask_active,
                                                       fit_image, fitok)
             except ValueError:
                 pass
@@ -1129,10 +1216,17 @@ class Gaussian(object):
         self.peak_flux = p[0]
         self.centre_pix = p[1:3]
         size = p[3:6]
-        if func.approx_equal(size[0], img.pixel_beam()[0]*1.1) and \
-                func.approx_equal(size[1], img.pixel_beam()[1]) and \
-                func.approx_equal(size[2], img.pixel_beam()[2]+90.0) or \
-                img.opts.fix_to_beam:
+        pixel_beam = img.pixel_beam()
+        expected_pa = (pixel_beam[2] + 90.0) % 180.0
+        pa_diff = (size[2] - expected_pa + 90.0) % 180.0 - 90.0
+
+        distorted_beam = (
+            func.approx_equal(size[0], pixel_beam[0]*1.1) and
+            func.approx_equal(size[1], pixel_beam[1]) and
+            abs(pa_diff) < 1e-5
+        )
+
+        if distorted_beam or img.opts.fix_to_beam:
             # Check whether fitted Gaussian is just the distorted pixel beam given as an
             # initial guess (always set to [bm_maj*1.1, bm_min, bm_pa+90]) or if size was
             # fixed to the beam. If so, reset the size to the undistorted beam. Note:

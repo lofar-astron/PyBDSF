@@ -235,18 +235,22 @@ class Opts(object):
                                  "can be specified manually using frequency_sp.")
     thresh = Enum(None, "hard", "fdr",
                              doc = "Type of thresholding: " \
-                                 "None => calculate inside program, 'fdr' => use "\
-                                 "false detection rate algorithm, 'hard' => "\
-                                 "use sigma clipping\nIf thresh = 'hard', "\
-                                 "then a hard threshold is assumed, given by thresh_pix. "\
-                                 "If thresh = 'fdr', then the False Detection Rate algorithm of "\
-                                 "Hancock et al. (2002) is used to calculate the value of "\
-                                 "thresh_pix. If thresh is None, then the false detection "\
-                                 "probability is first calculated, and if the number of false "\
-                                 "source pixels is more than fdr_ratio times the estimated "\
-                                 "number of true source pixels, then the 'fdr' threshold "\
-                                 "option is chosen, else the 'hard' threshold option is "\
-                                 "chosen.")
+                                "None => select automatically, 'fdr' => use "\
+                                "false detection rate algorithm, 'hard' => "\
+                                "use sigma clipping\n"\
+                                "If thresh = 'hard', then a hard threshold is "\
+                                "applied using thresh_pix.\n"\
+                                "If thresh = 'fdr', then the False Detection Rate "\
+                                "algorithm of Hancock et al. (2002) is used to "\
+                                "calculate thresh_pix; the supplied thresh_pix "\
+                                "value is ignored.\n"\
+                                "If thresh is None, the thresholding method is "\
+                                "selected automatically by comparing the expected "\
+                                "number of false positive pixels at thresh_pix with "\
+                                "fdr_ratio times the estimated number of source "\
+                                "pixels. If 'hard' is selected, thresh_pix is retained; "\
+                                "if 'fdr' is selected, thresh_pix is recalculated "\
+                                "internally.")
     thresh_isl = Float(3,
                              doc = "Threshold for the island boundary in number of sigma "\
                                  "above the mean. Determines extent of island used for fitting\n"\
@@ -272,14 +276,19 @@ class Opts(object):
                                  "calculated inside the program\n"\
                                  "This parameter sets the overall detection threshold "\
                                  "for islands (i.e. thresh_pix = 5 will find all sources "\
-                                 "with peak flux densities per beam of 5-sigma or greater). Use the "\
+                                 "that contain at least one pixel at 5-sigma or greater "\
+                                 "above the local mean, evaluated using the local rms). "\
+                                 "Use the "\
                                  "thresh_isl parameter to control how much of each island "\
                                  "is used in fitting. Generally, thresh_pix should be larger "\
                                  "than thresh_isl.\n"
                                  "Only islands "\
-                                 "with peaks above the absolute threshold will be used. "\
-                                 "The absolute threshold is calculated as abs_thr = "\
-                                 "mean + thresh_pix * rms. Use the mean_map "\
+                                 "with at least one pixel above the local threshold will be used. "\
+                                 "The local threshold is calculated for each pixel as "\
+                                 "thr = mean + thresh_pix * rms, where mean and rms are "\
+                                 "the values of the mean and rms maps at that pixel. "\
+                                 "For images with constant noise and mean this is equivalent to "\
+                                 "a threshold on the island peak. Use the mean_map "\
                                  "and rms_map parameters to control the way "\
                                  "the mean and rms are determined.")
     adaptive_rms_box = Bool(False,
@@ -354,8 +363,10 @@ class Opts(object):
                              group = "advanced_opts")
     fdr_ratio = Float(0.1,
                              doc = "For thresh = None; " \
-                                 "if #false_pix / #source_pix < fdr_ratio, " \
-                                 "thresh = 'hard' else thresh = 'fdr'",
+                                "if the expected number of false positive pixels "\
+                                "divided by the estimated number of source pixels "\
+                                "is less than fdr_ratio, thresh = 'hard'; otherwise "\
+                                "thresh = 'fdr'.",
                              group = "advanced_opts")
     kappa_clip = Option(None, Float(),
                              doc = "Kappa for clipped mean and rms. None => calculate "\
@@ -969,6 +980,10 @@ class Opts(object):
                              doc = "Calculate and print to log statistics of residual "\
                              "images (there is a computational cost)",
                              group = "output_opts")
+    resid_sigma_stats_do = Bool(False,
+                            doc = "Calculate and print residual statistics in units of "\
+                                  "the background RMS (there is a computational cost)",
+                            group = "output_opts")
 
 
     #------------------------POLARISATION OPTIONS------------------------------
@@ -995,16 +1010,28 @@ class Opts(object):
                                  "be lower than pi_thresh_pix.",
                              group = "polarisation_do")
     pi_thresh_pix = Option(None, Float(),
-                             doc = "Source detection threshold for PI image: threshold for the "\
-                                 "island peak in number of sigma "\
-                                 "above the mean. None => use thresh_pix\n"\
-                                 "This parameter sets the overall detection threshold "\
-                                 "for islands in the polarized intensity (PI) image "\
-                                 "(i.e. pi_thresh_pix = 5 will find all sources "\
-                                 "with peak flux densities per beam of 5-sigma or greater). Use the "\
-                                 "pi_thresh_isl parameter to control how much of each island "\
-                                 "is used in fitting. Generally, pi_thresh_pix should be larger "\
-                                 "than pi_thresh_isl.",
+                             doc = "Source detection threshold: threshold for the "\
+                                "island peak in number of sigma "\
+                                "above the mean.\n"\
+                                "If thresh = 'fdr', this value is ignored and "\
+                                "calculated inside the program.\n"\
+                                "If thresh is None, this value is used as the "\
+                                "candidate hard-threshold cutoff when selecting "\
+                                "the thresholding method automatically. If 'hard' "\
+                                "is selected, this value is retained; if 'fdr' is "\
+                                "selected, the threshold is recalculated internally.\n"\
+                                "This parameter sets the overall detection threshold "\
+                                "for islands (i.e. thresh_pix = 5 will find all sources "\
+                                "with peak flux densities per beam of 5-sigma or greater). Use the "\
+                                "thresh_isl parameter to control how much of each island "\
+                                "is used in fitting. Generally, thresh_pix should be larger "\
+                                "than thresh_isl.\n"\
+                                "Only islands "\
+                                "with peaks above the absolute threshold will be used. "\
+                                "The absolute threshold is calculated as abs_thr = "\
+                                "mean + thresh_pix * rms. Use the mean_map "\
+                                "and rms_map parameters to control the way "\
+                                "the mean and rms are determined.",
                              group = "polarisation_do")
 
 
