@@ -163,18 +163,21 @@ class Op_islands(Op):
         for 2D images) pixels with emission.
 
         The following cuts are applied:
-         - pixel is considered to have emission if it is 'thresh_isl' times
-           higher than RMS.
-         - Island should have at least 'minsize' active pixels
-         - There should be at lease 1 pixel in the island which is 'thresh_pix'
-           times higher than noise (peak clip).
+         - A pixel is considered to have emission ("active") if it is
+           'thresh_isl' times higher than the local rms (above the local mean).
+         - The island must have at least 'minpix_isl' and at most
+           'maxpix_isl' active pixels.
+         - At least one pixel in the island must exceed the local threshold
+           mean + thresh_pix * rms (peak significance cut).
 
         Parameters:
-        image, mask: arrays with image data and mask
-        mean, rms: arrays with mean & rms maps
-        thresh_isl: threshold for 'active pixels'
-        thresh_pix: threshold for peak
-        minsize: minimal acceptable island size
+        img: Image object. The following attributes are used:
+            ch0_arr, mask_arr, mean_arr, rms_arr: image data, mask, and
+                mean and rms maps
+            thresh_pix: threshold (in sigma) for the peak significance cut
+            minpix_isl, maxpix_isl: minimal and maximal acceptable island size
+        opts: Opts object. The following option is used:
+            thresh_isl: threshold (in sigma) for active pixels
 
         Function returns a list of Island objects.
         """
@@ -203,22 +206,30 @@ class Op_islands(Op):
         slices = nd.find_objects(labels)
         img.island_labels = labels
 
-        # Apply cuts on island size and peak value
+        # Calculate island sizes for all islands at once.
+        index = N.arange(1, count + 1)
+        isl_sizes = nd.sum(act_pixels, labels, index)
+
+        # Check peak significance for all pixels at once.
+        sig = (image - mean) > thresh_pix * rms
+        sig_counts = nd.sum(sig, labels, index)
+
+        # Apply island size and peak significance cuts.
+        valid_islands = (
+            (isl_sizes >= img.minpix_isl) &
+            (isl_sizes <= img.maxpix_isl) &
+            (sig_counts > 0)
+        )
+
         res = []
-        for idx, s in enumerate(slices):
-            idx += 1  # nd.labels indices are counted from 1
-            isl_size = (labels[s] == idx).sum()  # number of pixels inside bounding box which are in island
-            isl_peak = nd.maximum(image[s], labels[s], idx)
-            # Copy of the bounding box
-            sub_image = image[s].copy()
-            # Mask the pixels that are outisde the island
-            sub_image[labels[s] != idx] = N.nan
-            # 'nanargmax' finds the brightest pixels only in the island area
-            max_posn = N.unravel_index(N.nanargmax(sub_image), sub_image.shape)
-            isl_maxposn = tuple(N.array(max_posn) + N.array((s[0].start, s[1].start)))
-            if (isl_size >= img.minpix_isl) and (isl_size <= img.maxpix_isl) and (isl_peak - mean[isl_maxposn])/thresh_pix > rms[isl_maxposn]:
-                isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
-                res.append(isl)
+        for i, s in enumerate(slices):
+            if s is None or not valid_islands[i]:
+                continue
+
+            idx = i + 1  # ndimage labels start from 1
+            isl = Island(image, mask, mean, rms, labels, s, idx, img.pixel_beamarea())
+            res.append(isl)
+
         return res
 
     def coords_to_isl(self, img, opts):

@@ -276,14 +276,19 @@ class Opts(object):
                                  "calculated inside the program\n"\
                                  "This parameter sets the overall detection threshold "\
                                  "for islands (i.e. thresh_pix = 5 will find all sources "\
-                                 "with peak flux densities per beam of 5-sigma or greater). Use the "\
+                                 "that contain at least one pixel at 5-sigma or greater "\
+                                 "above the local mean, evaluated using the local rms). "\
+                                 "Use the "\
                                  "thresh_isl parameter to control how much of each island "\
                                  "is used in fitting. Generally, thresh_pix should be larger "\
                                  "than thresh_isl.\n"
                                  "Only islands "\
-                                 "with peaks above the absolute threshold will be used. "\
-                                 "The absolute threshold is calculated as abs_thr = "\
-                                 "mean + thresh_pix * rms. Use the mean_map "\
+                                 "with at least one pixel above the local threshold will be used. "\
+                                 "The local threshold is calculated for each pixel as "\
+                                 "thr = mean + thresh_pix * rms, where mean and rms are "\
+                                 "the values of the mean and rms maps at that pixel. "\
+                                 "For images with constant noise and mean this is equivalent to "\
+                                 "a threshold on the island peak. Use the mean_map "\
                                  "and rms_map parameters to control the way "\
                                  "the mean and rms are determined.")
     adaptive_rms_box = Bool(False,
@@ -975,6 +980,10 @@ class Opts(object):
                              doc = "Calculate and print to log statistics of residual "\
                              "images (there is a computational cost)",
                              group = "output_opts")
+    resid_sigma_stats_do = Bool(False,
+                            doc = "Calculate and print residual statistics in units of "\
+                                  "the background RMS (there is a computational cost)",
+                            group = "output_opts")
 
 
     #------------------------POLARISATION OPTIONS------------------------------
