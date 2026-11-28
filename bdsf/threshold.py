@@ -73,7 +73,7 @@ class Op_threshold(Op):
             alpha = opts.fdr_alpha
             if not 0.0 < alpha < 1.0:
                 raise RuntimeError(
-                    f"fdr_alpha must be finite and between 0 and 1; got {alpha!r}"
+                    f"fdr_alpha must satisfy 0 < fdr_alpha < 1; got {alpha!r}"
                 )
             cdelt = img.wcs_obj.acdelt[:2]
             bm = (img.beam[0], img.beam[1])

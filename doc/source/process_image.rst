@@ -461,9 +461,9 @@ The advanced options are:
 
     fdr_alpha
         This parameter is a float (default is 0.05) that sets the value of alpha
-        for the FDR algorithm for thresholding. If ``thresh`` is ``'fdr'``, then
-        the estimate of ``fdr_alpha`` (see Hopkins et al. 2002 [#f3]_ for
-        details) is stored in this parameter.
+        for the FDR algorithm for thresholding, and must satisfy 0 < alpha < 1.
+        It is used when ``thresh`` is ``'fdr'`` (see Hopkins et al. 2002
+        for details).
 
     fdr_ratio
         This parameter is a float (default is 0.1). When ``thresh = None``, if
