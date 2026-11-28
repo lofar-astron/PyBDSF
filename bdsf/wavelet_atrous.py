@@ -6,7 +6,8 @@ import numpy as N
 from .image import *
 from . import mylogger
 import os
-from math import log, floor, sqrt
+from math import log, floor, sqrt, exp
+from scipy.optimize import brentq
 from .const import fwsig
 from copy import deepcopy as cp
 from . import functions as func
@@ -32,6 +33,14 @@ try:
 except ImportError:
     has_pyfftw = False
 
+
+def _dog_halfmax_sigma(v_prev, v_curr, a_prev, a_curr):
+    """Sigma of a Gaussian with the same FWHM as the central lobe of
+    a_prev*G(v_prev) - a_curr*G(v_curr) (along one principal axis)."""
+    f = lambda r: a_prev * exp(-r * r / (2 * v_prev)) - a_curr * exp(-r * r / (2 * v_curr))
+    r_zero = sqrt(2 * log(a_prev / a_curr) * v_prev * v_curr / (v_curr - v_prev))
+    rh = brentq(lambda r: f(r) - 0.5 * f(0.0), 0.0, r_zero)
+    return rh / sqrt(2 * log(2))
 
 class Op_wavelet_atrous(Op):
     """Compute a-trous wavelet transform of the gaussian residual image."""
@@ -78,10 +87,16 @@ class Op_wavelet_atrous(Op):
                 lpf = 'b3'
             jmax = img.opts.atrous_jmax
             l = len(filter[lpf]['vec'])             # 1st 3 is arbit and 2nd 3 is whats expected for a-trous
+
+            filter_vec = N.asarray(filter[lpf]['vec'], dtype=float)
+            filter_x = N.arange(len(filter_vec)) - (len(filter_vec) - 1) / 2.0
+            filter_var = float(N.sum(filter_vec * filter_x**2) / N.sum(filter_vec))
+
             if jmax < 0 or jmax > 15:
                 mylog.warning(
                     'Invalid atrous_jmax=%s. Expected 0 (automatic) or a value between 1 and 15. Determining the number of scales automatically.', jmax
                 )
+
             if jmax < 1 or jmax > 15:                   # determine jmax
                 # Check if largest island size is
                 # smaller than 1/3 of image size. If so, use it to determine jmax.
@@ -155,9 +170,55 @@ class Op_wavelet_atrous(Op):
                 if dobdsm:
                     wopts['filename'] = filename
                     wopts['basedir'] = bdir
+
+                    # Get the original beam in pixel coordinates.
+                    # pixel_beam() returns Gaussian sigma values.
+                    b1, b2, bpa = img.pixel_beam()
+
+                    # Total variance of the a-trous filters up to scale j.
+                    # Variances of successive convolutions add up:
+                    # sum_{k=1..j} 4**(k-1) = (4**j - 1) / 3.
+                    filter_var_total = filter_var * (4.0**j - 1.0) / 3.0
+                    filter_var_prev = filter_var * (4.0**(j - 1) - 1.0) / 3.0
+
+                    # Calculate the effective beam variance.
+                    if img.opts.atrous_sum:
+                        # Fitting the smoothed image c_j.
+                        var1 = b1**2 + filter_var_total
+                        var2 = b2**2 + filter_var_total
+                    else:
+                        # Fitting the band-pass image c_(j-1) - c_j, which for a point
+                        # source is a difference of two Gaussians (DoG), not a Gaussian.
+                        # Use the half-maximum width of the DoG central lobe.
+                        var1_prev = b1**2 + filter_var_prev
+                        var2_prev = b2**2 + filter_var_prev
+
+                        var1_curr = b1**2 + filter_var_total
+                        var2_curr = b2**2 + filter_var_total
+
+                        # Peak amplitudes of unit-flux 2D Gaussians
+                        a_prev = 1.0 / sqrt(var1_prev * var2_prev)
+                        a_curr = 1.0 / sqrt(var1_curr * var2_curr)
+
+                        var1 = _dog_halfmax_sigma(var1_prev, var1_curr, a_prev, a_curr) ** 2
+                        var2 = _dog_halfmax_sigma(var2_prev, var2_curr, a_prev, a_curr) ** 2
+
+                    # Effective Gaussian beam (FWHM) in pixel coordinates.
+                    beam_pix = (
+                        fwsig * sqrt(var1),
+                        fwsig * sqrt(var2),
+                        bpa
+                    )
+
+                    # Use the full support of the a-trous kernel at scale j to set
+                    # the RMS box size: the noise is correlated over about this scale.
+                    # The effective beam is used only for wimg.beam.
+                    y1 = l + (l - 1) * (2 ** (j - 1) - 1)
+
+                    # Determine RMS box size.
                     box = img.rms_box[0]
-                    y1 = (l + (l - 1) * (2 ** (j - 1) - 1))
-                    bs = max(5 * y1, box)  # changed from 10 to 5
+                    bs = max(5 * y1, box)
+
                     if bs > min(n, m) / 2:
                         mylog.info("Wavelet scale #%d: rms box (%d px) exceeds half of the image; "
                                       "using constant rms and mean over the whole image.", j, bs)
@@ -175,18 +236,15 @@ class Op_wavelet_atrous(Op):
                                 wopts['adaptive_rms_box'] = False
                                 mylog.info("Wavelet scale #%d: adaptive_rms_box disabled "
                                            "(bright-source box %d px is not < rms box %d px / 1.5).", j, bs_bright, bs)
+
                     if j <= 3:
                         wopts['ini_gausfit'] = 'default'
                     else:
                         wopts['ini_gausfit'] = 'nobeam'
-                    wid = (l + (l - 1) * (2 ** (j - 1) - 1))
-                    b1, b2 = img.pixel_beam()[0:2]
-                    b1 = b1 * fwsig
-                    b2 = b2 * fwsig
-                    cdelt = img.wcs_obj.acdelt[:2]
 
                     wimg = Image(wopts)
-                    wimg.beam = (sqrt(wid * wid + b1 * b1) * cdelt[0] * 2.0, sqrt(wid * wid + b2 * b2) * cdelt[1] * 2.0, 0.0)
+                    wimg.beam = tuple(img.pix2beam(beam_pix))
+
                     wimg.orig_beam = img.beam
                     wimg.pixel_beam = img.pixel_beam
                     wimg.pixel_beamarea = img.pixel_beamarea
